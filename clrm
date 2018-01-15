@@ -4,8 +4,13 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
+if __name__ != '__main__':
+    print('This file can not be imported.')
+    exit(1)
 
 from argparse import ArgumentParser
+
+import cleanroom.printer as Printer
 import sys
 
 def parse_commandline(arguments):
@@ -28,9 +33,11 @@ def parse_commandline(arguments):
 
     return parse_result
 
-
 args = parse_commandline(sys.argv)
 
-print('workdir: {}'.format(args.work_dir))
-print('systems: {}'.format(args.systems))
+pr = Printer.Printer(args.verbose, args.debug)
 
+pr.verbose('Verbose output enabled.')
+pr.debug('Debug output enabled.')
+
+pr.print(args.systems)
