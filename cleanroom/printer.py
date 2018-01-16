@@ -21,12 +21,20 @@ class Printer:
 
     def print(self, *args):
         ''' Unconditionally print things. '''
-        print(args)
+        print(*args)
 
     def verbose(self, *args):
         ''' Print if verbose is set. '''
-        if self._verbose: print(args)
+        if self._verbose > 0: print('>  ', *args)
+
+    def info(self, *args):
+        ''' Print even more verbose. '''
+        if self._verbose > 1: print('>> ', *args)
+
+    def trace(self, *args):
+        ''' Print trace messsages. '''
+        if self._verbose > 2: print('>>>', *args)
 
     def debug(self, *args):
         ''' Print if debug is set. '''
-        if self._debug: print(args)
+        if self._debug: print('**** ', *args)
