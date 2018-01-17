@@ -19,6 +19,18 @@ class Printer:
         self._verbose = verbose
         self._debug = debug
 
+    def error(self, *args):
+        ''' Print error message. '''
+        print('Error:', *args)
+
+    def h2(self, *args):
+        ''' Print message with header. '''
+        print('\033[0;31m***\033[0m', *args)
+
+    def h1(self, *args):
+        ''' Print a headline. '''
+        print('\033[0;31m***\033[0m\033[1;37m', *args, '\033[0m')
+
     def print(self, *args):
         ''' Unconditionally print things. '''
         print(*args)

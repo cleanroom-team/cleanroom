@@ -46,6 +46,7 @@ generator = cr.Generator(args.work_dir, pr)
 for s in args.systems:
     generator.addSystem(s)
 
+generator.prepare()
 generator.generate()
 
 pr.verbose('Done.')
