@@ -44,12 +44,15 @@ class Generator:
     def workDirectory(self):
         return self._workDir
 
+    def systemsDirectory(self):
+        return self._systemDir
+
     def addSystem(self, system):
         self._pr.trace('adding system {} to Generator.'.format(system))
         self._parsers = parser.Parser(self, system, self._pr)
 
     def prepare(self):
-        pass       
+        pass
 
     def generate(self):
         pass
