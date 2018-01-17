@@ -74,7 +74,7 @@ class Generator:
             if b[1]:
                 self._pr.info('{} found: {}...'.format(b[0], b[1]))
             else:
-                self._pr.error('{} not found.'.format(b[0]))
+                self._pr.warn('{} not found.'.format(b[0]))
                 passed = False
         return passed
 
@@ -83,7 +83,7 @@ class Generator:
         if os.geteuid() == 0:
             self._pr.verbose('Running as root.')
             return True
-        self._pr.error('Not running as root.')
+        self._pr.warn('Not running as root.')
         return False
 
     def _preflightDirectories(self):

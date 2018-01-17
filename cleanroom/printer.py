@@ -5,6 +5,15 @@
 """
 
 
+import sys
+
+
+def ansify(seq):
+    if sys.stdout.isatty():
+        return seq
+    return ''
+
+
 class Printer:
     ''' Class to help with output in cleanroom.
 
@@ -19,34 +28,81 @@ class Printer:
         self._verbose = verbose
         self._debug = debug
 
-    def error(self, *args):
-        ''' Print error message. '''
-        print('Error:', *args)
+        self._ansi_reset = ansify('\033[0m')
+        self._h_prefix = ansify('\033[1;31m')
+        self._h1_suffix = ansify('\033[0m\033[1;37m')
+        self._error_prefix = ansify('\033[1;31m')
+        self._warn_prefix = ansify('\033[1;33m')
+        self._ok_prefix = ansify('\033[1;7;32m')
+        self._ok_suffix = ansify('\033[0;32m')
 
-    def h2(self, *args):
-        ''' Print message with header. '''
-        print('\033[0;31m***\033[0m', *args)
-
-    def h1(self, *args):
-        ''' Print a headline. '''
-        print('\033[0;31m***\033[0m\033[1;37m', *args, '\033[0m')
+        self._ig_fail_prefix = ansify('\033[1;7;33m')
+        self._ig_fail_suffix = ansify('\033[0;33m')
+        self._fail_prefix = ansify('\033[1;7;31m')
+        self._fail_suffix = ansify('\033[0;31m')
+        self._extra_prefix = ansify('\033[1;36m')
+        self._extra_suffix = ansify('\033[0;m\033[2;m')
 
     def print(self, *args):
         ''' Unconditionally print things. '''
         print(*args)
 
+    def h1(self, *args):
+        ''' Print a headline. '''
+        intro = '{}***{}'.format(self._h_prefix, self._h1_suffix)
+        print(intro, *args, self._ansi_reset)
+
+    def h2(self, *args):
+        intro = '{}***{}'.format(self._h_prefix, self._ansi_reset)
+        print(intro, *args)
+
+
+
     def verbose(self, *args):
         ''' Print if verbose is set. '''
-        if self._verbose > 0: print('>  ', *args)
+        if self._verbose > 0: print(*args)
+
+
+    def error(self, *args):
+        ''' Print error message. '''
+        intro = '{}ERROR:'.format(self._error_prefix)
+        print(intro, *args, self._ansi_reset)
+
+    def warn(self, *args):
+        ''' Print warning message. '''
+        intro = '{}warning:'.format(self._warn_prefix)
+        print(intro, *args, self._ansi_reset)
+
+    def success(self, *args):
+        ''' Print success message. '''
+        intro = '{}  OK  {}'.format(self._ok_prefix, self._ok_suffix)
+        print(intro, *args, self._ansi_reset)
+
+    def fail(self, ignore, *args):
+        ''' Print success message. '''
+        if ignore:
+            intro = '{} fail {}'.format(self._ig_fail_prefix, self._ig_fail_suffix)
+            print(intro, *args, '(ignored)', self._ansi_reset)
+        else:
+            intro = '{} FAIL {}'.format(self._fail_prefix, self._fail_suffix)
+            print(intro, *args, self._ansi_reset)
+            sys.exit(1)
 
     def info(self, *args):
         ''' Print even more verbose. '''
-        if self._verbose > 1: print('>> ', *args)
-
-    def trace(self, *args):
-        ''' Print trace messsages. '''
-        if self._verbose > 2: print('>>>', *args)
+        if self._verbose > 1:
+            intro = '{}...{}'.format(self._extra_prefix, self._extra_suffix)
+            print(intro, *args, self._ansi_reset)
 
     def debug(self, *args):
         ''' Print if debug is set. '''
-        if self._debug: print('**** ', *args)
+        if self._debug:
+            intro = '{}---{}'.format(self._extra_prefix, self._extra_suffix)
+            print(intro, *args, self._ansi_reset)
+
+    def trace(self, *args):
+        ''' Print trace messsages. '''
+        if self._verbose > 2:
+            intro = '{}+++{}'.format(self._extra_prefix, self._extra_suffix)
+            print(intro, *args, self._ansi_reset)
+
