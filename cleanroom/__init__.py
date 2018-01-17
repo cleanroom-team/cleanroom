@@ -10,7 +10,10 @@ from . import parser
 
 import os
 import os.path
-import sys
+
+
+class PreflightError(RuntimeError):
+    pass
 
 
 def checkForBinary(binary):
@@ -38,8 +41,6 @@ class Generator:
             'rofiles-fuse': checkForBinary('/usr/bin/rofiles-fuse')
         }
 
-        self.preflightTest()
-
     def workDirectory(self):
         return self._workDir
 
@@ -53,7 +54,7 @@ class Generator:
     def generate(self):
         pass
 
-    def preflightTest(self):
+    def preflightCheck(self):
         self._pr.h1('Running Preflight Checks.')
 
         binaries = self._preflightBinaries()
@@ -61,7 +62,7 @@ class Generator:
         directories = self._preflightDirectories()
 
         if not binaries or not users or not directories:
-            sys.exit(1)
+            raise PreflightError()
 
     def _preflightBinaries(self):
         ''' Check executables '''
