@@ -23,6 +23,8 @@ def parse_commandline(arguments):
                         help='Show debug information')
     parser.add_argument('--verbose', action='count', help='Be verbose')
 
+    parser.add_argument('--systemsdir', dest='system_dir', action='store',
+                        help='Directory containing system definitions')
     parser.add_argument('--workdir', dest='work_dir', action='store',
                         help='Work area to create files in')
 
@@ -41,7 +43,7 @@ pr.info('Info output enabled.')
 pr.trace('Trace output enabled.')
 pr.debug('Debug output enabled.')
 
-generator = cr.Generator(args.work_dir, pr)
+generator = cr.Generator(args.system_dir, args.work_dir, pr)
 
 for s in args.systems:
     generator.addSystem(s)

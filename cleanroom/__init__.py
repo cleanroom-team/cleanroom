@@ -28,9 +28,10 @@ def directoryMissingOrEmpty(directory):
 
 
 class Generator:
-    def __init__(self, work_dir, printer):
+    def __init__(self, system_dir, work_dir, printer):
         self._pr = printer
         self._parsers = []
+        self._systemDir = system_dir
         self._workDir =  work_dir
         self._binaries = {
             'ostree': checkForBinary('/usr/bin/ostree'),
