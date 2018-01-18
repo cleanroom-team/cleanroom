@@ -47,16 +47,18 @@ pr.info('Info output enabled.')
 pr.debug('Debug output enabled.')
 pr.trace('Trace output enabled.')
 
-with cleanroom.workdir.WorkDir(args.work_dir) as work_dir:
-    pr.verbose('Work directory is: {}.'.format(work_dir))
+# Set up Context object:
+ctx = cleanroom.Context(args.system_dir, args.work_dir, pr)
+try:
+    ctx.priflightCheck()
+except cleanroom.PreflightError:
+    pr.fail(args.ignore_errors, 'Preflight Check failed')
+else:
+    pr.success('Preflight Check passed')
 
-    generator = cleanroom.Generator(args.system_dir, work_dir, pr)
-    try:
-        generator.preflightCheck()
-    except cleanroom.PreflightError:
-        pr.fail(args.ignore_errors, 'Preflight Check failed.')
-    else:
-        pr.success('Preflight Check passed.')
+# Do work:
+with cleanroom.workdir.WorkDir(args.work_dir) as work_dir:
+    generator = cleanroom.Generator(ctx)
 
     for s in args.systems:
         generator.addSystem(s)

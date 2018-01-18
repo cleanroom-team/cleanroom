@@ -23,23 +23,19 @@ def checkForBinary(binary):
         return ''
 
 
-def directoryMissingOrEmpty(directory):
-    if os.path.isdir(directory):
-        return True
-    (dirpath, dirnames, files) = os.walk(directory)
-    return len(dirnames) == 0 and len(files) == 0
-
-
-class Generator:
+class Context:
     def __init__(self, system_dir, work_dir, printer):
-        self._pr = printer
-        self._parsers = []
-        self._systemDir = system_dir
-        self._workDir =  work_dir
+        self._system_dir = system_dir
+        self._work_dir = work_dir
+        self._printer = printer
         self._binaries = {
             'ostree': checkForBinary('/usr/bin/ostree'),
             'rofiles-fuse': checkForBinary('/usr/bin/rofiles-fuse')
         }
+        self.generator = None
+
+    def printer(self):
+        return self._printer
 
     def workDirectory(self):
         return self._workDir
@@ -47,24 +43,20 @@ class Generator:
     def systemsDirectory(self):
         return self._systemDir
 
-    def addSystem(self, system):
-        self._pr.trace('adding system {} to Generator.'.format(system))
-        self._parsers = parser.Parser(self, system, self._pr)
+    def systemsCleanRoomDirectory(self):
+        return os.path.join(systemsDirectory(), 'cleanroom')
 
-    def prepare(self):
-        pass
+    def systemsCommandsDirectory(self):
+        return os.path.join(systemsCleanRoomDirectory(), 'commands')
 
-    def generate(self):
-        pass
 
-    def preflightCheck(self):
-        self._pr.h1('Running Preflight Checks.')
+    def priflightCheck(self):
+        self._printer.h1('Running Preflight Checks.')
 
         binaries = self._preflightBinaries()
         users = self._preflightUsers()
-        directories = self._preflightDirectories()
 
-        if not binaries or not users or not directories:
+        if not binaries or not users:
             raise PreflightError()
 
     def _preflightBinaries(self):
@@ -72,21 +64,30 @@ class Generator:
         passed = True
         for b in self._binaries.items():
             if b[1]:
-                self._pr.info('{} found: {}...'.format(b[0], b[1]))
+                self._printer.info('{} found: {}...'.format(b[0], b[1]))
             else:
-                self._pr.warn('{} not found.'.format(b[0]))
+                self._printer.warn('{} not found.'.format(b[0]))
                 passed = False
         return passed
 
     def _preflightUsers(self):
         ''' Check tha the script is running as root '''
         if os.geteuid() == 0:
-            self._pr.verbose('Running as root.')
+            self._printer.verbose('Running as root.')
             return True
-        self._pr.warn('Not running as root.')
+        self._printer.warn('Not running as root.')
         return False
 
-    def _preflightDirectories(self):
+
+class Generator:
+    def __init__(self, system_dir, work_dir, printer):
+        self._context = Context(system_dir, work_dir, printer)
+        self._context.generator = self
+
+    def prepare(self):
+        pass
+
+    def generate(self):
         pass
 
 

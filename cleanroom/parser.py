@@ -8,10 +8,9 @@
 class Parser:
     ''' Parse a container.conf file '''
 
-    def __init__(self, generator, system, printer):
-        self._generator = generator
-        self._pr = printer
-        self.system = system
+    def __init__(self, system, ctx):
+        self._context = ctx
 
+        built_in_command_path = command.__file__
         self._pr.verbose('Parser created for {}...'.format(system))
 
