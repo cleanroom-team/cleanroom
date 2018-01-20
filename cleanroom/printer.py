@@ -24,9 +24,8 @@ class Printer:
     output needs.
     '''
 
-    def __init__(self, verbose, debug):
+    def __init__(self, verbose):
         self._verbose = verbose
-        self._debug = debug
 
         self._prefix = '      ' if verbose > 0 or debug else ''
 
@@ -104,13 +103,13 @@ class Printer:
 
     def debug(self, *args):
         ''' Print if debug is set. '''
-        if self._debug:
+        if self._verbose > 2:
             intro = '{}------{}'.format(self._extra_prefix, self._extra_suffix)
             print(intro, *args, self._ansi_reset)
 
     def trace(self, *args):
         ''' Print trace messsages. '''
-        if self._verbose > 2:
+        if self._verbose > 3:
             intro = '{}++++++{}'.format(self._extra_prefix, self._extra_suffix)
             print(intro, *args, self._ansi_reset)
 

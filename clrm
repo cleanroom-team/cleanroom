@@ -21,8 +21,6 @@ def parse_commandline(arguments):
     '''
     parser = ArgumentParser(description='Cleanroom OS image script generator',
                             prog=arguments[0])
-    parser.add_argument('--debug', action='store_true', default=False,
-                        help='Show debug information')
     parser.add_argument('--verbose', action='count', default=0, help='Be verbose')
 
     parser.add_argument('--ignore-errors', dest='ignore_errors', action='store_true',
@@ -42,7 +40,7 @@ def parse_commandline(arguments):
 
 args = parse_commandline(sys.argv)
 
-pr = cleanroom.printer.Printer(args.verbose, args.debug)
+pr = cleanroom.printer.Printer(args.verbose)
 pr.verbose('Verbose output enabled.')
 pr.info('Info output enabled.')
 pr.debug('Debug output enabled.')
