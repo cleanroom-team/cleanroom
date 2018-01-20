@@ -5,9 +5,21 @@
 """
 
 
+import cleanroom
+
+from enum import Enum, auto
 import importlib.util
 import inspect
 import os
+
+
+class ExecObject:
+    def __init__(self, command, *args):
+        self._command = command
+        self._args = args
+
+    def execute(self):
+        self._command.execute(*self._args)
 
 
 class Parser:
@@ -15,6 +27,11 @@ class Parser:
 
     _commands = {}
     ''' A list of known commands '''
+
+    class State(Enum):
+        START = auto()
+        PARSING = auto()
+        IN_MULTILINE = auto()
 
     @staticmethod
     def find_commands(ctx):
@@ -55,8 +72,30 @@ class Parser:
             location = '<GLOBAL>' if path.startswith(ctx.commandsDirectory() + '/') else '<LOCAL>'
             ctx.printer.debug('  {}: {}'.format(name, location))
 
-    def __init__(self, ctx, system):
+    def __init__(self, ctx):
         self._ctx = ctx
+        self._reset_parsing_state()
 
-        self._ctx.printer.verbose('Parser created for {}...'.format(system))
+    def parse(self, input_file):
+        _reset_parsing_state(self)
+
+        with open(input_file, 'r') as f:
+            for line in f:
+                obj = self._parse_line(line)
+                if obj:
+                    yield obj
+
+        if self._state == Parser.State.IN_MULTILINE:
+            raise cleanroom.ParseError(line, 'In multiline string at EOF.')
+
+    def _reset_parsing_state(self):
+        self._state = Parser.State.START
+        self._line = 0
+
+    def _parse_line(self, line):
+        if self._state == Parser.State.START:
+            self._state = Parser.State.PARSING
+
+        if self._state == Parser.State.PARSING:
+            pass
 

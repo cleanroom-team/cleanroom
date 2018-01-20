@@ -27,7 +27,7 @@ class Printer:
     def __init__(self, verbose):
         self._verbose = verbose
 
-        self._prefix = '      ' if verbose > 0 or debug else ''
+        self._prefix = '      ' if verbose > 0 else ''
 
         self._ansi_reset = ansify('\033[0m')
         self._h_prefix = ansify('\033[1;31m')
@@ -84,7 +84,7 @@ class Printer:
 
     def fail(self, ignore, *args, verbosity=0):
         ''' Print success message. '''
-        if self_verbose < verbosity:
+        if self._verbose < verbosity:
             return
 
         if ignore:

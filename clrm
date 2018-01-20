@@ -8,11 +8,12 @@ if __name__ != '__main__':
     print('This file can not be imported.')
     exit(1)
 
-from argparse import ArgumentParser
+import cleanroom.context as context
+import cleanroom.exceptions as exceptions
+import cleanroom.printer as printer
+import cleanroom.workdir as workdir
 
-import cleanroom
-import cleanroom.printer
-import cleanroom.workdir
+from argparse import ArgumentParser
 import os
 import sys
 
@@ -40,17 +41,17 @@ def parse_commandline(arguments):
 
 args = parse_commandline(sys.argv)
 
-pr = cleanroom.printer.Printer(args.verbose)
+pr = printer.Printer(args.verbose)
 pr.verbose('Verbose output enabled.')
 pr.info('Info output enabled.')
 pr.debug('Debug output enabled.')
 pr.trace('Trace output enabled.')
 
 # Set up Context object:
-ctx = cleanroom.Context(pr)
+ctx = context.Context(pr, args.ignore_errors)
 try:
     ctx.priflightCheck()
-except cleanroom.PreflightError:
+except exceptions.PreflightError:
     pr.fail(args.ignore_errors, 'Preflight Check failed')
 else:
     pr.success('Preflight Check passed', verbosity = 1)
@@ -58,12 +59,12 @@ else:
 system_dir = args.system_dir if args.system_dir else os.getcwd()
 
 # Do work:
-with cleanroom.workdir.WorkDir(ctx, args.work_dir) as work_dir:
+with workdir.WorkDir(ctx, args.work_dir) as work_dir:
     ctx.setDirectories(system_dir, work_dir)
 
     try:
         ctx.generator.prepare()
-    except cleanroom.PrepareError as e:
+    except exceptions.PrepareError as e:
         pr.fail(args.ignore_errors, 'Preparation failed: {}'.format(e.message))
         raise
     else:
@@ -74,7 +75,7 @@ with cleanroom.workdir.WorkDir(ctx, args.work_dir) as work_dir:
 
     try:
         ctx.generator.generate()
-    except cleanroom.GenerateError as e:
+    except exceptions.GenerateError as e:
         pr.fail(args.ignore_errors, 'Generation failed: {}'.format(e.message))
     else:
         pr.success('Generation phase.', verbosity = 1)
