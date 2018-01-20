@@ -21,15 +21,18 @@ class PreflightError(CleanRoomError):
     pass
 
 
-class ContextError(RuntimeError):
+class ContextError(CleanRoomError):
     pass
 
 
-class PrepareError(RuntimeError):
+class PrepareError(CleanRoomError):
     pass
 
 
-class GenerateError(RuntimeError):
+class GenerateError(CleanRoomError):
+    pass
+
+class SystemNotFoundError(CleanRoomError):
     pass
 
 
@@ -91,7 +94,7 @@ class Context:
         return binary
 
     def setDirectories(self, system_dir, work_dir):
-        self.printer.verbose('    Setting up Directories.')
+        self.printer.verbose('Setting up Directories.')
 
         if self._system_dir != None:
             raise ContextError('Directories were already set up.')
@@ -119,9 +122,9 @@ class Context:
 
         parser.Parser.find_commands(self)
 
-        parser.Parser._commands['run'].execute('foo', 'bar', 'baz')
+        parser.Parser._commands['run'][0].execute('foo', 'bar', 'baz')
 
-        self.printer.success('Setting up directories.')
+        self.printer.success('Setting up directories.', verbosity=1)
 
     def commandsDirectory(self):
         return self._command_dir
@@ -133,7 +136,7 @@ class Context:
         return self._directoryCheck(self._work_repo_dir)
 
     def systemsDirectory(self):
-        return self._directoryCheck(self.system_dir)
+        return self._directoryCheck(self._system_dir)
 
     def systemsCleanRoomDirectory(self):
         return self._directoryCheck(self._sys_cleanroom_dir)
@@ -204,6 +207,10 @@ class Generator:
         return self._ctx.binary(selector)
 
     def addSystem(self, system):
+        system_file = os.path.join(self._ctx.systemsDirectory(), system, system + '.conf')
+        if not os.path.exists(system_file):
+            raise SystemNotFoundError('Could not find systems file for {}, checked in {}.'.format(system, system_file))
+
         node = self._find(system)
         if node:
             return node.parent

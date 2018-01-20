@@ -28,6 +28,8 @@ class Printer:
         self._verbose = verbose
         self._debug = debug
 
+        self._prefix = '      ' if verbose > 0 or debug else ''
+
         self._ansi_reset = ansify('\033[0m')
         self._h_prefix = ansify('\033[1;31m')
         self._h1_suffix = ansify('\033[0m\033[1;37m')
@@ -45,22 +47,22 @@ class Printer:
 
     def print(self, *args):
         ''' Unconditionally print things. '''
-        print(*args)
+        print(self._prefix, *args)
 
     def h1(self, *args):
         ''' Print a headline. '''
-        intro = '{}***{}'.format(self._h_prefix, self._h1_suffix)
+        intro = '{}******{}'.format(self._h_prefix, self._h1_suffix)
         print(intro, *args, self._ansi_reset)
 
     def h2(self, *args):
-        intro = '{}***{}'.format(self._h_prefix, self._ansi_reset)
+        intro = '{}******{}'.format(self._h_prefix, self._ansi_reset)
         print(intro, *args)
 
 
 
     def verbose(self, *args):
         ''' Print if verbose is set. '''
-        if self._verbose > 0: print(*args)
+        if self._verbose > 0: print(self._prefix, *args)
 
 
     def error(self, *args):
@@ -70,16 +72,22 @@ class Printer:
 
     def warn(self, *args):
         ''' Print warning message. '''
-        intro = '{}warning:'.format(self._warn_prefix)
+        intro = '{}warn: '.format(self._warn_prefix)
         print(intro, *args, self._ansi_reset)
 
-    def success(self, *args):
+    def success(self, *args, verbosity=0):
         ''' Print success message. '''
+        if self._verbose < verbosity:
+            return
+
         intro = '{}  OK  {}'.format(self._ok_prefix, self._ok_suffix)
         print(intro, *args, self._ansi_reset)
 
-    def fail(self, ignore, *args):
+    def fail(self, ignore, *args, verbosity=0):
         ''' Print success message. '''
+        if self_verbose < verbosity:
+            return
+
         if ignore:
             intro = '{} fail {}'.format(self._ig_fail_prefix, self._ig_fail_suffix)
             print(intro, *args, '(ignored)', self._ansi_reset)
@@ -91,18 +99,18 @@ class Printer:
     def info(self, *args):
         ''' Print even more verbose. '''
         if self._verbose > 1:
-            intro = '{}...{}'.format(self._extra_prefix, self._extra_suffix)
+            intro = '{}......{}'.format(self._extra_prefix, self._extra_suffix)
             print(intro, *args, self._ansi_reset)
 
     def debug(self, *args):
         ''' Print if debug is set. '''
         if self._debug:
-            intro = '{}---{}'.format(self._extra_prefix, self._extra_suffix)
+            intro = '{}------{}'.format(self._extra_prefix, self._extra_suffix)
             print(intro, *args, self._ansi_reset)
 
     def trace(self, *args):
         ''' Print trace messsages. '''
         if self._verbose > 2:
-            intro = '{}+++{}'.format(self._extra_prefix, self._extra_suffix)
+            intro = '{}++++++{}'.format(self._extra_prefix, self._extra_suffix)
             print(intro, *args, self._ansi_reset)
 

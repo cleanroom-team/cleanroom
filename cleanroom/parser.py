@@ -25,6 +25,9 @@ class Parser:
                 continue
             checked_dirs.append(path)
             ctx.printer.trace('Checking "{}" for command files.'.format(path))
+            if not os.path.isdir(path):
+                continue # skip non-existing directories
+
             for f in os.listdir(path):
                 if not f.endswith('.py'):
                    continue
@@ -43,13 +46,17 @@ class Parser:
                                        x.__name__.endswith('Command') and \
                                        x.__module__ == name
                 klass = inspect.getmembers(cmd_module, predicate)
-                print(klass)
                 instance = klass[0][1](ctx)
-                print(instance)
-                Parser._commands[cmd] = instance
+                Parser._commands[cmd] = ( instance, f_path )
+
+        ctx.printer.debug('Commands found:')
+        for (name, value) in Parser._commands.items():
+            path = value[1]
+            location = '<GLOBAL>' if path.startswith(ctx.commandsDirectory() + '/') else '<LOCAL>'
+            ctx.printer.debug('  {}: {}'.format(name, location))
 
     def __init__(self, ctx, system):
         self._ctx = ctx
 
-        self._ctx.printer.verbose('    Parser created for {}...'.format(system))
+        self._ctx.printer.verbose('Parser created for {}...'.format(system))
 
