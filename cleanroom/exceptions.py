@@ -24,8 +24,15 @@ class PrepareError(CleanRoomError):
 class GenerateError(CleanRoomError):
     pass
 
+
 class SystemNotFoundError(CleanRoomError):
     pass
+
+
+class ParseError(CleanRoomError):
+    def __init__(self, line, msg):
+        self.line = line
+        super().__init__(msg)
 
 
 if __name__ == '__main__':

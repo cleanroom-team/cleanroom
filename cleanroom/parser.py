@@ -5,7 +5,8 @@
 """
 
 
-import cleanroom
+from . import exceptions
+
 
 from enum import Enum, auto
 import importlib.util
@@ -80,22 +81,57 @@ class Parser:
         _reset_parsing_state(self)
 
         with open(input_file, 'r') as f:
-            for line in f:
-                obj = self._parse_line(line)
-                if obj:
-                    yield obj
-
-        if self._state == Parser.State.IN_MULTILINE:
-            raise cleanroom.ParseError(line, 'In multiline string at EOF.')
+            obj = _parse_lines(f)
+            yield obj
 
     def _reset_parsing_state(self):
         self._state = Parser.State.START
-        self._line = 0
+        self._line_number = 0
 
-    def _parse_line(self, line):
+    def _parse_lines(self, iterable):
+        result = []
+        for line in iterable:
+            obj = self._parse_single_line(line)
+            if obj: result.append(obj)
+
+        if self._state == Parser.State.IN_MULTILINE:
+            raise exceptions.ParseError(line, 'In multiline string at EOF.')
+
+        return result
+
+    def _parse_single_line(self, line):
+        self._line_number += 1
+
         if self._state == Parser.State.START:
             self._state = Parser.State.PARSING
 
-        if self._state == Parser.State.PARSING:
-            pass
+        self._ctx.printer.trace('Parsing line "{}".'.format(line))
 
+        if self._state == Parser.State.PARSING:
+            command = ''
+            args = []
+            pos = -1
+            for c in line:
+                pos += 1
+                if c.isspace():
+                    continue
+                if c == '#':
+                    self._ctx.printer.trace('    Comment')
+                    return None # Comment
+                if c.isalnum():
+                    command += c
+                    continue
+
+                # TODO: parse args properly!
+                args.append(line[pos:])
+                break # at end of command
+
+            if command == '':
+                self._ctx.printer.trace('    Empty line')
+                return None
+
+            self._ctx.printer.trace('    Command "{}"'.format(command))
+            if command not in Parser._commands:
+                raise exceptions.ParseError(self._line_number, 'Unknown command "{}".'.format(command))
+
+            return ExecObject(command, *args)
