@@ -7,7 +7,6 @@
 
 from . import exceptions
 
-
 from enum import Enum, auto, unique
 import importlib.util
 import inspect
@@ -95,7 +94,7 @@ class Parser:
             if obj: yield obj
 
         if state._multiline_start:
-            raise exceptions.ParseError(line, 'In multiline string at EOF.')
+            raise exceptions.ParseError(state._line_number, 'In multiline string at EOF.')
 
         return result
 
@@ -106,9 +105,8 @@ class Parser:
             self._ctx.printer.trace('parsing "{}" (multiline continuation)'.format(line[:-1]))
             pass # handle multi-line strings
         else:
-            print('parsing "{}"'.format(line))
+            self._ctx.printer.trace('parsing "{}"'.format(line))
             (next_state, command, args) = self._extract_command(state, line)
-            print('::: {}: {} --- State: {}: {} :::'.format(command, args, next_state._command, next_state._multiline_start))
             if command and next_state._multiline_start == '':
                 obj = ExecObject(command, Parser._commands[command][0], args)
                 return (next_state, obj)
@@ -134,30 +132,38 @@ class Parser:
                 if in_leading_space: continue
 
                 assert(token)
+                (state, args) = self._extract_arguments(state, line[pos:])
+                command = self._validate_command(state, token)
 
-                (state, args) = self._extract_arguments(state, str(line[pos:]))
                 if state._multiline_start:
                     state._command = command
                     state._args = args
 
                     return (state, None, None)
-                return (state, token, args)
+                return (state, command, args)
+
+            in_leading_space = False
 
             if c == '#':
                 self._ctx.printer.trace('    Comment')
-                command = token if token else None
-                return (state, command, None) # No further processing necessary
+                return (state, self._validate_command(state, token), None)
 
             if c.isalnum():
-                if in_leading_space:
-                    in_leading_space = False
                 token += c
                 continue
 
             raise exceptions.ParseError(self._line_number, 'Unexpected character \'{}\'.'.format(c))
 
-        if token: return (state, token, None) # Command only
-        else: return (state, None, None) # Whitespace only
+        return (state, self._validate_command(state, token), None)
+
+    def _validate_command(self, state, command):
+        if not command: return None
+
+        if command not in Parser._commands:
+            self._ctx.printer.trace('Command "{}" not found.'.format(command))
+            raise exceptions.ParseError(state._line_number, 'Invalid command "{}"'.format(command))
+
+        return command
 
     def _extract_arguments(self, state, line):
         return (state, line)
