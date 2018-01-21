@@ -8,14 +8,15 @@
 from . import exceptions
 
 
-from enum import Enum, auto
+from enum import Enum, auto, unique
 import importlib.util
 import inspect
 import os
 
 
 class ExecObject:
-    def __init__(self, command, *args):
+    def __init__(self, name, command, args):
+        self._name = name
         self._command = command
         self._args = args
 
@@ -23,16 +24,19 @@ class ExecObject:
         self._command.execute(*self._args)
 
 
+class _ParserState:
+    def __init__(self):
+        self._line_number = -1
+
+        self._command = ''
+        self._args = []
+        self._multiline_start = ''
+
 class Parser:
     ''' Parse a container.conf file '''
 
     _commands = {}
     ''' A list of known commands '''
-
-    class State(Enum):
-        START = auto()
-        PARSING = auto()
-        IN_MULTILINE = auto()
 
     @staticmethod
     def find_commands(ctx):
@@ -75,63 +79,86 @@ class Parser:
 
     def __init__(self, ctx):
         self._ctx = ctx
-        self._reset_parsing_state()
 
     def parse(self, input_file):
         _reset_parsing_state(self)
 
         with open(input_file, 'r') as f:
-            obj = _parse_lines(f)
-            yield obj
-
-    def _reset_parsing_state(self):
-        self._state = Parser.State.START
-        self._line_number = 0
+            yield _parse_lines(f)
 
     def _parse_lines(self, iterable):
         result = []
-        for line in iterable:
-            obj = self._parse_single_line(line)
-            if obj: result.append(obj)
+        state = _ParserState()
 
-        if self._state == Parser.State.IN_MULTILINE:
+        for line in iterable:
+            (state, obj) = self._parse_single_line(state, line)
+            if obj: yield obj
+
+        if state._multiline_start:
             raise exceptions.ParseError(line, 'In multiline string at EOF.')
 
         return result
 
-    def _parse_single_line(self, line):
-        self._line_number += 1
+    def _parse_single_line(self, state, line):
+        state._line_number += 1
 
-        if self._state == Parser.State.START:
-            self._state = Parser.State.PARSING
+        if state._multiline_start:
+            self._ctx.printer.trace('parsing "{}" (multiline continuation)'.format(line[:-1]))
+            pass # handle multi-line strings
+        else:
+            print('parsing "{}"'.format(line))
+            (next_state, command, args) = self._extract_command(state, line)
+            print('::: {}: {} --- State: {}: {} :::'.format(command, args, next_state._command, next_state._multiline_start))
+            if command and next_state._multiline_start == '':
+                obj = ExecObject(command, Parser._commands[command][0], args)
+                return (next_state, obj)
+            else:
+                return (next_state, None)
 
-        self._ctx.printer.trace('Parsing line "{}".'.format(line))
+    def _extract_command(self, state, line):
+        assert(state._multiline_start == '')
+        assert(state._command == '')
+        assert(len(state._args) == 0)
 
-        if self._state == Parser.State.PARSING:
-            command = ''
-            args = []
-            pos = -1
-            for c in line:
-                pos += 1
-                if c.isspace():
-                    continue
-                if c == '#':
-                    self._ctx.printer.trace('    Comment')
-                    return None # Comment
-                if c.isalnum():
-                    command += c
-                    continue
+        token = ''
+        pos = -1
 
-                # TODO: parse args properly!
-                args.append(line[pos:])
-                break # at end of command
+        in_leading_space = True
 
-            if command == '':
-                self._ctx.printer.trace('    Empty line')
-                return None
+        has_arguments = False
 
-            self._ctx.printer.trace('    Command "{}"'.format(command))
-            if command not in Parser._commands:
-                raise exceptions.ParseError(self._line_number, 'Unknown command "{}".'.format(command))
+        for c in line:
+            pos += 1
 
-            return ExecObject(command, *args)
+            if c.isspace():
+                if in_leading_space: continue
+
+                assert(token)
+
+                (state, args) = self._extract_arguments(state, str(line[pos:]))
+                if state._multiline_start:
+                    state._command = command
+                    state._args = args
+
+                    return (state, None, None)
+                return (state, token, args)
+
+            if c == '#':
+                self._ctx.printer.trace('    Comment')
+                command = token if token else None
+                return (state, command, None) # No further processing necessary
+
+            if c.isalnum():
+                if in_leading_space:
+                    in_leading_space = False
+                token += c
+                continue
+
+            raise exceptions.ParseError(self._line_number, 'Unexpected character \'{}\'.'.format(c))
+
+        if token: return (state, token, None) # Command only
+        else: return (state, None, None) # Whitespace only
+
+    def _extract_arguments(self, state, line):
+        return (state, line)
+
