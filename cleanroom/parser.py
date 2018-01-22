@@ -105,7 +105,6 @@ class Parser:
         state = _ParserState()
 
         for line in iterable:
-            print('>>>>', line)
             (state, obj) = self._parse_single_line(state, line)
             if obj:
                 yield obj
@@ -113,6 +112,8 @@ class Parser:
         if state._multiline_start:
             raise exceptions.ParseError(state._line_number,
                                         'In multiline string at EOF.')
+
+        return None
 
     def _parse_single_line(self, state, line):
         """Parse a single line."""
@@ -137,6 +138,8 @@ class Parser:
         assert(state._command == '')
         assert(len(state._args) == 0)
 
+        self._ctx.printer.trace('Extracting command from "{}".'
+                                .format(line[:-1]))
         token = ''
         pos = -1
 
@@ -150,11 +153,11 @@ class Parser:
                     continue
 
                 assert(token)
-                (state, args) = self._extract_arguments(state, line[pos:])
                 command = self._validate_command(state, token)
+                state._command = command
+                (state, args) = self._extract_arguments(state, line[pos:])
 
                 if state._multiline_start:
-                    state._command = command
                     state._args = args
 
                     return (state, None, None)
@@ -170,13 +173,14 @@ class Parser:
                 token += c
                 continue
 
-            raise exceptions.ParseError(self._line_number,
+            raise exceptions.ParseError(state._line_number,
                                         'Unexpected character \'{}\'.'
                                         .format(c))
 
         return (state, self._validate_command(state, token), None)
 
     def _validate_command(self, state, command):
+        self._ctx.printer.trace('Validating comamnd "{}".'.format(command))
         if not command:
             return None
 
@@ -188,4 +192,27 @@ class Parser:
         return command
 
     def _extract_arguments(self, state, line):
-        return (state, line)
+        """Extract the command from a line."""
+        assert(state._command != '')
+
+        token = ''
+
+        in_leading_space = True
+
+        for c in line:
+            if c.isspace():
+                if in_leading_space:
+                    continue
+
+                if c == '\n':
+                    continue
+
+            in_leading_space = False
+
+            if c == '#':
+                self._ctx.printer.trace('    Comment')
+                return (state, token if token else None)
+
+            token += c
+
+        return (state, token if token else None)

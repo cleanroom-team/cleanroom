@@ -27,14 +27,18 @@ class ParserTest(unittest.TestCase):
 
     def _parse(self, data):
         """Call Parser._parse_lines and map the result."""
-        return tuple(map(lambda e: (e._name, e._args),
-                         self.parser._parse_lines(data)))
+        result = None
+        for exec_object in self.parser._parse_lines(data):
+            if result:
+                self.assertTrue(False)
+            if exec_object:
+                result = exec_object
+
+        return (result._command, result._args) if result else ()
 
     def _verify(self, data, expected):
         """Verify one line of input to the Parser."""
-        if data is str:
-            data = tuple(data)
-        result = self._parse(data)
+        result = self._parse((data,))
         self.assertEqual(result, expected)
 
     def test_comment(self):
@@ -87,12 +91,12 @@ class ParserTest(unittest.TestCase):
 
     def test_command_one_arg(self):
         """Test a simple command with one argument."""
-        self._verify(' test1  arg1 \n', (self._cmd1, ('arg1  \n')))  # FIXME
+        self._verify(' test1  arg1 \n', (self._cmd1, ('arg1 ')))  # FIXME
 
     def test_command_two_args(self):
         """Test a simple command with two arguments."""
         self._verify('test1  arg1  arg2\n',
-                     (self._cmd1, ('arg1   arg3\n')))  # FIXME
+                     (self._cmd1, ('arg1  arg2')))  # FIXME
 
     def test_command_one_arg_no_nl(self):
         """Test a simple command with one argument and no new line."""
@@ -110,8 +114,12 @@ class ParserTest(unittest.TestCase):
     def test_assert_on_unknown_command(self):
         """Test an invalid command."""
         with self.assertRaises(exceptions.ParseError):
-            data = ('   foobar test\n', '')
-            self.parse(data)
+            self._parse('   foobar test\n')
+
+    def test_assert_on_invalid_char_in_command(self):
+        """Test an command containing an unexpected character."""
+        with self.assertRaises(exceptions.ParseError):
+            self._parse('  !test1\n')
 
 
 if __name__ == '__main__':
