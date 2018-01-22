@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
+"""Pretty-print output of cleanroom.
+
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
@@ -9,22 +10,27 @@ import sys
 
 
 def ansify(seq):
+    """Use ANSI color codes if possible.
+
+    Use ANSI color codes if possible and strip them out if not.
+    """
     if sys.stdout.isatty():
         return seq
     return ''
 
 
 class Printer:
-    ''' Class to help with output in cleanroom.
+    """Pretty-print output.
 
     A Printer will be set up by the cleanroom executable and
     passed on to the cleanroom module.
 
     The module will then use this Printer object for all its
     output needs.
-    '''
+    """
 
     def __init__(self, verbose):
+        """Constructor."""
         self._verbose = verbose
 
         self._prefix = '      ' if verbose > 0 else ''
@@ -45,37 +51,36 @@ class Printer:
         self._extra_suffix = ansify('\033[0;m\033[2;m')
 
     def print(self, *args):
-        ''' Unconditionally print things. '''
+        """Unconditionally print things."""
         print(self._prefix, *args)
 
     def h1(self, *args):
-        ''' Print a headline. '''
+        """Print a headline."""
         intro = '{}******{}'.format(self._h_prefix, self._h1_suffix)
         print(intro, *args, self._ansi_reset)
 
     def h2(self, *args):
+        """Print a subheading."""
         intro = '{}******{}'.format(self._h_prefix, self._ansi_reset)
         print(intro, *args)
 
-
-
     def verbose(self, *args):
-        ''' Print if verbose is set. '''
-        if self._verbose > 0: print(self._prefix, *args)
-
+        """Print if verbose is set."""
+        if self._verbose > 0:
+            print(self._prefix, *args)
 
     def error(self, *args):
-        ''' Print error message. '''
+        """Print error message."""
         intro = '{}ERROR:'.format(self._error_prefix)
         print(intro, *args, self._ansi_reset)
 
     def warn(self, *args):
-        ''' Print warning message. '''
+        """Print warning message."""
         intro = '{}warn: '.format(self._warn_prefix)
         print(intro, *args, self._ansi_reset)
 
     def success(self, *args, verbosity=0):
-        ''' Print success message. '''
+        """Print success message."""
         if self._verbose < verbosity:
             return
 
@@ -83,12 +88,13 @@ class Printer:
         print(intro, *args, self._ansi_reset)
 
     def fail(self, ignore, *args, verbosity=0):
-        ''' Print success message. '''
+        """Print success message."""
         if self._verbose < verbosity:
             return
 
         if ignore:
-            intro = '{} fail {}'.format(self._ig_fail_prefix, self._ig_fail_suffix)
+            intro = '{} fail {}'.format(self._ig_fail_prefix,
+                                        self._ig_fail_suffix)
             print(intro, *args, '(ignored)', self._ansi_reset)
         else:
             intro = '{} FAIL {}'.format(self._fail_prefix, self._fail_suffix)
@@ -96,20 +102,19 @@ class Printer:
             sys.exit(1)
 
     def info(self, *args):
-        ''' Print even more verbose. '''
+        """Print even more verbose."""
         if self._verbose > 1:
             intro = '{}......{}'.format(self._extra_prefix, self._extra_suffix)
             print(intro, *args, self._ansi_reset)
 
     def debug(self, *args):
-        ''' Print if debug is set. '''
+        """Print if debug is set."""
         if self._verbose > 2:
             intro = '{}------{}'.format(self._extra_prefix, self._extra_suffix)
             print(intro, *args, self._ansi_reset)
 
     def trace(self, *args):
-        ''' Print trace messsages. '''
+        """Print trace messsages."""
         if self._verbose > 3:
             intro = '{}++++++{}'.format(self._extra_prefix, self._extra_suffix)
             print(intro, *args, self._ansi_reset)
-
