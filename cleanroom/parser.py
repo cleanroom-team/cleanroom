@@ -6,11 +6,12 @@
 """
 
 
-from . import exceptions
+from . import exceptions as ex
 
 import importlib.util
 import inspect
 import os
+import re
 
 
 class ExecObject:
@@ -34,11 +35,38 @@ class _ParserState:
     """Hold the state of the Parser."""
 
     def __init__(self):
-        self._line_number = -1
+        self._line_number = 0
+        self._to_process = ''
+
+        self.reset()
+
+    def is_command_complete(self):
+        return self._incomplete_token == ''
+
+    def is_line_done(self):
+        return self._to_process == ''
+
+    def reset(self):
+        assert(self._line_number >= 0)
+        assert(self._to_process == '')
 
         self._command = ''
         self._args = []
-        self._multiline_start = ''
+
+        self._incomplete_token = ''
+        self._to_process = ''
+
+        assert(self.is_command_complete())
+        assert(self.is_line_done())
+
+
+    def __str__(self):
+        dump = self._to_process.replace('\n', '\\n').replace('\t', '\\t')
+
+        return '{}-\"{}\" ({})-cc:{}-ld:{}-"{}".'.\
+               format(self._line_number, self._command,
+                      ','.join(self._args), self.is_command_complete(),
+                      self.is_line_done(), dump)
 
 
 class Parser:
@@ -93,6 +121,21 @@ class Parser:
         """Constructor."""
         self._ctx = ctx
 
+    def _object_from_state(self, state):
+        if state.is_line_done() \
+           and state.is_command_complete() \
+           and state._command:
+            self._ctx.printer.debug('Creating Exec Object ({}).'.format(state))
+            command = state._command
+            args = state._args
+            state.reset()
+
+            return (state,
+                    ExecObject(command, Parser._commands[command][0],
+                               tuple(args)))
+
+        return (state, None)
+
     def parse(self, input_file):
         """Parse a file."""
         self._reset_parsing_state(self)
@@ -105,114 +148,212 @@ class Parser:
         state = _ParserState()
 
         for line in iterable:
-            (state, obj) = self._parse_single_line(state, line)
+            state._to_process += line
+            state._line_number += 1
+
+            next_state = self._parse_single_line(state)
+            (state, obj) = self._object_from_state(next_state)
+
             if obj:
                 yield obj
 
-        if state._multiline_start:
-            raise exceptions.ParseError(state._line_number,
-                                        'In multiline string at EOF.')
+            if not state.is_line_done():
+                raise ex.ParseError(state._line_number,
+                                    'Unexpected tokens "{}" found.'
+                                    .format(state._to_process))
+
+        if not state.is_line_done() \
+           or not state.is_command_complete():
+            raise ex.ParseError(state._line_number, 'Unexpected EOF.')
 
         return None
 
-    def _parse_single_line(self, state, line):
+    def _parse_single_line(self, state):
         """Parse a single line."""
-        state._line_number += 1
+        self._ctx.printer.trace('Parsing single line ({}).'.format(state))
 
-        if state._multiline_start:
-            self._ctx.printer.trace('parsing "{}" (multiline continuation)'
-                                    .format(line[:-1]))
-            pass  # handle multi-line strings
+        if state.is_command_complete():
+            self._ctx.printer.trace('Part of a new command ({}).'
+                                    .format(state))
+            state = self._extract_command(state)
         else:
-            self._ctx.printer.trace('parsing "{}"'.format(line))
-            (next_state, command, args) = self._extract_command(state, line)
-            if command and next_state._multiline_start == '':
-                obj = ExecObject(command, Parser._commands[command][0], args)
-                return (next_state, obj)
-            else:
-                return (next_state, None)
+            self._ctx.printer.trace('Continuation of earlier command ({}).'
+                                    .format(state))
+            state = self._extract_multiline_argument(state)
 
-    def _extract_command(self, state, line):
+        return self._extract_arguments(state)
+
+    def _strip_comment_and_ws(self, state):
+        """Extract a comment up to the end of the line."""
+        line = state._to_process.lstrip()
+        if line == '' or line.startswith('#'):
+            state._to_process = ''
+        else:
+            state._to_process = line
+        self._ctx.printer.trace('Stripped WS and comments ({}).'.format(state))
+        return state
+
+    def _extract_command(self, state):
         """Extract the command from a line."""
-        assert(state._multiline_start == '')
         assert(state._command == '')
-        assert(len(state._args) == 0)
+        assert(state._args == [])
 
-        self._ctx.printer.trace('Extracting command from "{}".'
-                                .format(line[:-1]))
-        token = ''
+        state = self._strip_comment_and_ws(state)
+        if state.is_line_done():
+            return state
+
+        line = state._to_process.lstrip()
+        pos = 0
+        command = ''
+
+        self._ctx.printer.trace('Extracting command ({}).'.format(state))
+
+        for c in line:
+            if c.isspace() or c == '#':
+                break
+
+            pos += 1
+            command += c
+
+        state._command = self._validate_command(state, command)
+        state._to_process = line[pos:]
+
+        self._ctx.printer.debug('Command found ({}).'.format(state))
+
+        return state
+
+    def _extract_arguments(self, state):
+        # extract arguments:
+        while not state.is_line_done():
+            state = self._extract_next_argument(state)
+
+        self._ctx.printer.debug('<EOL> ({}).'.format(state))
+
+        return state
+
+    def _validate_command(self, state, command):
+        self._ctx.printer.trace('Validating command "{}".'.format(command))
+        if not command:
+            self._ctx.printer.trace('Empty command found.')
+            raise ex.ParseError(state._line_number, 'Empty command found.')
+
+        command_pattern = re.compile("^[A-Za-z][A-Za-z0-9]*$")
+        if not command_pattern.match(command):
+            self._ctx.printer.trace('Invalid command "{}".'.format(command))
+            raise ex.ParseError(state._line_number,
+                                'Invalid command "{}".'.format(command))
+
+        if command not in Parser._commands:
+            self._ctx.printer.trace('Command "{}" not found.'.format(command))
+            raise ex.ParseError(state._line_number,
+                                'Command "{}" not found.'.format(command))
+
+        return command
+
+    def _extract_next_argument(self, state):
+        state = self._strip_comment_and_ws(state)
+        if state.is_line_done():
+            return state
+
+        self._ctx.printer.trace('Extracting argument ({}).'.format(state))
+
+        line = state._to_process
+
+        if line.startswith('<<<<'):
+            state._to_process = line[4:]
+            return self._extract_multiline_argument(state)
+
+        if line[0] == '"' or line[0] == '\'':
+            state._to_process = line[1:]
+            return self._extract_string_argument(state, line[0])
+
+        state._to_process = line
+        return self._extract_normal_argument(state)
+
+    def _extract_multiline_argument(self, state):
+        line = state._to_process
+
+        self._ctx.printer.trace('Extracting multiline ({}).'.format(state))
+
+        end_pos = line.find('>>>>')
+        if end_pos >= 0:
+            arg = state._incomplete_token + line[:end_pos]
+
+            state._incomplete_token = ''
+            state._args.append(arg)
+            state._to_process = line[end_pos + 4:]
+
+            self._ctx.printer.debug('  ML Arg ({}).'.format(state))
+        else:
+            state._incomplete_token += line
+            state._to_process = ''
+
+        return state
+
+    def _extract_string_argument(self, state, quote):
+        must_escape = False
+        line = state._to_process
         pos = -1
-
-        in_leading_space = True
+        arg = ''
 
         for c in line:
             pos += 1
 
-            if c.isspace():
-                if in_leading_space:
+            if must_escape:
+                must_escape = False
+                if c == '\'' or c == quote:
+                    arg += c
                     continue
 
-                assert(token)
-                command = self._validate_command(state, token)
-                state._command = command
-                (state, args) = self._extract_arguments(state, line[pos:])
+                raise ex.ParseError(state._line_number,
+                                    'Invalid escape sequence "\{}" in string.'
+                                    .format(c))
 
-                if state._multiline_start:
-                    state._args = args
-
-                    return (state, None, None)
-                return (state, command, args)
-
-            in_leading_space = False
-
-            if c == '#':
-                self._ctx.printer.trace('    Comment')
-                return (state, self._validate_command(state, token), None)
-
-            if c.isalnum():
-                token += c
+            if c == '\\':
+                must_escape = True
                 continue
 
-            raise exceptions.ParseError(state._line_number,
-                                        'Unexpected character \'{}\'.'
-                                        .format(c))
+            if c == quote:
+                state._to_process = line[pos + 1:]
+                state._args.append(arg)
+                return state
 
-        return (state, self._validate_command(state, token), None)
+            arg += c
 
-    def _validate_command(self, state, command):
-        self._ctx.printer.trace('Validating comamnd "{}".'.format(command))
-        if not command:
-            return None
+        raise ex.ParseError(state._line_number,
+                            'Missing closing "{}" quote.'.format(quote))
 
-        if command not in Parser._commands:
-            self._ctx.printer.trace('Command "{}" not found.'.format(command))
-            raise exceptions.ParseError(state._line_number,
-                                        'Invalid command "{}"'.format(command))
-
-        return command
-
-    def _extract_arguments(self, state, line):
-        """Extract the command from a line."""
-        assert(state._command != '')
-
-        token = ''
-
-        in_leading_space = True
+    def _extract_normal_argument(self, state):
+        must_escape = False
+        line = state._to_process
+        pos = -1
+        arg = ''
 
         for c in line:
-            if c.isspace():
-                if in_leading_space:
+            pos += 1
+
+            if must_escape:
+                must_escape = False
+                if c == ' ' or c == '\\':
+                    arg += c
                     continue
 
-                if c == '\n':
-                    continue
+                raise ex.ParseError(state._line_number,
+                                    'Invalid escape sequence "\{}" '
+                                    'in argument.'.format(c))
 
-            in_leading_space = False
+            if c == '\\':
+                must_escape = True
+                continue
 
-            if c == '#':
-                self._ctx.printer.trace('    Comment')
-                return (state, token if token else None)
+            if c.isspace() or c == '#':
+                # end of argument...
+                break
 
-            token += c
+            arg += c
 
-        return (state, token if token else None)
+        state._to_process = line[pos + 1:]
+        assert(arg != '')
+        self._ctx.printer.debug('  Arg ({}).'.format(state))
+        state._args.append(arg)
+        return state
