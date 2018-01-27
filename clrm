@@ -11,6 +11,7 @@ if __name__ != '__main__':
 
 import cleanroom.context as context
 import cleanroom.exceptions as exceptions
+import cleanroom.parser as parser
 import cleanroom.printer as printer
 import cleanroom.workdir as workdir
 
@@ -23,7 +24,11 @@ def parse_commandline(arguments):
     '''
     parser = ArgumentParser(description='Cleanroom OS image script generator',
                             prog=arguments[0])
-    parser.add_argument('--verbose', action='count', default=0, help='Be verbose')
+    parser.add_argument('--verbose', action='count', default=0,
+                        help='Be verbose')
+    parser.add_argument('--list-commands', dest='list_commands',
+                        action='store_true',
+                        help='List known commands for definition files')
 
     parser.add_argument('--ignore-errors', dest='ignore_errors', action='store_true',
                         help='Force continuation on non-critical errors.')
@@ -33,7 +38,7 @@ def parse_commandline(arguments):
     parser.add_argument('--workdir', dest='work_dir', action='store',
                         help='Work area to create files in')
 
-    parser.add_argument(dest='systems', nargs='+', metavar='<system>',
+    parser.add_argument(dest='systems', nargs='*', metavar='<system>',
                         help='systems to create')
 
     parse_result = parser.parse_args(arguments[1:])
@@ -41,6 +46,10 @@ def parse_commandline(arguments):
     return parse_result
 
 args = parse_commandline(sys.argv)
+
+if not args.list_commands and not args.systems:
+    print('No systems to process.')
+    sys.exit(1)
 
 pr = printer.Printer(args.verbose)
 pr.verbose('Verbose output enabled.')
@@ -62,6 +71,10 @@ system_dir = args.system_dir if args.system_dir else os.getcwd()
 # Do work:
 with workdir.WorkDir(ctx, args.work_dir) as work_dir:
     ctx.set_directories(system_dir, work_dir)
+
+    if args.list_commands:
+        parser.Parser.list_commands(ctx)
+        sys.exit(0)
 
     try:
         ctx.generator.prepare()

@@ -15,7 +15,9 @@ import unittest
 class TestCommand(cmd.Command):
     """Dummy command implementation."""
 
-    pass
+    def __init__(self):
+        """Constructor."""
+        super().__init__('test', 'test')
 
 
 class ParserTest(tu.BaseParserTest, unittest.TestCase):

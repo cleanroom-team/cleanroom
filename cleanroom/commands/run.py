@@ -11,7 +11,8 @@ class RunCommand(cmd.Command):
 
     def __init__(self, ctx):
         """Constructor."""
-        super().__init__()
+        super().__init__("run <COMMAND> [<ARGUMENTS>]",
+                         "Run a shell command with arguments.")
         self._ctx = ctx
 
     def validate_arguments(self, state, args):

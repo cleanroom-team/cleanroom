@@ -84,7 +84,8 @@ class Parser:
         """Find possible commands in the file system."""
         ctx.printer.trace('Checking for commands.')
         checked_dirs = []
-        for path in (ctx.systems_commands_directory(), ctx.commands_directory()):
+        for path in (ctx.systems_commands_directory(),
+                     ctx.commands_directory()):
             if path in checked_dirs:
                 continue
             checked_dirs.append(path)
@@ -120,6 +121,19 @@ class Parser:
             location = '<GLOBAL>' if path.startswith(ctx.commands_directory()
                                                      + '/') else '<LOCAL>'
             ctx.printer.debug('  {}: {}'.format(name, location))
+
+    @staticmethod
+    def list_commands(ctx):
+        """Print a list of all known commands."""
+        ctx.printer.h1('Command List:')
+
+        for key in sorted(Parser._commands):
+            cmd = Parser._commands[key][0]
+
+            long_help_lines = cmd.help().split('\n')
+            ctx.printer.print('{}\n    {}\n'
+                              .format(cmd.syntax(),
+                                      '\n    '.join(long_help_lines)))
 
     def __init__(self, ctx):
         """Constructor."""

@@ -31,10 +31,14 @@ class DependencyNode:
 
     def __init__(self, system, parent, *children):
         """Constructor."""
+        # Tree:
         self.parent = parent
+        self.children = []
+
+        # Payload:
         self.system = system
         self.state = State.NEW
-        self.children = []
+        self.commands = []
 
     def find(self, system):
         """Find a system in the dependency tree."""
@@ -54,8 +58,7 @@ class Generator:
     def __init__(self, ctx):
         """Constructor."""
         self._ctx = ctx
-        self.systems = []
-        self.dependencies = []
+        self._systems_forest = []
         ctx.generator = self
 
     def _binary(self, selector):
@@ -64,18 +67,12 @@ class Generator:
 
     def add_system(self, system):
         """Add a system to the dependency tree."""
-        system_file = os.path.join(self._ctx.systems_directory(),
-                                   system, system + '.conf')
-        if not os.path.exists(system_file):
-            raise exceptions.SystemNotFoundError(
-                'Could not find systems file for {}, '
-                'checked in {}.'.format(system, system_file))
-
         node = self._find(system)
         if node:
             return node.parent
 
-        base = parser.Parser(self._ctx)
+        system_file = self._find_system_definition_file(system)
+        system_parser = parser.Parser(self._ctx)
 
         parentNode = self._find(base)
         node = DependencyNode(system, parentNode)
@@ -83,9 +80,20 @@ class Generator:
         if parentNode:
             pass
 
+    def _find_system_definition_file(self, system):
+        """Make sure a system definition file can be found."""
+        system_file = os.path.join(self._ctx.systems_directory(),
+                                   system, system + '.def')
+        if not os.path.exists(system_file):
+            raise exceptions.SystemNotFoundError(
+                'Could not find systems file for {}, '
+                'checked in {}.'.format(system, system_file))
+
+        return system_file
+
     def _find(self, system):
         """Find a system in the dependency tree."""
-        for d in self.dependencies:
+        for d in self._systems_forest:
             node = d.find(system)
             if node:
                 return node
