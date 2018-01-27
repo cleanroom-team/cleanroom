@@ -51,7 +51,7 @@ pr.trace('Trace output enabled.')
 # Set up Context object:
 ctx = context.Context(pr, args.ignore_errors)
 try:
-    ctx.priflightCheck()
+    ctx.preflight_check()
 except exceptions.PreflightError:
     pr.fail(args.ignore_errors, 'Preflight Check failed')
 else:
@@ -61,7 +61,7 @@ system_dir = args.system_dir if args.system_dir else os.getcwd()
 
 # Do work:
 with workdir.WorkDir(ctx, args.work_dir) as work_dir:
-    ctx.setDirectories(system_dir, work_dir)
+    ctx.set_directories(system_dir, work_dir)
 
     try:
         ctx.generator.prepare()

@@ -62,9 +62,9 @@ class Generator:
         """Get the full path to a binary."""
         return self._ctx.binary(selector)
 
-    def addSystem(self, system):
+    def add_system(self, system):
         """Add a system to the dependency tree."""
-        system_file = os.path.join(self._ctx.systemsDirectory(),
+        system_file = os.path.join(self._ctx.systems_directory(),
                                    system, system + '.conf')
         if not os.path.exists(system_file):
             raise exceptions.SystemNotFoundError(
@@ -94,12 +94,12 @@ class Generator:
 
     def prepare(self):
         """Prepare for generation."""
-        repo_dir = self._ctx.workRepositoryDirectory()
+        repo_dir = self._ctx.work_repository_directory()
         run_result = run.run(self._ctx,
                              [self._binary(context.Binaries.OSTREE),
                               'init', '--repo={}'.format(repo_dir)])
         if run_result.returncode != 0:
-            run.reportCompletedProcess(self._context.print, run_result)
+            run.report_completed_process(self._context.print, run_result)
             raise exceptions.PrepareError('Failed to run ostree init.')
 
     def generate(self):

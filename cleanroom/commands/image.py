@@ -23,6 +23,7 @@ class ImageCommand(cmd.Command):
         name = None
         base = None
 
+        print('Validating args for image command:', ','.join(args))
         if len(args) == 1:
             name = args[0]
         elif len(args) == 3:
@@ -38,11 +39,12 @@ class ImageCommand(cmd.Command):
                                 'Image needs a name and an optional '
                                 'base image.')
 
-        image_pattern = re.compile("^[A-Za-z][A-Za-z0-9_-]*$")
+        image_pattern = re.compile('^[A-Za-z][A-Za-z0-9_-]*$')
+        assert(name)
         if not image_pattern.match(name):
             raise ex.ParseError(line_number, 'Invalid name.')
 
-        if not image_pattern.match(base):
+        if base and not image_pattern.match(base):
             raise ex.ParseError(line_number, 'Invalid base.')
 
         return base

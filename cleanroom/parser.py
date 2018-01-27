@@ -84,7 +84,7 @@ class Parser:
         """Find possible commands in the file system."""
         ctx.printer.trace('Checking for commands.')
         checked_dirs = []
-        for path in (ctx.systemsCommandsDirectory(), ctx.commandsDirectory()):
+        for path in (ctx.systems_commands_directory(), ctx.commands_directory()):
             if path in checked_dirs:
                 continue
             checked_dirs.append(path)
@@ -117,7 +117,7 @@ class Parser:
         ctx.printer.debug('Commands found:')
         for (name, value) in Parser._commands.items():
             path = value[1]
-            location = '<GLOBAL>' if path.startswith(ctx.commandsDirectory()
+            location = '<GLOBAL>' if path.startswith(ctx.commands_directory()
                                                      + '/') else '<LOCAL>'
             ctx.printer.debug('  {}: {}'.format(name, location))
 

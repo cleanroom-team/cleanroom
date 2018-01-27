@@ -52,7 +52,7 @@ class WorkDir:
             return tmpDir.__exit__(exc_type, exc_val, exc_tb)
         return False
 
-    def name(self):
+    def path(self):
         """Name of the work directory."""
         return self._path
 

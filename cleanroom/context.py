@@ -23,7 +23,7 @@ class Binaries(Enum):
     ROFILES_FUSE = auto()
 
 
-def checkForBinary(binary):
+def _check_for_binary(binary):
     """Check for binaries (with full path!)."""
     return binary if os.access(binary, os.X_OK) else ''
 
@@ -40,8 +40,8 @@ class Context:
         """Constructor."""
         self.printer = printer
         self.binaries = {
-            Binaries.OSTREE: checkForBinary('/usr/bin/ostree'),
-            Binaries.ROFILES_FUSE: checkForBinary('/usr/bin/rofiles-fuse')
+            Binaries.OSTREE: _check_for_binary('/usr/bin/ostree'),
+            Binaries.ROFILES_FUSE: _check_for_binary('/usr/bin/rofiles-fuse')
         }
         self.generator = generator.Generator(self)
 
@@ -61,7 +61,7 @@ class Context:
                            .format(selector, binary))
         return binary
 
-    def setDirectories(self, system_dir, work_dir):
+    def set_directories(self, system_dir, work_dir):
         """Set system- and work directory and set them up."""
         self.printer.verbose('Setting up Directories.')
 
@@ -101,47 +101,47 @@ class Context:
 
         self.printer.success('Setting up directories.', verbosity=1)
 
-    def commandsDirectory(self):
+    def commands_directory(self):
         """Get the global commands directory."""
         return self._command_dir
 
-    def workDirectory(self):
+    def work_directory(self):
         """Get the top-level work directory."""
-        return self._directoryCheck(self._work_dir)
+        return self._directory_check(self._work_dir)
 
-    def workRepositoryDirectory(self):
+    def work_repository_directory(self):
         """Get the ostree repository directory."""
-        return self._directoryCheck(self._work_repo_dir)
+        return self._directory_check(self._work_repo_dir)
 
-    def systemsDirectory(self):
+    def systems_directory(self):
         """Get the top-level systems directory."""
-        return self._directoryCheck(self._system_dir)
+        return self._directory_check(self._system_dir)
 
-    def systemsCleanRoomDirectory(self):
+    def systems_cleanroom_directory(self):
         """Get the cleanroom configuration directory of a systems directory."""
-        return self._directoryCheck(self._sys_cleanroom_dir)
+        return self._directory_check(self._sys_cleanroom_dir)
 
-    def systemsCommandsDirectory(self):
+    def systems_commands_directory(self):
         """Get the systems-specific commands directory."""
-        return self._directoryCheck(self._sys_commands_dir)
+        return self._directory_check(self._sys_commands_dir)
 
-    def _directoryCheck(self, directory):
+    def _directory_check(self, directory):
         """Raise a ContextError if a directory is not yet set up."""
         if directory is None:
             raise exceptions.ContextError('Directories not set up yet.')
         return directory
 
-    def priflightCheck(self):
+    def preflight_check(self):
         """Run a fast pre-flight check on the context."""
         self.printer.verbose('Running Preflight Checks.')
 
-        binaries = self._preflightBinaries()
-        users = self._preflightUsers()
+        binaries = self._preflight_binaries_check()
+        users = self._preflight_users_check()
 
         if not binaries or not users:
             raise exceptions.PreflightError('Preflight Check failed.')
 
-    def _preflightBinaries(self):
+    def _preflight_binaries_check(self):
         """Check executables."""
         passed = True
         for b in self.binaries.items():
@@ -152,7 +152,7 @@ class Context:
                 passed = False
         return passed
 
-    def _preflightUsers(self):
+    def _preflight_users_check(self):
         """Check tha the script is running as root."""
         if os.geteuid() == 0:
             self.printer.verbose('Running as root.')
