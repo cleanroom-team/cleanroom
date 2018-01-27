@@ -20,11 +20,16 @@ class ExecObject:
     Describe the command to execute later during generation phase.
     """
 
-    def __init__(self, name, command, args):
+    def __init__(self, name, dependency, command, args):
         """Constructor."""
         self._name = name
         self._command = command
         self._args = args
+        self._dependency = dependency
+
+    def dependency(self):
+        """Return dependency of the system (or None)."""
+        return self._dependency
 
     def execute(self):
         """Execute the command."""
@@ -58,7 +63,6 @@ class _ParserState:
 
         assert(self.is_command_complete())
         assert(self.is_line_done())
-
 
     def __str__(self):
         dump = self._to_process.replace('\n', '\\n').replace('\t', '\\t')
@@ -130,9 +134,12 @@ class Parser:
             args = state._args
             state.reset()
 
-            return (state,
-                    ExecObject(command, Parser._commands[command][0],
-                               tuple(args)))
+            command_object = Parser._commands[command][0]
+            dependency = command_object.validate_arguments(state._line_number,
+                                                           args)
+
+            return (state, ExecObject(command, dependency,
+                                      command_object, tuple(args)))
 
         return (state, None)
 

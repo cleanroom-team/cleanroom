@@ -4,11 +4,18 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
+import cleanroom.command as cmd
 import cleanroom.context as context
 import cleanroom.exceptions as exceptions
 import cleanroom.parser as parser
 
 import unittest
+
+
+class TestCommand(cmd.Command):
+    """Dummy command implementation."""
+
+    pass
 
 
 class ParserTest(unittest.TestCase):
@@ -19,11 +26,14 @@ class ParserTest(unittest.TestCase):
         self.ctx = context.Context.Create(5)
         self.parser = parser.Parser(self.ctx)
 
-        self._cmd1 = 'test1'
-        self._cmd2 = 'test2'
+        self._cmd1name = 'test1'
+        self._cmd1 = TestCommand()
 
-        parser.Parser._commands[self._cmd1] = (self._cmd1, '<built-in>/1')
-        parser.Parser._commands[self._cmd2] = (self._cmd2, '<built-in>/2')
+        self._cmd2name = 'test2'
+        self._cmd2 = TestCommand()
+
+        parser.Parser._commands[self._cmd1name] = (self._cmd1, '<builtin>/1')
+        parser.Parser._commands[self._cmd2name] = (self._cmd2, '<builtin>/2')
 
     def _parse(self, data):
         """Call Parser._parse_lines and map the result."""

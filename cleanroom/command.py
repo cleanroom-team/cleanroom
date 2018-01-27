@@ -15,3 +15,15 @@ class Command:
     def __init__(self):
         """Constructor."""
         pass
+
+    def validate_arguments(self, line, args):
+        """Validate all arguments.
+
+        Validate all arguments and optionally return a dependency for
+        the system.
+        """
+        return None
+
+    def execute(self, args):
+        """Execute command."""
+        return True
