@@ -141,7 +141,6 @@ class Generator:
                                 .format(len(self._systems_forest)))
         for root_node in self._systems_forest:
             for node in root_node.walk():
-                print(type(node), node)
                 self._ctx.printer.debug('  {}{} ({} children)'
                                         .format(base_indent * node.depth(),
                                                 node.system,
