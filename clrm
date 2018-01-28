@@ -85,7 +85,7 @@ with workdir.WorkDir(ctx, args.work_dir) as work_dir:
         pr.success('Preparation phase.', verbosity = 1)
 
     for s in args.systems:
-        ctx.generator.addSystem(s)
+        ctx.generator.add_system(s)
 
     try:
         ctx.generator.generate()

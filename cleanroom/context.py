@@ -48,7 +48,7 @@ class Context:
         self.ignore_errors = ignore_errors
 
         self._work_dir = None
-        self._system_dir = None
+        self._systems_dir = None
         self._command_dir = None
 
         self._sys_cleanroom_dir = None
@@ -65,11 +65,11 @@ class Context:
         """Set system- and work directory and set them up."""
         self.printer.verbose('Setting up Directories.')
 
-        if self._system_dir is not None:
+        if self._systems_dir is not None:
             raise exceptions.ContextError('Directories were already set up.')
 
         # main directories:
-        self._system_dir = system_dir
+        self._systems_dir = system_dir
         self._work_dir = work_dir
         self._command_dir = os.path.join(os.path.dirname(__file__), 'commands')
 
@@ -77,12 +77,12 @@ class Context:
         self._work_systems_dir = os.path.join(work_dir, 'systems')
 
         # setup secondary directories:
-        self._sys_cleanroom_dir = os.path.join(self._system_dir, 'cleanroom')
+        self._sys_cleanroom_dir = os.path.join(self._systems_dir, 'cleanroom')
         self._sys_commands_dir = os.path.join(self._sys_cleanroom_dir,
                                               'commands')
 
         self.printer.info('Context: System dir       = "{}".'
-                          .format(self._system_dir))
+                          .format(self._systems_dir))
         self.printer.info('Context: Work dir         = "{}".'
                           .format(self._work_dir))
         self.printer.info('Context: Command dir      = "{}".'
@@ -115,7 +115,7 @@ class Context:
 
     def systems_directory(self):
         """Get the top-level systems directory."""
-        return self._directory_check(self._system_dir)
+        return self._directory_check(self._systems_dir)
 
     def systems_cleanroom_directory(self):
         """Get the cleanroom configuration directory of a systems directory."""

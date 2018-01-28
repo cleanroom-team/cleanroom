@@ -159,10 +159,9 @@ class Parser:
 
     def parse(self, input_file):
         """Parse a file."""
-        self._reset_parsing_state(self)
-
         with open(input_file, 'r') as f:
-            yield self._parse_lines(f)
+            for result in self._parse_lines(f):
+                yield result
 
     def _parse_lines(self, iterable):
         """Parse an iterable of lines."""
@@ -186,8 +185,6 @@ class Parser:
         if not state.is_line_done() \
            or not state.is_command_complete():
             raise ex.ParseError(state._line_number, 'Unexpected EOF.')
-
-        return None
 
     def _parse_single_line(self, state):
         """Parse a single line."""

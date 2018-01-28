@@ -28,6 +28,7 @@ class BasedCommand(cmd.Command):
         if len(args) == 0:
             raise ex.ParseError(line_number,
                                 '"based" needs a system name.')
+
         elif len(args) == 1:
             base = args[0]
         elif len(args) == 2:

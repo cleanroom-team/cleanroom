@@ -11,25 +11,14 @@ from . import exceptions
 from . import parser
 from . import run
 
-from enum import Enum, auto, unique
 import os
 import os.path
-
-
-@unique
-class State(Enum):
-    """State of generation process."""
-
-    NEW = auto()
-    PARSED = auto()
-    GENERATING = auto()
-    GENERATED = auto()
 
 
 class DependencyNode:
     """Node of the dependency tree of all systems."""
 
-    def __init__(self, system, parent, *children):
+    def __init__(self, system, parent, commands):
         """Constructor."""
         # Tree:
         self.parent = parent
@@ -37,8 +26,9 @@ class DependencyNode:
 
         # Payload:
         self.system = system
-        self.state = State.NEW
-        self.commands = []
+        self.commands = commands
+
+        assert(system)
 
     def find(self, system):
         """Find a system in the dependency tree."""
@@ -50,6 +40,20 @@ class DependencyNode:
                 return cn
 
         return None
+
+    def walk(self):
+        """Walk the nodes in pre-order."""
+        yield(self)
+
+        for child in self.children:
+            for node in child.walk():
+                yield node
+
+    def depth(self):
+        """Calculate the distance from the root node."""
+        if self.parent:
+            return self.parent.depth() + 1
+        return 0
 
 
 class Generator:
@@ -67,23 +71,53 @@ class Generator:
 
     def add_system(self, system):
         """Add a system to the dependency tree."""
+        if not system:
+            return None
+
+        self._ctx.printer.debug('Adding system "{}".'
+                                .format(system if system else "<NONE>"))
+
         node = self._find(system)
         if node:
-            return node.parent
+            self._ctx.printer.trace('Found system "{}" in system_forest.'
+                                    .format(system))
+            return node
 
         system_file = self._find_system_definition_file(system)
+        (base_system, command_list) \
+            = self._parse_system_definition_file(system_file)
+
+        self._ctx.printer.trace('"{}" is based on "{}"'
+                                .format(system, base_system))
+        parent_node = self.add_system(base_system)
+        node = DependencyNode(system, parent_node, command_list)
+
+        if parent_node:
+            parent_node.children.append(node)
+        else:
+            self._systems_forest.append(node)
+
+        return node
+
+    def _parse_system_definition_file(self, system_file):
+        self._ctx.printer.trace('Parsing "{}".'.format(system_file))
         system_parser = parser.Parser(self._ctx)
+        command_list = []
+        for command in system_parser.parse(system_file):
+            command_list.append(command)
 
-        parentNode = self._find(base)
-        node = DependencyNode(system, parentNode)
+        base_system = ''
+        for exec_object in command_list:
+            if exec_object.dependency():
+                base_system = exec_object.dependency()
+                break
 
-        if parentNode:
-            pass
+        return (base_system, command_list)
 
     def _find_system_definition_file(self, system):
         """Make sure a system definition file can be found."""
         system_file = os.path.join(self._ctx.systems_directory(),
-                                   system, system + '.def')
+                                   system + '.def')
         if not os.path.exists(system_file):
             raise exceptions.SystemNotFoundError(
                 'Could not find systems file for {}, '
@@ -93,12 +127,25 @@ class Generator:
 
     def _find(self, system):
         """Find a system in the dependency tree."""
-        for d in self._systems_forest:
-            node = d.find(system)
+        for root_node in self._systems_forest:
+            node = root_node.find(system)
             if node:
                 return node
 
         return None
+
+    def _print_systems_forest(self):
+        """Print the systems forest."""
+        base_indent = "  "
+        self._ctx.printer.debug('Systems forest ({} trees):'
+                                .format(len(self._systems_forest)))
+        for root_node in self._systems_forest:
+            for node in root_node.walk():
+                print(type(node), node)
+                self._ctx.printer.debug('  {}{} ({} children)'
+                                        .format(base_indent * node.depth(),
+                                                node.system,
+                                                len(node.children)))
 
     def prepare(self):
         """Prepare for generation."""
@@ -112,6 +159,7 @@ class Generator:
 
     def generate(self):
         """Generate all systems in the dependency tree."""
+        self._print_systems_forest()
         pass
 
 

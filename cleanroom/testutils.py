@@ -26,13 +26,9 @@ class BaseParserTest:
 
     def _parse(self, data):
         """Call Parser._parse_lines and map the result."""
-        result = []
         input = (data,) if type(data) is str else data
-        for exec_object in self.parser._parse_lines(input):
-            if exec_object:
-                result.append((exec_object._name, exec_object._args))
-
-        return result
+        return list(map(lambda x: (x._name, x._args),
+                        self.parser._parse_lines(input)))
 
     def _verify(self, data, expected):
         """Verify one line of input to the Parser."""
