@@ -63,7 +63,7 @@ class Context:
 
     def set_directories(self, system_dir, work_dir):
         """Set system- and work directory and set them up."""
-        self.printer.verbose('Setting up Directories.')
+        self.printer.debug('Setting up Directories.')
 
         if self._systems_dir is not None:
             raise exceptions.ContextError('Directories were already set up.')
@@ -99,7 +99,7 @@ class Context:
 
         parser.Parser.find_commands(self)
 
-        self.printer.success('Setting up directories.', verbosity=1)
+        self.printer.success('Setting up directories.', verbosity=3)
 
     def commands_directory(self):
         """Get the global commands directory."""
@@ -133,7 +133,7 @@ class Context:
 
     def preflight_check(self):
         """Run a fast pre-flight check on the context."""
-        self.printer.verbose('Running Preflight Checks.')
+        self.printer.debug('Running Preflight Checks.')
 
         binaries = self._preflight_binaries_check()
         users = self._preflight_users_check()
@@ -155,7 +155,7 @@ class Context:
     def _preflight_users_check(self):
         """Check tha the script is running as root."""
         if os.geteuid() == 0:
-            self.printer.verbose('Running as root.')
+            self.printer.debug('Running as root.')
             return True
         self.printer.warn('Not running as root.')
         return False

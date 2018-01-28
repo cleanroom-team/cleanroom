@@ -20,8 +20,7 @@ import os
 import sys
 
 def parse_commandline(arguments):
-    '''This function parses the command line options.
-    '''
+    """This function parses the command line options."""
     parser = ArgumentParser(description='Cleanroom OS image script generator',
                             prog=arguments[0])
     parser.add_argument('--verbose', action='count', default=0,
@@ -64,7 +63,7 @@ try:
 except exceptions.PreflightError:
     pr.fail(args.ignore_errors, 'Preflight Check failed')
 else:
-    pr.success('Preflight Check passed', verbosity = 1)
+    pr.success('Preflight Check passed', verbosity = 2)
 
 system_dir = args.system_dir if args.system_dir else os.getcwd()
 
@@ -82,7 +81,7 @@ with workdir.WorkDir(ctx, args.work_dir) as work_dir:
         pr.fail(args.ignore_errors, 'Preparation failed: {}'.format(e.message))
         raise
     else:
-        pr.success('Preparation phase.', verbosity = 1)
+        pr.success('Preparation phase.', verbosity = 2)
 
     for s in args.systems:
         ctx.generator.add_system(s)
@@ -92,6 +91,6 @@ with workdir.WorkDir(ctx, args.work_dir) as work_dir:
     except exceptions.GenerateError as e:
         pr.fail(args.ignore_errors, 'Generation failed: {}'.format(e.message))
     else:
-        pr.success('Generation phase.', verbosity = 1)
+        pr.success('Generation phase.', verbosity = 2)
 
-pr.success('Done.', verbosity = 1)
+pr.success('Done.', verbosity = 3)

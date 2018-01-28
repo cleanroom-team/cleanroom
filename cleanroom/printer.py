@@ -56,12 +56,12 @@ class Printer:
 
     def h1(self, *args):
         """Print a headline."""
-        intro = '{}******{}'.format(self._h_prefix, self._h1_suffix)
+        intro = '\n\n{}******{}'.format(self._h_prefix, self._h1_suffix)
         print(intro, *args, self._ansi_reset)
 
     def h2(self, *args):
         """Print a subheading."""
-        intro = '{}******{}'.format(self._h_prefix, self._ansi_reset)
+        intro = '\n{}******{}'.format(self._h_prefix, self._ansi_reset)
         print(intro, *args)
 
     def verbose(self, *args):

@@ -7,6 +7,7 @@
 
 
 from . import context
+from . import executor
 from . import exceptions
 from . import parser
 from . import run
@@ -18,7 +19,7 @@ import os.path
 class DependencyNode:
     """Node of the dependency tree of all systems."""
 
-    def __init__(self, system, parent, commands):
+    def __init__(self, system, parent, command_list):
         """Constructor."""
         # Tree:
         self.parent = parent
@@ -26,7 +27,7 @@ class DependencyNode:
 
         # Payload:
         self.system = system
-        self.commands = commands
+        self.command_list = command_list
 
         assert(system)
 
@@ -139,12 +140,16 @@ class Generator:
         base_indent = "  "
         self._ctx.printer.debug('Systems forest ({} trees):'
                                 .format(len(self._systems_forest)))
+        for node in self._walk_systems_forest():
+            self._ctx.printer.debug('  {}{} ({} children)'
+                                    .format(base_indent * node.depth(),
+                                            node.system,
+                                            len(node.children)))
+
+    def _walk_systems_forest(self):
         for root_node in self._systems_forest:
             for node in root_node.walk():
-                self._ctx.printer.debug('  {}{} ({} children)'
-                                        .format(base_indent * node.depth(),
-                                                node.system,
-                                                len(node.children)))
+                yield node
 
     def prepare(self):
         """Prepare for generation."""
@@ -159,7 +164,24 @@ class Generator:
     def generate(self):
         """Generate all systems in the dependency tree."""
         self._print_systems_forest()
-        pass
+
+        for node in self._walk_systems_forest():
+            system = node.system
+            command_list = node.command_list
+
+            self._ctx.printer.h1('Generate "{}"'.format(system))
+            try:
+                exe = executor.Executor()
+                exe.run(self._ctx, system, command_list)
+            except Exception as e:
+                self._ctx.printer.fail(self._ctx.ignore_errors,
+                                       'Generation of "{}" failed.'
+                                       .format(system))
+                if not self._ctx.ignore_errors:
+                    raise e
+            else:
+                self._ctx.printer.success('Generation of "{}" complete.'
+                                          .format(system))
 
 
 if __name__ == '__main__':
