@@ -35,34 +35,30 @@ class ExecObject:
         """Execute the command."""
         args = self._args
         if args is None:
-            args = (run_context._system,)
+            args = (run_context.system,)
 
         command_object = self._command
 
-        args = self._args
-        if args is None:
-            args = (run_context._system,)
-
-        run_context._ctx.printer.debug('Running "{}" with arguments ({}).'
-                                       .format(self._name,
-                                               ', '.join(args)))
+        run_context.ctx.printer.debug('Running "{}" with arguments ({}).'
+                                      .format(self._name,
+                                              ', '.join(args)))
 
         try:
             command_object.execute(run_context, args)
         except ex.CleanRoomError as e:
-            run_context._ctx.printer.fail('Failed to run "{}" with '
-                                          'arguments ({}): {}.'
-                                          .format(self._name,
-                                                  ', '.join(args), e),
-                                          verbosity=1)
-            if not run_context._ctx.ignore_errors:
+            run_context.ctx.printer.fail('Failed to run "{}" with '
+                                         'arguments ({}): {}.'
+                                         .format(self._name,
+                                                 ', '.join(args), e),
+                                         verbosity=1)
+            if not run_context.ctx.ignore_errors:
                 raise
         else:
-            run_context._ctx.printer.success('Ran "{}" with '
-                                             'arguments ({}).'
-                                             .format(self._name,
-                                                     ', '.join(args)),
-                                             verbosity=1)
+            run_context.ctx.printer.success('Ran "{}" with '
+                                            'arguments ({}).'
+                                            .format(self._name,
+                                                    ', '.join(args)),
+                                            verbosity=1)
 
 
 class _ParserState:
@@ -141,7 +137,7 @@ class Parser:
                         x.__name__.endswith('Command') and \
                         x.__module__ == name
                 klass = inspect.getmembers(cmd_module, is_command)
-                instance = klass[0][1](ctx)
+                instance = klass[0][1]()
                 Parser._commands[cmd] = (instance, f_path)
 
         ctx.printer.debug('Commands found:')

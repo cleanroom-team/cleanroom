@@ -6,6 +6,7 @@
 """
 
 
+import datetime
 import os
 import os.path
 
@@ -15,33 +16,48 @@ class RunContext:
 
     def __init__(self, ctx, system):
         """Constructor."""
-        self._ctx = ctx
-        self._system = system
-        self._vars = dict()
+        self.ctx = ctx
+        self.system = system
+        self.base = None
+        self.vars = dict()
+        self.timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        self.baseContext = None
 
-        assert(self._ctx)
-        assert(self._system)
-        assert(not self._vars)
+        assert(self.ctx)
+        assert(self.system)
+        assert(not self.vars)
 
-    def _base_directory(self):
+    def _work_directory(self, system=None):
         """Find base directory for all temporary system files."""
-        return os.path.join(self._ctx.work_systems_directory(), self._system)
+        if system is None:
+            system = self.system
+        return os.path.join(self.ctx.work_systems_directory(), system)
 
     def system_directory(self):
         """Location of temporary system files."""
-        return self._base_directory()
+        return self._work_directory()
 
     def fs_directory(self):
         """Location of the systems filesystem root."""
-        return os.path.join(self._base_directory(), 'fs')
+        return os.path.join(self._work_directory(), 'fs')
 
-    def meta_directory(self):
+    def meta_directory(self, system=None):
         """Location of the systems meta-data directory."""
-        return os.path.join(self._base_directory(), 'meta')
+        return os.path.join(self._work_directory(system), 'meta')
+
+    def pickle_jar(self, system=None):
+        """Location of the system's pickle jar."""
+        return os.path.join(self.meta_directory(system), 'pickle_jar.bin')
 
     def system_complete_flag(self):
         """Flag-file set when system was completely set up."""
-        return os.path.join(self._base_directory(), 'done')
+        return os.path.join(self._work_directory(), 'done')
+
+    def install_base_context(self, base_context):
+        """Set up base context."""
+        self.baseContext = base_context
+        self.timestamp = base_context.timestamp
+        print('Timestamp is now:', self.timestamp)
 
 
 class Executor:
@@ -59,9 +75,9 @@ class Executor:
 
     def _setup_for_execution(self, run_context):
         """Set up execution context."""
-        run_context._ctx.printer\
+        run_context.ctx.printer\
             .trace('Setup for execution of commands of "{}".'
-                   .format(run_context._system))
+                   .format(run_context.system))
 
         os.makedirs(run_context.fs_directory())
         os.makedirs(run_context.meta_directory())
@@ -70,18 +86,18 @@ class Executor:
 
     def _run_commands(self, command_list, run_context):
         """Run commands."""
-        run_context._ctx.printer\
+        run_context.ctx.printer\
             .trace('Running commands for system "{}".'
-                   .format(run_context._system))
+                   .format(run_context.system))
 
         for command in command_list:
             command.execute(run_context)
 
     def _store_result(self, run_context):
         """Store execution context and extra data."""
-        run_context._ctx.printer.\
+        run_context.ctx.printer.\
             trace('Store execution results for system "{}".'
-                  .format(run_context._system))
+                  .format(run_context.system))
 
 
 if __name__ == '__main__':

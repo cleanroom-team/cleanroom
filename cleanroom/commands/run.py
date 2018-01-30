@@ -9,8 +9,7 @@ import cleanroom.command as cmd
 class RunCommand(cmd.Command):
     """The Run Command."""
 
-    def __init__(self, ctx):
+    def __init__(self):
         """Constructor."""
         super().__init__("run <COMMAND> [<ARGUMENTS>]",
                          "Run a shell command with arguments.")
-        self._ctx = ctx

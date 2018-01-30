@@ -9,9 +9,8 @@ import cleanroom.command as cmd
 class _SetupCommand(cmd.Command):
     """The _setup Command."""
 
-    def __init__(self, ctx):
+    def __init__(self):
         """Constructor."""
         super().__init__("_setup <SYSTEM>",
                          "Implicitly run before any other command of a "
                          "system is run.")
-        self._ctx = ctx
