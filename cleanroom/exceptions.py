@@ -13,6 +13,11 @@ class CleanRoomError(RuntimeError):
         """Constructor."""
         super().__init__(msg)
 
+    def __str__(self):
+        """Stringify exception."""
+        assert(len(self.args) == 1)
+        return 'Error: {}'.format(self.args[0])
+
 
 class PreflightError(CleanRoomError):
     """Error raised in the Preflight Phase."""
@@ -49,8 +54,12 @@ class ParseError(CleanRoomError):
 
     def __init__(self, line, msg):
         """Constructor."""
-        self.line = line
-        super().__init__(msg)
+        super().__init__(line, msg)
+
+    def __str__(self):
+        """Stringify exception."""
+        assert(len(self.args) == 2)
+        return 'Error in line {}: {}'.format(self.args[0], self.args[1])
 
 
 if __name__ == '__main__':

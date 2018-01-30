@@ -90,6 +90,7 @@ with workdir.WorkDir(ctx, args.work_dir) as work_dir:
         ctx.generator.generate()
     except exceptions.GenerateError as e:
         pr.fail(args.ignore_errors, 'Generation failed: {}'.format(e.message))
+        raise
     else:
         pr.success('Generation phase.', verbosity = 2)
 

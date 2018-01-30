@@ -113,6 +113,10 @@ class Context:
         """Get the ostree repository directory."""
         return self._directory_check(self._work_repo_dir)
 
+    def work_systems_directory(self):
+        """Get the base systems directory in the work directory."""
+        return self._directory_check(self._work_systems_dir)
+
     def systems_directory(self):
         """Get the top-level systems directory."""
         return self._directory_check(self._systems_dir)

@@ -30,6 +30,7 @@ class DependencyNode:
         self.command_list = command_list
 
         assert(system)
+        assert(len(command_list) >= 2)  # At least _setup and _teardown!
 
     def find(self, system):
         """Find a system in the dependency tree."""
@@ -175,10 +176,10 @@ class Generator:
                 exe.run(self._ctx, system, command_list)
             except Exception as e:
                 self._ctx.printer.fail(self._ctx.ignore_errors,
-                                       'Generation of "{}" failed.'
-                                       .format(system))
+                                       'Generation of "{}" failed: {}.'
+                                       .format(system, e))
                 if not self._ctx.ignore_errors:
-                    raise e
+                    raise
             else:
                 self._ctx.printer.success('Generation of "{}" complete.'
                                           .format(system))

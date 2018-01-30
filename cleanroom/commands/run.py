@@ -14,11 +14,3 @@ class RunCommand(cmd.Command):
         super().__init__("run <COMMAND> [<ARGUMENTS>]",
                          "Run a shell command with arguments.")
         self._ctx = ctx
-
-    def validate_arguments(self, state, args):
-        """Validate arguments."""
-        return super().validate_arguments(state, args)
-
-    def execute(self, *args):
-        """Execute run command."""
-        super().execute(*args)

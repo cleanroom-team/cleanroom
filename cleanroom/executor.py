@@ -7,6 +7,7 @@
 
 
 import os
+import os.path
 
 
 class RunContext:
@@ -16,9 +17,11 @@ class RunContext:
         """Constructor."""
         self._ctx = ctx
         self._system = system
+        self._vars = dict()
 
         assert(self._ctx)
         assert(self._system)
+        assert(not self._vars)
 
     def _base_directory(self):
         """Find base directory for all temporary system files."""
@@ -46,8 +49,7 @@ class Executor:
 
     def run(self, ctx, system, command_list):
         """Run the command_list for the system the executor was set up for."""
-        self._ctx.printer.debug('Running commands for system "{}".'
-                                .format(self._system))
+        ctx.printer.debug('Running commands for system "{}".'.format(system))
         run_context = RunContext(ctx, system)
         if not self._setup_for_execution(run_context):
             return  # Return early when system already set up
@@ -57,23 +59,29 @@ class Executor:
 
     def _setup_for_execution(self, run_context):
         """Set up execution context."""
-        self._ctx.printer.trace('Setup for execution of commands of "{}".'
-                                .format(run_context._system))
+        run_context._ctx.printer\
+            .trace('Setup for execution of commands of "{}".'
+                   .format(run_context._system))
 
-        os.path.mkpaths(run_context.fs_directory())
-        os.path.mkpaths(run_context.meta_directory())
+        os.makedirs(run_context.fs_directory())
+        os.makedirs(run_context.meta_directory())
 
         return not os.path.exists(run_context.system_complete_flag())
 
     def _run_commands(self, command_list, run_context):
         """Run commands."""
-        self._ctx.printer.trace('Running commands for system "{}".'
-                                .format(run_context._system))
+        run_context._ctx.printer\
+            .trace('Running commands for system "{}".'
+                   .format(run_context._system))
+
+        for command in command_list:
+            command.execute(run_context)
 
     def _store_result(self, run_context):
         """Store execution context and extra data."""
-        self._ctx.printer.trace('Store execution results for system "{}".'
-                                .format(run_context._system))
+        run_context._ctx.printer.\
+            trace('Store execution results for system "{}".'
+                  .format(run_context._system))
 
 
 if __name__ == '__main__':

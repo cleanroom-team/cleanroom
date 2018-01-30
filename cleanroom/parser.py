@@ -31,9 +31,38 @@ class ExecObject:
         """Return dependency of the system (or None)."""
         return self._dependency
 
-    def execute(self):
+    def execute(self, run_context):
         """Execute the command."""
-        self._command.execute(*self._args)
+        args = self._args
+        if args is None:
+            args = (run_context._system,)
+
+        command_object = self._command
+
+        args = self._args
+        if args is None:
+            args = (run_context._system,)
+
+        run_context._ctx.printer.debug('Running "{}" with arguments ({}).'
+                                       .format(self._name,
+                                               ', '.join(args)))
+
+        try:
+            command_object.execute(run_context, args)
+        except ex.CleanRoomError as e:
+            run_context._ctx.printer.fail('Failed to run "{}" with '
+                                          'arguments ({}): {}.'
+                                          .format(self._name,
+                                                  ', '.join(args), e),
+                                          verbosity=1)
+            if not run_context._ctx.ignore_errors:
+                raise
+        else:
+            run_context._ctx.printer.success('Ran "{}" with '
+                                             'arguments ({}).'
+                                             .format(self._name,
+                                                     ', '.join(args)),
+                                             verbosity=1)
 
 
 class _ParserState:
@@ -128,12 +157,14 @@ class Parser:
         ctx.printer.h1('Command List:')
 
         for key in sorted(Parser._commands):
-            cmd = Parser._commands[key][0]
+            cmd, path = Parser._commands[key]
 
             long_help_lines = cmd.help().split('\n')
-            ctx.printer.print('{}\n    {}\n'
+            ctx.printer.print('{}\n          {}\n\n          '
+                              'Definition in: {}\n\n'
                               .format(cmd.syntax(),
-                                      '\n    '.join(long_help_lines)))
+                                      '\n          '.join(long_help_lines),
+                                      path))
 
     def __init__(self, ctx):
         """Constructor."""
@@ -167,13 +198,14 @@ class Parser:
         """Parse an iterable of lines."""
         state = _ParserState()
 
+        yield ExecObject('_setup', None, Parser._commands['_setup'][0], None)
+
         for line in iterable:
             state._to_process += line
             state._line_number += 1
 
             next_state = self._parse_single_line(state)
             (state, obj) = self._object_from_state(next_state)
-
             if obj:
                 yield obj
 
@@ -185,6 +217,9 @@ class Parser:
         if not state.is_line_done() \
            or not state.is_command_complete():
             raise ex.ParseError(state._line_number, 'Unexpected EOF.')
+
+        yield ExecObject('_teardown', None,
+                         Parser._commands['_teardown'][0], None)
 
     def _parse_single_line(self, state):
         """Parse a single line."""
@@ -255,7 +290,7 @@ class Parser:
             self._ctx.printer.trace('Empty command found.')
             raise ex.ParseError(state._line_number, 'Empty command found.')
 
-        command_pattern = re.compile("^[A-Za-z][A-Za-z0-9]*$")
+        command_pattern = re.compile("^[A-Za-z][A-Za-z0-9_-]*$")
         if not command_pattern.match(command):
             self._ctx.printer.trace('Invalid command "{}".'.format(command))
             raise ex.ParseError(state._line_number,

@@ -25,7 +25,7 @@ class Command:
         """
         return None
 
-    def execute(self, args):
+    def execute(self, run_context, args):
         """Execute command."""
         return True
 
