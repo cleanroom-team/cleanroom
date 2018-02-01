@@ -19,6 +19,10 @@ class TestCommand(cmd.Command):
         """Constructor."""
         super().__init__('test', 'test')
 
+    def validate_arguments(self, line_number, args):
+        """Accept all arguments."""
+        return None
+
 
 class ParserTest(tu.BaseParserTest, unittest.TestCase):
     """Test for Parser class of cleanroom."""

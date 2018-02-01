@@ -33,4 +33,7 @@ class BaseParserTest:
     def _verify(self, data, expected):
         """Verify one line of input to the Parser."""
         result = self._parse(data)
-        self.assertEqual(result, expected)
+        self.assertTrue(len(result) >= 2)
+        self.assertEqual(result[0], ('_setup', None))
+        self.assertEqual(result[-1], ('_teardown', None))
+        self.assertEqual(result[1:-1], expected)

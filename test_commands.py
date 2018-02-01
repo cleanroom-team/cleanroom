@@ -33,25 +33,25 @@ class CommandTest(unittest.TestCase, tu.BaseParserTest):
         """Tear down method."""
         self._tempDir.cleanup()
 
-    def test_based_with_name(self):
-        """Test an image with a name."""
-        self._verify('   based foo\n', [('based', ('foo',))])
+    def test_based(self):
+        """Test based with a name."""
+        self._verify('   based on foo\n', [('based', ('on', 'foo',))])
 
     # Error cases:
-    def test_based_no_name(self):
-        """Test an image without name and base."""
+    def test_based_nothing(self):
+        """Test an image without 'on' and name."""
         with self.assertRaises(exceptions.ParseError):
-            self._parse('  image\n')
+            self._parse('  based\n')
+
+    def test_based_no_name(self):
+        """Test based without name."""
+        with self.assertRaises(exceptions.ParseError):
+            self._parse('  based  on\n')
 
     def test_based_with_invalid_base(self):
-        """Test an image with invalid name and no base."""
+        """Test based with invalid name."""
         with self.assertRaises(exceptions.ParseError):
-            self._parse('   based f!oo\n')
-
-    def test_based_with_invalid_filler(self):
-        """Test an image with name and invalid base."""
-        with self.assertRaises(exceptions.ParseError):
-            self._parse('image foo based_on ba!r\n')
+            self._parse('   based on f!oo\n')
 
 
 if __name__ == '__main__':

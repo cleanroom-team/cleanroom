@@ -22,19 +22,23 @@ def file_name(run_context, f):
 
 
 def create_file(run_context, f, contents):
+    """Create a new file with the given contents."""
     os.path.join(run_context.system_directory(), f)
     pass
 
 
 def replace_file(run_context, f, contents):
+    """Replace an existing file with the given contents."""
     pass
 
 
 def append_file(run_context, f, contents):
+    """Append contents to an existing file."""
     pass
 
 
 def prepend_file(run_context, f, contents):
+    """Prepend contents to an existing file."""
     pass
 
 

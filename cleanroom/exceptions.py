@@ -54,7 +54,7 @@ class ParseError(CleanRoomError):
 
     def __init__(self, line, msg):
         """Constructor."""
-        super().__init__(line, msg)
+        super().__init__((line, msg))
 
     def __str__(self):
         """Stringify exception."""

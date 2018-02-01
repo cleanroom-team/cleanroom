@@ -25,23 +25,12 @@ class BasedCommand(cmd.Command):
         """Validate the arguments."""
         base = None
 
-        if len(args) == 0:
+        if len(args) != 2 or args[0] != 'on':
             raise ex.ParseError(line_number,
-                                '"based" needs a system name.')
-
-        elif len(args) == 1:
-            base = args[0]
+                                '"based" needs a "on" followed by a '
+                                'system name.')
         elif len(args) == 2:
-            if args[0] != 'on':
-                raise ex.ParseError(line_number,
-                                    '"based" may take an optional filler "on" '
-                                    'as first argument.')
-            else:
-                base = args[1]
-        else:
-            raise ex.ParseError(line_number,
-                                '"based" takes an optional filler "on" and '
-                                'a system name. Too many arguments given.')
+            base = args[1]
 
         assert(base)
         system_pattern = re.compile('^[A-Za-z][A-Za-z0-9_-]*$')
