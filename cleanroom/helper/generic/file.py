@@ -29,15 +29,59 @@ def file_name(run_context, f):
     return full_path
 
 
+def makedirs(run_context, dir):
+    """Make directories in the system filesystem."""
+    full_path = file_name(run_context, dir)
+    return os.makedirs(full_path)
+
+
+def chmod(run_context, f, mode):
+    """Chmod in the system filesystem."""
+    full_path = file_name(run_context, f)
+    return os.chmod(full_path, mode)
+
+
+def chown(run_context, f, user, group):
+    """Change ownership of a file in the system filesystem."""
+    full_path = file_name(run_context, f)
+
+    if user == 'root':
+        user = 0
+    if group == 'root':
+        group = 0
+
+    assert(user is not str)
+    assert(group is not str)
+
+    os.chown(full_path, user, group)
+
+
 def create_file(run_context, f, contents):
     """Create a new file with the given contents."""
-    os.path.join(run_context.system_directory(), f)
-    pass
+    full_path = file_name(run_context, f)
+
+    if os.exists(full_path):
+        raise ex.GenerateError('"{}" exists when trying to create a '
+                               'file there.'.format(full_path))
+
+    with open(full_path, 'wb') as f:
+        f.write(contents)
 
 
 def replace_file(run_context, f, contents):
     """Replace an existing file with the given contents."""
-    pass
+    full_path = file_name(run_context, f)
+
+    if not os.exists(full_path):
+        raise ex.GenerateError('"{}" does not exist when trying to replace '
+                               'the file.'.format(full_path))
+
+    if not os.path.isfile(full_path):
+        raise ex.GenerateError('"{}" is not a file when trying to replace it.'
+                               .format(full_path))
+
+    with open(full_path, 'wb') as f:
+        f.write(contents)
 
 
 def append_file(run_context, f, contents):
