@@ -6,58 +6,10 @@
 """
 
 
-import datetime
+from . import runcontext
+
 import os
 import os.path
-
-
-class RunContext:
-    """Context data for the execution os commands."""
-
-    def __init__(self, ctx, system):
-        """Constructor."""
-        self.ctx = ctx
-        self.system = system
-        self.base = None
-        self.vars = dict()
-        self.timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
-        self.baseContext = None
-
-        assert(self.ctx)
-        assert(self.system)
-        assert(not self.vars)
-
-    def _work_directory(self, system=None):
-        """Find base directory for all temporary system files."""
-        if system is None:
-            system = self.system
-        return os.path.join(self.ctx.work_systems_directory(), system)
-
-    def system_directory(self):
-        """Location of temporary system files."""
-        return self._work_directory()
-
-    def fs_directory(self):
-        """Location of the systems filesystem root."""
-        return os.path.join(self._work_directory(), 'fs')
-
-    def meta_directory(self, system=None):
-        """Location of the systems meta-data directory."""
-        return os.path.join(self._work_directory(system), 'meta')
-
-    def pickle_jar(self, system=None):
-        """Location of the system's pickle jar."""
-        return os.path.join(self.meta_directory(system), 'pickle_jar.bin')
-
-    def system_complete_flag(self):
-        """Flag-file set when system was completely set up."""
-        return os.path.join(self._work_directory(), 'done')
-
-    def install_base_context(self, base_context):
-        """Set up base context."""
-        self.baseContext = base_context
-        self.timestamp = base_context.timestamp
-        print('Timestamp is now:', self.timestamp)
 
 
 class Executor:
@@ -66,7 +18,7 @@ class Executor:
     def run(self, ctx, system, command_list):
         """Run the command_list for the system the executor was set up for."""
         ctx.printer.debug('Running commands for system "{}".'.format(system))
-        run_context = RunContext(ctx, system)
+        run_context = runcontext.RunContext(ctx, system)
         if not self._setup_for_execution(run_context):
             return  # Return early when system already set up
 
