@@ -15,9 +15,17 @@ import os.path
 def file_name(run_context, f):
     """Return the full (outside) file path to a absolute (inside) file."""
     if not os.path.isabs(f):
-        raise ex.GenerateError('Filepath "{}" is not absolute.'.format(f))
+        raise ex.GenerateError('File path "{}" is not absolute.'.format(f))
 
-    full_path = run_context.fs_directory() + f
+    root_path = os.path.realpath(run_context.fs_directory())
+    if not root_path.endswith('/'):
+        root_path += '/'
+
+    full_path = os.path.realpath(root_path + f)
+
+    if not full_path.startswith(root_path):
+        raise ex.GenerateError('File path "{}" is outside of "{}"'
+                               .format(full_path, root_path))
     return full_path
 
 

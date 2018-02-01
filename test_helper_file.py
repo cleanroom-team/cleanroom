@@ -31,10 +31,24 @@ class ModFileTest(unittest.TestCase):
 
         self.assertEqual(result, self._system_dir + input_file)
 
+    def test_file_name_with_dotdot(self):
+        """Test absolute input file name with ".." in its path."""
+        input_file = '/root/../test.txt'
+        result = filehelper.file_name(self._run_context, input_file)
+
+        self.assertEqual(result, self._system_dir + '/test.txt')
+
     # Error cases:
     def test_file_name_relative(self):
         """Test relative input file name."""
         input_file = './test.txt'
+
+        with self.assertRaises(exceptions.GenerateError):
+            filehelper.file_name(self._run_context, input_file)
+
+    def test_file_name_outside_root_directory(self):
+        """Test relative input file name."""
+        input_file = '/root/../../test.txt'
 
         with self.assertRaises(exceptions.GenerateError):
             filehelper.file_name(self._run_context, input_file)
