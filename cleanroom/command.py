@@ -20,6 +20,9 @@ class Command:
         self._syntax_string = syntax_string
         self._help_string = help_string
 
+    def find_configuration_file(self, run_context, filename):
+        pass
+
     def validate_arguments(self, line_number, args):
         """Validate all arguments.
 

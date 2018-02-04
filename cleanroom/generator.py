@@ -155,12 +155,8 @@ class Generator:
     def prepare(self):
         """Prepare for generation."""
         repo_dir = self._ctx.work_repository_directory()
-        run_result = run.run(self._ctx,
-                             [self._binary(context.Binaries.OSTREE),
-                              'init', '--repo={}'.format(repo_dir)])
-        if run_result.returncode != 0:
-            run.report_completed_process(self._context.print, run_result)
-            raise exceptions.PrepareError('Failed to run ostree init.')
+        run.run(self._ctx, [self._binary(context.Binaries.OSTREE),
+                'init', '--repo={}'.format(repo_dir)], exit_code=0)
 
     def generate(self):
         """Generate all systems in the dependency tree."""
@@ -177,7 +173,8 @@ class Generator:
             except Exception as e:
                 self._ctx.printer.fail(self._ctx.ignore_errors,
                                        'Generation of "{}" failed: {}.'
-                                       .format(system, e))
+                                       .format(system, e),
+                                       force_exit=False)
                 if not self._ctx.ignore_errors:
                     raise
             else:

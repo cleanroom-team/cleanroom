@@ -121,6 +121,10 @@ class Context:
         """Get the top-level systems directory."""
         return self._directory_check(self._systems_dir)
 
+    def system_definition_directory(self, system):
+        """Get the top-level directory of the given system."""
+        return os.path.join(self.systems_directory(), system)
+
     def systems_cleanroom_directory(self):
         """Get the cleanroom configuration directory of a systems directory."""
         return self._directory_check(self._sys_cleanroom_dir)

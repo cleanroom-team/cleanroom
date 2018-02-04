@@ -10,6 +10,7 @@ from ... import exceptions as ex
 
 import os
 import os.path
+import shutil
 
 
 def file_name(run_context, f):
@@ -29,22 +30,29 @@ def file_name(run_context, f):
     return full_path
 
 
-def makedirs(run_context, dir):
+def makedirs(run_context, *dirs, user=0, group=0, mode=None):
     """Make directories in the system filesystem."""
-    full_path = file_name(run_context, dir)
-    return os.makedirs(full_path)
+    for d in dirs:
+        full_path = file_name(run_context, d)
+        if os.makedirs(full_path):
+            _chmod(full_path, mode)
+        _chown(full_path, user, group)
+
+
+def _chmod(file_path, mode):
+    """For internal use only."""
+    if mode:
+        return os.chmod(file_path, mode)
+    return True
 
 
 def chmod(run_context, f, mode):
     """Chmod in the system filesystem."""
     full_path = file_name(run_context, f)
-    return os.chmod(full_path, mode)
+    return _chmod(full_path, mode)
 
 
-def chown(run_context, f, user, group):
-    """Change ownership of a file in the system filesystem."""
-    full_path = file_name(run_context, f)
-
+def _chown(file_path, user, group):
     if user == 'root':
         user = 0
     if group == 'root':
@@ -53,7 +61,14 @@ def chown(run_context, f, user, group):
     assert(user is not str)
     assert(group is not str)
 
-    os.chown(full_path, user, group)
+    return os.chown(file_path, user, group)
+
+
+def chown(run_context, f, user, group):
+    """Change ownership of a file in the system filesystem."""
+    full_path = file_name(run_context, f)
+
+    return _chown(full_path, user, group)
 
 
 def create_file(run_context, f, contents):
@@ -92,6 +107,24 @@ def append_file(run_context, f, contents):
 def prepend_file(run_context, f, contents):
     """Prepend contents to an existing file."""
     pass
+
+
+def copy_into(run_context, source, destination):
+    """Copy a file into a system."""
+    full_path = file_name(run_context, destination)
+    shutil.copyfile(source, full_path)
+
+
+def remove(run_context, dest, *, recursive=False):
+    """Delete a file inside of a system."""
+    full_path = file_name(run_context, dest)
+    if os.path.isdir(full_path):
+        if recursive:
+            shutil.rmtree(full_path)
+        else:
+            os.rmdir(full_path)
+    else:
+        os.remove(full_path)
 
 
 if __name__ == '__main__':

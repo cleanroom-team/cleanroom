@@ -23,6 +23,8 @@ class RunContext:
         self.timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
         self.baseContext = None
 
+        self._command = None
+
         assert(self.ctx)
         assert(self.system)
         assert(not self.vars)
@@ -57,7 +59,14 @@ class RunContext:
         """Set up base context."""
         self.baseContext = base_context
         self.timestamp = base_context.timestamp
-        print('Timestamp is now:', self.timestamp)
+
+    def system_definition_directory(self):
+        """Return the top level system definition directory of a system."""
+        return self.ctx.system_definition_directory(self.system)
+
+    def set_command(self, command_name):
+        """Set the command name."""
+        self._command = command_name
 
 
 if __name__ == '__main__':

@@ -2,3 +2,4 @@ __pycache__
 *.pyc
 .spyproject
 *.swp
+clrm-env

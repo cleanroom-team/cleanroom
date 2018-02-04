@@ -38,7 +38,7 @@ class ExecObject:
             args = (run_context.system,)
 
         command_object = self._command
-
+        run_context.set_command(self._name)
         run_context.ctx.printer.debug('Running "{}" with arguments ({}).'
                                       .format(self._name,
                                               ', '.join(args)))
@@ -59,6 +59,8 @@ class ExecObject:
                                             .format(self._name,
                                                     ', '.join(args)),
                                             verbosity=1)
+        finally:
+            run_context.set_command(None)
 
 
 class _ParserState:

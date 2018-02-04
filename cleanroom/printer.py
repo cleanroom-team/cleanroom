@@ -87,7 +87,7 @@ class Printer:
         intro = '{}  OK  {}'.format(self._ok_prefix, self._ok_suffix)
         print(intro, *args, self._ansi_reset)
 
-    def fail(self, ignore, *args, verbosity=0):
+    def fail(self, ignore, *args, verbosity=0, force_exit=True):
         """Print success message."""
         if self._verbose < verbosity:
             return
@@ -99,7 +99,8 @@ class Printer:
         else:
             intro = '{} FAIL {}'.format(self._fail_prefix, self._fail_suffix)
             print(intro, *args, self._ansi_reset)
-            sys.exit(1)
+            if force_exit:
+                sys.exit(1)
 
     def info(self, *args):
         """Print even more verbose."""

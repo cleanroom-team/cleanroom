@@ -22,7 +22,6 @@ class _SetupCommand(cmd.Command):
         """Execute command."""
         # Make sure systemd does not create /var/lib/machines for us!
         machines_dir = '/var/lib/machines'
-        file.makedirs(run_context, machines_dir)
-        file.chmod(run_context, machines_dir,
-                   stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-        file.chown(run_context, machines_dir, 'root', 'root')
+        file.makedirs(run_context, machines_dir,
+                      mode=(stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR),
+                      user='root', group='root')

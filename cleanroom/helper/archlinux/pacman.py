@@ -6,7 +6,11 @@
 """
 
 
+import cleanroom.exceptions as ex
 import cleanroom.helper.generic.file as file
+
+import os
+import os.path
 
 
 class Pacman:
@@ -16,17 +20,27 @@ class Pacman:
         """Constructor."""
         self._run_context = run_context
 
-    def gpg_directory(self):
-        """Return the location of the pacman GPG configuration."""
+    def global_gpg_directory(self):
+        """Return the global location of the pacman GPG configuration."""
         return file.file_name(self._run_context, '/usr/lib/pacman/gpg')
 
-    def db_directory(self):
-        """Return the location of the pacman DB."""
+    def global_db_directory(self):
+        """Return the global location of the pacman DB."""
         return file.file_name(self._run_context, '/usr/lib/pacman/db')
 
     def cache_directory(self):
-        """Return the location of the pacman cache."""
+        """Return the global location of the pacman cache."""
         return file.file_name(self._run_context, '/var/cache/pacman/pkgs')
+
+    def initial_pacstrap_configuration_file(self, run_context):
+        """Return the global configuration for initial pacstrap run."""
+        init_config_path = os.path.join(
+            self._run_context.system_definition_directory(),
+            'pacstrap.conf')
+        if not os.path.isfile(init_config_path):
+            raise ex.GenerateError('Could not find: "{}".'
+                                   .format(init_config_path))
+        return init_config_path
 
 
 if __name__ == '__main__':
