@@ -1,12 +1,13 @@
 # Base image for everything
 
 pacstrap type-base/pacstrap.conf <<<<
-    base
+    coreutils
 
-    -linux-firmware -dhcpcd -e2fsprogs -hwids -iptables -iputils -iproute2
-    -jfsutils -linux -logrotate -lvm2 -man-db -man-pages -mdadm -nano
-    -netctl -reiserfsprogs -s-nail -xfsprogs -usbutils -pciutils -inetutils
-    -pcmciautils -vi -xfsprogs -texinfo
+    file filesystem
 
-    dash systemd-sysvcompat pacman-mirrorlist
+    glibc
+
+    pacman
+
+    shadow systemd
 >>>>

@@ -20,6 +20,9 @@ class Binaries(Enum):
     """Important binaries."""
 
     OSTREE = auto()
+    PACMAN = auto()
+    PACMAN_KEY = auto()
+    PACSTRAP = auto()
     ROFILES_FUSE = auto()
 
 
@@ -41,6 +44,9 @@ class Context:
         self.printer = printer
         self.binaries = {
             Binaries.OSTREE: _check_for_binary('/usr/bin/ostree'),
+            Binaries.PACMAN: _check_for_binary('/usr/bin/pacman'),
+            Binaries.PACMAN_KEY: _check_for_binary('/usr/bin/pacman-key'),
+            Binaries.PACSTRAP: _check_for_binary('/usr/bin/pacstrap'),
             Binaries.ROFILES_FUSE: _check_for_binary('/usr/bin/rofiles-fuse')
         }
         self.generator = generator.Generator(self)

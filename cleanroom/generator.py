@@ -155,8 +155,11 @@ class Generator:
     def prepare(self):
         """Prepare for generation."""
         repo_dir = self._ctx.work_repository_directory()
-        run.run(self._ctx, [self._binary(context.Binaries.OSTREE),
-                'init', '--repo={}'.format(repo_dir)], exit_code=0)
+        run.run(self._binary(context.Binaries.OSTREE),
+                'init',
+                '--repo={}'.format(repo_dir),
+                exit_code=0,
+                trace_output=self._ctx.printer.trace)
 
     def generate(self):
         """Generate all systems in the dependency tree."""

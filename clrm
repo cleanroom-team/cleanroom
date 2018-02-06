@@ -56,6 +56,8 @@ pr.info('Info output enabled.')
 pr.debug('Debug output enabled.')
 pr.trace('Trace output enabled.')
 
+old_work_directory = os.getcwd()
+
 # Set up Context object:
 ctx = context.Context(pr, args.ignore_errors)
 try:
@@ -90,6 +92,7 @@ with workdir.WorkDir(ctx, args.work_dir) as work_dir:
         ctx.generator.generate()
     except exceptions.GenerateError as e:
         pr.fail(args.ignore_errors, 'Generation failed: {}'.format(e.message))
+        os.chdir(old_work_directory)
         raise
     else:
         pr.success('Generation phase.', verbosity = 2)

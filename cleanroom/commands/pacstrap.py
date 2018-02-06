@@ -5,6 +5,7 @@
 
 
 import cleanroom.command as cmd
+import cleanroom.context as context
 import cleanroom.exceptions as ex
 import cleanroom.helper.archlinux.pacman as pacman
 import cleanroom.helper.generic.file as file
@@ -30,27 +31,26 @@ class PacstrapCommand(cmd.Command):
         """Execute command."""
         pac_object = pacman.Pacman(run_context)
 
-        run_context.ctx.printer.h2('Pacstrap-ing system "{}"'
-                                   .format(run_context.system))
         pacstrap_config = args[0]
-        all_packages = []
-        for a in args[1:]:
-            all_packages += a.split()
-
         self._prepare_keyring(run_context, pac_object, pacstrap_config)
+
+        pac_object.pacstrap(pacstrap_config, args[1:])
 
     def _prepare_keyring(self, run_context, pac_object, pacstrap_config):
         # Make sure important pacman directories exist:
-        file.makedirs(run_context, pac_object.global_gpg_directory())
-        run.run(run_context.ctx,
-                [ 'pacman-key', '--config', pacstrap_config,
-                  '--gpgdir', pac_object.global_gpg_directory(),
-                  '--init' ],
+        file.makedirs(run_context, pac_object.host_gpg_directory())
+        pacman_key = run_context.ctx.binary(context.Binaries.PACMAN_KEY)
+        run.run(pacman_key,
+                '--config', pacstrap_config,
+                '--gpgdir', pac_object.host_gpg_directory(),
+                '--init',
                 exit_code=0,
-                work_directory=run_context.ctx.systems_directory())
-        run.run(run_context.ctx,
-                [ 'pacman-key', '--config', pacstrap_config,
-                  '--gpgdir', pac_object.global_gpg_directory(),
-                  '--populate', 'archlinux' ],
+                work_directory=run_context.ctx.systems_directory(),
+                trace_output=run_context.ctx.printer.trace)
+        run.run(pacman_key,
+                '--config', pacstrap_config,
+                '--gpgdir', pac_object.host_gpg_directory(),
+                '--populate', 'archlinux',
                 exit_code=0,
-                work_directory=run_context.ctx.systems_directory())
+                work_directory=run_context.ctx.systems_directory(),
+                trace_output=run_context.ctx.printer.trace)
