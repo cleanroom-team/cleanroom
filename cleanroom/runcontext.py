@@ -22,6 +22,7 @@ class RunContext:
         self.vars = dict()
         self.timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
         self.baseContext = None
+        self.hooks = {}
 
         self._command = None
 
@@ -67,6 +68,10 @@ class RunContext:
     def set_command(self, command_name):
         """Set the command name."""
         self._command = command_name
+
+    def add_hook(self, hook, executable_object):
+        """Add a hook."""
+        self.hooks[hook] += [executable_object]
 
 
 if __name__ == '__main__':

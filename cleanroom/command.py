@@ -23,14 +23,14 @@ class Command:
     def find_configuration_file(self, run_context, filename):
         pass
 
-    def validate_arguments(self, line_number, args):
+    def validate_arguments(self, file_name, line_number, args):
         """Validate all arguments.
 
         Validate all arguments and optionally return a dependency for
         the system.
         """
         if len(args) != 0:
-            raise ex.ParseError(line_number,
+            raise ex.ParseError(file_name, line_number,
                                 'Command does not take arguments.')
         return None
 

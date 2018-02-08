@@ -19,10 +19,10 @@ class PacstrapCommand(cmd.Command):
         """Constructor."""
         pass
 
-    def validate_arguments(self, line_number, args):
+    def validate_arguments(self, file_name, line_number, args):
         """Validate the arguments."""
         if len(args) < 2:
-            raise ex.ParseError(line_number,
+            raise ex.ParseError(file_name, line_number,
                                 'pacstrap needs a config file and at least '
                                 'one package or group to install.')
         return None

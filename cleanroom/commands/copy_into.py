@@ -17,10 +17,10 @@ class CopyIntoCommand(cmd.Command):
                          'Copy a file into a system, optionally overwriting '
                          'an existing file.')
 
-    def validate_arguments(self, line_number, args):
+    def validate_arguments(self, file_name, line_number, args):
         """Validate the arguments."""
         if len(args) < 2:
-            raise ex.ParseError(line_number,
+            raise ex.ParseError(file_name, line_number,
                                 'To few arguments for "copy_into". '
                                 'Need <FILE> and <LOCATION_INSIDE> and '
                                 '(optional) "replace".')
@@ -28,11 +28,12 @@ class CopyIntoCommand(cmd.Command):
             return None
         elif len(args) == 3:
             if args[2] != 'replace':
-                raise ex.ParseError(line_number,
+                raise ex.ParseError(file_name, line_number,
                                     'Third (optional) argument must be '
                                     '"replace".')
         else:
-            raise ex.ParseError(line_number, )
+            raise ex.ParseError(file_name, line_number,
+                                'Invalid number of arguments for "copy_into".')
 
     def execute(self, run_context, args):
         """Execute command."""

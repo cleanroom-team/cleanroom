@@ -52,14 +52,15 @@ class SystemNotFoundError(CleanRoomError):
 class ParseError(CleanRoomError):
     """Error raised while parsing system descriptions."""
 
-    def __init__(self, line, msg):
+    def __init__(self, file, line, msg):
         """Constructor."""
         super().__init__((line, msg))
 
     def __str__(self):
         """Stringify exception."""
-        assert(len(self.args) == 2)
-        return 'Error in line {}: {}'.format(self.args[0], self.args[1])
+        assert(len(self.args) == 3)
+        return 'Error in {}({}): {}'.format(self.args[0], self.args[1],
+                                            self.args[2])
 
 
 if __name__ == '__main__':

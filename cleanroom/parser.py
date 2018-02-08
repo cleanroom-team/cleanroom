@@ -20,12 +20,13 @@ class ExecObject:
     Describe the command to execute later during generation phase.
     """
 
-    def __init__(self, name, dependency, command, args):
+    def __init__(self, location, name, dependency, command, args):
         """Constructor."""
         self._name = name
         self._command = command
         self._args = args
         self._dependency = dependency
+        self._location = location
 
     def dependency(self):
         """Return dependency of the system (or None)."""
@@ -46,17 +47,19 @@ class ExecObject:
         try:
             command_object.execute(run_context, args)
         except ex.CleanRoomError as e:
-            run_context.ctx.printer.fail('Failed to run "{}" with '
+            run_context.ctx.printer.fail('{}: Failed to run "{}" with '
                                          'arguments ({}): {}.'
-                                         .format(self._name,
+                                         .format(self._location,
+                                                 self._name,
                                                  ', '.join(args), e),
                                          verbosity=1)
             if not run_context.ctx.ignore_errors:
                 raise
         else:
-            run_context.ctx.printer.success('Ran "{}" with '
+            run_context.ctx.printer.success('{}: Ran "{}" with '
                                             'arguments ({}).'
-                                            .format(self._name,
+                                            .format(self._location,
+                                                    self._name,
                                                     ', '.join(args)),
                                             verbosity=1)
         finally:
@@ -66,7 +69,8 @@ class ExecObject:
 class _ParserState:
     """Hold the state of the Parser."""
 
-    def __init__(self):
+    def __init__(self, file_name):
+        self._file_name = file_name
         self._line_number = 0
         self._to_process = ''
 
@@ -178,10 +182,12 @@ class Parser:
             state.reset()
 
             command_object = Parser._commands[command][0]
-            dependency = command_object.validate_arguments(state._line_number,
+            dependency = command_object.validate_arguments(state._file_name,
+                                                           state._line_number,
                                                            args)
 
-            return (state, ExecObject(command, dependency,
+            return (state, ExecObject((state._file_name, state._line_number),
+                                      command, dependency,
                                       command_object, tuple(args)))
 
         return (state, None)
@@ -189,14 +195,17 @@ class Parser:
     def parse(self, input_file):
         """Parse a file."""
         with open(input_file, 'r') as f:
-            for result in self._parse_lines(f):
+            for result in self._parse_lines(f, input_file):
                 yield result
 
-    def _parse_lines(self, iterable):
+    def _parse_lines(self, iterable, file_name):
         """Parse an iterable of lines."""
-        state = _ParserState()
+        state = _ParserState(file_name)
 
-        yield ExecObject('_setup', None, Parser._commands['_setup'][0], None)
+        location = ('<BUILT_IN>', 1)
+
+        yield ExecObject(location, '_setup', None,
+                         Parser._commands['_setup'][0], None)
 
         for line in iterable:
             state._to_process += line
@@ -208,15 +217,16 @@ class Parser:
                 yield obj
 
             if not state.is_line_done():
-                raise ex.ParseError(state._line_number,
+                raise ex.ParseError(state._file_name, state._line_number,
                                     'Unexpected tokens "{}" found.'
                                     .format(state._to_process))
 
         if not state.is_line_done() \
            or not state.is_command_complete():
-            raise ex.ParseError(state._line_number, 'Unexpected EOF.')
+            raise ex.ParseError(state._file_name, state._line_number,
+                                'Unexpected EOF.')
 
-        yield ExecObject('_teardown', None,
+        yield ExecObject(location, '_teardown', None,
                          Parser._commands['_teardown'][0], None)
 
     def _parse_single_line(self, state):
@@ -286,17 +296,18 @@ class Parser:
         self._ctx.printer.trace('Validating command "{}".'.format(command))
         if not command:
             self._ctx.printer.trace('Empty command found.')
-            raise ex.ParseError(state._line_number, 'Empty command found.')
+            raise ex.ParseError(state._file_name, state._line_number,
+                                'Empty command found.')
 
         command_pattern = re.compile("^[A-Za-z][A-Za-z0-9_-]*$")
         if not command_pattern.match(command):
             self._ctx.printer.trace('Invalid command "{}".'.format(command))
-            raise ex.ParseError(state._line_number,
+            raise ex.ParseError(state._file_name, state._line_number,
                                 'Invalid command "{}".'.format(command))
 
         if command not in Parser._commands:
             self._ctx.printer.trace('Command "{}" not found.'.format(command))
-            raise ex.ParseError(state._line_number,
+            raise ex.ParseError(state._file_name, state._line_number,
                                 'Command "{}" not found.'.format(command))
 
         return command
@@ -356,7 +367,7 @@ class Parser:
                     arg += c
                     continue
 
-                raise ex.ParseError(state._line_number,
+                raise ex.ParseError(state._file_name, state._line_number,
                                     'Invalid escape sequence "\{}" in string.'
                                     .format(c))
 
@@ -371,7 +382,7 @@ class Parser:
 
             arg += c
 
-        raise ex.ParseError(state._line_number,
+        raise ex.ParseError(state._file_name, state._line_number,
                             'Missing closing "{}" quote.'.format(quote))
 
     def _extract_normal_argument(self, state):
@@ -389,7 +400,7 @@ class Parser:
                     arg += c
                     continue
 
-                raise ex.ParseError(state._line_number,
+                raise ex.ParseError(state._file_name, state._line_number,
                                     'Invalid escape sequence "\{}" '
                                     'in argument.'.format(c))
 

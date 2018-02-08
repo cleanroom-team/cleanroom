@@ -18,7 +18,10 @@ def run(*args, exit_code=0, work_directory=None, trace_output=None, **kwargs):
         os.chdir(work_directory)
 
     if trace_output is not None:
-        trace_output('Running:', args)
+        if work_directory:
+            trace_output('Running:', args, 'in', work_directory)
+        else:
+            trace_output('Running', args)
 
     completed_process = subprocess.run(args,
                                        stdout=subprocess.PIPE,

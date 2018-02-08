@@ -1,10 +1,6 @@
 # Base image for everything
 
 pacstrap type-base/pacstrap.conf <<<<
-    coreutils
-
-    file filesystem
-
     glibc
 
     pacman

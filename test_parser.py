@@ -19,7 +19,7 @@ class TestCommand(cmd.Command):
         """Constructor."""
         super().__init__('test', 'test')
 
-    def validate_arguments(self, line_number, args):
+    def validate_arguments(self, file_name, line_number, args):
         """Accept all arguments."""
         return None
 
