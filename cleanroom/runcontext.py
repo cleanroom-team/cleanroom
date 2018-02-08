@@ -69,9 +69,23 @@ class RunContext:
         """Set the command name."""
         self._command = command_name
 
-    def add_hook(self, hook, executable_object):
+    def add_hook(self, hook, exec_object):
         """Add a hook."""
-        self.hooks[hook] += [executable_object]
+        self.hooks.setdefault(hook, []).append(exec_object)
+        self.ctx.printer.trace('Hook {} has {} entries.'
+                               .format(hook, len(self.hooks[hook])))
+
+    def run_hooks(self, hook):
+        """Run all the registered hooks."""
+        command_list = self.hooks.setdefault(hook, [])
+        self.ctx.printer.trace('Runnnig hook {} with {} entries.'
+                               .format(hook, len(command_list)))
+        if not command_list:
+            return
+
+        self.ctx.printer.h2('Running {} hooks.'.format(hook))
+        for command in command_list:
+            command.execute(self)
 
 
 if __name__ == '__main__':

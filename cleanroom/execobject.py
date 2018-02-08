@@ -27,6 +27,11 @@ class ExecObject:
         """Return dependency of the system (or None)."""
         return self._dependency
 
+    def __str__(self):
+        """Turn into string object."""
+        return '{}({}): {}'.format(self._location[0], self._location[1],
+                                   self._name)
+
     def execute(self, run_context):
         """Execute the command."""
         args = self._args
@@ -40,7 +45,7 @@ class ExecObject:
                                               ', '.join(args)))
 
         try:
-            command_object.execute(run_context, args)
+            command_object(run_context, args)
         except ex.CleanRoomError as e:
             run_context.ctx.printer.fail('{}: Failed to run "{}" with '
                                          'arguments ({}): {}.'

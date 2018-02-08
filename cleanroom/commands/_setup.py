@@ -18,7 +18,7 @@ class _SetupCommand(cmd.Command):
                          "Implicitly run before any other command of a "
                          "system is run.")
 
-    def execute(self, run_context, args):
+    def __call__(self, run_context, args):
         """Execute command."""
         # Make sure systemd does not create /var/lib/machines for us!
         machines_dir = '/var/lib/machines'

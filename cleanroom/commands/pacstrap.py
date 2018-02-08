@@ -6,6 +6,7 @@
 
 import cleanroom.command as cmd
 import cleanroom.context as context
+import cleanroom.execobject as eo
 import cleanroom.exceptions as ex
 import cleanroom.helper.archlinux.pacman as pacman
 import cleanroom.helper.generic.file as file
@@ -27,7 +28,7 @@ class PacstrapCommand(cmd.Command):
                                 'one package or group to install.')
         return None
 
-    def execute(self, run_context, args):
+    def __call__(self, run_context, args):
         """Execute command."""
         pac_object = pacman.Pacman(run_context)
 
@@ -54,3 +55,12 @@ class PacstrapCommand(cmd.Command):
                 exit_code=0,
                 work_directory=run_context.ctx.systems_directory(),
                 trace_output=run_context.ctx.printer.trace)
+
+        run_context.add_hook('_teardown',
+                             eo.ExecObject(('<pacstrap command>', 1),
+                                           'clean pacman key directory',
+                                           None,
+                                           self._teardown_hook, ()))
+
+    def _teardown_hook(self, run_context, args):
+        print('Running teardown hook in pacstrap!!!!!!!!!!!')

@@ -41,7 +41,7 @@ class BasedCommand(cmd.Command):
 
         return base
 
-    def execute(self, run_context, args):
+    def __call__(self, run_context, args):
         """Execute command."""
         pickle_jar = run_context.pickle_jar(args[1])
         run_context.ctx.printer.debug('Reading pickled run_context from {}.'

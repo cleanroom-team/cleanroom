@@ -34,7 +34,7 @@ class Command:
                                 'Command does not take arguments.')
         return None
 
-    def execute(self, run_context, args):
+    def __call__(self, run_context, args):
         """Execute command."""
         return True
 

@@ -35,7 +35,7 @@ class CopyIntoCommand(cmd.Command):
             raise ex.ParseError(file_name, line_number,
                                 'Invalid number of arguments for "copy_into".')
 
-    def execute(self, run_context, args):
+    def __call__(self, run_context, args):
         """Execute command."""
         file.copy_into(run_context, args[0], args[1])
         return True

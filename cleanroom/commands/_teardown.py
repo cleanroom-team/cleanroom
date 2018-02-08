@@ -19,8 +19,10 @@ class _TeardownCommand(cmd.Command):
                          "Implicitly run after any other command of a "
                          "system is run.")
 
-    def execute(self, run_context, args):
+    def __call__(self, run_context, args):
         """Execute command."""
+        run_context.run_hooks('_teardown')
+
         pickle_jar = run_context.pickle_jar()
 
         ctx = run_context.ctx
