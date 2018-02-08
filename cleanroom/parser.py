@@ -7,63 +7,12 @@
 
 
 from . import exceptions as ex
+from . import execobject
 
 import importlib.util
 import inspect
 import os
 import re
-
-
-class ExecObject:
-    """Describe command in system definition file.
-
-    Describe the command to execute later during generation phase.
-    """
-
-    def __init__(self, location, name, dependency, command, args):
-        """Constructor."""
-        self._name = name
-        self._command = command
-        self._args = args
-        self._dependency = dependency
-        self._location = location
-
-    def dependency(self):
-        """Return dependency of the system (or None)."""
-        return self._dependency
-
-    def execute(self, run_context):
-        """Execute the command."""
-        args = self._args
-        if args is None:
-            args = (run_context.system,)
-
-        command_object = self._command
-        run_context.set_command(self._name)
-        run_context.ctx.printer.debug('Running "{}" with arguments ({}).'
-                                      .format(self._name,
-                                              ', '.join(args)))
-
-        try:
-            command_object.execute(run_context, args)
-        except ex.CleanRoomError as e:
-            run_context.ctx.printer.fail('{}: Failed to run "{}" with '
-                                         'arguments ({}): {}.'
-                                         .format(self._location,
-                                                 self._name,
-                                                 ', '.join(args), e),
-                                         verbosity=1)
-            if not run_context.ctx.ignore_errors:
-                raise
-        else:
-            run_context.ctx.printer.success('{}: Ran "{}" with '
-                                            'arguments ({}).'
-                                            .format(self._location,
-                                                    self._name,
-                                                    ', '.join(args)),
-                                            verbosity=1)
-        finally:
-            run_context.set_command(None)
 
 
 class _ParserState:
@@ -186,9 +135,10 @@ class Parser:
                                                            state._line_number,
                                                            args)
 
-            return (state, ExecObject((state._file_name, state._line_number),
-                                      command, dependency,
-                                      command_object, tuple(args)))
+            return (state, execobject.ExecObject((state._file_name,
+                                                 state._line_number),
+                                                 command, dependency,
+                                                 command_object, tuple(args)))
 
         return (state, None)
 
@@ -204,8 +154,8 @@ class Parser:
 
         location = ('<BUILT_IN>', 1)
 
-        yield ExecObject(location, '_setup', None,
-                         Parser._commands['_setup'][0], None)
+        yield execobject.ExecObject(location, '_setup', None,
+                                    Parser._commands['_setup'][0], None)
 
         for line in iterable:
             state._to_process += line
@@ -226,8 +176,8 @@ class Parser:
             raise ex.ParseError(state._file_name, state._line_number,
                                 'Unexpected EOF.')
 
-        yield ExecObject(location, '_teardown', None,
-                         Parser._commands['_teardown'][0], None)
+        yield execobject.ExecObject(location, '_teardown', None,
+                                    Parser._commands['_teardown'][0], None)
 
     def _parse_single_line(self, state):
         """Parse a single line."""
