@@ -17,7 +17,7 @@ class CopyIntoCommand(cmd.Command):
                          'Copy a file into a system, optionally overwriting '
                          'an existing file.')
 
-    def validate_arguments(self, file_name, line_number, args):
+    def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate the arguments."""
         if len(args) < 2:
             raise ex.ParseError(file_name, line_number,
@@ -35,7 +35,7 @@ class CopyIntoCommand(cmd.Command):
             raise ex.ParseError(file_name, line_number,
                                 'Invalid number of arguments for "copy_into".')
 
-    def __call__(self, run_context, args):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         file.copy_into(run_context, args[0], args[1])
         return True

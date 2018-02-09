@@ -14,11 +14,11 @@ class _SetupCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__("_setup <SYSTEM>",
+        super().__init__("_setup",
                          "Implicitly run before any other command of a "
                          "system is run.")
 
-    def __call__(self, run_context, args):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         # Make sure systemd does not create /var/lib/machines for us!
         machines_dir = '/var/lib/machines'

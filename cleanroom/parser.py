@@ -36,7 +36,8 @@ class _ParserState:
         assert(self._to_process == '')
 
         self._command = ''
-        self._args = []
+        self._args = ()
+        self._kwargs = {}
 
         self._incomplete_token = ''
         self._to_process = ''
@@ -128,17 +129,20 @@ class Parser:
             self._ctx.printer.debug('Creating Exec Object ({}).'.format(state))
             command = state._command
             args = state._args
+            kwargs = state._kwargs
+            file_name = state._file_name
+            line_number = state._line_number
             state.reset()
 
             command_object = Parser._commands[command][0]
-            dependency = command_object.validate_arguments(state._file_name,
-                                                           state._line_number,
-                                                           args)
+            dependency = command_object.validate_arguments(file_name,
+                                                           line_number,
+                                                           *args, *kwargs)
 
-            return (state, execobject.ExecObject((state._file_name,
-                                                 state._line_number),
+            return (state, execobject.ExecObject((file_name, line_number),
                                                  command, dependency,
-                                                 command_object, tuple(args)))
+                                                 command_object, *args,
+                                                 *kwargs))
 
         return (state, None)
 
@@ -155,7 +159,7 @@ class Parser:
         location = ('<BUILT_IN>', 1)
 
         yield execobject.ExecObject(location, '_setup', None,
-                                    Parser._commands['_setup'][0], None)
+                                    Parser._commands['_setup'][0])
 
         for line in iterable:
             state._to_process += line
@@ -177,7 +181,7 @@ class Parser:
                                 'Unexpected EOF.')
 
         yield execobject.ExecObject(location, '_teardown', None,
-                                    Parser._commands['_teardown'][0], None)
+                                    Parser._commands['_teardown'][0])
 
     def _parse_single_line(self, state):
         """Parse a single line."""
@@ -207,7 +211,8 @@ class Parser:
     def _extract_command(self, state):
         """Extract the command from a line."""
         assert(state._command == '')
-        assert(state._args == [])
+        assert(state._args == ())
+        assert(state._kwargs == {})
 
         state = self._strip_comment_and_ws(state)
         if state.is_line_done():
@@ -292,7 +297,7 @@ class Parser:
             arg = state._incomplete_token + line[:end_pos]
 
             state._incomplete_token = ''
-            state._args.append(arg)
+            state._args = (*state._args, arg)
             state._to_process = line[end_pos + 4:]
 
             self._ctx.printer.debug('  ML Arg ({}).'.format(state))
@@ -327,7 +332,7 @@ class Parser:
 
             if c == quote:
                 state._to_process = line[pos + 1:]
-                state._args.append(arg)
+                state._args = (*state._args, arg)
                 return state
 
             arg += c
@@ -367,5 +372,5 @@ class Parser:
         state._to_process = line[pos + 1:]
         assert(arg != '')
         self._ctx.printer.debug('  Arg ({}).'.format(state))
-        state._args.append(arg)
+        state._args = (*state._args, arg)
         return state

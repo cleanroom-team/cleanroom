@@ -15,11 +15,12 @@ class ExecObject:
     Describe the command to execute later during generation phase.
     """
 
-    def __init__(self, location, name, dependency, command, args):
+    def __init__(self, location, name, dependency, command, *args, **kwargs):
         """Constructor."""
         self._name = name
         self._command = command
         self._args = args
+        self._kwargs = kwargs
         self._dependency = dependency
         self._location = location
 
@@ -34,33 +35,32 @@ class ExecObject:
 
     def execute(self, run_context):
         """Execute the command."""
-        args = self._args
-        if args is None:
-            args = (run_context.system,)
-
         command_object = self._command
         run_context.set_command(self._name)
         run_context.ctx.printer.debug('Running "{}" with arguments ({}).'
                                       .format(self._name,
-                                              ', '.join(args)))
+                                              ', '.join(self._args),
+                                              ', '.join(self._kwargs)))
 
         try:
-            command_object(run_context, args)
+            command_object(run_context, *self._args, **self._kwargs)
         except ex.CleanRoomError as e:
             run_context.ctx.printer.fail('{}: Failed to run "{}" with '
                                          'arguments ({}): {}.'
                                          .format(self._location,
                                                  self._name,
-                                                 ', '.join(args), e),
+                                                 ', '.join(self._args),
+                                                 ', '.join(self._kwargs), e),
                                          verbosity=1)
             if not run_context.ctx.ignore_errors:
                 raise
         else:
             run_context.ctx.printer.success('{}: Ran "{}" with '
-                                            'arguments ({}).'
+                                            'arguments ({}, {}).'
                                             .format(self._location,
                                                     self._name,
-                                                    ', '.join(args)),
+                                                    ', '.join(self._args),
+                                                    ', '.join(self._kwargs)),
                                             verbosity=1)
         finally:
             run_context.set_command(None)

@@ -20,7 +20,7 @@ class PacstrapCommand(cmd.Command):
         """Constructor."""
         pass
 
-    def validate_arguments(self, file_name, line_number, args):
+    def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate the arguments."""
         if len(args) < 2:
             raise ex.ParseError(file_name, line_number,
@@ -28,7 +28,7 @@ class PacstrapCommand(cmd.Command):
                                 'one package or group to install.')
         return None
 
-    def __call__(self, run_context, args):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         pac_object = pacman.Pacman(run_context)
 
@@ -60,7 +60,7 @@ class PacstrapCommand(cmd.Command):
                              eo.ExecObject(('<pacstrap command>', 1),
                                            'clean pacman key directory',
                                            None,
-                                           self._teardown_hook, ()))
+                                           file.Deleter(), ()))
 
     def _teardown_hook(self, run_context, args):
         print('Running teardown hook in pacstrap!!!!!!!!!!!')

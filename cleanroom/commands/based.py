@@ -21,11 +21,12 @@ class BasedCommand(cmd.Command):
                          "Note: This command needs to be the first in the\n"
                          "system definition file!")
 
-    def validate_arguments(self, file_name, line_number, args):
+    def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate the arguments."""
         base = None
 
         if len(args) != 2 or args[0] != 'on':
+            print('>>>>', args, type(args))
             raise ex.ParseError(file_name, line_number,
                                 '"based" needs a "on" followed by a '
                                 'system name.')
@@ -41,7 +42,7 @@ class BasedCommand(cmd.Command):
 
         return base
 
-    def __call__(self, run_context, args):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         pickle_jar = run_context.pickle_jar(args[1])
         run_context.ctx.printer.debug('Reading pickled run_context from {}.'

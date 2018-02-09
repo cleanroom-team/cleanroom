@@ -127,5 +127,14 @@ def remove(run_context, dest, *, recursive=False):
         os.remove(full_path)
 
 
+class Deleter:
+    """Delete files in the system directory."""
+
+    def __call__(self, run_context, *args, **kwargs):
+        """Run delete operations on the files in args."""
+        print('!!!!!!!!!!!!!!!!!!!!! Deleter !!!!!!!!!!!!!!!!!!!!!')
+        pass
+
+
 if __name__ == '__main__':
     pass

@@ -23,17 +23,21 @@ class BaseParserTest:
         """Set up method."""
         self.ctx = context.Context.Create(verbosity)
         self.parser = parser.Parser(self.ctx)
+        parser.Parser._commands['_setup'] \
+            = (TestCommand('_setup', 'placeholder'), '<placeholder>')
+        parser.Parser._commands['_teardown'] \
+            = (TestCommand('_setup', 'placeholder'), '<placeholder>')
 
     def _parse(self, data):
         """Call Parser._parse_lines and map the result."""
         input = (data,) if type(data) is str else data
-        return list(map(lambda x: (x._name, x._args),
+        return list(map(lambda x: (x._name, x._args, x._kwargs),
                         self.parser._parse_lines(input, '<TEST_DATA>')))
 
     def _verify(self, data, expected):
         """Verify one line of input to the Parser."""
         result = self._parse(data)
         self.assertTrue(len(result) >= 2)
-        self.assertEqual(result[0], ('_setup', None))
-        self.assertEqual(result[-1], ('_teardown', None))
+        self.assertEqual(result[0], ('_setup', (), {}))
+        self.assertEqual(result[-1], ('_teardown', (), {}))
         self.assertEqual(result[1:-1], expected)

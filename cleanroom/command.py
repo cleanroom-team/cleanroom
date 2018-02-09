@@ -20,10 +20,7 @@ class Command:
         self._syntax_string = syntax_string
         self._help_string = help_string
 
-    def find_configuration_file(self, run_context, filename):
-        pass
-
-    def validate_arguments(self, file_name, line_number, args):
+    def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate all arguments.
 
         Validate all arguments and optionally return a dependency for
@@ -34,7 +31,7 @@ class Command:
                                 'Command does not take arguments.')
         return None
 
-    def __call__(self, run_context, args):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         return True
 
