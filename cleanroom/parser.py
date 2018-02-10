@@ -23,35 +23,66 @@ class _ParserState:
         self._line_number = 0
         self._to_process = ''
 
+        self._indent_depth = 0
+
         self.reset()
 
-    def is_command_complete(self):
+    def is_token_complete(self):
         return self._incomplete_token == ''
+
+    def is_command_continuation(self):
+        if self._to_process == '' or self._to_process == '\n':
+            return True
+
+        return self._indent_depth > 0 \
+            and self._to_process.startswith(' ' * self._indent_depth)
 
     def is_line_done(self):
         return self._to_process == ''
 
     def reset(self):
         assert(self._line_number >= 0)
-        assert(self._to_process == '')
 
         self._command = ''
         self._args = ()
         self._kwargs = {}
 
         self._incomplete_token = ''
-        self._to_process = ''
 
-        assert(self.is_command_complete())
-        assert(self.is_line_done())
+        self._indent_depth = 0
+
+        assert(self.is_token_complete())
+
+    def create_execute_object(self):
+        if self._command == '':
+            return None
+
+        command = self._command
+        args = self._args
+        kwargs = self._kwargs
+        file_name = self._file_name
+        line_number = self._line_number
+
+        self.reset()
+
+        command_object = Parser._commands[command][0]
+        dependency = command_object.validate_arguments(file_name,
+                                                       line_number,
+                                                       *args, *kwargs)
+
+        return execobject.ExecObject((file_name, line_number), command,
+                                     dependency, command_object, *args,
+                                     *kwargs)
 
     def __str__(self):
-        dump = self._to_process.replace('\n', '\\n').replace('\t', '\\t')
+        dump1 = self._to_process.replace('\n', '\\n').replace('\t', '\\t')
+        dump2 = self._incomplete_token.replace('\n', '\\n')\
+            .replace('\t', '\\t')
 
-        return '{}-\"{}\" ({})-cc:{}-ld:{}-"{}".'.\
+        return '{}-\"{}\" ({})-tc:{}-ld:{}-"{}"-token:"{}".'.\
                format(self._line_number, self._command,
-                      ','.join(self._args), self.is_command_complete(),
-                      self.is_line_done(), dump)
+                      ','.join(self._args), self.is_token_complete(),
+                      self.is_line_done(), dump1, dump2)
 
 
 class Parser:
@@ -122,30 +153,6 @@ class Parser:
         """Constructor."""
         self._ctx = ctx
 
-    def _object_from_state(self, state):
-        if state.is_line_done() \
-           and state.is_command_complete() \
-           and state._command:
-            self._ctx.printer.debug('Creating Exec Object ({}).'.format(state))
-            command = state._command
-            args = state._args
-            kwargs = state._kwargs
-            file_name = state._file_name
-            line_number = state._line_number
-            state.reset()
-
-            command_object = Parser._commands[command][0]
-            dependency = command_object.validate_arguments(file_name,
-                                                           line_number,
-                                                           *args, *kwargs)
-
-            return (state, execobject.ExecObject((file_name, line_number),
-                                                 command, dependency,
-                                                 command_object, *args,
-                                                 *kwargs))
-
-        return (state, None)
-
     def parse(self, input_file):
         """Parse a file."""
         with open(input_file, 'r') as f:
@@ -156,17 +163,16 @@ class Parser:
         """Parse an iterable of lines."""
         state = _ParserState(file_name)
 
-        location = ('<BUILT_IN>', 1)
+        built_in = ('<BUILT_IN>', 1)
 
-        yield execobject.ExecObject(location, '_setup', None,
+        yield execobject.ExecObject(built_in, '_setup', None,
                                     Parser._commands['_setup'][0])
 
         for line in iterable:
             state._to_process += line
             state._line_number += 1
 
-            next_state = self._parse_single_line(state)
-            (state, obj) = self._object_from_state(next_state)
+            (state, obj) = self._parse_single_line(state)
             if obj:
                 yield obj
 
@@ -175,54 +181,79 @@ class Parser:
                                     'Unexpected tokens "{}" found.'
                                     .format(state._to_process))
 
-        if not state.is_line_done() \
-           or not state.is_command_complete():
+            self._ctx.printer.info('  <EOL> ({}).'.format(state))
+
+        if not state.is_token_complete():
             raise ex.ParseError(state._file_name, state._line_number,
                                 'Unexpected EOF.')
 
-        yield execobject.ExecObject(location, '_teardown', None,
+        # Flush last exec object:
+        obj = state.create_execute_object()
+        if obj:
+            yield obj
+
+        yield execobject.ExecObject(built_in, '_teardown', None,
                                     Parser._commands['_teardown'][0])
 
     def _parse_single_line(self, state):
         """Parse a single line."""
-        self._ctx.printer.trace('Parsing single line ({}).'.format(state))
+        self._ctx.printer.info('Parsing line ({}).'.format(state))
 
-        if state.is_command_complete():
-            self._ctx.printer.trace('Part of a new command ({}).'
+        exec_object = None
+
+        if state.is_token_complete() and not state.is_command_continuation():
+            self._ctx.printer.trace('  Part of a new command ({}).'
                                     .format(state))
+            exec_object = state.create_execute_object()
             state = self._extract_command(state)
         else:
-            self._ctx.printer.trace('Continuation of earlier command ({}).'
-                                    .format(state))
-            state = self._extract_multiline_argument(state)
+            if state.is_token_complete():
+                state._to_process = state._to_process[state._indent_depth:]
+                self._ctx.printer.trace('  Continuation of command ({}).'
+                                        .format(state))
+                state = self._extract_arguments(state)
+            else:
+                self._ctx.printer.trace('  Continuation of argument ({}).'
+                                        .format(state))
+                state = self._extract_multiline_argument(state)
 
-        return self._extract_arguments(state)
+        return (self._extract_arguments(state), exec_object)
 
     def _strip_comment_and_ws(self, state):
         """Extract a comment up to the end of the line."""
-        line = state._to_process.lstrip()
+        input = state._to_process
+        line = input.lstrip()
         if line == '' or line.startswith('#'):
             state._to_process = ''
         else:
             state._to_process = line
-        self._ctx.printer.trace('Stripped WS and comments ({}).'.format(state))
+
+        # Only report if there are changes:
+        if input != state._to_process:
+            self._ctx.printer.trace('      Stripped WS and comments ({}).'
+                                    .format(state))
+
         return state
 
     def _extract_command(self, state):
         """Extract the command from a line."""
         assert(state._command == '')
+        assert(state._indent_depth == 0)
         assert(state._args == ())
         assert(state._kwargs == {})
+
+        indent_depth = \
+            len(state._to_process) - len(state._to_process.lstrip(' ')) + 4
 
         state = self._strip_comment_and_ws(state)
         if state.is_line_done():
             return state
 
+        state._indent_depth = indent_depth
+
         line = state._to_process.lstrip()
         pos = 0
         command = ''
-
-        self._ctx.printer.trace('Extracting command ({}).'.format(state))
 
         for c in line:
             if c.isspace() or c == '#':
@@ -234,7 +265,7 @@ class Parser:
         state._command = self._validate_command(state, command)
         state._to_process = line[pos:]
 
-        self._ctx.printer.debug('Command found ({}).'.format(state))
+        self._ctx.printer.trace('      Command found ({}).'.format(state))
 
         return state
 
@@ -243,27 +274,25 @@ class Parser:
         while not state.is_line_done():
             state = self._extract_next_argument(state)
 
-        self._ctx.printer.debug('<EOL> ({}).'.format(state))
-
         return state
 
     def _validate_command(self, state, command):
-        self._ctx.printer.trace('Validating command "{}".'.format(command))
+        self._ctx.printer.trace('      Validating command "{}".'
+                                .format(command))
         if not command:
-            self._ctx.printer.trace('Empty command found.')
             raise ex.ParseError(state._file_name, state._line_number,
                                 'Empty command found.')
 
         command_pattern = re.compile("^[A-Za-z][A-Za-z0-9_-]*$")
         if not command_pattern.match(command):
-            self._ctx.printer.trace('Invalid command "{}".'.format(command))
             raise ex.ParseError(state._file_name, state._line_number,
                                 'Invalid command "{}".'.format(command))
 
         if command not in Parser._commands:
-            self._ctx.printer.trace('Command "{}" not found.'.format(command))
             raise ex.ParseError(state._file_name, state._line_number,
                                 'Command "{}" not found.'.format(command))
+
+        self._ctx.printer.info('    Command is "{}".'.format(command))
 
         return command
 
@@ -271,8 +300,6 @@ class Parser:
         state = self._strip_comment_and_ws(state)
         if state.is_line_done():
             return state
-
-        self._ctx.printer.trace('Extracting argument ({}).'.format(state))
 
         line = state._to_process
 
@@ -290,7 +317,8 @@ class Parser:
     def _extract_multiline_argument(self, state):
         line = state._to_process
 
-        self._ctx.printer.trace('Extracting multiline ({}).'.format(state))
+        self._ctx.printer.trace('      Extracting multiline ({}).'
+                                .format(state))
 
         end_pos = line.find('>>>>')
         if end_pos >= 0:
@@ -300,7 +328,8 @@ class Parser:
             state._args = (*state._args, arg)
             state._to_process = line[end_pos + 4:]
 
-            self._ctx.printer.debug('  ML Arg ({}).'.format(state))
+            self._ctx.printer.info('    multi-line Arg ({}).'
+                                   .format(state))
         else:
             state._incomplete_token += line
             state._to_process = ''
@@ -333,6 +362,7 @@ class Parser:
             if c == quote:
                 state._to_process = line[pos + 1:]
                 state._args = (*state._args, arg)
+                self._ctx.printer.info('    string Arg ({}).'.format(state))
                 return state
 
             arg += c
@@ -371,6 +401,6 @@ class Parser:
 
         state._to_process = line[pos + 1:]
         assert(arg != '')
-        self._ctx.printer.debug('  Arg ({}).'.format(state))
         state._args = (*state._args, arg)
+        self._ctx.printer.info('    normal Arg ({}).'.format(state))
         return state

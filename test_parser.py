@@ -183,6 +183,28 @@ class ParserTest(tu.BaseParserTest, unittest.TestCase):
                       'bar\n', 'baz>>>>"arg2" # foobar\n'),
                      [(self._cmd1, ('arg1', 'foo', '\nbar\nbaz', 'arg2'), {})])
 
+    def test_multiline_command(self):
+        """Test a multiline command."""
+        self._verify(('test1 \'arg1\'\n',
+                      '    test2\n',
+                      '\n',
+                      '    # ignore this comment\n',
+                      '      baz "arg2" # foobar\n',
+                      '   test2 foo'),
+                     [(self._cmd1, ('arg1', 'test2', 'baz', 'arg2'), {}),
+                      (self._cmd2, ('foo',), {})])
+
+    def test_multiline_command_with_extra_indent(self):
+        """Test a indented multiline command."""
+        self._verify(('  test1 \'arg1\'\n',
+                      '      test2\n',
+                      '\n',
+                      '      # ignore this comment\n',
+                      '        baz "arg2" # foobar\n',
+                      '     test2 foo'),
+                     [(self._cmd1, ('arg1', 'test2', 'baz', 'arg2'), {}),
+                      (self._cmd2, ('foo',), {})])
+
     # Error cases:
     def test_assert_on_unknown_command(self):
         """Test an invalid command."""
