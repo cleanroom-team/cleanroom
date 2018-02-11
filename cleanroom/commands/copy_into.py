@@ -38,4 +38,3 @@ class CopyIntoCommand(cmd.Command):
     def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         file.copy_into(run_context, args[0], args[1])
-        return True

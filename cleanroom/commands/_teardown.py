@@ -37,8 +37,6 @@ class _TeardownCommand(cmd.Command):
 
         self.store_to_ostree(run_context)
 
-        return super().execute(run_context, args)
-
     def store_to_ostree(self, run_context):
         run_context.ctx.printer.debug('Storing results in ostree.')
         ostree = run_context.ctx.binary(context.Binaries.OSTREE)

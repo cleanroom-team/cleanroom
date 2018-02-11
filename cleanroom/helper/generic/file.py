@@ -115,16 +115,24 @@ def copy_into(run_context, source, destination):
     shutil.copyfile(source, full_path)
 
 
-def remove(run_context, dest, *, recursive=False):
+def remove(run_context, *path_list, recursive=False, force=False):
     """Delete a file inside of a system."""
-    full_path = file_name(run_context, dest)
-    if os.path.isdir(full_path):
-        if recursive:
-            shutil.rmtree(full_path)
+    for path in path_list:
+        full_path = file_name(run_context, path)
+        run_context.ctx.printer.trace('Removing "{}".'.format(full_path))
+
+        if not os.path.exists(full_path):
+            if force:
+                continue
+            raise ex.GenerateError('Failed to delete: "{}" does not exist.'
+                                   .format(full_path))
+        if os.path.isdir(full_path):
+            if recursive:
+                shutil.rmtree(full_path)
+            else:
+                os.rmdir(full_path)
         else:
-            os.rmdir(full_path)
-    else:
-        os.remove(full_path)
+            os.remove(full_path)
 
 
 class Deleter:
@@ -132,8 +140,7 @@ class Deleter:
 
     def __call__(self, run_context, *args, **kwargs):
         """Run delete operations on the files in args."""
-        print('!!!!!!!!!!!!!!!!!!!!! Deleter !!!!!!!!!!!!!!!!!!!!!')
-        pass
+        remove(run_context, *args, **kwargs)
 
 
 if __name__ == '__main__':

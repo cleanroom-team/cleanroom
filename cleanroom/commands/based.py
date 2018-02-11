@@ -51,4 +51,3 @@ class BasedCommand(cmd.Command):
             base_context = pickle.load(jar)
 
         run_context.install_base_context(base_context)
-        return super().execute(run_context, args)

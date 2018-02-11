@@ -60,6 +60,7 @@ class RunContext:
         """Set up base context."""
         self.baseContext = base_context
         self.timestamp = base_context.timestamp
+        self.hooks = base_context.hooks
 
     def system_definition_directory(self):
         """Return the top level system definition directory of a system."""

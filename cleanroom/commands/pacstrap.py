@@ -12,6 +12,8 @@ import cleanroom.helper.archlinux.pacman as pacman
 import cleanroom.helper.generic.file as file
 import cleanroom.run as run
 
+import os
+
 
 class PacstrapCommand(cmd.Command):
     """The pacstrap command."""
@@ -60,11 +62,17 @@ class PacstrapCommand(cmd.Command):
                 work_directory=run_context.ctx.systems_directory(),
                 trace_output=run_context.ctx.printer.trace)
 
-        run_context.add_hook('_teardown',
-                             eo.ExecObject(('<pacstrap command>', 1),
-                                           'clean pacman key directory',
-                                           None,
-                                           file.Deleter()))
+        gpgdir = pac_object.target_gpg_directory()
 
-    def _teardown_hook(self, run_context, args):
-        print('Running teardown hook in pacstrap!!!!!!!!!!!')
+        run_context.add_hook('_teardown',
+                             eo.ExecObject(
+                                ('<pacstrap command>', 1),
+                                'clean pacman key directory', None,
+                                file.Deleter(),
+                                os.path.join(gpgdir, 'S.scdaemon'),
+                                os.path.join(gpgdir, 'S.gpg-agent'),
+                                os.path.join(gpgdir, 'S.gpg-agent.browser'),
+                                os.path.join(gpgdir, 'S.gpg-agent.extra'),
+                                os.path.join(gpgdir, 'S.gpg-agent.ssh'),
+                                os.path.join(gpgdir, 'pubring.gpg~'),
+                                force=True))
