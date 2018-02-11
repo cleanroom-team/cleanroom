@@ -152,6 +152,7 @@ class Parser:
     def __init__(self, ctx):
         """Constructor."""
         self._ctx = ctx
+        self._command_pattern = re.compile("^[A-Za-z][A-Za-z0-9_-]*$")
 
     def parse(self, input_file):
         """Parse a file."""
@@ -283,8 +284,7 @@ class Parser:
             raise ex.ParseError(state._file_name, state._line_number,
                                 'Empty command found.')
 
-        command_pattern = re.compile("^[A-Za-z][A-Za-z0-9_-]*$")
-        if not command_pattern.match(command):
+        if not self._command_pattern.match(command):
             raise ex.ParseError(state._file_name, state._line_number,
                                 'Invalid command "{}".'.format(command))
 
