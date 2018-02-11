@@ -22,6 +22,7 @@ class _ParserState:
         self._file_name = file_name
         self._line_number = 0
         self._to_process = ''
+        self._key_for_value = ''
 
         self._indent_depth = 0
 
@@ -37,9 +38,6 @@ class _ParserState:
         return self._indent_depth > 0 \
             and self._to_process.startswith(' ' * self._indent_depth)
 
-    def is_line_done(self):
-        return self._to_process == ''
-
     def reset(self):
         assert(self._line_number >= 0)
 
@@ -47,6 +45,7 @@ class _ParserState:
         self._args = ()
         self._kwargs = {}
 
+        self._key_for_value = ''
         self._incomplete_token = ''
 
         self._indent_depth = 0
@@ -60,6 +59,9 @@ class _ParserState:
         command = self._command
         args = self._args
         kwargs = self._kwargs
+        if self._key_for_value:
+            kwargs[self._key_for_value] = ''
+
         file_name = self._file_name
         line_number = self._line_number
 
@@ -68,21 +70,23 @@ class _ParserState:
         command_object = Parser._commands[command][0]
         dependency = command_object.validate_arguments(file_name,
                                                        line_number,
-                                                       *args, *kwargs)
+                                                       *args, **kwargs)
 
         return execobject.ExecObject((file_name, line_number), command,
                                      dependency, command_object, *args,
-                                     *kwargs)
+                                     **kwargs)
 
     def __str__(self):
-        dump1 = self._to_process.replace('\n', '\\n').replace('\t', '\\t')
-        dump2 = self._incomplete_token.replace('\n', '\\n')\
+        dump1 = ','.join(self._args) + ':'
+        dump1 += ','.join([k + '=' + v for (k, v) in self._kwargs.items()])
+        dump1 = dump1.replace('\n', '\\n').replace('\t', '\\t')
+        dump2 = self._to_process.replace('\n', '\\n').replace('\t', '\\t')
+        dump3 = self._incomplete_token.replace('\n', '\\n')\
             .replace('\t', '\\t')
 
-        return '{}-\"{}\" ({})-tc:{}-ld:{}-"{}"-token:"{}".'.\
-               format(self._line_number, self._command,
-                      ','.join(self._args), self.is_token_complete(),
-                      self.is_line_done(), dump1, dump2)
+        return '{}-\"{}\" ({})-tc:{}-"{}"-token:"{}".'.\
+               format(self._line_number, self._command, dump1,
+                      self.is_token_complete(), dump2, dump3)
 
 
 class Parser:
@@ -163,7 +167,6 @@ class Parser:
     def _parse_lines(self, iterable, file_name):
         """Parse an iterable of lines."""
         state = _ParserState(file_name)
-
         built_in = ('<BUILT_IN>', 1)
 
         yield execobject.ExecObject(built_in, '_setup', None,
@@ -177,7 +180,7 @@ class Parser:
             if obj:
                 yield obj
 
-            if not state.is_line_done():
+            if state._to_process != '':
                 raise ex.ParseError(state._file_name, state._line_number,
                                     'Unexpected tokens "{}" found.'
                                     .format(state._to_process))
@@ -212,7 +215,6 @@ class Parser:
                 state._to_process = state._to_process[state._indent_depth:]
                 self._ctx.printer.trace('  Continuation of command ({}).'
                                         .format(state))
-                state = self._extract_arguments(state)
             else:
                 self._ctx.printer.trace('  Continuation of argument ({}).'
                                         .format(state))
@@ -220,21 +222,21 @@ class Parser:
 
         return (self._extract_arguments(state), exec_object)
 
-    def _strip_comment_and_ws(self, state):
+    def _strip_comment_and_ws(self, line):
         """Extract a comment up to the end of the line."""
-        input = state._to_process
+        input = line
         line = input.lstrip()
-        if line == '' or line.startswith('#'):
-            state._to_process = ''
-        else:
-            state._to_process = line
+        if line == '\n' or line == '' or line.startswith('#'):
+            line = ''
 
         # Only report if there are changes:
-        if input != state._to_process:
+        if input != line:
             self._ctx.printer.trace('      Stripped WS and comments ({}).'
-                                    .format(state))
+                                    .format(line
+                                            .replace('\n', '\\n')
+                                            .replace('\t', '\\t')))
 
-        return state
+        return line
 
     def _extract_command(self, state):
         """Extract the command from a line."""
@@ -246,8 +248,8 @@ class Parser:
         indent_depth = \
             len(state._to_process) - len(state._to_process.lstrip(' ')) + 4
 
-        state = self._strip_comment_and_ws(state)
-        if state.is_line_done():
+        state._to_process = self._strip_comment_and_ws(state._to_process)
+        if state._to_process == '':
             return state
 
         state._indent_depth = indent_depth
@@ -272,8 +274,30 @@ class Parser:
 
     def _extract_arguments(self, state):
         # extract arguments:
-        while not state.is_line_done():
-            state = self._extract_next_argument(state)
+        while state._to_process != '':
+            (key, value, token, to_process, need_arg_value) \
+                = self._parse_next_argument(state._file_name,
+                                            state._line_number,
+                                            state._to_process,
+                                            state._incomplete_token, True)
+
+            state._incomplete_token = token
+            state._to_process = to_process
+
+            if key is not None:
+                if need_arg_value:
+                    if not self._command_pattern.match(key):
+                        raise ex.ParseError(state._file_name,
+                                            state._line_number,
+                                            '"{}" is not a valid keyword '
+                                            'argument.'.format(key))
+                    if value is not None:
+                        state._kwargs[key] = value
+                        state._key_for_value = ''
+                    else:
+                        state._key_for_value = key
+                else:
+                    state._args = (*state._args, key)
 
         return state
 
@@ -296,62 +320,97 @@ class Parser:
 
         return command
 
-    def _extract_next_argument(self, state):
-        state = self._strip_comment_and_ws(state)
-        if state.is_line_done():
-            return state
+    def _parse_next_argument(self, file_name, line_number, line, token,
+                             is_keyword_possible=True):
+        to_process = self._strip_comment_and_ws(line)
+        if to_process == '':
+            return (None, None, '', '', False)  # return what
 
-        line = state._to_process
+        if to_process.startswith('<<<<'):
+            to_process = to_process[4:]
+            (value, token, to_process) \
+                = self._parse_multiline_argument(file_name, line_number,
+                                                 to_process, token)
+            return (value, None, token, to_process, False)
+        if to_process[0] == '"' or to_process[0] == '\'':
+            quote = to_process[0]
+            to_process = to_process[1:]
+            (value, to_process) \
+                = self._parse_string_argument(file_name, line_number,
+                                              to_process, quote)
+            return (value, None, '', to_process, False)
 
-        if line.startswith('<<<<'):
-            state._to_process = line[4:]
-            return self._extract_multiline_argument(state)
+        (key_or_value, to_process, need_arg_value) \
+            = self._parse_normal_argument(file_name, line_number,
+                                          to_process, is_keyword_possible)
 
-        if line[0] == '"' or line[0] == '\'':
-            state._to_process = line[1:]
-            return self._extract_string_argument(state, line[0])
+        value = None
+        if need_arg_value:
+            (value, token, to_process) \
+                = self._parse_next_argument_value(file_name, line_number,
+                                                  to_process, token)
 
-        state._to_process = line
-        return self._extract_normal_argument(state)
+        return (key_or_value, value, token, to_process, need_arg_value)
+
+    def _parse_next_argument_value(self, file_name, line_number, line, token):
+        (value, unused, token, to_process, need_arg_value) \
+            = self._parse_next_argument(file_name, line_number, line, token,
+                                        is_keyword_possible=False)
+
+        assert(unused is None)
+        assert(not need_arg_value)
+
+        return (value, token, to_process)
 
     def _extract_multiline_argument(self, state):
-        line = state._to_process
+        (value, token, to_process) \
+            = self._parse_multiline_argument(state._file_name,
+                                             state._line_number,
+                                             state._to_process,
+                                             state._incomplete_token)
+        state._to_process = to_process
+        state._incomplete_token = token
+        if token == '':
+            if state._key_for_value:
+                state._kwargs[state._key_for_value] = value
+                state._key_for_value = ''
+            else:
+                state._args = (*state._args, value)
 
         self._ctx.printer.trace('      Extracting multiline ({}).'
                                 .format(state))
 
-        end_pos = line.find('>>>>')
-        if end_pos >= 0:
-            arg = state._incomplete_token + line[:end_pos]
-
-            state._incomplete_token = ''
-            state._args = (*state._args, arg)
-            state._to_process = line[end_pos + 4:]
-
-            self._ctx.printer.info('    multi-line Arg ({}).'
-                                   .format(state))
-        else:
-            state._incomplete_token += line
-            state._to_process = ''
-
         return state
 
-    def _extract_string_argument(self, state, quote):
+    def _parse_multiline_argument(self, file_name, line_number, line, token):
+        value = None
+        to_process = ''
+
+        end_pos = line.find('>>>>')
+
+        if end_pos >= 0:
+            value = token + line[:end_pos]
+            token = ''
+            to_process = line[end_pos + 4:]
+        else:
+            token += line
+        return (value, token, to_process)
+
+    def _parse_string_argument(self, file_name, line_number, line, quote):
         must_escape = False
-        line = state._to_process
         pos = -1
-        arg = ''
+        value = ''
 
         for c in line:
             pos += 1
 
             if must_escape:
                 must_escape = False
-                if c == '\'' or c == quote:
-                    arg += c
+                if c == '\\' or c == quote:
+                    value += c
                     continue
 
-                raise ex.ParseError(state._file_name, state._line_number,
+                raise ex.ParseError(file_name, line_number,
                                     'Invalid escape sequence "\{}" in string.'
                                     .format(c))
 
@@ -360,21 +419,19 @@ class Parser:
                 continue
 
             if c == quote:
-                state._to_process = line[pos + 1:]
-                state._args = (*state._args, arg)
-                self._ctx.printer.info('    string Arg ({}).'.format(state))
-                return state
+                return (value, line[pos + 1:])
 
-            arg += c
+            value += c
 
-        raise ex.ParseError(state._file_name, state._line_number,
+        raise ex.ParseError(file_name, line_number,
                             'Missing closing "{}" quote.'.format(quote))
 
-    def _extract_normal_argument(self, state):
+    def _parse_normal_argument(self, file_name, line_number, line,
+                               is_keyword_possible=True):
         must_escape = False
-        line = state._to_process
         pos = -1
-        arg = ''
+        value = ''
+        need_arg_value = False
 
         for c in line:
             pos += 1
@@ -382,10 +439,10 @@ class Parser:
             if must_escape:
                 must_escape = False
                 if c == ' ' or c == '\\':
-                    arg += c
+                    value += c
                     continue
 
-                raise ex.ParseError(state._file_name, state._line_number,
+                raise ex.ParseError(file_name, line_number,
                                     'Invalid escape sequence "\{}" '
                                     'in argument.'.format(c))
 
@@ -393,14 +450,15 @@ class Parser:
                 must_escape = True
                 continue
 
+            if c == '=' and is_keyword_possible:
+                # end of argument, start of value...
+                need_arg_value = True
+                break
+
             if c.isspace() or c == '#':
                 # end of argument...
                 break
 
-            arg += c
+            value += c
 
-        state._to_process = line[pos + 1:]
-        assert(arg != '')
-        state._args = (*state._args, arg)
-        self._ctx.printer.info('    normal Arg ({}).'.format(state))
-        return state
+        return (value, line[pos + 1:], need_arg_value)
