@@ -20,7 +20,8 @@ class PacstrapCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        pass
+        super().__init__('pacstrap <PACKAGES> config=<CONFIG_FILE>',
+                         'Run pacstrap to install <PACKAGES>.')
 
     def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate the arguments."""

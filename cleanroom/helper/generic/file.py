@@ -19,15 +19,67 @@ def file_name(run_context, f):
         raise ex.GenerateError('File path "{}" is not absolute.'.format(f))
 
     root_path = os.path.realpath(run_context.fs_directory())
-    if not root_path.endswith('/'):
-        root_path += '/'
+    if root_path.endswith('/'):
+        root_path = root_path[:-1]
 
-    full_path = os.path.realpath(root_path + f)
+    full_path = os.path.normpath(root_path + f)
 
     if not full_path.startswith(root_path):
         raise ex.GenerateError('File path "{}" is outside of "{}"'
                                .format(full_path, root_path))
     return full_path
+
+
+def _check_file(run_context, f, op, description, base_directory=None):
+    """Run op on a file f."""
+    if base_directory is not None:
+        base_directory = file_name(run_context, base_directory)
+        os.chdir(base_directory)
+
+    to_test = f
+    if os.path.isabs(f):
+        to_test = file_name(run_context, f)
+
+    result = op(to_test)
+
+    # Report result:
+    if base_directory is None:
+        run_context.ctx.printer.trace('{}: {} = {}'
+                                      .format(description, to_test, result))
+    else:
+        run_context.ctx.printer.trace('{}: {} (relative to {}) = {}'
+                                      .format(description, to_test,
+                                              base_directory, result))
+    return result
+
+
+def exists(run_context, f, base_directory=None):
+    """Check whether a file exists."""
+    return _check_file(run_context, f, os.path.exists, 'file exists:',
+                       base_directory=base_directory)
+
+
+def isfile(run_context, f, base_directory=None):
+    """Check whether a file exists and is a file."""
+    return _check_file(run_context, f, os.path.isfile, 'isfile:',
+                       base_directory=base_directory)
+
+
+def isdir(run_context, f, base_directory=None):
+    """Check whether a file exists and is a directory."""
+    return _check_file(run_context, f, os.path.isdir, 'isdir:',
+                       base_directory=base_directory)
+
+
+def symlink(run_context, source, destination, base_directory=None):
+    """Create a symbolic link."""
+    if base_directory is not None:
+        os.chdir(file_name(run_context, base_directory))
+
+    if os.path.isabs(destination):
+        destination = file_name(run_context, destination)
+
+    os.symlink(source, destination)
 
 
 def makedirs(run_context, *dirs, user=0, group=0, mode=None):

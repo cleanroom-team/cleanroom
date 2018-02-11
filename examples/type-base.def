@@ -6,3 +6,5 @@ pacstrap config=type-base/pacstrap.conf
     pacman
 
     shadow systemd
+
+set_timezone Europe/Berlin
