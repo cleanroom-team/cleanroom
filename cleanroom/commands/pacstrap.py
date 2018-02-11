@@ -22,20 +22,24 @@ class PacstrapCommand(cmd.Command):
 
     def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) < 2:
+        if len(args) < 1:
             raise ex.ParseError(file_name, line_number,
-                                'pacstrap needs a config file and at least '
+                                'pacstrap needs at least '
                                 'one package or group to install.')
+
+        if 'config' not in kwargs:
+            raise ex.ParseError(file_name, line_number,
+                                'pacstrap needs a "config" keyword argument.')
         return None
 
     def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         pac_object = pacman.Pacman(run_context)
 
-        pacstrap_config = args[0]
+        pacstrap_config = kwargs['config']
         self._prepare_keyring(run_context, pac_object, pacstrap_config)
 
-        pac_object.pacstrap(pacstrap_config, args[1:])
+        pac_object.pacstrap(pacstrap_config, args)
 
     def _prepare_keyring(self, run_context, pac_object, pacstrap_config):
         # Make sure important pacman directories exist:
@@ -60,7 +64,7 @@ class PacstrapCommand(cmd.Command):
                              eo.ExecObject(('<pacstrap command>', 1),
                                            'clean pacman key directory',
                                            None,
-                                           file.Deleter(), ()))
+                                           file.Deleter()))
 
     def _teardown_hook(self, run_context, args):
         print('Running teardown hook in pacstrap!!!!!!!!!!!')

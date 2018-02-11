@@ -1,9 +1,8 @@
 # Base image for everything
 
-pacstrap type-base/pacstrap.conf <<<<
+pacstrap config=type-base/pacstrap.conf
     glibc
 
     pacman
 
     shadow systemd
->>>>
