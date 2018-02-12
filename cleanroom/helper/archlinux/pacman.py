@@ -38,9 +38,13 @@ class Pacman:
         """Return the host location of the pacman DB."""
         return file.file_name(self._run_context, self.target_db_directory())
 
-    def cache_directory(self):
+    def target_cache_directory(self):
+        """Return the target pacman cache directory path."""
+        return '/var/cache/pacman'
+
+    def host_cache_directory(self):
         """Return the host location of the pacman cache."""
-        return file.file_name(self._run_context, '/var/cache/pacman/pkgs')
+        return file.file_name(self._run_context, self.target_cache_directory())
 
     def initial_pacstrap_configuration_file(self, run_context):
         """Return the host configuration for initial pacstrap run."""

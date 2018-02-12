@@ -12,8 +12,6 @@ import cleanroom.helper.archlinux.pacman as pacman
 import cleanroom.helper.generic.file as file
 import cleanroom.run as run
 
-import os
-
 
 class PacstrapCommand(cmd.Command):
     """The pacstrap command."""
@@ -64,16 +62,15 @@ class PacstrapCommand(cmd.Command):
                 trace_output=run_context.ctx.printer.trace)
 
         gpgdir = pac_object.target_gpg_directory()
+        packageFiles = pac_object.target_cache_directory() + '/pkg/*'
 
         run_context.add_hook('_teardown',
-                             eo.ExecObject(
-                                ('<pacstrap command>', 1),
-                                'clean pacman key directory', None,
-                                file.Deleter(),
-                                os.path.join(gpgdir, 'S.scdaemon'),
-                                os.path.join(gpgdir, 'S.gpg-agent'),
-                                os.path.join(gpgdir, 'S.gpg-agent.browser'),
-                                os.path.join(gpgdir, 'S.gpg-agent.extra'),
-                                os.path.join(gpgdir, 'S.gpg-agent.ssh'),
-                                os.path.join(gpgdir, 'pubring.gpg~'),
-                                force=True))
+                             eo.ExecObject(('<pacstrap command>', 1),
+                                           'garbage collect pacman files',
+                                           None,
+                                           file.Deleter(),
+                                           gpgdir + '/S.*',
+                                           gpgdir + '/pubring.gpg~',
+                                           '/var/log/pacman.log',
+                                           packageFiles,
+                                           force=True, recursive=True))

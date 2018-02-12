@@ -8,6 +8,7 @@
 
 from ... import exceptions as ex
 
+import glob
 import os
 import os.path
 import shutil
@@ -28,6 +29,13 @@ def file_name(run_context, f):
         raise ex.GenerateError('File path "{}" is outside of "{}"'
                                .format(full_path, root_path))
     return full_path
+
+
+def expand_files(run_context, files):
+    """Prepend the system directory and expand glob patterns."""
+    for pattern in map(lambda f: file_name(run_context, f), files):
+        for match in glob.iglob(pattern):
+            yield match
 
 
 def _check_file(run_context, f, op, description, base_directory=None):
@@ -87,24 +95,21 @@ def makedirs(run_context, *dirs, user=0, group=0, mode=None):
     for d in dirs:
         full_path = file_name(run_context, d)
         if os.makedirs(full_path):
-            _chmod(full_path, mode)
-        _chown(full_path, user, group)
+            _chmod(mode, full_path)
+        _chown(user, group, full_path)
 
 
-def _chmod(file_path, mode):
+def _chmod(mode, file):
     """For internal use only."""
-    if mode:
-        return os.chmod(file_path, mode)
-    return True
+    return os.chmod(file, mode)
 
 
-def chmod(run_context, f, mode):
+def chmod(run_context, mode, *files):
     """Chmod in the system filesystem."""
-    full_path = file_name(run_context, f)
-    return _chmod(full_path, mode)
+    return _chmod(mode, expand_files(run_context, files))
 
 
-def _chown(file_path, user, group):
+def _chown(user, group, file):
     if user == 'root':
         user = 0
     if group == 'root':
@@ -113,21 +118,19 @@ def _chown(file_path, user, group):
     assert(user is not str)
     assert(group is not str)
 
-    return os.chown(file_path, user, group)
+    return os.chown(file, user, group)
 
 
-def chown(run_context, f, user, group):
+def chown(run_context, user, group, *files):
     """Change ownership of a file in the system filesystem."""
-    full_path = file_name(run_context, f)
-
-    return _chown(full_path, user, group)
+    return _chown(user, group, expand_files(run_context, files))
 
 
-def create_file(run_context, f, contents):
+def create_file(run_context, file, contents, force=False):
     """Create a new file with the given contents."""
-    full_path = file_name(run_context, f)
+    full_path = file_name(run_context, file)
 
-    if os.exists(full_path):
+    if os.path.exists(full_path) and not force:
         raise ex.GenerateError('"{}" exists when trying to create a '
                                'file there.'.format(full_path))
 
@@ -135,64 +138,52 @@ def create_file(run_context, f, contents):
         f.write(contents)
 
 
-def replace_file(run_context, f, contents):
-    """Replace an existing file with the given contents."""
-    full_path = file_name(run_context, f)
-
-    if not os.exists(full_path):
-        raise ex.GenerateError('"{}" does not exist when trying to replace '
-                               'the file.'.format(full_path))
-
-    if not os.path.isfile(full_path):
-        raise ex.GenerateError('"{}" is not a file when trying to replace it.'
-                               .format(full_path))
-
-    with open(full_path, 'wb') as f:
-        f.write(contents)
-
-
-def append_file(run_context, f, contents):
+def append_file(run_context, file, contents):
     """Append contents to an existing file."""
     pass
 
 
-def prepend_file(run_context, f, contents):
+def prepend_file(run_context, file, contents):
     """Prepend contents to an existing file."""
     pass
 
 
-def copy_into(run_context, source, destination):
+def copy(run_context, source, destination, to_outside=False,
+         from_outside=False, **kwargs):
     """Copy a file into a system."""
-    full_path = file_name(run_context, destination)
-    shutil.copyfile(source, full_path)
+    assert(not to_outside or not from_outside)
+    if not from_outside:
+        source = file_name(run_context, source)
+    if not to_outside:
+        destination = file_name(run_context, destination)
+    shutil.copyfile(source, destination, **kwargs)
 
 
-def remove(run_context, *path_list, recursive=False, force=False):
+def remove(run_context, *files, recursive=False, force=False):
     """Delete a file inside of a system."""
-    for path in path_list:
-        full_path = file_name(run_context, path)
-        run_context.ctx.printer.trace('Removing "{}".'.format(full_path))
+    for file in expand_files(run_context, files):
+        run_context.ctx.printer.trace('Removing "{}".'.format(file))
 
-        if not os.path.exists(full_path):
+        if not os.path.exists(file):
             if force:
                 continue
             raise ex.GenerateError('Failed to delete: "{}" does not exist.'
-                                   .format(full_path))
-        if os.path.isdir(full_path):
+                                   .format(file))
+        if os.path.isdir(file):
             if recursive:
-                shutil.rmtree(full_path)
+                shutil.rmtree(file)
             else:
-                os.rmdir(full_path)
+                os.rmdir(file)
         else:
-            os.remove(full_path)
+            os.unlink(file)
 
 
 class Deleter:
     """Delete files in the system directory."""
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, run_context, *files, **kwargs):
         """Run delete operations on the files in args."""
-        remove(run_context, *args, **kwargs)
+        remove(run_context, *files, **kwargs)
 
 
 if __name__ == '__main__':

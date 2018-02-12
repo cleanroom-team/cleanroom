@@ -8,3 +8,27 @@ pacstrap config=type-base/pacstrap.conf
     shadow systemd
 
 set_timezone Europe/Berlin
+
+create /etc/motd <<<<For authorized use only...
+>>>> force=True
+copy /etc/motd /etc/issue
+copy /etc/motd /etc/issue.net
+
+# Make sure some files are gone so that they do not cause trouble later:
+remove /etc/machine-id /usr/bin/init force=True
+
+set_default_target multi-user.target
+
+# Remove unnecessary systemd-generators:
+# Must keep fstab and cryptsetup generator for mkinitcpio
+remove /usr/lib/system/system-generators/systemd-system-update-generator
+
+# Remove unnecessary systemd-timers:
+remove /usr/lib/systemd/system/timers.target.wants/shadow.timer
+
+# Remove unnecessary systemd-services:
+remove /usr/lib/systemd/system/*/ldconfig.service
+       /usr/lib/systemd/system/ldconfig.service
+       /usr/lib/systemd/system/*/systemd-hwdb-update.service
+       /usr/lib/systemd/system/systemd-hwdb-update.service
+
