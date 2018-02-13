@@ -1,4 +1,8 @@
-# Base image for everything
+# Base image
+
+### cleanroom will have added the following substitution patterns:
+###  # TIMESTAMP:  timestamp of installation
+###  # SYSTEM:     system name
 
 pacstrap config=type-base/pacstrap.conf
     glibc
@@ -6,6 +10,11 @@ pacstrap config=type-base/pacstrap.conf
     pacman
 
     shadow systemd
+
+append /usr/lib/os-release <<<<
+VERSION=${TIMESTAMP}
+VERSION_ID=${TIMESTAMP}
+>>>>
 
 set_timezone Europe/Berlin
 

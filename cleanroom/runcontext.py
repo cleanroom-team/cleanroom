@@ -9,6 +9,7 @@
 import datetime
 import os
 import os.path
+import string
 
 
 class RunContext:
@@ -19,16 +20,21 @@ class RunContext:
         self.ctx = ctx
         self.system = system
         self.base = None
-        self.vars = dict()
         self.timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
         self.baseContext = None
         self.hooks = {}
+        self.substitutions = {}
 
         self._command = None
 
+        self._setup_substitutions()
+
         assert(self.ctx)
         assert(self.system)
-        assert(not self.vars)
+
+    def _setup_substitutions(self):
+        self.set_substitution('TIMESTAMP', self.timestamp)
+        self.set_substitution('SYSTEM', self.system)
 
     def _work_directory(self, system=None):
         """Find base directory for all temporary system files."""
@@ -61,6 +67,9 @@ class RunContext:
         self.baseContext = base_context
         self.timestamp = base_context.timestamp
         self.hooks = base_context.hooks
+        self.substitutions = base_context.substitutions
+
+        self._setup_substitutions()  # Override critical substitutions again:-)
 
     def system_definition_directory(self):
         """Return the top level system definition directory of a system."""
@@ -87,6 +96,15 @@ class RunContext:
         self.ctx.printer.h2('Running {} hooks.'.format(hook))
         for command in command_list:
             command.execute(self)
+
+    def set_substitution(self, key, value):
+        """Add a substitution to the substitution table."""
+        self.substitutions[key] = value
+
+    def substitute(self, text):
+        """Substitute variables in text."""
+        template = string.Template(text)
+        return template.substitute(self.substitutions)
 
 
 if __name__ == '__main__':
