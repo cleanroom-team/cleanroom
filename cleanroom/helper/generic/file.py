@@ -140,7 +140,14 @@ def create_file(run_context, file, contents, force=False):
 
 def append_file(run_context, file, contents):
     """Append contents to an existing file."""
-    pass
+    full_path = file_name(run_context, file)
+
+    if not os.path.exists(full_path):
+        raise ex.GenerateError('"{}" does not exist when trying to append to '
+                               'it.'.format(full_path))
+
+    with open(full_path, 'ab') as f:
+        f.write(contents)
 
 
 def prepend_file(run_context, file, contents):
