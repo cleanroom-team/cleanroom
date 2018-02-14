@@ -17,7 +17,8 @@ class Executor:
 
     def run(self, ctx, system, command_list):
         """Run the command_list for the system the executor was set up for."""
-        ctx.printer.debug('Running commands for system "{}".'.format(system))
+        ctx.printer.h2('Running commands for system "{}".'.format(system),
+                       verbosity=2)
         run_context = runcontext.RunContext(ctx, system)
         if not self._setup_for_execution(run_context):
             return  # Return early when system already set up

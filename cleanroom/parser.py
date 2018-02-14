@@ -98,7 +98,7 @@ class Parser:
     @staticmethod
     def find_commands(ctx):
         """Find possible commands in the file system."""
-        ctx.printer.trace('Checking for commands.')
+        ctx.printer.h2('Searching for available commands', verbosity=2)
         checked_dirs = []
         for path in (ctx.systems_commands_directory(),
                      ctx.commands_directory()):
@@ -141,7 +141,7 @@ class Parser:
     @staticmethod
     def list_commands(ctx):
         """Print a list of all known commands."""
-        ctx.printer.h1('Command List:')
+        ctx.printer.h2('Command List:')
 
         for key in sorted(Parser._commands):
             cmd, path = Parser._commands[key]

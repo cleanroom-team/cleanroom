@@ -74,3 +74,11 @@ class PacstrapCommand(cmd.Command):
                                            '/var/log/pacman.log',
                                            packageFiles,
                                            force=True, recursive=True))
+
+        run_context.add_hook('export',
+                             eo.ExecObject(('<pacstrap command>', 2),
+                                           'remove pacman secret keys',
+                                           None,
+                                           file.Deleter(),
+                                           gpgdir + '/secring.gpg*',
+                                           force=True))

@@ -69,7 +69,7 @@ class Context:
 
     def set_directories(self, system_dir, work_dir):
         """Set system- and work directory and set them up."""
-        self.printer.debug('Setting up Directories.')
+        self.printer.h2('Setting up Directories.', verbosity=2)
 
         if self._systems_dir is not None:
             raise exceptions.ContextError('Directories were already set up.')
@@ -147,7 +147,7 @@ class Context:
 
     def preflight_check(self):
         """Run a fast pre-flight check on the context."""
-        self.printer.debug('Running Preflight Checks.')
+        self.printer.h2('Running Preflight Checks.', verbosity=2)
 
         binaries = self._preflight_binaries_check()
         users = self._preflight_users_check()

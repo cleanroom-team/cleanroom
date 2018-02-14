@@ -93,7 +93,7 @@ class RunContext:
         if not command_list:
             return
 
-        self.ctx.printer.h2('Running {} hooks.'.format(hook))
+        self.ctx.printer.h2('Running {} hooks.'.format(hook), verbosity=1)
         for command in command_list:
             command.execute(self)
 

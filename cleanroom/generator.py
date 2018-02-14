@@ -154,6 +154,7 @@ class Generator:
 
     def prepare(self):
         """Prepare for generation."""
+        self._ctx.printer.h2('Preparing for system generation')
         repo_dir = self._ctx.work_repository_directory()
         run.run(self._binary(context.Binaries.OSTREE),
                 'init',
