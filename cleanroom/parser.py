@@ -67,14 +67,8 @@ class _ParserState:
 
         self.reset()
 
-        command_object = Parser._commands[command][0]
-        dependency = command_object.validate_arguments(file_name,
-                                                       line_number,
-                                                       *args, **kwargs)
-
-        return execobject.ExecObject((file_name, line_number), command,
-                                     dependency, command_object, *args,
-                                     **kwargs)
+        return Parser.create_execute_object(file_name, line_number,
+                                            command, *args, **kwargs)
 
     def __str__(self):
         dump1 = ','.join(self._args) + ':'
@@ -160,6 +154,19 @@ class Parser:
     def command_file(name):
         """Retrieve the file containing a command."""
         return Parser._commands[name][1]
+
+    @staticmethod
+    def create_execute_object(file_name, line_number,
+                              command, *args, **kwargs):
+        """Create an execute object based on command and arguments."""
+        command_object = Parser.command(command)
+        dependency = command_object.validate_arguments(file_name,
+                                                       line_number,
+                                                       *args, **kwargs)
+
+        return execobject.ExecObject((file_name, line_number), command,
+                                     dependency, command_object, *args,
+                                     **kwargs)
 
     def __init__(self, ctx):
         """Constructor."""
