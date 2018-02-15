@@ -9,7 +9,7 @@ import cleanroom.exceptions as ex
 import cleanroom.helper.generic.file as file
 
 
-class CopyFileCommand(cmd.Command):
+class RemoveCommand(cmd.Command):
     """The copy command."""
 
     def __init__(self):

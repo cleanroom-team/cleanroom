@@ -7,7 +7,6 @@
 import cleanroom.command as cmd
 import cleanroom.exceptions as ex
 
-import pickle
 import re
 
 
@@ -44,10 +43,4 @@ class BasedCommand(cmd.Command):
 
     def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
-        pickle_jar = run_context.pickle_jar(args[1])
-        run_context.ctx.printer.debug('Reading pickled run_context from {}.'
-                                      .format(pickle_jar))
-        with open(pickle_jar, 'rb') as jar:
-            base_context = pickle.load(jar)
-
-        run_context.install_base_context(base_context)
+        run_context.unpickle_base_context(args[1])

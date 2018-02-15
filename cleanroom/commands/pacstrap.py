@@ -10,6 +10,7 @@ import cleanroom.execobject as eo
 import cleanroom.exceptions as ex
 import cleanroom.helper.archlinux.pacman as pacman
 import cleanroom.helper.generic.file as file
+import cleanroom.parser as parser
 import cleanroom.run as run
 
 
@@ -68,7 +69,7 @@ class PacstrapCommand(cmd.Command):
                              eo.ExecObject(('<pacstrap command>', 1),
                                            'garbage collect pacman files',
                                            None,
-                                           file.Deleter(),
+                                           parser.Parser.command('remove'),
                                            gpgdir + '/S.*',
                                            gpgdir + '/pubring.gpg~',
                                            '/var/log/pacman.log',
@@ -79,6 +80,6 @@ class PacstrapCommand(cmd.Command):
                              eo.ExecObject(('<pacstrap command>', 2),
                                            'remove pacman secret keys',
                                            None,
-                                           file.Deleter(),
+                                           parser.Parser.command('remove'),
                                            gpgdir + '/secring.gpg*',
                                            force=True))

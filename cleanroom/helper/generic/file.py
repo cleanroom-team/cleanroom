@@ -185,13 +185,5 @@ def remove(run_context, *files, recursive=False, force=False):
             os.unlink(file)
 
 
-class Deleter:
-    """Delete files in the system directory."""
-
-    def __call__(self, run_context, *files, **kwargs):
-        """Run delete operations on the files in args."""
-        remove(run_context, *files, **kwargs)
-
-
 if __name__ == '__main__':
     pass

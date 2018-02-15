@@ -14,6 +14,7 @@ class CopyFileCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
+        print('CopyFileCommand:', self.__module__, self.__class__)
         super().__init__('copy <SOURCE> <DESTINATION> [force=True] '
                          '[from_outside=True] [to_outside=True]',
                          'Copy a file within the system.')

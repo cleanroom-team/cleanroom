@@ -7,8 +7,6 @@ import cleanroom.command as cmd
 import cleanroom.context as context
 import cleanroom.run as run
 
-import pickle
-
 
 class _TeardownCommand(cmd.Command):
     """The _teardown Command."""
@@ -23,17 +21,7 @@ class _TeardownCommand(cmd.Command):
         """Execute command."""
         run_context.run_hooks('_teardown')
 
-        pickle_jar = run_context.pickle_jar()
-
-        ctx = run_context.ctx
-        run_context.ctx = None  # Do not pickle the context!
-
-        ctx.printer.debug('Pickling run_context into {}.'.format(pickle_jar))
-
-        with open(pickle_jar, 'wb') as jar:
-            pickle.dump(run_context, jar, pickle.HIGHEST_PROTOCOL)
-
-        run_context.ctx = ctx  # Restore context to run_context again!
+        run_context.pickle()
 
         self.store_to_ostree(run_context)
 

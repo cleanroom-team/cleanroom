@@ -20,6 +20,10 @@ class Command:
         self._syntax_string = syntax_string
         self._help_string = help_string
 
+    def name(self):
+        """Return the command name."""
+        return self.__module__[19:]  # minus cleanroom.commands.
+
     def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate all arguments.
 

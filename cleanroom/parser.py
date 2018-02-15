@@ -117,7 +117,7 @@ class Parser:
                 ctx.printer.trace('Found file: {}'.format(f_path))
 
                 cmd = f[:-3]
-                name = 'cr_cmd_' + cmd + '.py'
+                name = 'cleanroom.commands.' + cmd
 
                 spec = importlib.util.spec_from_file_location(name, f_path)
                 cmd_module = importlib.util.module_from_spec(spec)
@@ -147,11 +147,19 @@ class Parser:
             cmd, path = Parser._commands[key]
 
             long_help_lines = cmd.help().split('\n')
-            ctx.printer.print('{}\n          {}\n\n          '
-                              'Definition in: {}\n\n'
-                              .format(cmd.syntax(),
-                                      '\n          '.join(long_help_lines),
-                                      path))
+            print('{}\n          {}\n\n          Definition in: {}\n\n'
+                  .format(cmd.syntax(), '\n          '.join(long_help_lines),
+                          path))
+
+    @staticmethod
+    def command(name):
+        """Retrieve a command."""
+        return Parser._commands[name][0]
+
+    @staticmethod
+    def command_file(name):
+        """Retrieve the file containing a command."""
+        return Parser._commands[name][1]
 
     def __init__(self, ctx):
         """Constructor."""
@@ -170,7 +178,7 @@ class Parser:
         built_in = ('<BUILT_IN>', 1)
 
         yield execobject.ExecObject(built_in, '_setup', None,
-                                    Parser._commands['_setup'][0])
+                                    Parser.command('_setup'))
 
         for line in iterable:
             state._to_process += line
@@ -197,7 +205,7 @@ class Parser:
             yield obj
 
         yield execobject.ExecObject(built_in, '_teardown', None,
-                                    Parser._commands['_teardown'][0])
+                                    Parser.command('_teardown'))
 
     def _parse_single_line(self, state):
         """Parse a single line."""
