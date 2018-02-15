@@ -49,7 +49,9 @@ class RunContext:
         self.timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
         self.baseContext = None
         self.hooks = {}
+        self.hooks_that_already_ran = []
         self.substitutions = {}
+        self.flags = {}
 
         self._command = None
 
@@ -105,12 +107,13 @@ class RunContext:
         return os.path.join(RunContext._work_directory(self.ctx, self.system),
                             'done')
 
-    def install_base_context(self, base_context):
+    def _install_base_context(self, base_context):
         """Set up base context."""
         self.baseContext = base_context
         self.timestamp = base_context.timestamp
         self.hooks = base_context.hooks
         self.substitutions = base_context.substitutions
+        self.flags = base_context.flags
 
         self._setup_substitutions()  # Override critical substitutions again:-)
 
@@ -130,6 +133,11 @@ class RunContext:
 
     def run_hooks(self, hook):
         """Run all the registered hooks."""
+        if hook in self.hooks_that_already_ran:
+            self.ctx.printer.trace('Skipping hooks "{}": Already ran them.'
+                                   .format(hook))
+            return
+
         command_list = self.hooks.setdefault(hook, [])
         self.ctx.printer.trace('Runnnig hook {} with {} entries.'
                                .format(hook, len(command_list)))
@@ -139,6 +147,8 @@ class RunContext:
         self.ctx.printer.h2('Running {} hooks.'.format(hook), verbosity=1)
         for cmd in command_list:
             cmd.execute(self)
+
+        self.hooks_that_already_ran.append(hook)
 
     def set_substitution(self, key, value):
         """Add a substitution to the substitution table."""
@@ -152,12 +162,20 @@ class RunContext:
     def pickle(self):
         """Pickle this run_context."""
         pickle_jar = RunContext._pickle_jar(self.ctx, self.system)
+
         ctx = self.ctx
+        hooks_that_ran = self.hooks_that_already_ran
+
         ctx.printer.debug('Pickling run_context into {}.'.format(pickle_jar))
         self.ctx = None  # Disconnect context for the pickling!
+        self.hooks_that_already_ran = []
+
         with open(pickle_jar, 'wb') as jar:
             _RunContextPickler(jar).dump(self)
+
+        # Restore state that should not get saved:
         self.ctx = ctx
+        self.hooks_that_already_ran = hooks_that_ran
 
     def unpickle_base_context(self, system):
         """Create a new run_context by unpickling a file."""
@@ -167,7 +185,7 @@ class RunContext:
                                .format(pickle_jar))
         with open(pickle_jar, 'rb') as jar:
             base_context = _RunContextUnpickler(jar).load()
-        self.install_base_context(base_context)
+        self._install_base_context(base_context)
 
 
 if __name__ == '__main__':

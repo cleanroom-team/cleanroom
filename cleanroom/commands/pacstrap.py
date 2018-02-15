@@ -36,12 +36,25 @@ class PacstrapCommand(cmd.Command):
 
     def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
+        assert(run_context.flags.get('package_type', None) is None)
+
         pac_object = pacman.Pacman(run_context)
 
         pacstrap_config = kwargs['config']
         self._prepare_keyring(run_context, pac_object, pacstrap_config)
 
         pac_object.pacstrap(pacstrap_config, args)
+
+        # Install pacman.conf:
+        file.copy(run_context, pacstrap_config, '/etc/pacman.conf',
+                  from_outside=True)
+
+        # Make sure DB is up-to-date:
+        run.run('/usr/bin/pacman-db-upgrade',
+                chroot=run_context.fs_directory(),
+                trace_output=run_context.ctx.printer.trace)
+
+        run_context.flags['package_type'] = 'pacman'
 
     def _prepare_keyring(self, run_context, pac_object, pacstrap_config):
         # Make sure important pacman directories exist:

@@ -63,7 +63,7 @@ ctx = context.Context(pr, args.ignore_errors)
 try:
     ctx.preflight_check()
 except exceptions.PreflightError:
-    pr.fail(args.ignore_errors, 'Preflight Check failed')
+    pr.fail('Preflight Check failed', ignore=args.ignore_errors)
 else:
     pr.success('Preflight Check passed', verbosity = 2)
 
@@ -80,7 +80,7 @@ with workdir.WorkDir(ctx, args.work_dir) as work_dir:
     try:
         ctx.generator.prepare()
     except exceptions.PrepareError as e:
-        pr.fail(args.ignore_errors, 'Preparation failed: {}'.format(e.message))
+        pr.fail('Preparation failed: {}'.format(e), ignore=args.ignore_errors)
         raise
     else:
         pr.success('Preparation phase.', verbosity = 2)
@@ -91,7 +91,7 @@ with workdir.WorkDir(ctx, args.work_dir) as work_dir:
     try:
         ctx.generator.generate()
     except exceptions.GenerateError as e:
-        pr.fail(args.ignore_errors, 'Generation failed: {}'.format(e.message))
+        pr.fail('Generation failed: {}'.format(e), ignore=args.ignore_errors)
         os.chdir(old_work_directory)
         raise
     else:

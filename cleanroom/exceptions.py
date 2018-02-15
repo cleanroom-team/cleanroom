@@ -9,9 +9,9 @@
 class CleanRoomError(RuntimeError):
     """Base class for all cleanroom Exceptions."""
 
-    def __init__(self, msg):
+    def __init__(self, *args):
         """Constructor."""
-        super().__init__(msg)
+        super().__init__(*args)
 
     def __str__(self):
         """Stringify exception."""
@@ -54,7 +54,7 @@ class ParseError(CleanRoomError):
 
     def __init__(self, file, line, msg):
         """Constructor."""
-        super().__init__((line, msg))
+        super().__init__(file, line, msg)
 
     def __str__(self):
         """Stringify exception."""

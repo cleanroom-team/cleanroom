@@ -175,10 +175,10 @@ class Generator:
                 exe = executor.Executor()
                 exe.run(self._ctx, system, command_list)
             except Exception as e:
-                self._ctx.printer.fail(self._ctx.ignore_errors,
-                                       'Generation of "{}" failed: {}.'
+                self._ctx.printer.fail('Generation of "{}" failed: {}.'
                                        .format(system, e),
-                                       force_exit=False)
+                                       force_exit=False,
+                                       ignore=self._ctx.ignore_errors)
                 if not self._ctx.ignore_errors:
                     raise
             else:

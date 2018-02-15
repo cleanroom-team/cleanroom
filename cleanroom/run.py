@@ -12,10 +12,16 @@ import os
 import subprocess
 
 
-def run(*args, exit_code=0, work_directory=None, trace_output=None, **kwargs):
+def run(*args, exit_code=0, work_directory=None,
+        trace_output=None, chroot=None, shell=False, **kwargs):
     """Run command and trace the external command result and output."""
     if work_directory:
         os.chdir(work_directory)
+
+    if shell:
+        args = ('/usr/bin/bash', '-c', *args)
+    if chroot is not None:
+        args = ('/usr/bin/arch-chroot', chroot, *args)
 
     if trace_output is not None:
         if work_directory:

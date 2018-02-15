@@ -1,3 +1,6 @@
 # A client system
 
 based on type-baremetal
+
+# Make the system available for deployment:
+export

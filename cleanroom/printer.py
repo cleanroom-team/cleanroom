@@ -99,7 +99,7 @@ class Printer:
         intro = '{}  OK  {}'.format(self._ok_prefix, self._ok_suffix)
         print(intro, *args, self._ansi_reset)
 
-    def fail(self, ignore, *args, verbosity=0, force_exit=True):
+    def fail(self, *args, verbosity=0, force_exit=True, ignore=False):
         """Print success message."""
         if not self._print_at_verbosity_level(verbosity):
             return
