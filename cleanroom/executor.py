@@ -6,6 +6,7 @@
 """
 
 
+from . import context
 from . import runcontext
 
 import os
@@ -27,6 +28,9 @@ class Executor:
         self._store_result(run_context)
 
     def _setup_for_execution(self, run_context):
+        if self._ostree_has_system(run_context):
+            return False
+
         """Set up execution context."""
         run_context.ctx.printer\
             .trace('Setup for execution of commands of "{}".'
@@ -35,10 +39,17 @@ class Executor:
         os.makedirs(run_context.fs_directory())
         os.makedirs(run_context.meta_directory())
 
-        return not self._ostree_has_system(run_context)
+        return True
 
     def _ostree_has_system(self, run_context):
-        pass
+        """Check ostree for system refs."""
+        ostree = run_context.ctx.binary(context.Binaries.OSTREE)
+        repo = run_context.ctx.work_repository_directory()
+        ostree_refs = run_context.run(ostree, '--repo={}'.format(repo),
+                                      'refs',
+                                      outside=True,
+                                      work_directory=repo)
+        return run_context.system in ostree_refs.stdout.split('\n')
 
     def _run_commands(self, command_list, run_context):
         """Run commands."""

@@ -33,6 +33,9 @@ def run(*args, exit_code=0, work_directory=None,
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE,
                                        **kwargs)
+    completed_process.stdout = completed_process.stdout.decode('utf-8')
+    completed_process.stderr = completed_process.stderr.decode('utf-8')
+
     report_completed_process(trace_output, completed_process)
 
     if exit_code is not None and completed_process.returncode != exit_code:
@@ -58,11 +61,11 @@ def report_completed_process(channel, completed_process):
 
 def _report_output_lines(channel, line_data):
     """Pretty-print output lines."""
-    if line_data == b'' or line_data == b'\n':
+    if line_data == '' or line_data == '\n':
         return
-    lines = line_data.split(b'\n')
+    lines = line_data.split('\n')
     for line in lines:
-        channel('    {}'.format(line.decode('utf-8')))
+        channel('    {}'.format(line))
 
 
 if __name__ == '__main__':
