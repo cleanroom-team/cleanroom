@@ -10,7 +10,7 @@ from . import context
 from . import executor
 from . import exceptions
 from . import parser
-from . import run
+from .helper.generic import run
 
 import os
 import os.path

@@ -5,7 +5,6 @@
 
 import cleanroom.command as cmd
 import cleanroom.context as context
-import cleanroom.run as run
 
 
 class _TeardownCommand(cmd.Command):
@@ -29,13 +28,13 @@ class _TeardownCommand(cmd.Command):
         run_context.ctx.printer.debug('Storing results in ostree.')
         ostree = run_context.ctx.binary(context.Binaries.OSTREE)
 
-        run.run(ostree,
-                'commit',
-                '--repo={}'
-                .format(run_context.ctx.work_repository_directory()),
-                '--branch', run_context.system,
-                '--subject', run_context.timestamp,
-                '--add-metadata-string="timestamp={}"'
-                .format(run_context.timestamp),
-                work_directory=run_context.system_directory(),
-                trace_output=run_context.ctx.printer.trace)
+        run_context.run(ostree,
+                        'commit',
+                        '--repo={}'
+                        .format(run_context.ctx.work_repository_directory()),
+                        '--branch', run_context.system,
+                        '--subject', run_context.timestamp,
+                        '--add-metadata-string="timestamp={}"'
+                        .format(run_context.timestamp),
+                        outside=True,
+                        work_directory=run_context.system_directory())

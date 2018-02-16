@@ -7,6 +7,7 @@
 
 
 import cleanroom.command as command
+import cleanroom.helper.generic.run as run
 import cleanroom.parser as parser
 
 import datetime
@@ -102,11 +103,6 @@ class RunContext:
         return os.path.join(RunContext._meta_directory(ctx, system),
                             'pickle_jar.bin')
 
-    def system_complete_flag(self):
-        """Flag-file set when system was completely set up."""
-        return os.path.join(RunContext._work_directory(self.ctx, self.system),
-                            'done')
-
     def _install_base_context(self, base_context):
         """Set up base context."""
         self.baseContext = base_context
@@ -158,6 +154,14 @@ class RunContext:
         """Substitute variables in text."""
         template = string.Template(text)
         return template.substitute(self.substitutions)
+
+    def run(self, *args, outside=False, **kwargs):
+        """Run a command in this run_context."""
+        assert('chroot' not in kwargs)
+
+        if not outside:
+            kwargs['chroot'] = self.fs_directory()
+        return run.run(*args, trace_output=self.ctx.printer.trace, **kwargs)
 
     def pickle(self):
         """Pickle this run_context."""

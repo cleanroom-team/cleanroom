@@ -35,7 +35,10 @@ class Executor:
         os.makedirs(run_context.fs_directory())
         os.makedirs(run_context.meta_directory())
 
-        return not os.path.exists(run_context.system_complete_flag())
+        return not self._ostree_has_system(run_context)
+
+    def _ostree_has_system(self, run_context):
+        pass
 
     def _run_commands(self, command_list, run_context):
         """Run commands."""

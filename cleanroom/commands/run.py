@@ -6,7 +6,7 @@
 
 import cleanroom.command as cmd
 import cleanroom.exceptions as ex
-import cleanroom.run as run
+import cleanroom.helper.generic.run as run
 
 
 class RunCommand(cmd.Command):

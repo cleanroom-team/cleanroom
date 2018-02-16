@@ -43,4 +43,7 @@ class BasedCommand(cmd.Command):
 
     def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
-        run_context.unpickle_base_context(args[1])
+        system = args[1]
+
+        run_context.unpickle_base_context(system)
+        run_context.set_substitution('BASE_SYSTEM', system)

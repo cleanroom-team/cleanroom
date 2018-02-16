@@ -9,7 +9,6 @@
 import cleanroom.context as context
 import cleanroom.exceptions as ex
 import cleanroom.helper.generic.file as file
-import cleanroom.run as run
 
 import os
 import os.path
@@ -64,25 +63,27 @@ class Pacman:
         for a in packages:
             all_packages += a.split()
 
-        run.run(self._run_context.ctx.binary(context.Binaries.PACSTRAP),
-                '-c',  # use cache on host
-                '-d',  # No mount point
-                '-M',  # Do not copy host mirrorlist
-                '-G',  # Do not copy host keyring
-                '-C', config,  # Use config file
-                self._run_context.fs_directory(),
-                '--dbpath={}'.format(self.host_db_directory()),
-                '--gpgdir={}'.format(self.host_gpg_directory()),
-                *all_packages,
-                work_directory=self._run_context.ctx.systems_directory(),
-                trace_output=self._run_context.ctx.printer.trace)
+        self._run_context.run(
+            self._run_context.ctx.binary(context.Binaries.PACSTRAP),
+            '-c',  # use cache on host
+            '-d',  # No mount point
+            '-M',  # Do not copy host mirrorlist
+            '-G',  # Do not copy host keyring
+            '-C', config,  # Use config file
+            self._run_context.fs_directory(),
+            '--dbpath={}'.format(self.host_db_directory()),
+            '--gpgdir={}'.format(self.host_gpg_directory()),
+            *all_packages,
+            work_directory=self._run_context.ctx.systems_directory(),
+            outside=True)
 
     def _sync_host(self):
         """Run pacman -Syu on the host."""
         os.makedirs(self.host_db_directory())
-        run.run(self._run_context.ctx.binary(context.Binaries.PACMAN),
-                '-Syu', '--dbpath', self.host_db_directory(),
-                trace_output=self._run_context.ctx.printer.trace)
+        self._run_context.run(
+            self._run_context.ctx.binary(context.Binaries.PACMAN),
+            '-Syu', '--dbpath', self.host_db_directory(),
+            outside=True)
 
 
 if __name__ == '__main__':

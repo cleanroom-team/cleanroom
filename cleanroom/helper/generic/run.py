@@ -15,7 +15,7 @@ import subprocess
 def run(*args, exit_code=0, work_directory=None,
         trace_output=None, chroot=None, shell=False, **kwargs):
     """Run command and trace the external command result and output."""
-    if work_directory:
+    if work_directory is not None:
         os.chdir(work_directory)
 
     if shell:

@@ -11,7 +11,6 @@ import cleanroom.exceptions as ex
 import cleanroom.helper.archlinux.pacman as pacman
 import cleanroom.helper.generic.file as file
 import cleanroom.parser as parser
-import cleanroom.run as run
 
 
 class PacstrapCommand(cmd.Command):
@@ -50,9 +49,7 @@ class PacstrapCommand(cmd.Command):
                   from_outside=True)
 
         # Make sure DB is up-to-date:
-        run.run('/usr/bin/pacman-db-upgrade',
-                chroot=run_context.fs_directory(),
-                trace_output=run_context.ctx.printer.trace)
+        run_context.run('/usr/bin/pacman-db-upgrade')
 
         run_context.flags['package_type'] = 'pacman'
 
@@ -60,20 +57,18 @@ class PacstrapCommand(cmd.Command):
         # Make sure important pacman directories exist:
         file.makedirs(run_context, pac_object.host_gpg_directory())
         pacman_key = run_context.ctx.binary(context.Binaries.PACMAN_KEY)
-        run.run(pacman_key,
-                '--config', pacstrap_config,
-                '--gpgdir', pac_object.host_gpg_directory(),
-                '--init',
-                exit_code=0,
-                work_directory=run_context.ctx.systems_directory(),
-                trace_output=run_context.ctx.printer.trace)
-        run.run(pacman_key,
-                '--config', pacstrap_config,
-                '--gpgdir', pac_object.host_gpg_directory(),
-                '--populate', 'archlinux',
-                exit_code=0,
-                work_directory=run_context.ctx.systems_directory(),
-                trace_output=run_context.ctx.printer.trace)
+        run_context.run(pacman_key,
+                        '--config', pacstrap_config,
+                        '--gpgdir', pac_object.host_gpg_directory(),
+                        '--init',
+                        exit_code=0, outside=True,
+                        work_directory=run_context.ctx.systems_directory())
+        run_context.run(pacman_key,
+                        '--config', pacstrap_config,
+                        '--gpgdir', pac_object.host_gpg_directory(),
+                        '--populate', 'archlinux',
+                        exit_code=0, outside=True,
+                        work_directory=run_context.ctx.systems_directory())
 
         gpgdir = pac_object.target_gpg_directory()
         packageFiles = pac_object.target_cache_directory() + '/pkg/*'
