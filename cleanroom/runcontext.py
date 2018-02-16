@@ -46,9 +46,9 @@ class RunContext:
         """Constructor."""
         self.ctx = ctx
         self.system = system
-        self.base = None
+        self.base_system = None
         self.timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
-        self.baseContext = None
+        self.base_context = None
         self.hooks = {}
         self.hooks_that_already_ran = []
         self.substitutions = {}
@@ -105,7 +105,7 @@ class RunContext:
 
     def _install_base_context(self, base_context):
         """Set up base context."""
-        self.baseContext = base_context
+        self.base_context = base_context
         self.timestamp = base_context.timestamp
         self.hooks = base_context.hooks
         self.substitutions = base_context.substitutions

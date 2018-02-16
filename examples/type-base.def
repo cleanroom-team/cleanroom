@@ -4,12 +4,13 @@
 ###  # TIMESTAMP:  timestamp of installation
 ###  # SYSTEM:     system name
 
+# sed is needed for locale-gen
 pacstrap config=type-base/pacstrap.conf
-    glibc
+    glibc gzip
 
     pacman
 
-    shadow systemd
+    sed shadow systemd
 
 append /usr/lib/os-release <<<<
 VERSION=${TIMESTAMP}

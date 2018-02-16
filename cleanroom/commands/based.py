@@ -5,9 +5,12 @@
 
 
 import cleanroom.command as cmd
+import cleanroom.context as context
 import cleanroom.exceptions as ex
+import cleanroom.helper.generic.file as file
 
 import re
+import shutil
 
 
 class BasedCommand(cmd.Command):
@@ -43,7 +46,25 @@ class BasedCommand(cmd.Command):
 
     def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
-        system = args[1]
+        base_system = args[1]
 
-        run_context.unpickle_base_context(system)
-        run_context.set_substitution('BASE_SYSTEM', system)
+        self._ostree_checkout(run_context, base_system)
+        self._update_base_context(run_context, base_system)
+
+    def _ostree_checkout(self, run_context, base_system):
+        shutil.rmtree(run_context.system_directory())
+
+        ostree = run_context.ctx.binary(context.Binaries.OSTREE)
+        repo = run_context.ctx.work_repository_directory()
+
+        run_context.run(ostree, '--repo={}'.format(repo),
+                        'checkout', base_system,
+                        run_context.system_directory(),
+                        outside=True,
+                        work_directory=repo)
+
+    def _update_base_context(self, run_context, base_system):
+        run_context.unpickle_base_context(base_system)
+        run_context.set_substitution('BASE_SYSTEM', base_system)
+
+        run_context.base_system = base_system

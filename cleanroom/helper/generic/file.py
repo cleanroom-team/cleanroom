@@ -31,9 +31,9 @@ def file_name(run_context, f):
     return full_path
 
 
-def expand_files(run_context, files):
+def expand_files(run_context, *files):
     """Prepend the system directory and expand glob patterns."""
-    for pattern in map(lambda f: file_name(run_context, f), files):
+    for pattern in map(lambda f: file_name(run_context, f), *files):
         for match in glob.iglob(pattern):
             yield match
 
@@ -106,7 +106,7 @@ def _chmod(mode, file):
 
 def chmod(run_context, mode, *files):
     """Chmod in the system filesystem."""
-    return _chmod(mode, expand_files(run_context, files))
+    return _chmod(mode, expand_files(run_context, *files))
 
 
 def _chown(user, group, file):

@@ -45,7 +45,7 @@ class SetLocalesCommand(cmd.Command):
                 raise ex.ParseError(self._file_name, self._line_number,
                                     'Locale "{}" not found in '
                                     '/usr/share/locale.'.format(a))
-            locales.append('{}.UTF8 UTF8'.format(a))
+            locales.append('{}.UTF-8 UTF-8'.format(a))
 
         all_locales = '\n'.join(locales).encode('utf-8')
         file.create_file(run_context, '/etc/locale.gen', all_locales,
