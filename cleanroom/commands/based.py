@@ -7,7 +7,6 @@
 import cleanroom.command as cmd
 import cleanroom.context as context
 import cleanroom.exceptions as ex
-import cleanroom.helper.generic.file as file
 
 import re
 import shutil
