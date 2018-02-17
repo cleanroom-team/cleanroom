@@ -21,9 +21,9 @@ class RunCommand(cmd.Command):
     def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate the arguments."""
         if len(args) < 1:
-            raise ex.ParseError(file_name, line_number,
-                                'run needs a command to run and optional '
-                                'arguments.')
+            raise ex.ParseError('run needs a command to run and optional '
+                                'arguments.',
+                                file_name=file_name, line_number=line_number)
         return None
 
     def __call__(self, run_context, *args, **kwargs):

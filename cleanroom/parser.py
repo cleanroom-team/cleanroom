@@ -199,15 +199,17 @@ class Parser:
                 yield obj
 
             if state._to_process != '':
-                raise ex.ParseError(state._file_name, state._line_number,
-                                    'Unexpected tokens "{}" found.'
-                                    .format(state._to_process))
+                raise ex.ParseError('Unexpected tokens "{}" found.'
+                                    .format(state._to_process),
+                                    file_name=state._file_name,
+                                    line_number=state._line_number)
 
             self._ctx.printer.info('  <EOL> ({}).'.format(state))
 
         if not state.is_token_complete():
-            raise ex.ParseError(state._file_name, state._line_number,
-                                'Unexpected EOF.')
+            raise ex.ParseError('Unexpected EOF.',
+                                file_name=state._file_name,
+                                line_number=state._line_number)
 
         # Flush last exec object:
         obj = state.create_execute_object()
@@ -305,10 +307,10 @@ class Parser:
             if key is not None:
                 if need_arg_value:
                     if not self._command_pattern.match(key):
-                        raise ex.ParseError(state._file_name,
-                                            state._line_number,
-                                            '"{}" is not a valid keyword '
-                                            'argument.'.format(key))
+                        raise ex.ParseError('"{}" is not a valid keyword '
+                                            'argument.'.format(key),
+                                            file_name=state._file_name,
+                                            line_number=state._line_number)
                     if value is not None:
                         state._kwargs[key] = value
                         state._key_for_value = ''
@@ -323,16 +325,19 @@ class Parser:
         self._ctx.printer.trace('      Validating command "{}".'
                                 .format(command))
         if not command:
-            raise ex.ParseError(state._file_name, state._line_number,
-                                'Empty command found.')
+            raise ex.ParseError('Empty command found.',
+                                file_name=state._file_name,
+                                line_number=state._line_number)
 
         if not self._command_pattern.match(command):
-            raise ex.ParseError(state._file_name, state._line_number,
-                                'Invalid command "{}".'.format(command))
+            raise ex.ParseError('Invalid command "{}".'.format(command),
+                                file_name=state._file_name,
+                                line_number=state._line_number)
 
         if command not in Parser._commands:
-            raise ex.ParseError(state._file_name, state._line_number,
-                                'Command "{}" not found.'.format(command))
+            raise ex.ParseError('Command "{}" not found.'.format(command),
+                                file_name=state._file_name,
+                                line_number=state._line_number)
 
         self._ctx.printer.info('    Command is "{}".'.format(command))
 
@@ -428,9 +433,9 @@ class Parser:
                     value += c
                     continue
 
-                raise ex.ParseError(file_name, line_number,
-                                    'Invalid escape sequence "\{}" in string.'
-                                    .format(c))
+                raise ex.ParseError('Invalid escape sequence "\{}" in string.'
+                                    .format(c), file_name=file_name,
+                                    line_number=line_number)
 
             if c == '\\':
                 must_escape = True
@@ -441,8 +446,8 @@ class Parser:
 
             value += c
 
-        raise ex.ParseError(file_name, line_number,
-                            'Missing closing "{}" quote.'.format(quote))
+        raise ex.ParseError('Missing closing "{}" quote.'.format(quote),
+                            file_name=file_name, line_number=line_number)
 
     def _parse_normal_argument(self, file_name, line_number, line,
                                is_keyword_possible=True):
@@ -460,9 +465,10 @@ class Parser:
                     value += c
                     continue
 
-                raise ex.ParseError(file_name, line_number,
-                                    'Invalid escape sequence "\{}" '
-                                    'in argument.'.format(c))
+                raise ex.ParseError('Invalid escape sequence "\{}" '
+                                    'in argument.'.format(c),
+                                    file_name=file_name,
+                                    line_number=line_number)
 
             if c == '\\':
                 must_escape = True

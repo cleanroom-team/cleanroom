@@ -20,8 +20,8 @@ class SetTimezoneCommand(cmd.Command):
     def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 1:
-            raise ex.ParseError(file_name, line_number,
-                                'set_timezone needs a timezone to set up.')
+            raise ex.ParseError('set_timezone needs a timezone to set up.',
+                                file_name=file_name, line_number=line_number)
 
         return None
 

@@ -31,8 +31,8 @@ class Command:
         the system.
         """
         if len(args) != 0:
-            raise ex.ParseError(file_name, line_number,
-                                'Command does not take arguments.')
+            raise ex.ParseError('Command does not take arguments.',
+                                file_name=file_name, line_number=line_number)
         return None
 
     def __call__(self, run_context, *args, **kwargs):

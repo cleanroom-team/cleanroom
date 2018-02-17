@@ -22,14 +22,14 @@ class CopyFileCommand(cmd.Command):
     def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 2:
-            raise ex.ParseError(file_name, line_number,
-                                'copy needs source and a destination.')
+            raise ex.ParseError('copy needs source and a destination.',
+                                file_name=file_name, line_number=line_number)
 
         if kwargs.get('from_outside', False) \
            and kwargs.get('to_outside', False):
-            raise ex.ParseError(file_name, line_number,
-                                'You can not copy a file from_outside '
-                                'to_outside.')
+            raise ex.ParseError('You can not copy a file from_outside '
+                                'to_outside.',
+                                file_name=file_name, line_number=line_number)
 
         return None
 

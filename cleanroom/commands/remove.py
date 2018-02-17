@@ -20,8 +20,8 @@ class RemoveCommand(cmd.Command):
     def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate the arguments."""
         if len(args) == 0:
-            raise ex.ParseError(file_name, line_number,
-                                'remove needs a list of files to remove')
+            raise ex.ParseError('remove needs a list of files to remove',
+                                file_name=file_name, line_number=line_number)
 
         return None
 

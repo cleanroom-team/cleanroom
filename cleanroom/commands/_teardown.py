@@ -5,7 +5,6 @@
 
 import cleanroom.command as cmd
 import cleanroom.context as context
-import cleanroom.testrunner as testrunner
 
 
 class _TeardownCommand(cmd.Command):

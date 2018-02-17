@@ -20,8 +20,8 @@ class CreateCommand(cmd.Command):
     def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 2:
-            raise ex.ParseError(file_name, line_number,
-                                'create_file needs a file and its contents.')
+            raise ex.ParseError('create_file needs a file and its contents.',
+                                file_name=file_name, line_number=line_number)
 
         return None
 

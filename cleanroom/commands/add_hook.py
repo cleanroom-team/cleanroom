@@ -25,9 +25,9 @@ class AddHookCommand(cmd.Command):
         self._line_number = line_number
 
         if len(args) < 2:
-            raise ex.ParseError(file_name, line_number,
-                                'add_hook needs a hook name and a command '
-                                'with optional arguments')
+            raise ex.ParseError('add_hook needs a hook name and a command '
+                                'with optional arguments',
+                                file_name=file_name, line_number=line_number)
 
         return None
 

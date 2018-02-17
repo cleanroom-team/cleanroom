@@ -28,18 +28,18 @@ class BasedCommand(cmd.Command):
 
         if len(args) != 2 or args[0] != 'on':
             print('>>>>', args, type(args))
-            raise ex.ParseError(file_name, line_number,
-                                '"based" needs a "on" followed by a '
-                                'system name.')
+            raise ex.ParseError('"based" needs a "on" followed by a '
+                                'system name.',
+                                file_name=file_name, line_number=line_number)
         elif len(args) == 2:
             base = args[1]
 
         assert(base)
         system_pattern = re.compile('^[A-Za-z][A-Za-z0-9_-]*$')
         if not system_pattern.match(base):
-            raise ex.ParseError(file_name, line_number,
-                                '"based" got invalid base system name "{}".'
-                                .format(base))
+            raise ex.ParseError('"based" got invalid base system name "{}".'
+                                .format(base),
+                                file_name=file_name, line_number=line_number)
 
         return base
 

@@ -9,14 +9,23 @@
 class CleanRoomError(RuntimeError):
     """Base class for all cleanroom Exceptions."""
 
-    def __init__(self, *args):
+    def __init__(self, *args, file_name=None, line_number=-1):
         """Constructor."""
         super().__init__(*args)
+        self._file_name = file_name
+        self._line_number = line_number
 
     def __str__(self):
         """Stringify exception."""
-        assert(len(self.args) == 1)
-        return 'Error: {}'.format(self.args[0])
+        prefix = 'Error'
+        if self._file_name:
+            if self._line_number > 0:
+                prefix = 'Error in "{}"({})'.format(self._file_name,
+                                                    self._line_number)
+            else:
+                prefix = 'Error in "{}"'.format(self._file_name)
+
+        return '{}: {}'.format(prefix, ' '.join(self.args))
 
 
 class PreflightError(CleanRoomError):
@@ -52,15 +61,7 @@ class SystemNotFoundError(CleanRoomError):
 class ParseError(CleanRoomError):
     """Error raised while parsing system descriptions."""
 
-    def __init__(self, file, line, msg):
-        """Constructor."""
-        super().__init__(file, line, msg)
-
-    def __str__(self):
-        """Stringify exception."""
-        assert(len(self.args) == 3)
-        return 'Error in {}({}): {}'.format(self.args[0], self.args[1],
-                                            self.args[2])
+    pass
 
 
 if __name__ == '__main__':

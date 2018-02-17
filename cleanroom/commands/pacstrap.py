@@ -23,13 +23,13 @@ class PacstrapCommand(cmd.Command):
     def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate the arguments."""
         if len(args) < 1:
-            raise ex.ParseError(file_name, line_number,
-                                'pacstrap needs at least '
-                                'one package or group to install.')
+            raise ex.ParseError('pacstrap needs at least '
+                                'one package or group to install.',
+                                file_name=file_name, line_number=line_number)
 
         if 'config' not in kwargs:
-            raise ex.ParseError(file_name, line_number,
-                                'pacstrap needs a "config" keyword argument.')
+            raise ex.ParseError('pacstrap needs a "config" keyword argument.',
+                                file_name=file_name, line_number=line_number)
         return None
 
     def __call__(self, run_context, *args, **kwargs):
