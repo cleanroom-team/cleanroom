@@ -20,7 +20,8 @@ class SetLocalesCommand(cmd.Command):
         self._file_name = None
         self._line_number = -1
 
-        super().__init__('set_locales <LOCALE> [<MORE_LOCALES>]',
+        super().__init__('set_locales <LOCALE> [<MORE_LOCALES>] '
+                         '[charmap=UTF-8]',
                          'Set the system locales.')
 
     def validate_arguments(self, file_name, line_number, *args, **kwargs):
@@ -36,6 +37,7 @@ class SetLocalesCommand(cmd.Command):
 
     def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
+        charmap = kwargs.get('charmap', 'UTF-8')
         locales_dir = os.path.join(run_context.fs_directory(),
                                    'usr/share/locale')
         locales = []
@@ -45,7 +47,7 @@ class SetLocalesCommand(cmd.Command):
                 raise ex.ParseError(self._file_name, self._line_number,
                                     'Locale "{}" not found in '
                                     '/usr/share/locale.'.format(a))
-            locales.append('{}.UTF-8 UTF-8'.format(a))
+            locales.append('{}.{} {}'.format(a, charmap, charmap))
 
         all_locales = '\n'.join(locales).encode('utf-8')
         file.create_file(run_context, '/etc/locale.gen', all_locales,
@@ -53,11 +55,13 @@ class SetLocalesCommand(cmd.Command):
         self._setup_hooks(run_context)
 
     def _setup_hooks(self, run_context):
-        if run_context.flags.get('locales_setup', None) is None:
+        locales_flag = 'locales_set_up'
+        if not run_context.flags.get(locales_flag, False):
             run_context.add_hook('export',
                                  parser.Parser.create_execute_object(
                                     '<set_locales>', 1,
-                                    'run', '/usr/bin/locale-gen'))
+                                    'run', '/usr/bin/locale-gen',
+                                    message='run locale-gen'))
             run_context.add_hook('export',
                                  parser.Parser.create_execute_object(
                                     '<set_locales>', 2,
@@ -65,6 +69,6 @@ class SetLocalesCommand(cmd.Command):
                                     '/usr/share/locale/*',
                                     '/etc/locale.gen', '/usr/bin/locale-gen',
                                     '/usr/bin/localedef',
-                                    force=True, recursive=True
-                                 ))
-        run_context.flags['locales_setup'] = True
+                                    force=True, recursive=True,
+                                    message='Remove locale related data.'))
+        run_context.flags[locales_flag] = True

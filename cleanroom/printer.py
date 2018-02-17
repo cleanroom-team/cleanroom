@@ -114,6 +114,10 @@ class Printer:
             if force_exit:
                 sys.exit(1)
 
+    def print(self, *args):
+        """Print arguments."""
+        print(self._prefix, *args)
+
     def verbose(self, *args):
         """Print if verbose is set."""
         if not self._print_at_verbosity_level(1):

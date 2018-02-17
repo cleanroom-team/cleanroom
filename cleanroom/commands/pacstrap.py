@@ -6,7 +6,6 @@
 
 import cleanroom.command as cmd
 import cleanroom.context as context
-import cleanroom.execobject as eo
 import cleanroom.exceptions as ex
 import cleanroom.helper.archlinux.pacman as pacman
 import cleanroom.helper.generic.file as file
@@ -53,6 +52,9 @@ class PacstrapCommand(cmd.Command):
 
         run_context.flags['package_type'] = 'pacman'
 
+        file.move(run_context, '/opt', '/usr')
+        file.symlink(run_context, 'usr/opt', 'opt', base_directory='/')
+
     def _prepare_keyring(self, run_context, pac_object, pacstrap_config):
         # Make sure important pacman directories exist:
         file.makedirs(run_context, pac_object.host_gpg_directory())
@@ -74,20 +76,20 @@ class PacstrapCommand(cmd.Command):
         packageFiles = pac_object.target_cache_directory() + '/pkg/*'
 
         run_context.add_hook('_teardown',
-                             eo.ExecObject(('<pacstrap command>', 1),
-                                           'garbage collect pacman files',
-                                           None,
-                                           parser.Parser.command('remove'),
-                                           gpgdir + '/S.*',
-                                           gpgdir + '/pubring.gpg~',
-                                           '/var/log/pacman.log',
-                                           packageFiles,
-                                           force=True, recursive=True))
+                             parser.Parser.create_execute_object(
+                                 '<pacstrap command>', 1,
+                                 'remove',
+                                 gpgdir + '/S.*',
+                                 gpgdir + '/pubring.gpg~',
+                                 '/var/log/pacman.log',
+                                 packageFiles,
+                                 force=True, recursive=True,
+                                 message='cleanup pacman-key files'))
 
         run_context.add_hook('export',
-                             eo.ExecObject(('<pacstrap command>', 2),
-                                           'remove pacman secret keys',
-                                           None,
-                                           parser.Parser.command('remove'),
-                                           gpgdir + '/secring.gpg*',
-                                           force=True))
+                             parser.Parser.create_execute_object(
+                                 '<pacstrap command>', 2,
+                                 'remove',
+                                 gpgdir + '/secring.gpg*',
+                                 force=True,
+                                 message='Remove pacman secret keyring'))

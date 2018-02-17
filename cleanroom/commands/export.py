@@ -19,3 +19,4 @@ class ExportCommand(cmd.Command):
         """Execute command."""
         run_context.run_hooks('_teardown')
         run_context.run_hooks('export')
+        run_context.run_hooks('testing')

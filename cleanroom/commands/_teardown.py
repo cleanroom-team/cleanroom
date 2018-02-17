@@ -5,6 +5,7 @@
 
 import cleanroom.command as cmd
 import cleanroom.context as context
+import cleanroom.testrunner as testrunner
 
 
 class _TeardownCommand(cmd.Command):
@@ -19,22 +20,27 @@ class _TeardownCommand(cmd.Command):
     def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         run_context.run_hooks('_teardown')
+        run_context.run_hooks('testing')
 
         run_context.pickle()
 
-        self.store_to_ostree(run_context)
+        self._store_to_ostree(run_context)
 
-    def store_to_ostree(self, run_context):
+    def _store_to_ostree(self, run_context):
         run_context.ctx.printer.debug('Storing results in ostree.')
         ostree = run_context.ctx.binary(context.Binaries.OSTREE)
 
         run_context.run(ostree,
-                        'commit',
                         '--repo={}'
                         .format(run_context.ctx.work_repository_directory()),
+                        'commit',
                         '--branch', run_context.system,
                         '--subject', run_context.timestamp,
                         '--add-metadata-string="timestamp={}"'
                         .format(run_context.timestamp),
                         outside=True,
                         work_directory=run_context.system_directory())
+
+    def _run_tests(self, run_context):
+        runner = testrunner.TestRunner()
+        runner._find_tests(run_context)

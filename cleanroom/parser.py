@@ -157,14 +157,17 @@ class Parser:
 
     @staticmethod
     def create_execute_object(file_name, line_number,
-                              command, *args, **kwargs):
+                              command, *args, message=None, **kwargs):
         """Create an execute object based on command and arguments."""
+        if message is None:
+            message = command
+
         command_object = Parser.command(command)
         dependency = command_object.validate_arguments(file_name,
                                                        line_number,
                                                        *args, **kwargs)
 
-        return execobject.ExecObject((file_name, line_number), command,
+        return execobject.ExecObject((file_name, line_number), message,
                                      dependency, command_object, *args,
                                      **kwargs)
 

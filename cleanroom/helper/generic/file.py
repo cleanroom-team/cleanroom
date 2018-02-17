@@ -166,6 +166,17 @@ def copy(run_context, source, destination, to_outside=False,
     shutil.copyfile(source, destination, **kwargs)
 
 
+def move(run_context, source, destination, to_outside=False,
+         from_outside=False, **kwargs):
+    """Copy a file into a system."""
+    assert(not to_outside or not from_outside)
+    if not from_outside:
+        source = file_name(run_context, source)
+    if not to_outside:
+        destination = file_name(run_context, destination)
+    shutil.move(source, destination, **kwargs)
+
+
 def remove(run_context, *files, recursive=False, force=False):
     """Delete a file inside of a system."""
     for file in expand_files(run_context, files):

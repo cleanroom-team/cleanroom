@@ -34,10 +34,11 @@ class AddHookCommand(cmd.Command):
     def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         hook = args[0]
-        cmd = args[1]
-        cmd_args = args[2:]
+        message = args[1]
+        cmd = args[2]
+        cmd_args = args[3:]
         cmd_kwargs = kwargs
 
         run_context.add_hook(hook, parser.Parser.create_execute_object(
             self._file_name, self._line_number,
-            cmd, *cmd_args, **cmd_kwargs))
+            cmd, *cmd_args, message=message, **cmd_kwargs))

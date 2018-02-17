@@ -48,7 +48,7 @@ set_default_target multi-user.target
 set_locales de_DE en_US
 
 # Things to update/clean on export:
-add_hook export run /usr/bin/ldconfig -X
-add_hook export remove /usr/bin/ldconfig
-add_hook export run /usr/bin/systemd-hwdb --usr update
-add_hook export remove /usr/bin/systemd-hwdb
+add_hook export 'Run ldconfig' run /usr/bin/ldconfig -X
+add_hook export 'Remove ldconfig data' remove /usr/bin/ldconfig
+add_hook export 'Update HWDB' run /usr/bin/systemd-hwdb --usr update
+add_hook export 'Remove HWDB data' remove /usr/bin/systemd-hwdb
