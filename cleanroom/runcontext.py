@@ -52,6 +52,7 @@ class RunContext:
         self.hooks = {}
         self.hooks_that_already_ran = []
         self.substitutions = {}
+        self.local_substitutions = {}
         self.flags = {}
 
         self._command = None
@@ -63,8 +64,8 @@ class RunContext:
 
     def _setup_substitutions(self):
         self.set_substitution('TIMESTAMP', self.timestamp)
-        self.set_substitution('SYSTEM', self.system)
-        self.set_substitution('BASE_SYSTEM', '')
+        self.set_substitution('SYSTEM', self.system, local=True)
+        self.set_substitution('BASE_SYSTEM', '', local=True)
 
     @staticmethod
     def _work_directory(ctx, system):
@@ -147,14 +148,18 @@ class RunContext:
 
         self.hooks_that_already_ran.append(hook)
 
-    def set_substitution(self, key, value):
+    def set_substitution(self, key, value, local=False):
         """Add a substitution to the substitution table."""
-        self.substitutions[key] = value
+        if local:
+            self.local_substitutions[key] = value
+        else:
+            self.substitutions[key] = value
 
     def substitute(self, text):
         """Substitute variables in text."""
         template = string.Template(text)
-        return template.substitute(self.substitutions)
+        all_substitutions = {**self.substitutions, **self.local_substitutions}
+        return template.substitute(all_substitutions)
 
     def run(self, *args, outside=False, **kwargs):
         """Run a command in this run_context."""

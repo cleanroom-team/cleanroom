@@ -50,10 +50,14 @@ class PacstrapCommand(cmd.Command):
         # Make sure DB is up-to-date:
         run_context.run('/usr/bin/pacman-db-upgrade')
 
-        run_context.flags['package_type'] = 'pacman'
+        run_context.set_substitution('PACKAGE_TYPE', 'pacman')
 
         file.move(run_context, '/opt', '/usr')
         file.symlink(run_context, 'usr/opt', 'opt', base_directory='/')
+
+        # Make sure pacman DB is up-to-date:
+        run_context.run('/usr/bin/pacman', '-Sy')
+        run_context.run('/usr/bin/pacman', '-Fy')
 
     def _prepare_keyring(self, run_context, pac_object, pacstrap_config):
         # Make sure important pacman directories exist:

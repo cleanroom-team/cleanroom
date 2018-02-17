@@ -4,6 +4,10 @@
 ###  # TIMESTAMP:  timestamp of installation
 ###  # SYSTEM:     system name
 
+# Set up some more substitutions:
+set ARCH x86_64
+set VENDOR org.archlinux.cleanroom
+
 # sed is needed for locale-gen
 pacstrap config=type-base/pacstrap.conf
     glibc gzip
@@ -28,7 +32,7 @@ CHASSIS="server"
 >>>>
 
 # Make sure some files are gone so that they do not cause trouble later:
-remove /etc/machine-id /usr/bin/init force=True
+remove /etc/fstab /etc/machine-id /etc/machine.info /usr/bin/init force=True
 
 # Remove unnecessary systemd-generators:
 # Must keep fstab and cryptsetup generator for mkinitcpio

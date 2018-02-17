@@ -64,6 +64,6 @@ class BasedCommand(cmd.Command):
 
     def _update_base_context(self, run_context, base_system):
         run_context.unpickle_base_context(base_system)
-        run_context.set_substitution('BASE_SYSTEM', base_system)
+        run_context.set_substitution('BASE_SYSTEM', base_system, local=True)
 
         run_context.base_system = base_system

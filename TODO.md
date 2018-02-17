@@ -1,3 +1,3 @@
-* Commit systems to ostree
-* Check out already known systems from ostree
 * More commands
+* Move /etc/systemd/system symlinks (and files?) into /usr
+* Make base feature complete
