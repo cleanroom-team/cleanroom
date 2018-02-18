@@ -14,7 +14,8 @@ class AddHookCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('add_hook <HOOK_NAME> <COMMAND> [<ARGS>] [<KWARGS>]',
+        super().__init__('add_hook <HOOK_NAME> <MESSAGE> <COMMAND> '
+                         '[<ARGS>] [<KWARGS>]',
                          'Add a hook running command with arguments.')
         self._file_name = ''
         self._line_number = -1

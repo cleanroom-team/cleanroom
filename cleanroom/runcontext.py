@@ -65,6 +65,7 @@ class RunContext:
     def _setup_substitutions(self):
         self.set_substitution('TIMESTAMP', self.timestamp)
         self.set_substitution('SYSTEM', self.system, local=True)
+        self.set_substitution('ROOT', self.fs_directory(), local=True)
         self.set_substitution('BASE_SYSTEM', '', local=True)
 
     @staticmethod

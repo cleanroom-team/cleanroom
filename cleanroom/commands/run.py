@@ -32,7 +32,14 @@ class RunCommand(cmd.Command):
             args = ('/usr/bin/bash', '-c', *args)
         if kwargs.get('outside', 'False') == 'False':
             kwargs['chroot'] = run_context.fs_directory()
-        if kwargs.get('exit_code', 0) == 'None':
+        if kwargs.get('exit_code', '0') == 'None':
             kwargs['exit_code'] = None
+        else:
+            kwargs['exit_code'] = int(kwargs.get('exit_code', '0'))
+
+        if 'outside' in kwargs:
+            del kwargs['outside']
+
+        args = map(lambda a: run_context.substitute(a), args)
 
         run.run(*args, **kwargs, trace_output=run_context.ctx.printer.trace)

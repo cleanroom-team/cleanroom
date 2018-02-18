@@ -18,7 +18,8 @@ class PacstrapCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('pacstrap <PACKAGES> config=<CONFIG_FILE>',
-                         'Run pacstrap to install <PACKAGES>.')
+                         'Run pacstrap to install <PACKAGES>.\n'
+                         'Hooks: Will runs _setup hooks after pacstrapping.')
 
     def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate the arguments."""
@@ -54,6 +55,8 @@ class PacstrapCommand(cmd.Command):
 
         file.move(run_context, '/opt', '/usr')
         file.symlink(run_context, 'usr/opt', 'opt', base_directory='/')
+
+        run_context.run_hooks('_setup')
 
         # Make sure pacman DB is up-to-date:
         run_context.run('/usr/bin/pacman', '-Sy')

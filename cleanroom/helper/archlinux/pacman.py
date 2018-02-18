@@ -57,7 +57,7 @@ class Pacman:
 
     def pacstrap(self, config, packages):
         """Run pacstrap on host."""
-        self._sync_host()
+        self._sync_host(config)
 
         all_packages = []
         for a in packages:
@@ -77,12 +77,12 @@ class Pacman:
             work_directory=self._run_context.ctx.systems_directory(),
             outside=True)
 
-    def _sync_host(self):
+    def _sync_host(self, config):
         """Run pacman -Syu on the host."""
         os.makedirs(self.host_db_directory())
         self._run_context.run(
             self._run_context.ctx.binary(context.Binaries.PACMAN),
-            '-Syu', '--dbpath', self.host_db_directory(),
+            '-Syu', '--config', config, '--dbpath', self.host_db_directory(),
             outside=True)
 
 
