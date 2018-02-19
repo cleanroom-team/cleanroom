@@ -35,7 +35,9 @@ class SetTimezoneCommand(cmd.Command):
         full_timezone = '../usr/share/zoneinfo/' + timezone
         if not file.exists(run_context, full_timezone, base_directory=etc):
             raise ex.GenerateError('Timezone "{}" not found when trying to '
-                                   'set timezone.'.format(timezone))
+                                   'set timezone.'.format(timezone),
+                                   file_name=file_name,
+                                   line_number=line_number)
 
         file.remove(run_context, etc_localtime)
         file.symlink(run_context, full_timezone, localtime, base_directory=etc)
