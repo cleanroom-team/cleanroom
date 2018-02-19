@@ -51,6 +51,8 @@ class PacstrapCommand(cmd.Command):
         # Make sure DB is up-to-date:
         run_context.run('/usr/bin/pacman-db-upgrade')
 
+        file.remove(run_context, '/var/lib/pacman', recursive=True, force=True)
+
         run_context.set_substitution('PACKAGE_TYPE', 'pacman')
 
         file.move(run_context, '/opt', '/usr')
