@@ -6,7 +6,6 @@
 
 import cleanroom.command as cmd
 import cleanroom.exceptions as ex
-import cleanroom.helper.generic.file as file
 
 
 class SetDefaultTargetCommand(cmd.Command):
@@ -25,7 +24,7 @@ class SetDefaultTargetCommand(cmd.Command):
 
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
         key = args[0]
         value = args[1]

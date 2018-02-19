@@ -27,7 +27,6 @@ class BasedCommand(cmd.Command):
         base = None
 
         if len(args) != 2 or args[0] != 'on':
-            print('>>>>', args, type(args))
             raise ex.ParseError('"based" needs a "on" followed by a '
                                 'system name.',
                                 file_name=file_name, line_number=line_number)
@@ -43,7 +42,7 @@ class BasedCommand(cmd.Command):
 
         return base
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
         base_system = args[1]
 

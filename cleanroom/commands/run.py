@@ -26,7 +26,7 @@ class RunCommand(cmd.Command):
                                 file_name=file_name, line_number=line_number)
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
         if kwargs.get('shell', 'False') == 'True':
             args = ('/usr/bin/bash', '-c', *args)

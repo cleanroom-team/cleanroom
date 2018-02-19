@@ -16,7 +16,7 @@ class _TeardownCommand(cmd.Command):
                          "Implicitly run after any other command of a "
                          "system is run.")
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
         run_context.run_hooks('_teardown')
         run_context.run_hooks('testing')
@@ -39,7 +39,3 @@ class _TeardownCommand(cmd.Command):
                         .format(run_context.timestamp),
                         outside=True,
                         work_directory=run_context.system_directory())
-
-    def _run_tests(self, run_context):
-        runner = testrunner.TestRunner()
-        runner._find_tests(run_context)

@@ -25,7 +25,7 @@ class CreateCommand(cmd.Command):
 
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
         to_write = run_context.substitute(args[1]).encode('utf-8')
         file.create_file(run_context, args[0], to_write, **kwargs)

@@ -18,7 +18,7 @@ class _TestCommand(cmd.Command):
         super().__init__("_test",
                          "Implicitly run after hooks on export/teardown.")
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
         run_context.ctx.printer.h2('Running tests for system "{}"'
                                    .format(run_context.system),

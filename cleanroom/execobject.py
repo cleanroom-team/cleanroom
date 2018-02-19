@@ -43,7 +43,8 @@ class ExecObject:
                                               ', '.join(self._kwargs)))
 
         try:
-            command_object(run_context, *self._args, **self._kwargs)
+            command_object(self._location[0], self._location[1],
+                           run_context, *self._args, **self._kwargs)
         except ex.CleanRoomError as e:
             run_context.ctx.printer.fail('{}: Failed to run "{}" with '
                                          'arguments ({}): {}.'

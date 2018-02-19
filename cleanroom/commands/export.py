@@ -15,7 +15,7 @@ class ExportCommand(cmd.Command):
                          'Export a system and make it available '
                          'for deployment.')
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
         run_context.run_hooks('_teardown')
         run_context.run_hooks('export')

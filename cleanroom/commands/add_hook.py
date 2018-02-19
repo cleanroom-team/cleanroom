@@ -17,14 +17,9 @@ class AddHookCommand(cmd.Command):
         super().__init__('add_hook <HOOK_NAME> <MESSAGE> <COMMAND> '
                          '[<ARGS>] [<KWARGS>]',
                          'Add a hook running command with arguments.')
-        self._file_name = ''
-        self._line_number = -1
 
     def validate_arguments(self, file_name, line_number, *args, **kwargs):
         """Validate the arguments."""
-        self._file_name = file_name
-        self._line_number = line_number
-
         if len(args) < 2:
             raise ex.ParseError('add_hook needs a hook name and a command '
                                 'with optional arguments',
@@ -32,7 +27,7 @@ class AddHookCommand(cmd.Command):
 
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
         hook = args[0]
         message = args[1]
@@ -41,5 +36,5 @@ class AddHookCommand(cmd.Command):
         cmd_kwargs = kwargs
 
         run_context.add_hook(hook, parser.Parser.create_execute_object(
-            self._file_name, self._line_number,
+            file_name, line_number,
             cmd, *cmd_args, message=message, **cmd_kwargs))

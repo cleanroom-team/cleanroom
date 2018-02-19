@@ -19,7 +19,7 @@ class _SetupCommand(cmd.Command):
                          "Implicitly run before any other command of a "
                          "system is run.")
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
         # Make sure systemd does not create /var/lib/machines for us!
         machines_dir = '/var/lib/machines'
@@ -31,6 +31,6 @@ class _SetupCommand(cmd.Command):
         if not run_context.flags.get(test_flag, False):
             run_context.add_hook('testing',
                                  parser.Parser.create_execute_object(
-                                     '<_setup>', 1, '_test',
+                                     file_name, line_number, '_test',
                                      message='Run tests'))
             run_context.flags[test_flag] = True

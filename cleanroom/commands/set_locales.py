@@ -35,7 +35,7 @@ class SetLocalesCommand(cmd.Command):
 
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
         charmap = kwargs.get('charmap', 'UTF-8')
         locales_dir = os.path.join(run_context.fs_directory(),

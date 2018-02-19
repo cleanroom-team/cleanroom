@@ -25,7 +25,7 @@ class SetTimezoneCommand(cmd.Command):
 
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
         etc = '/etc'
         localtime = 'localtime'
