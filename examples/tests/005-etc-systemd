@@ -1,0 +1,12 @@
+#!/usr/bin/bash
+
+function fail {
+    echo "$1"
+    exit $2
+}
+
+test -z "$(ls -A etc/systemd/system)" \
+    || fail "/etc/systemd/system is not empty, fail" 1
+
+echo "/etc/systemd is empty, ok"
+
