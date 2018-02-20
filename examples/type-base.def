@@ -60,6 +60,8 @@ set_timezone Europe/Berlin
 set_default_target multi-user.target
 set_locales de_DE en_US
 
+sed 's/^[ \\t#]*KillUserProcesses=.*$/KillUserProcesses=yes/' /etc/systemd/logind.conf
+
 # Things to update/clean on export:
 add_hook export 'Run ldconfig' run /usr/bin/ldconfig -X
 add_hook export 'Remove ldconfig data' remove /usr/bin/ldconfig
