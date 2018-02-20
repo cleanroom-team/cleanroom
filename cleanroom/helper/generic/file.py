@@ -152,7 +152,16 @@ def append_file(run_context, file, contents):
 
 def prepend_file(run_context, file, contents):
     """Prepend contents to an existing file."""
-    pass
+    full_path = file_name(run_context, file)
+
+    if not os.path.exists(full_path):
+        raise ex.GenerateError('"{}" does not exist when trying to append to '
+                               'it.'.format(full_path))
+
+    with open(full_path, 'r+b') as f:
+        content = f.read()
+        f.seek(0, 0)
+        f.write(contents + content)
 
 
 def copy(run_context, source, destination, to_outside=False,
