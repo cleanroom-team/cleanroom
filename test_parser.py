@@ -157,6 +157,26 @@ class ParserTest(tu.BaseParserTest, unittest.TestCase):
         self._verify('test1  \ ',
                      [(self._cmd1, (' ',), {})])
 
+    def test_command_escaped_sq_argument(self):
+        """Test a command with argument surrounded by sq."""
+        self._verify('test1  \\\'arg1\\\' ',
+                     [(self._cmd1, ('\'arg1\'',), {})])
+
+    def test_command_escaped_dq_argument(self):
+        """Test a command with argument surrounded by dq."""
+        self._verify('test1  \\"arg1\\" ',
+                     [(self._cmd1, ('"arg1"',), {})])
+
+    def test_command_escaped_sq_kw_argument(self):
+        """Test a command with kwargument valuesurrounded by sq."""
+        self._verify('test1  value=\\\'arg1\\\' ',
+                     [(self._cmd1, (), {'value': '\'arg1\''})])
+
+    def test_command_escaped_dq_kw_argument(self):
+        """Test a command with kwargument value surrounded by dq."""
+        self._verify('test1  value=\\"arg1\\" ',
+                     [(self._cmd1, (), {'value': '"arg1"'})])
+
     # Multiline:
     def test_command_empty_ml(self):
         """Test a command with empty ml argument."""

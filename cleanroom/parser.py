@@ -461,7 +461,7 @@ class Parser:
 
             if must_escape:
                 must_escape = False
-                if c == ' ' or c == '\\':
+                if c == ' ' or c == '\\' or c == '\'' or c == '\"':
                     value += c
                     continue
 
