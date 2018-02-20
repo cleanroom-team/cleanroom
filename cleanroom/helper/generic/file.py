@@ -24,8 +24,10 @@ def file_name(run_context, f):
         root_path = root_path[:-1]
 
     full_path = os.path.normpath(root_path + f)
+    run_context.ctx.printer.trace('Mapped file path "{}" to "{}".'
+                                  .format(f, full_path))
 
-    if not full_path.startswith(root_path):
+    if full_path != root_path and not full_path.startswith(root_path + '/'):
         raise ex.GenerateError('File path "{}" is outside of "{}"'
                                .format(full_path, root_path))
     return full_path
@@ -95,21 +97,25 @@ def makedirs(run_context, *dirs, user=0, group=0, mode=None):
     for d in dirs:
         full_path = file_name(run_context, d)
         if os.makedirs(full_path):
-            _chmod(mode, full_path)
-        _chown(user, group, full_path)
+            _chmod(run_context, mode, full_path)
+        _chown(run_context, user, group, full_path)
 
 
-def _chmod(mode, file):
+def _chmod(run_context, mode, *files):
     """For internal use only."""
-    return os.chmod(file, mode)
+    for f in files:
+        run_context.ctx.printer.trace('Chmod of "{}" to {}.'
+                                      .format(f, mode))
+        os.chmod(f, mode)
 
 
 def chmod(run_context, mode, *files):
     """Chmod in the system filesystem."""
-    return _chmod(mode, expand_files(run_context, *files))
+    return _chmod(run_context, mode, *expand_files(run_context, files))
 
 
-def _chown(user, group, file):
+def _chown(run_context, user, group, *files):
+    """Change owner of files."""
     if user == 'root':
         user = 0
     if group == 'root':
@@ -118,12 +124,15 @@ def _chown(user, group, file):
     assert(user is not str)
     assert(group is not str)
 
-    return os.chown(file, user, group)
+    for f in files:
+        run_context.ctx.printer.trace('Chown of "{}" to {}:{}.'
+                                      .format(f, user, group))
+        os.chown(f, user, group)
 
 
 def chown(run_context, user, group, *files):
     """Change ownership of a file in the system filesystem."""
-    return _chown(user, group, expand_files(run_context, files))
+    return _chown(run_context, user, group, *expand_files(run_context, files))
 
 
 def create_file(run_context, file, contents, force=False):
@@ -172,6 +181,8 @@ def copy(run_context, source, destination, to_outside=False,
         source = file_name(run_context, source)
     if not to_outside:
         destination = file_name(run_context, destination)
+    run_context.ctx.printer.trace('Copying file from "{}" to "{}".'
+                                  .format(source, destination))
     shutil.copyfile(source, destination, **kwargs)
 
 
@@ -183,6 +194,8 @@ def move(run_context, source, destination, to_outside=False,
         source = file_name(run_context, source)
     if not to_outside:
         destination = file_name(run_context, destination)
+    run_context.ctx.printer.trace('Moving file from "{}" to "{}".'
+                                  .format(source, destination))
     shutil.move(source, destination, **kwargs)
 
 

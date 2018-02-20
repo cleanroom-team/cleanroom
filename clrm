@@ -5,10 +5,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-if __name__ != '__main__':
-    print('This file can not be imported.')
-    exit(1)
-
 import cleanroom.context as context
 import cleanroom.exceptions as exceptions
 import cleanroom.parser as parser
@@ -44,57 +40,73 @@ def parse_commandline(arguments):
 
     return parse_result
 
-args = parse_commandline(sys.argv)
 
-if not args.list_commands and not args.systems:
-    print('No systems to process.')
-    sys.exit(1)
+def main():
+    args = parse_commandline(sys.argv)
 
-pr = printer.Printer(args.verbose)
-pr.verbose('Verbose output enabled.')
-pr.info('Info output enabled.')
-pr.debug('Debug output enabled.')
-pr.trace('Trace output enabled.')
+    if not args.list_commands and not args.systems:
+        print('No systems to process.')
+        sys.exit(1)
 
-old_work_directory = os.getcwd()
+    pr = printer.Printer(args.verbose)
+    pr.verbose('Verbose output enabled.')
+    pr.info('Info output enabled.')
+    pr.debug('Debug output enabled.')
+    pr.trace('Trace output enabled.')
 
-# Set up Context object:
-ctx = context.Context(pr, args.ignore_errors)
-try:
-    ctx.preflight_check()
-except exceptions.PreflightError:
-    pr.fail('Preflight Check failed', ignore=args.ignore_errors)
-else:
-    pr.success('Preflight Check passed', verbosity = 2)
-
-system_dir = args.system_dir if args.system_dir else os.getcwd()
-
-# Do work:
-with workdir.WorkDir(ctx, args.work_dir) as work_dir:
-    ctx.set_directories(system_dir, work_dir)
-
-    if args.list_commands:
-        parser.Parser.list_commands(ctx)
-        sys.exit(0)
-
+    old_work_directory = os.getcwd()
     try:
-        ctx.generator.prepare()
-    except exceptions.PrepareError as e:
-        pr.fail('Preparation failed: {}'.format(e), ignore=args.ignore_errors)
-        raise
+        generate(pr, args)
+    except Exception as e:
+        pr.fail('System generation failed: {}.'.format(e),
+                ignore=args.ignore_errors)
+        raise e
     else:
-        pr.success('Preparation phase.', verbosity = 2)
-
-    for s in args.systems:
-        ctx.generator.add_system(s)
-
-    try:
-        ctx.generator.generate()
-    except exceptions.GenerateError as e:
-        pr.fail('Generation failed: {}'.format(e), ignore=args.ignore_errors)
+        pr.success('Done.', verbosity = 3)
+    finally:
         os.chdir(old_work_directory)
-        raise
-    else:
-        pr.success('Generation phase.', verbosity = 2)
 
-pr.success('Done.', verbosity = 3)
+def generate(pr, args):
+    # Set up Context object:
+    ctx = context.Context(pr, args.ignore_errors)
+    try:
+        ctx.preflight_check()
+    except exceptions.PreflightError:
+        pr.fail('Preflight Check failed', ignore=args.ignore_errors)
+        if not args.ignore_errors:
+            raise
+    else:
+        pr.success('Preflight Check passed', verbosity = 2)
+
+    system_dir = args.system_dir if args.system_dir else os.getcwd()
+
+    # Do work:
+    with workdir.WorkDir(ctx, args.work_dir) as work_dir:
+        ctx.set_directories(system_dir, work_dir)
+
+        if args.list_commands:
+            parser.Parser.list_commands(ctx)
+            sys.exit(0)
+
+        try:
+            ctx.generator.prepare()
+        except exceptions.PrepareError as e:
+            pr.fail('Preparation failed: {}'.format(e), ignore=args.ignore_errors)
+            raise
+        else:
+            pr.success('Preparation phase.', verbosity = 2)
+
+        for s in args.systems:
+            ctx.generator.add_system(s)
+
+        try:
+            ctx.generator.generate()
+        except exceptions.GenerateError as e:
+            pr.fail('Generation failed: {}'.format(e), ignore=args.ignore_errors)
+            raise
+        else:
+            pr.success('Generation phase.', verbosity = 2)
+
+
+if __name__ == '__main__':
+    main()

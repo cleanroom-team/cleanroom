@@ -47,17 +47,18 @@ class ExecObject:
                            run_context, *self._args, **self._kwargs)
         except ex.CleanRoomError as e:
             run_context.ctx.printer.fail('{}: Failed to run "{}" with '
-                                         'arguments ({}): {}.'
+                                         '({}:{}): {}.'
                                          .format(self._location,
                                                  self._name,
                                                  ', '.join(self._args),
-                                                 ', '.join(self._kwargs), e),
+                                                 ', '.join(self._kwargs),
+                                                 e),
                                          verbosity=1)
             if not run_context.ctx.ignore_errors:
                 raise
         else:
             run_context.ctx.printer.success('{}: Ran "{}" with '
-                                            'arguments ({}, {}).'
+                                            '({}:{}).'
                                             .format(self._location,
                                                     self._name,
                                                     ', '.join(self._args),
