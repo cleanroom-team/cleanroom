@@ -30,9 +30,6 @@ class SetLocalesCommand(cmd.Command):
             raise ex.ParseError('set_locales needs at least one locale.',
                                 file_name=file_name, line_number=line_number)
 
-        self._file_name = file_name
-        self._line_number = line_number
-
         return None
 
     def __call__(self, file_name, line_number, run_context, *args, **kwargs):
@@ -46,8 +43,8 @@ class SetLocalesCommand(cmd.Command):
                and not os.path.isdir(os.path.join(locales_dir, a[0:2])):
                 raise ex.ParseError('Locale "{}" not found in '
                                     '/usr/share/locale.'.format(a),
-                                    file_name=self._file_name,
-                                    line_number=self._line_number)
+                                    file_name=file_name,
+                                    line_number=line_number)
             locales.append('{}.{} {}'.format(a, charmap, charmap))
 
         all_locales = '\n'.join(locales).encode('utf-8')
