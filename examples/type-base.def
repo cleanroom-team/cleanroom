@@ -1,8 +1,10 @@
 # Base image
 
 ### cleanroom will have added the following substitution patterns:
-###  # TIMESTAMP:  timestamp of installation
-###  # SYSTEM:     system name
+###  # TIMESTAMP:   timestamp of installation
+###  # SYSTEM:      system name
+###  # BASE_SYSTEM: system name of the base
+###  # ROOT:        path to the systems filesystem root
 
 # Set up some more substitutions:
 set ARCH x86_64
