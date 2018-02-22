@@ -13,13 +13,10 @@ import os.path
 
 
 class SetLocalesCommand(cmd.Command):
-    """The set_default_target command."""
+    """The set_locales command."""
 
     def __init__(self):
         """Constructor."""
-        self._file_name = None
-        self._line_number = -1
-
         super().__init__('set_locales <LOCALE> [<MORE_LOCALES>] '
                          '[charmap=UTF-8]',
                          'Set the system locales.')
