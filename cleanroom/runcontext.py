@@ -8,6 +8,7 @@
 
 import cleanroom.command as command
 import cleanroom.helper.generic.run as run
+import cleanroom.helper.generic.file as file
 import cleanroom.parser as parser
 
 import datetime
@@ -99,6 +100,10 @@ class RunContext:
         if system is None:
             system = self.system
         return RunContext._meta_directory(self.ctx, system)
+
+    def expand_files(self, *files):
+        """Map files from inside to outside paths."""
+        return file.expand_files(self, *files)
 
     @staticmethod
     def _pickle_jar(ctx, system):

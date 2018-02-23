@@ -111,7 +111,7 @@ def _chmod(run_context, mode, *files):
 
 def chmod(run_context, mode, *files):
     """Chmod in the system filesystem."""
-    return _chmod(run_context, mode, *expand_files(run_context, files))
+    return _chmod(run_context, mode, *run_context.expand_files(files))
 
 
 def _chown(run_context, user, group, *files):
@@ -132,7 +132,7 @@ def _chown(run_context, user, group, *files):
 
 def chown(run_context, user, group, *files):
     """Change ownership of a file in the system filesystem."""
-    return _chown(run_context, user, group, *expand_files(run_context, files))
+    return _chown(run_context, user, group, *run_context.expand_files(files))
 
 
 def create_file(run_context, file, contents, force=False):
@@ -201,7 +201,7 @@ def move(run_context, source, destination, to_outside=False,
 
 def remove(run_context, *files, recursive=False, force=False):
     """Delete a file inside of a system."""
-    for file in expand_files(run_context, files):
+    for file in run_context.expand_files(files):
         run_context.ctx.printer.trace('Removing "{}".'.format(file))
 
         if not os.path.exists(file):
