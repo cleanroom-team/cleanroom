@@ -94,10 +94,15 @@ class PacstrapCommand(cmd.Command):
                                  packageFiles,
                                  force=True, recursive=True,
                                  message='cleanup pacman-key files'))
+        run_context.add_hook('_teardown',
+                             parser.Parser.create_execute_object(
+                                 '<pacstrap command>', 2,
+                                 'systemd_cleanup',
+                                 message='Move systemd files into /usr'))
 
         run_context.add_hook('export',
                              parser.Parser.create_execute_object(
-                                 '<pacstrap command>', 2,
+                                 '<pacstrap command>', 3,
                                  'remove',
                                  gpgdir + '/secring.gpg*',
                                  force=True,

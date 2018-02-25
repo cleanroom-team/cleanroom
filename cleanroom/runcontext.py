@@ -102,8 +102,14 @@ class RunContext:
         return RunContext._meta_directory(self.ctx, system)
 
     def expand_files(self, *files):
-        """Map files from inside to outside paths."""
+        """Map and expand files from inside to outside paths."""
         return file.expand_files(self, *files)
+
+    def file_name(self, path):
+        """Map a file from inside to outside path."""
+        if not os.path.isabs(path):
+            return path
+        return file.file_name(self, path)
 
     @staticmethod
     def _pickle_jar(ctx, system):

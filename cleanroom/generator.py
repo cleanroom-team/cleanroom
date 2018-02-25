@@ -174,6 +174,13 @@ class Generator:
             try:
                 exe = executor.Executor()
                 exe.run(self._ctx, system, command_list)
+            except AssertionError as e:
+                self._ctx.printer.fail('Generation of "{}" asserted.'
+                                       .format(system,),
+                                       force_exit=False,
+                                       ignore=self._ctx.ignore_errors)
+                if not self._ctx.ignore_errors:
+                    raise
             except Exception as e:
                 self._ctx.printer.fail('Generation of "{}" failed: {}.'
                                        .format(system, e),

@@ -36,13 +36,6 @@ remove /usr/lib/systemd/system/*/ldconfig.service
        /usr/lib/systemd/system/*/systemd-hwdb-update.service
        /usr/lib/systemd/system/systemd-hwdb-update.service
 
-# Clean out useless files in /etc/systemd/system:
-# These files are already in /usr/lib/systemd/system/...
-remove /etc/systemd/system/multi-user.target.wants/remote-fs.target
-       /etc/systemd/system/getty.target.wants/getty@tty1.service
-       /etc/systemd/system/multi-user.target.wants
-       /etc/systemd/system/getty.target.wants
-
 set_timezone Europe/Berlin
 set_default_target multi-user.target
 set_locales de_DE en_US

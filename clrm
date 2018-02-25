@@ -57,10 +57,14 @@ def main():
     old_work_directory = os.getcwd()
     try:
         generate(pr, args)
+    except AssertionError as ae:
+        pr.fail('Assertion when generating system.', force_exit=False)
+        raise
     except Exception as e:
         pr.fail('System generation failed: {}.'.format(e),
-                ignore=args.ignore_errors)
-        raise e
+                ignore=args.ignore_errors,
+                force_exit=False)
+        raise
     else:
         pr.success('Done.', verbosity = 3)
     finally:
