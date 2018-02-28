@@ -1,0 +1,31 @@
+#!/usr/bin/bash
+
+function fail {
+    echo "$1"
+    exit $2
+}
+
+TOP=$(pwd)
+SD="${TOP}/usr/lib/systemd/system"
+
+for L in $(cd "${SD}" ; find . -type l) ; do
+    LT=$(cd "${SD}" && readlink "${L}" | sed -e 's!^\./!!')
+    if test "x$LT" = "x/dev/null" ; then
+        echo "Systemd: Symlink ${L} is a mask, ok." 
+    elif [[ "$(dirname "${L}")" == "." ]]; then
+        # top level:
+        if [[ "${LT}" != */* ]]; then
+            echo "Systemd: Symlink ${L} is an alias for ${LT}, ok"
+        else
+            fail "Systemd: Symlink ${L} points to a strange place ${LT}, fail" 1
+        fi
+    else
+        # (target.wants) sub folder:
+        if [[ "${LT}" == ../* ]]; then
+            echo "Systemd: Symlink ${L} is relative, ok"
+        else
+            fail "Systemd: Symlink ${L} is not relative ($LT), fail" 1
+        fi
+    fi
+done
+
