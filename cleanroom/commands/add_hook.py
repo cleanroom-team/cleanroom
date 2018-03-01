@@ -6,7 +6,6 @@
 
 import cleanroom.command as cmd
 import cleanroom.exceptions as ex
-import cleanroom.parser as parser
 
 
 class AddHookCommand(cmd.Command):
@@ -35,6 +34,6 @@ class AddHookCommand(cmd.Command):
         cmd_args = args[3:]
         cmd_kwargs = kwargs
 
-        run_context.add_hook(hook, parser.Parser.create_execute_object(
-            file_name, line_number,
-            cmd, *cmd_args, message=message, **cmd_kwargs))
+        run_context.add_hook(hook, cmd, *cmd_args, **cmd_kwargs,
+                             file_name=file_name, line_number=line_number,
+                             message=message)

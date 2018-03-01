@@ -9,7 +9,6 @@ import cleanroom.context as context
 import cleanroom.exceptions as ex
 import cleanroom.helper.archlinux.pacman as pacman
 import cleanroom.helper.generic.file as file
-import cleanroom.parser as parser
 
 
 class PacstrapCommand(cmd.Command):
@@ -84,26 +83,19 @@ class PacstrapCommand(cmd.Command):
         gpgdir = pac_object.target_gpg_directory()
         packageFiles = pac_object.target_cache_directory() + '/pkg/*'
 
-        run_context.add_hook('_teardown',
-                             parser.Parser.create_execute_object(
-                                 '<pacstrap command>', 1,
-                                 'remove',
-                                 gpgdir + '/S.*',
-                                 gpgdir + '/pubring.gpg~',
-                                 '/var/log/pacman.log',
-                                 packageFiles,
-                                 force=True, recursive=True,
-                                 message='cleanup pacman-key files'))
-        run_context.add_hook('_teardown',
-                             parser.Parser.create_execute_object(
-                                 '<pacstrap command>', 2,
-                                 'systemd_cleanup',
-                                 message='Move systemd files into /usr'))
+        run_context.add_hook('_teardown', 'remove',
+                             gpgdir + '/S.*', gpgdir + '/pubring.gpg~',
+                             '/var/log/pacman.log', packageFiles,
+                             recursive=True, force=True,
+                             message='cleanup pacman-key files',
+                             file_name='<pacstrap command>',
+                             line_number=1)
+        run_context.add_hook('_teardown', 'systemd_cleanup',
+                             file_name='<pacstrap command>', line_number=2,
+                             message='Move systemd files into /usr')
 
-        run_context.add_hook('export',
-                             parser.Parser.create_execute_object(
-                                 '<pacstrap command>', 3,
-                                 'remove',
-                                 gpgdir + '/secring.gpg*',
-                                 force=True,
-                                 message='Remove pacman secret keyring'))
+        run_context.add_hook('export', 'remove',
+                             gpgdir + '/secring.gpg*',
+                             force=True,
+                             file_name='<pacstrap command>', line_number=3,
+                             message='Remove pacman secret keyring')

@@ -135,11 +135,21 @@ class RunContext:
         """Set the command name."""
         self._command = command_name
 
-    def add_hook(self, hook, exec_object):
+    def _add_hook(self, hook, exec_object):
         """Add a hook."""
+        self.ctx.printer.info('Adding hook "{}": {}.'
+                              .format(hook, exec_object))
         self.hooks.setdefault(hook, []).append(exec_object)
         self.ctx.printer.trace('Hook {} has {} entries.'
                                .format(hook, len(self.hooks[hook])))
+
+    def add_hook(self, hook, command, *args,
+                 message='<unknown hook>', file_name=None, line_number=-1,
+                 **kwargs):
+        """Add a hook."""
+        self._add_hook(hook, parser.Parser.create_execute_object(
+            file_name, line_number,
+            command, *args, message=message, **kwargs))
 
     def run_hooks(self, hook):
         """Run all the registered hooks."""

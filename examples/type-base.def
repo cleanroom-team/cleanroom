@@ -23,18 +23,7 @@ VERSION=${TIMESTAMP}
 VERSION_ID=${TIMESTAMP}
 >>>>
 
-# Remove unnecessary systemd-generators:
-# Must keep fstab and cryptsetup generator for mkinitcpio
-remove /usr/lib/system/system-generators/systemd-system-update-generator
-
-# Remove unnecessary systemd-timers:
-remove /usr/lib/systemd/system/timers.target.wants/shadow.timer
-
-# Remove unnecessary systemd-services:
-remove /usr/lib/systemd/system/*/ldconfig.service
-       /usr/lib/systemd/system/ldconfig.service
-       /usr/lib/systemd/system/*/systemd-hwdb-update.service
-       /usr/lib/systemd/system/systemd-hwdb-update.service
+setup_readonly_usr
 
 set_timezone Europe/Berlin
 set_default_target multi-user.target
@@ -44,9 +33,3 @@ set_locales de_DE en_US
 usermod root password='$6$7YexNe71gbljWuon$WkE6mSHd01osomCEMj/6rSX839atK7GTklCmUqy8poME22Oo1GKvDG3VUufdiKcwmR4Eo/A9W92NK8HhVmtxo1'
 
 sed 's/^[ \\t#]*KillUserProcesses=.*$/KillUserProcesses=yes/' /etc/systemd/logind.conf
-
-# Things to update/clean on export:
-add_hook export 'Run ldconfig' run /usr/bin/ldconfig -X
-add_hook export 'Remove ldconfig data' remove /usr/bin/ldconfig
-add_hook export 'Update HWDB' run /usr/bin/systemd-hwdb --usr update
-add_hook export 'Remove HWDB data' remove /usr/bin/systemd-hwdb

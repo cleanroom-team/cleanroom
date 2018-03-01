@@ -5,7 +5,6 @@
 
 import cleanroom.helper.generic.file as file
 import cleanroom.command as cmd
-import cleanroom.parser as parser
 
 import stat
 
@@ -29,8 +28,6 @@ class _SetupCommand(cmd.Command):
 
         test_flag = 'testing_was_set_up'
         if not run_context.flags.get(test_flag, False):
-            run_context.add_hook('testing',
-                                 parser.Parser.create_execute_object(
-                                     file_name, line_number, '_test',
-                                     message='Run tests'))
+            run_context.add_hook('_test', '_test', message='testing',
+                                 file_name=file_name, line_number=line_number)
             run_context.flags[test_flag] = True

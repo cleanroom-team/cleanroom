@@ -49,6 +49,8 @@ class BasedCommand(cmd.Command):
         self._ostree_checkout(run_context, base_system)
         self._update_base_context(run_context, base_system)
 
+        run_context.run_hooks('_setup')
+
     def _ostree_checkout(self, run_context, base_system):
         shutil.rmtree(run_context.system_directory())
 

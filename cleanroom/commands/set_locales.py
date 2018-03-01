@@ -7,7 +7,6 @@
 import cleanroom.command as cmd
 import cleanroom.exceptions as ex
 import cleanroom.helper.generic.file as file
-import cleanroom.parser as parser
 
 import os.path
 
@@ -53,17 +52,14 @@ class SetLocalesCommand(cmd.Command):
         locales_flag = 'locales_set_up'
         if not run_context.flags.get(locales_flag, False):
             run_context.add_hook('export',
-                                 parser.Parser.create_execute_object(
-                                    '<set_locales>', 1,
-                                    'run', '/usr/bin/locale-gen',
-                                    message='run locale-gen'))
+                                 'run', '/usr/bin/locale-gen',
+                                 file_name='<set_locales>', line_number=1,
+                                 message='run locale-gen')
             run_context.add_hook('export',
-                                 parser.Parser.create_execute_object(
-                                    '<set_locales>', 2,
-                                    'remove',
-                                    '/usr/share/locale/*',
-                                    '/etc/locale.gen', '/usr/bin/locale-gen',
-                                    '/usr/bin/localedef',
-                                    force=True, recursive=True,
-                                    message='Remove locale related data.'))
+                                 'remove', '/usr/share/locale/*',
+                                 '/etc/locale.gen', '/usr/bin/locale-gen',
+                                 '/usr/bin/localedef',
+                                 force=True, recursive=True,
+                                 file_name='<set_locales>', line_number=2,
+                                 message='Remove locale related data.')
         run_context.flags[locales_flag] = True

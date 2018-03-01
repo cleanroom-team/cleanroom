@@ -13,14 +13,11 @@ import os.path
 import stat
 
 
-class InstallCertificateLocalesCommand(cmd.Command):
+class InstallCertificatesCommand(cmd.Command):
     """The install_certificate command."""
 
     def __init__(self):
         """Constructor."""
-        self._file_name = None
-        self._line_number = -1
-
         super().__init__('install_certificate <CA_CERT> [<MORE_CA_CERTS>]',
                          'Install CA certificates.')
 
@@ -48,6 +45,5 @@ class InstallCertificateLocalesCommand(cmd.Command):
                        stat.S_IRUSR | stat.S_IWUSR
                        | stat.S_IRGRP | stat.S_IROTH,
                        dest)
-            print('>>>>> Certificate chmoded.')
 
         run_context.run('/usr/bin/trust', 'extract-compat')
