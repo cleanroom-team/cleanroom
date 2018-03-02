@@ -58,6 +58,7 @@ class Executor:
                    .format(run_context.system))
 
         for command in command_list:
+            os.chdir(run_context.ctx.systems_directory())
             command.execute(run_context)
 
     def _store_result(self, run_context):
