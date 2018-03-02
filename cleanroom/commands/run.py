@@ -6,7 +6,6 @@
 
 import cleanroom.command as cmd
 import cleanroom.exceptions as ex
-import cleanroom.helper.generic.run as run
 
 
 class RunCommand(cmd.Command):
@@ -28,10 +27,5 @@ class RunCommand(cmd.Command):
 
     def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
-        if kwargs.get('outside', False):
-            kwargs['chroot'] = run_context.fs_directory()
-            del kwargs['outside']
-
         args = map(lambda a: run_context.substitute(a), args)
-
-        run.run(*args, **kwargs, trace_output=run_context.ctx.printer.trace)
+        run_context.run(*args, **kwargs)
