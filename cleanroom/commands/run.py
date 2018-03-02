@@ -28,17 +28,9 @@ class RunCommand(cmd.Command):
 
     def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
-        kwargs['shell'] = kwargs.get('shell', False)
-        kwargs['outside'] = (kwargs.get('outside', 'False') == 'False')
-
-        if kwargs['outside']:
+        if kwargs.get('outside', False):
             kwargs['chroot'] = run_context.fs_directory()
-        if kwargs.get('exit_code', '0') == 'None':
-            kwargs['exit_code'] = None
-        else:
-            kwargs['exit_code'] = int(kwargs.get('exit_code', '0'))
-
-        del kwargs['outside']
+            del kwargs['outside']
 
         args = map(lambda a: run_context.substitute(a), args)
 

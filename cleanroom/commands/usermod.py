@@ -29,18 +29,18 @@ class UsermodCommand(cmd.Command):
             raise ex.ParseError('usermod needs keyword arguments',
                                 file_name=file_name, line_number=line_number)
 
-        lock = kwargs.get('lock', 'None')
-        if lock not in ('True', 'None', 'False'):
+        lock = kwargs.get('lock', None)
+        if lock not in (True, None, False):
             raise ex.ParseError('"lock" must be either True, False or None.',
                                 file_name=file_name, line_number=line_number)
 
-        append = kwargs.get('append', 'False')
-        if append not in ('True', 'False'):
+        append = kwargs.get('append', False)
+        if append not in (True, False):
             raise ex.ParseError('"append" must have either True or False as '
                                 'value.',
                                 file_name=file_name, line_number=line_number)
 
-        if append == 'True' and kwargs.get('groups', '') == '':
+        if append and kwargs.get('groups', '') == '':
             raise ex.ParseError('"append" needs "groups" to be set, too.',
                                 file_name=file_name, line_number=line_number)
 
@@ -67,11 +67,12 @@ class UsermodCommand(cmd.Command):
         if uid:
             command += ['--uid', uid]
 
-        lock = kwargs.get('lock', 'None')
-        if lock == 'True':
-            command.append('--lock')
-        elif lock == 'False':
-            command.append('--unlock')
+        lock = kwargs.get('lock', None)
+        if lock is not None:
+            if lock:
+                command.append('--lock')
+            else:
+                command.append('--unlock')
 
         shell = kwargs.get('shell', '')
         if shell:
@@ -81,8 +82,8 @@ class UsermodCommand(cmd.Command):
         if rename:
             command += ['--login', rename]
 
-        append = kwargs.get('append', 'False')
-        if append == 'True':
+        append = kwargs.get('append', False)
+        if append:
             command.append('--append')
 
         groups = kwargs.get('groups', '')

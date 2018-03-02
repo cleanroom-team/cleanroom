@@ -29,6 +29,4 @@ class SetDefaultTargetCommand(cmd.Command):
         key = args[0]
         value = args[1]
 
-        is_local = (kwargs.get('local', 'False') == 'True')
-
         run_context.set_substitution(key, value, local=is_local)

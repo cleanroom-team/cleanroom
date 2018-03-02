@@ -177,6 +177,92 @@ class ParserTest(tu.BaseParserTest, unittest.TestCase):
         self._verify('test1  value=\\"arg1\\" ',
                      [(self._cmd1, (), {'value': '"arg1"'})])
 
+    def test_command_escaped_equal_in_kw_argument(self):
+        """Test a command with kwargument value containing '='."""
+        self._verify('test1  value=test=key ',
+                     [(self._cmd1, (), {'value': 'test=key'})])
+
+    # Special keywords:
+    def test_command_with_kw_true(self):
+        """Test a command with kwargument value of True."""
+        self._verify('test1  value=True ',
+                     [(self._cmd1, (), {'value': True})])
+
+    def test_command_with_kw_false(self):
+        """Test a command with kwargument value of False."""
+        self._verify('test1  value=False ',
+                     [(self._cmd1, (), {'value': False})])
+
+    def test_command_with_kw_none(self):
+        """Test a command with kwargument value of None."""
+        self._verify('test1  value=None ',
+                     [(self._cmd1, (), {'value': None})])
+
+    def test_command_with_kw_int(self):
+        """Test a command with kwargument value of 42."""
+        self._verify('test1  value=42 ',
+                     [(self._cmd1, (), {'value': 42})])
+
+    def test_command_with_kw_true_sq_string(self):
+        """Test a command with kwargument value of 'True'."""
+        self._verify('test1  value=\'True\' ',
+                     [(self._cmd1, (), {'value': 'True'})])
+
+    def test_command_with_kw_false_sq_string(self):
+        """Test a command with kwargument value of 'False'."""
+        self._verify('test1  value=\'False\' ',
+                     [(self._cmd1, (), {'value': 'False'})])
+
+    def test_command_with_kw_none_sq_string(self):
+        """Test a command with kwargument value of None."""
+        self._verify('test1  value=\'None\' ',
+                     [(self._cmd1, (), {'value': 'None'})])
+
+    def test_command_with_kw_int_sq_string(self):
+        """Test a command with kwargument value of '42'."""
+        self._verify('test1  value=\'42\' ',
+                     [(self._cmd1, (), {'value': '42'})])
+
+    def test_command_with_kw_true_dq_string(self):
+        """Test a command with kwargument value of "True"."""
+        self._verify('test1  value="True" ',
+                     [(self._cmd1, (), {'value': 'True'})])
+
+    def test_command_with_kw_false_dq_string(self):
+        """Test a command with kwargument value of "False"."""
+        self._verify('test1  value="False" ',
+                     [(self._cmd1, (), {'value': 'False'})])
+
+    def test_command_with_kw_none_dq_string(self):
+        """Test a command with kwargument value of "None"."""
+        self._verify('test1  value="None" ',
+                     [(self._cmd1, (), {'value': 'None'})])
+
+    def test_command_with_kw_int_dq_string(self):
+        """Test a command with kwargument value of "42"."""
+        self._verify('test1  value="42" ',
+                     [(self._cmd1, (), {'value': '42'})])
+
+    def test_command_with_kw_true_ml_string(self):
+        """Test a command with kwargument value of <<<<True>>>>."""
+        self._verify('test1  value=<<<<True>>>> ',
+                     [(self._cmd1, (), {'value': 'True'})])
+
+    def test_command_with_kw_false_ml_string(self):
+        """Test a command with kwargument value of <<<<False>>>>."""
+        self._verify('test1  value=<<<<False>>>> ',
+                     [(self._cmd1, (), {'value': 'False'})])
+
+    def test_command_with_kw_none_ml_string(self):
+        """Test a command with kwargument value of <<<<None>>>>."""
+        self._verify('test1  value=<<<<None>>>> ',
+                     [(self._cmd1, (), {'value': 'None'})])
+
+    def test_command_with_kw_int_ml_string(self):
+        """Test a command with kwargument value of <<<<42>>>>."""
+        self._verify('test1  value=<<<<42>>>> ',
+                     [(self._cmd1, (), {'value': '42'})])
+
     # Multiline:
     def test_command_empty_ml(self):
         """Test a command with empty ml argument."""

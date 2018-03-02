@@ -72,7 +72,8 @@ class _ParserState:
 
     def __str__(self):
         dump1 = ','.join(self._args) + ':'
-        dump1 += ','.join([k + '=' + v for (k, v) in self._kwargs.items()])
+        dump1 += ','.join([k + '=' + str(v) for (k, v) in
+                           self._kwargs.items()])
         dump1 = dump1.replace('\n', '\\n').replace('\t', '\\t')
         dump2 = self._to_process.replace('\n', '\\n').replace('\t', '\\t')
         dump3 = self._incomplete_token.replace('\n', '\\n')\
@@ -295,7 +296,8 @@ class Parser:
     def _extract_arguments(self, state):
         # extract arguments:
         while state._to_process != '':
-            (key, value, token, to_process, need_arg_value) \
+            (key, has_value, value, token, to_process,
+             need_arg_value, special_string) \
                 = self._parse_next_argument(state._file_name,
                                             state._line_number,
                                             state._to_process,
@@ -311,7 +313,7 @@ class Parser:
                                             'argument.'.format(key),
                                             file_name=state._file_name,
                                             line_number=state._line_number)
-                    if value is not None:
+                    if has_value:
                         state._kwargs[key] = value
                         state._key_for_value = ''
                     else:
@@ -347,43 +349,59 @@ class Parser:
                              is_keyword_possible=True):
         to_process = self._strip_comment_and_ws(line)
         if to_process == '':
-            return (None, None, '', '', False)  # return what
+            return (None, False, None, '', '', False, False)  # return what
 
         if to_process.startswith('<<<<'):
             to_process = to_process[4:]
             (value, token, to_process) \
                 = self._parse_multiline_argument(file_name, line_number,
                                                  to_process, token)
-            return (value, None, token, to_process, False)
+            return (value, False, None, token, to_process, False, True)
         if to_process[0] == '"' or to_process[0] == '\'':
             quote = to_process[0]
             to_process = to_process[1:]
             (value, to_process) \
                 = self._parse_string_argument(file_name, line_number,
                                               to_process, quote)
-            return (value, None, '', to_process, False)
+            return (value, False, None, '', to_process, False, True)
 
         (key_or_value, to_process, need_arg_value) \
             = self._parse_normal_argument(file_name, line_number,
                                           to_process, is_keyword_possible)
 
         value = None
+        has_value = False
+
         if need_arg_value:
-            (value, token, to_process) \
+            (has_value, value, token, to_process) \
                 = self._parse_next_argument_value(file_name, line_number,
                                                   to_process, token)
 
-        return (key_or_value, value, token, to_process, need_arg_value)
+        return (key_or_value, has_value, value, token,
+                to_process, need_arg_value, False)
 
     def _parse_next_argument_value(self, file_name, line_number, line, token):
-        (value, unused, token, to_process, need_arg_value) \
+        (value, has_value, unused, token, to_process,
+         need_arg_value, special_string) \
             = self._parse_next_argument(file_name, line_number, line, token,
                                         is_keyword_possible=False)
 
+        assert(not has_value)
         assert(unused is None)
         assert(not need_arg_value)
 
-        return (value, token, to_process)
+        has_value = value is not None
+        if not special_string and has_value:
+            if value == 'None':
+                value = None
+            elif value == 'True':
+                value = True
+            elif value == 'False':
+                value = False
+            elif value.isdigit():
+                value = int(value)
+
+        return (has_value, value, token, to_process)
 
     def _extract_multiline_argument(self, state):
         (value, token, to_process) \
