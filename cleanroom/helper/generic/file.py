@@ -89,6 +89,8 @@ def symlink(run_context, source, destination, base_directory=None):
     if os.path.isabs(destination):
         destination = file_name(run_context, destination)
 
+    run_context.ctx.printer.trace('Symlinking "{}"->"{}".'
+                                  .format(source, destination))
     os.symlink(source, destination)
 
 

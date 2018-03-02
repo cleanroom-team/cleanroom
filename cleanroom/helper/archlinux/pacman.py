@@ -105,7 +105,7 @@ class Pacman:
                                            .format(', '.join(packages)))
         self._run_context.run(
             self._run_context.ctx.binary(context.Binaries.PACMAN),
-            '-S', *packages)
+            '-S', '--noconfirm', '--needed', *packages)
 
 
 if __name__ == '__main__':
