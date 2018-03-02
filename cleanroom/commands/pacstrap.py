@@ -34,8 +34,6 @@ class PacstrapCommand(cmd.Command):
 
     def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
-        assert(run_context.flags.get('package_type', None) is None)
-
         pac_object = pacman.Pacman(run_context)
 
         pacstrap_config = kwargs['config']

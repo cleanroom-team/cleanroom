@@ -20,6 +20,14 @@ class Pacman:
     def __init__(self, run_context):
         """Constructor."""
         self._run_context = run_context
+        assert(self._package_type() is None or
+               self._package_type() == 'pacman')
+
+    def _package_type(self):
+        return self._run_context.flags.get('package_type', None)
+
+    def _set_package_type(self):
+        self._run_context.flags['package_type'] = 'pacman'
 
     def target_gpg_directory(self):
         """Return the gpg directory path inside the system filesystem."""
@@ -57,6 +65,8 @@ class Pacman:
 
     def pacstrap(self, config, packages):
         """Run pacstrap on host."""
+        assert(self._package_type() is None)
+
         self._sync_host(config)
 
         all_packages = []
@@ -77,6 +87,8 @@ class Pacman:
             work_directory=self._run_context.ctx.systems_directory(),
             outside=True)
 
+        self._set_package_type()
+
     def _sync_host(self, config):
         """Run pacman -Syu on the host."""
         os.makedirs(self.host_db_directory())
@@ -84,6 +96,16 @@ class Pacman:
             self._run_context.ctx.binary(context.Binaries.PACMAN),
             '-Syu', '--config', config, '--dbpath', self.host_db_directory(),
             outside=True)
+
+    def pacman(self, *packages):
+        """Use pacman to install packages."""
+        assert(self._package_type() == 'pacman')
+
+        self._run_context.ctx.printer.info('Installing {}'
+                                           .format(', '.join(packages)))
+        self._run_context.run(
+            self._run_context.ctx.binary(context.Binaries.PACMAN),
+            '-S', *packages)
 
 
 if __name__ == '__main__':
