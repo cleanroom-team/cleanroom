@@ -37,10 +37,15 @@ class Context:
     def Create(verbose=0, ignore_errors=False):
         """Create a new Context object."""
         prt = printer.Printer(verbose)
-        return Context(prt, ignore_errors)
+        return Context(printer=prt, ignore_errors=ignore_errors,
+                       export_repository='/tmp/export_repository')
 
-    def __init__(self, printer, ignore_errors):
+    def __init__(self, *, printer=None, export_repository=None,
+                 ignore_errors=False):
         """Constructor."""
+        assert(printer)
+        assert(export_repository)
+
         self.printer = printer
         self.binaries = {
             Binaries.OSTREE: _check_for_binary('/usr/bin/ostree'),
@@ -59,6 +64,8 @@ class Context:
 
         self._sys_cleanroom_dir = None
         self._sys_commands_dir = None
+
+        self._export_repository = export_repository
 
     def binary(self, selector):
         """Get a binary from the context."""

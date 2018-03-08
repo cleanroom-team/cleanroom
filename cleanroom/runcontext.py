@@ -177,6 +177,15 @@ class RunContext:
         else:
             self.substitutions[key] = value
 
+    def substitution(self, key):
+        """Get substitution value."""
+        return self.local_substitutions.get(key,
+                                            self.substitutions.get(key, None))
+
+    def has_substitution(self, key):
+        """Check wether a substitution is defined."""
+        return key in self.local_substitutions or key in self.substitutions
+
     def substitute(self, text):
         """Substitute variables in text."""
         template = string.Template(text)
