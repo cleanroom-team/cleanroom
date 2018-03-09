@@ -28,6 +28,10 @@ class SetupReadonlyUsrCommand(cmd.Command):
 
     def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
+        # Remove files:
+        file.remove(run_context,
+                    '/etc/machine-id', '/usr/bin/init', force=True)
+
         # Remove unnecessary systemd-generators:
         # Must keep fstab and cryptsetup generator for mkinitcpio
         file.remove(run_context,

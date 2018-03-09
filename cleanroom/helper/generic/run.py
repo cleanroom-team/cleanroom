@@ -13,7 +13,8 @@ import subprocess
 
 
 def run(*args, exit_code=0, work_directory=None,
-        trace_output=None, chroot=None, shell=False, **kwargs):
+        trace_output=None, chroot=None, shell=False,
+        stdout=None, stderr=None, **kwargs):
     """Run command and trace the external command result and output."""
     if work_directory is not None:
         os.chdir(work_directory)
@@ -29,12 +30,35 @@ def run(*args, exit_code=0, work_directory=None,
         else:
             trace_output('Running', args)
 
-    completed_process = subprocess.run(args,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE,
-                                       **kwargs)
-    completed_process.stdout = completed_process.stdout.decode('utf-8')
-    completed_process.stderr = completed_process.stderr.decode('utf-8')
+    stdoutFd = subprocess.PIPE
+    stderrFd = subprocess.PIPE
+
+    completed_process = None
+
+    try:
+        if stdout is not None:
+            trace_output('>> Redirecting stdout to {}.'.format(stdout))
+            stdoutFd = open(stdout, mode='w')
+
+        if stderr is not None:
+            trace_output('>> Redirecting stderr to {}.'.format(stdout))
+            stderrFd = open(stderr, mode='w')
+
+        completed_process = subprocess.run(args,
+                                           stdout=stdoutFd, stderr=stderrFd,
+                                           **kwargs)
+    finally:
+        if stdout is not None:
+            stdoutFd.close()
+        if stderr is not None:
+            stderrFd.close()
+
+    assert(completed_process is not None)
+
+    if completed_process.stdout is not None:
+        completed_process.stdout = completed_process.stdout.decode('utf-8')
+    if completed_process.stderr is not None:
+        completed_process.stderr = completed_process.stderr.decode('utf-8')
 
     report_completed_process(trace_output, completed_process)
 
@@ -51,16 +75,24 @@ def report_completed_process(channel, completed_process):
     if channel is None:
         return
 
+    stdout = '<REDIRECTED>'
+    stderr = stdout
+
+    if completed_process.stdout is not None:
+        stdout = completed_process.stdout
+
+    if completed_process.stderr is not None:
+        stderr = completed_process.stderr
+
     channel('Arguments  : {}'.format(' '.join(completed_process.args)))
     channel('Return Code: {}'.format(completed_process.returncode))
-    channel('StdOut     :')
-    _report_output_lines(channel, completed_process.stdout)
-    channel('StdErr     :')
-    _report_output_lines(channel, completed_process.stderr)
+    _report_output_lines(channel, 'StdOut     :', stdout)
+    _report_output_lines(channel, 'StdErr     :', stderr)
 
 
-def _report_output_lines(channel, line_data):
+def _report_output_lines(channel, headline, line_data):
     """Pretty-print output lines."""
+    channel(headline)
     if line_data == '' or line_data == '\n':
         return
     lines = line_data.split('\n')

@@ -38,8 +38,8 @@ class SetHostnameCommand(cmd.Command):
         run_context.set_substitution('HOSTNAME', static_hostname)
         run_context.set_substitution('PRETTY_HOSTNAME', pretty_hostname)
 
-        file.create(run_context, '/etc/hostname',
-                    static_hostname.encode('utf-8'))
+        file.create_file(run_context, '/etc/hostname',
+                         static_hostname.encode('utf-8'))
         pattern = \
             's/^PRETTY_HOSTNAME=.*$/PRETTY_HOSTNAME=\\"{}\\"/'\
             .format(pretty_hostname)

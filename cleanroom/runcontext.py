@@ -166,6 +166,7 @@ class RunContext:
 
         self.ctx.printer.h2('Running {} hooks.'.format(hook), verbosity=1)
         for cmd in command_list:
+            os.chdir(self.ctx.systems_directory())
             cmd.execute(self)
 
         self.hooks_that_already_ran.append(hook)
@@ -198,6 +199,7 @@ class RunContext:
 
         if not outside:
             kwargs['chroot'] = self.fs_directory()
+
         return run.run(*args, trace_output=self.ctx.printer.trace, **kwargs)
 
     def pickle(self):

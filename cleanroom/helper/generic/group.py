@@ -6,7 +6,7 @@
 """
 
 
-def addgroup(run_context, group_name, *, gid=-1, force=False, system=False):
+def groupadd(run_context, group_name, *, gid=-1, force=False, system=False):
     """Execute command."""
     command = ['/usr/bin/groupadd', group_name]
 

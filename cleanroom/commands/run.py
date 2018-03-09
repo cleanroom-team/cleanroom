@@ -28,4 +28,15 @@ class RunCommand(cmd.Command):
     def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
         args = map(lambda a: run_context.substitute(a), args)
+
+        stdout = kwargs.get('stdout', None)
+        if stdout is not None:
+            stdout = run_context.substitute(stdout)
+        kwargs['stdout'] = stdout
+
+        stderr = kwargs.get('stderr', None)
+        if stderr is not None:
+            stderr = run_context.substitute(stderr)
+        kwargs['stderr'] = stderr
+
         run_context.run(*args, **kwargs)

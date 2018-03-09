@@ -38,4 +38,4 @@ class SetMachineIdCommand(cmd.Command):
         """Execute command."""
         id = args[0] + '\n'
 
-        file.create(run_context, '/etc/machine-id', id.encode('utf-8'))
+        file.create_file(run_context, '/etc/machine-id', id.encode('utf-8'))

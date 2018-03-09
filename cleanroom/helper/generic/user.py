@@ -35,9 +35,9 @@ def useradd(run_context, user_name, *,
 
     if expire is not None:
         if expire == 'None':
-            command.append('--expire-date')
+            command.append('--expiredate')
         else:
-            command += ['--expire-date', expire]
+            command += ['--expiredate', expire]
 
     run_context.run(*command)
 
@@ -68,9 +68,9 @@ def usermod(run_context, user_name, *, comment='', home='', gid=-1, uid=-1,
 
     if expire is not None:
         if expire == 'None':
-            command.append('--expire-date')
+            command.append('--expiredate')
         else:
-            command += ['--expire-date', expire]
+            command += ['--expiredate', expire]
 
     if shell:
         command += ['--shell', shell]
@@ -87,10 +87,8 @@ def usermod(run_context, user_name, *, comment='', home='', gid=-1, uid=-1,
     if password:
         command += ['--password', password]
 
-    if expire is None:
-        command.append('--expire-date')
-    else:
-        command += ['--expire-date', expire]
+    if expire is not None:
+        command += ['--expiredate', expire]
 
     run_context.run(*command)
 

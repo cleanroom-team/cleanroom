@@ -24,8 +24,11 @@ class Executor:
         if not self._setup_for_execution(run_context):
             return  # Return early when system already set up
 
+        run_context.ctx.printer\
+            .trace('Running commands for system "{}".'
+                   .format(run_context.system))
+
         self._run_commands(command_list, run_context)
-        self._store_result(run_context)
 
     def _setup_for_execution(self, run_context):
         if self._ostree_has_system(run_context):
@@ -53,19 +56,9 @@ class Executor:
 
     def _run_commands(self, command_list, run_context):
         """Run commands."""
-        run_context.ctx.printer\
-            .trace('Running commands for system "{}".'
-                   .format(run_context.system))
-
         for command in command_list:
             os.chdir(run_context.ctx.systems_directory())
             command.execute(run_context)
-
-    def _store_result(self, run_context):
-        """Store execution context and extra data."""
-        run_context.ctx.printer.\
-            trace('Store execution results for system "{}".'
-                  .format(run_context.system))
 
 
 if __name__ == '__main__':

@@ -34,6 +34,6 @@ class AddHookCommand(cmd.Command):
         cmd_args = args[3:]
         cmd_kwargs = kwargs
 
-        run_context.add_hook(hook, cmd, *cmd_args, **cmd_kwargs,
+        run_context.add_hook(hook, cmd, *cmd_args,
                              file_name=file_name, line_number=line_number,
-                             message=message)
+                             message=message, **cmd_kwargs)
