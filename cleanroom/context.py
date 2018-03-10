@@ -146,6 +146,10 @@ class Context:
         """Get the systems-specific commands directory."""
         return self._directory_check(self._sys_commands_dir)
 
+    def export_repository(self):
+        """Get the repository to export filesystems into."""
+        return self._export_repository
+
     def _directory_check(self, directory):
         """Raise a ContextError if a directory is not yet set up."""
         if directory is None:

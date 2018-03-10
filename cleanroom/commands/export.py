@@ -29,16 +29,21 @@ class ExportCommand(cmd.Command):
         self._run_hooks(run_context)
 
         ostree = run_context.ctx.binary(context.Binaries.OSTREE)
-        export_repository = run_context.ctx.export_repository
+        export_repository = run_context.ctx.export_repository()
         filesystem = run_context.fs_directory()
 
-        run_context.run(ostree, 'commit',
-                        '--repo={}'.format(export_repository),
-                        '--subject={}'.format(hostname),
-                        '--branch={}'.format(hostname),
-                        '.',
-                        work_directory=filesystem,
-                        outside=True)
+        run_context.run(ostree,
+                        '--repo={}'
+                        .format(export_repository),
+                        'commit',
+                        '--branch', run_context.substitution('HOSTNAME'),
+                        '--subject', run_context.timestamp,
+                        '--add-metadata-string="timestamp={}"'
+                        .format(run_context.timestamp),
+                        '--add-metadata-string="machine-id={}"'
+                        .format(run_context.substitution('MACHINE_ID')),
+                        outside=True,
+                        work_directory=filesystem)
 
     def _run_hooks(self, run_context):
         run_context.run_hooks('_teardown')

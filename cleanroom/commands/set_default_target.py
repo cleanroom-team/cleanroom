@@ -42,3 +42,5 @@ class SetDefaultTargetCommand(cmd.Command):
         file.remove(run_context, default_path, force=True)
         file.symlink(run_context, target, default,
                      base_directory=systemd_directory)
+
+        run_context.set_substitution('DEFAULT_BOOT_TARGET', target)

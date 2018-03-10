@@ -36,6 +36,12 @@ class SetMachineIdCommand(cmd.Command):
 
     def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
-        id = args[0] + '\n'
+        if run_context.has_substitution('MACHINE_ID'):
+            raise ex.GenerateError('Machine-id was already set.',
+                                   file_name=file_name,
+                                   line_number=line_number)
 
+        id = args[0]
+        run_context.set_substitution('MACHINE_ID', id)
+        id += '\n'
         file.create_file(run_context, '/etc/machine-id', id.encode('utf-8'))
