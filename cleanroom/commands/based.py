@@ -8,6 +8,7 @@ import cleanroom.command as cmd
 import cleanroom.context as context
 import cleanroom.exceptions as ex
 
+import os
 import re
 import shutil
 
@@ -47,6 +48,7 @@ class BasedCommand(cmd.Command):
         base_system = args[1]
 
         self._ostree_checkout(run_context, base_system)
+        self._mount_checkout_to_system_directory(run_context)
         self._update_base_context(run_context, base_system)
 
         run_context.run_hooks('_setup')
@@ -59,9 +61,16 @@ class BasedCommand(cmd.Command):
 
         run_context.run(ostree, '--repo={}'.format(repo),
                         'checkout', base_system,
-                        run_context.system_directory(),
+                        run_context.checkout_directory(),
                         outside=True,
                         work_directory=repo)
+
+    def _mount_checkout_to_system_directory(self, run_context):
+        os.makedirs(run_context.system_directory())
+        rofiles = run_context.ctx.binary(context.Binaries.ROFILES_FUSE)
+        result = run_context.run(rofiles, run_context.checkout_directory(),
+                                 run_context.system_directory(), outside=True)
+        assert(result.stderr == '')
 
     def _update_base_context(self, run_context, base_system):
         run_context.unpickle_base_context(base_system)

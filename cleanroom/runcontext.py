@@ -75,6 +75,12 @@ class RunContext:
         return os.path.join(ctx.work_systems_directory(), system)
 
     @staticmethod
+    def _checkout_directory(ctx, system):
+        """Find base directory for all temporary system files."""
+        return os.path.join(ctx.work_systems_directory(),
+                            'checkout.{}'.format(system))
+
+    @staticmethod
     def _meta_directory(ctx, system):
         """Find the metadata directory of system."""
         return os.path.join(RunContext._work_directory(ctx, system), 'meta')
@@ -88,6 +94,12 @@ class RunContext:
         if system is None:
             system = self.system
         return RunContext._work_directory(self.ctx, system)
+
+    def checkout_directory(self, system=None):
+        """Location of ostree checkout."""
+        if system is None:
+            system = self.system
+        return RunContext._checkout_directory(self.ctx, system)
 
     def fs_directory(self, system=None):
         """Location of the systems filesystem root."""

@@ -1,1 +1,2 @@
-* Use rofiles-fuse!!!!
+* Use rofiles-fuse (done)
+* umount everything on work_directory/systems
