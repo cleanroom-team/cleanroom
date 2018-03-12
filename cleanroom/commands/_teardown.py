@@ -49,4 +49,5 @@ class _TeardownCommand(cmd.Command):
                         '--subject', run_context.timestamp,
                         '--add-metadata-string="timestamp={}"'
                         .format(run_context.timestamp),
+                        '--link-checkout-speedup',
                         outside=True, work_directory=to_commit)

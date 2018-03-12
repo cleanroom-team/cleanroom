@@ -31,10 +31,11 @@ def parse_commandline(arguments):
                         action='store_true',
                         help='Force continuation on non-critical errors.')
 
-    parser.add_argument('--systemsdir', dest='system_dir', action='store',
+    parser.add_argument('--systems-directory', dest='systems_directory',
+                        action='store',
                         help='Directory containing system definitions')
-    parser.add_argument('--workdir', dest='work_directory', action='store',
-                        help='Work area to create files in')
+    parser.add_argument('--work-directory', dest='work_directory',
+                        action='store', help='Work area to create files in')
 
     parser.add_argument('--export-repository', dest='export_repository',
                         action='store',
@@ -99,11 +100,12 @@ def generate(pr, args):
     else:
         pr.success('Preflight Check passed', verbosity = 2)
 
-    system_dir = args.system_dir if args.system_dir else os.getcwd()
+    systems_directory = args.systems_directory \
+       if args.systems_directory else os.getcwd()
 
     # Do work:
     with workdir.WorkDir(ctx, args.work_directory) as work_directory:
-        ctx.set_directories(system_dir, work_directory)
+        ctx.set_directories(systems_directory, work_directory)
 
         if args.list_commands:
             parser.Parser.list_commands(ctx)

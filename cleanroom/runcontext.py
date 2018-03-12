@@ -72,12 +72,12 @@ class RunContext:
     @staticmethod
     def _work_directory(ctx, system):
         """Find base directory for all temporary system files."""
-        return os.path.join(ctx.work_systems_directory(), system)
+        return os.path.join(ctx.work_directory(), system)
 
     @staticmethod
     def _checkout_directory(ctx, system):
         """Find base directory for all temporary system files."""
-        return os.path.join(ctx.work_systems_directory(),
+        return os.path.join(ctx.work_directory(),
                             'checkout.{}'.format(system))
 
     @staticmethod

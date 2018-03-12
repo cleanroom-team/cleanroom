@@ -87,24 +87,24 @@ class Context:
         self._command_dir = os.path.join(os.path.dirname(__file__), 'commands')
 
         self._work_repo_dir = os.path.join(work_dir, 'repo')
-        self._work_systems_dir = os.path.join(work_dir, 'systems')
+        self._work_directory = os.path.join(work_dir, 'systems')
 
         # setup secondary directories:
         self._sys_cleanroom_dir = os.path.join(self._systems_dir, 'cleanroom')
         self._sys_commands_dir = os.path.join(self._sys_cleanroom_dir,
                                               'commands')
 
-        self.printer.info('Context: System dir       = "{}".'
+        self.printer.info('Context: Systems directory = "{}".'
                           .format(self._systems_dir))
-        self.printer.info('Context: Work dir         = "{}".'
+        self.printer.info('Context: Work directory    = "{}".'
                           .format(self._work_dir))
-        self.printer.info('Context: Command dir      = "{}".'
+        self.printer.info('Context: Command directory = "{}".'
                           .format(self._command_dir))
 
-        self.printer.debug('Context: Repo dir         = "{}".'
+        self.printer.debug('Context: Repo directory   = "{}".'
                            .format(self._work_repo_dir))
-        self.printer.debug('Context: work systems dir = "{}".'
-                           .format(self._work_systems_dir))
+        self.printer.debug('Context: work directory   = "{}".'
+                           .format(self._work_directory))
         self.printer.debug('Context: Custom cleanroom = "{}".'
                            .format(self._sys_cleanroom_dir))
         self.printer.debug('Context: Custom commands  = "{}".'
@@ -126,9 +126,9 @@ class Context:
         """Get the ostree repository directory."""
         return self._directory_check(self._work_repo_dir)
 
-    def work_systems_directory(self):
+    def work_directory(self):
         """Get the base systems directory in the work directory."""
-        return self._directory_check(self._work_systems_dir)
+        return self._directory_check(self._work_directory)
 
     def systems_directory(self):
         """Get the top-level systems directory."""
