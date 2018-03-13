@@ -5,3 +5,4 @@ __pycache__
 clrm-env
 
 systems/*
+clrm-run-*.sh

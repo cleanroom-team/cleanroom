@@ -15,6 +15,7 @@ import cleanroom.workdir as workdir
 from argparse import ArgumentParser
 import os
 import re
+import shutil
 import sys
 
 def parse_commandline(arguments):
@@ -41,6 +42,10 @@ def parse_commandline(arguments):
                         action='store',
                         help='OStree repository to export created filesystems '
                         'into.')
+
+    parser.add_argument('--clear-work-directory', dest='clear_work_directory',
+                        action='store_true',
+                        help='Clear the work directory before proceeding.')
 
     parser.add_argument(dest='systems', nargs='*', metavar='<system>',
                         help='systems to create')
@@ -70,6 +75,9 @@ def main():
     if not mount._umount_all(args.work_directory):
         print('Failed to unmount mounts below {}.'.format(args.work_directory))
         sys.exit(3)
+
+    if args.clear_work_directory:
+        clear_work_directory(args.work_directory)
 
     old_work_directory = os.getcwd()
     try:
@@ -132,6 +140,10 @@ def generate(pr, args):
         else:
             pr.success('Generation phase.', verbosity = 2)
 
+
+def clear_work_directory(work_directory):
+    shutil.rmtree(os.path.join(work_directory, 'systems'))
+    shutil.rmtree(os.path.join(work_directory, 'repo'))
 
 if __name__ == '__main__':
     main()
