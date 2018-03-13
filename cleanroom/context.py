@@ -34,14 +34,16 @@ def _check_for_binary(binary):
 class Context:
     """The context the generation will run in."""
 
-    def Create(verbose=0, ignore_errors=False):
+    def Create(verbose=0, ignore_errors=False,
+               keep_temporary_data=False):
         """Create a new Context object."""
         prt = printer.Printer(verbose)
         return Context(printer=prt, ignore_errors=ignore_errors,
-                       export_repository='/tmp/export_repository')
+                       export_repository='/tmp/export_repository',
+                       keep_temporary_data=keep_temporary_data)
 
     def __init__(self, *, printer=None, export_repository=None,
-                 ignore_errors=False):
+                 ignore_errors=False, keep_temporary_data=False):
         """Constructor."""
         assert(printer)
         assert(export_repository)
@@ -57,13 +59,14 @@ class Context:
         self.generator = generator.Generator(self)
 
         self.ignore_errors = ignore_errors
+        self.keep_temporary_data = keep_temporary_data
 
-        self._work_dir = None
-        self._systems_dir = None
-        self._command_dir = None
+        self._work_directory = None
+        self._systems_directory = None
+        self._command_directory = None
 
-        self._sys_cleanroom_dir = None
-        self._sys_commands_dir = None
+        self._sys_cleanroom_directory = None
+        self._sys_commands_directory = None
 
         self._export_repository = export_repository
 
@@ -74,41 +77,43 @@ class Context:
                            .format(selector, binary))
         return binary
 
-    def set_directories(self, system_dir, work_dir):
+    def set_directories(self, system_directory, work_directory):
         """Set system- and work directory and set them up."""
         self.printer.h2('Setting up Directories.', verbosity=2)
 
-        if self._systems_dir is not None:
+        if self._systems_directory is not None:
             raise exceptions.ContextError('Directories were already set up.')
 
         # main directories:
-        self._systems_dir = system_dir
-        self._work_dir = work_dir
-        self._command_dir = os.path.join(os.path.dirname(__file__), 'commands')
+        self._systems_directory = system_directory
+        self._work_directory = work_directory
+        self._command_directory \
+            = os.path.join(os.path.dirname(__file__), 'commands')
 
-        self._work_repo_dir = os.path.join(work_dir, 'repo')
-        self._work_directory = os.path.join(work_dir, 'systems')
+        self._work_repo_directory = os.path.join(work_directory, 'repo')
+        self._work_directory = os.path.join(work_directory, 'systems')
 
         # setup secondary directories:
-        self._sys_cleanroom_dir = os.path.join(self._systems_dir, 'cleanroom')
-        self._sys_commands_dir = os.path.join(self._sys_cleanroom_dir,
-                                              'commands')
+        self._sys_cleanroom_directory \
+            = os.path.join(self._systems_directory, 'cleanroom')
+        self._sys_commands_directory \
+            = os.path.join(self._sys_cleanroom_directory, 'commands')
 
         self.printer.info('Context: Systems directory = "{}".'
-                          .format(self._systems_dir))
+                          .format(self._systems_directory))
         self.printer.info('Context: Work directory    = "{}".'
-                          .format(self._work_dir))
+                          .format(self._work_directory))
         self.printer.info('Context: Command directory = "{}".'
-                          .format(self._command_dir))
+                          .format(self._command_directory))
 
         self.printer.debug('Context: Repo directory   = "{}".'
-                           .format(self._work_repo_dir))
+                           .format(self._work_repo_directory))
         self.printer.debug('Context: work directory   = "{}".'
                            .format(self._work_directory))
         self.printer.debug('Context: Custom cleanroom = "{}".'
-                           .format(self._sys_cleanroom_dir))
+                           .format(self._sys_cleanroom_directory))
         self.printer.debug('Context: Custom commands  = "{}".'
-                           .format(self._sys_commands_dir))
+                           .format(self._sys_commands_directory))
 
         parser.Parser.find_commands(self)
 
@@ -116,23 +121,19 @@ class Context:
 
     def commands_directory(self):
         """Get the global commands directory."""
-        return self._command_dir
+        return self._command_directory
 
     def work_directory(self):
         """Get the top-level work directory."""
-        return self._directory_check(self._work_dir)
+        return self._directory_check(self._work_directory)
 
     def work_repository_directory(self):
         """Get the ostree repository directory."""
-        return self._directory_check(self._work_repo_dir)
-
-    def work_directory(self):
-        """Get the base systems directory in the work directory."""
-        return self._directory_check(self._work_directory)
+        return self._directory_check(self._work_repo_directory)
 
     def systems_directory(self):
         """Get the top-level systems directory."""
-        return self._directory_check(self._systems_dir)
+        return self._directory_check(self._systems_directory)
 
     def system_definition_directory(self, system):
         """Get the top-level directory of the given system."""
@@ -140,11 +141,11 @@ class Context:
 
     def systems_cleanroom_directory(self):
         """Get the cleanroom configuration directory of a systems directory."""
-        return self._directory_check(self._sys_cleanroom_dir)
+        return self._directory_check(self._sys_cleanroom_directory)
 
     def systems_commands_directory(self):
         """Get the systems-specific commands directory."""
-        return self._directory_check(self._sys_commands_dir)
+        return self._directory_check(self._sys_commands_directory)
 
     def export_repository(self):
         """Get the repository to export filesystems into."""

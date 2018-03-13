@@ -46,6 +46,9 @@ def parse_commandline(arguments):
     parser.add_argument('--clear-work-directory', dest='clear_work_directory',
                         action='store_true',
                         help='Clear the work directory before proceeding.')
+    parser.add_argument('--keep-temporary-data', dest='keep_temporary_data',
+                        action='store_true',
+                        help='Keep temporary data in work directory.')
 
     parser.add_argument(dest='systems', nargs='*', metavar='<system>',
                         help='systems to create')

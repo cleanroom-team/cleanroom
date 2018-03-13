@@ -7,6 +7,7 @@ import cleanroom.command as cmd
 import cleanroom.context as context
 
 import os.path
+import shutil
 
 
 class _TeardownCommand(cmd.Command):
@@ -27,6 +28,7 @@ class _TeardownCommand(cmd.Command):
 
         self._unmount_system_directory(run_context)
         self._store_to_ostree(run_context)
+        self._clean_temporary_data(run_context)
 
     def _unmount_system_directory(self, run_context):
         """Unmount system directory."""
@@ -51,3 +53,13 @@ class _TeardownCommand(cmd.Command):
                         .format(run_context.timestamp),
                         '--link-checkout-speedup',
                         outside=True, work_directory=to_commit)
+
+    def _clean_temporary_data(self, run_context):
+        """Clean up temporary data."""
+        if not run_context.ctx.keep_temporary_data:
+            return
+        if os.path.isdir(run_context.checkout_directory()):
+            shutil.rmtree(run_context.checkout_directory())
+            os.rmdir(run_context.system_directory())
+        else:
+            shutil.rmtree(run_context.system_directory())
