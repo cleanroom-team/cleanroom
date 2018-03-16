@@ -70,48 +70,27 @@ class RunContext:
         self.set_substitution('BASE_SYSTEM', '', local=True)
 
     @staticmethod
-    def _work_directory(ctx, system):
+    def _storage_directory(ctx, system):
         """Find base directory for all temporary system files."""
-        return os.path.join(ctx.work_directory(), system)
+        return os.path.join(ctx.work_directory(), 'storage', system)
 
-    @staticmethod
-    def _checkout_directory(ctx, system):
-        """Find base directory for all temporary system files."""
-        return os.path.join(ctx.work_directory(),
-                            'checkout.{}'.format(system))
-
-    @staticmethod
-    def _meta_directory(ctx, system):
-        """Find the metadata directory of system."""
-        return os.path.join(RunContext._work_directory(ctx, system), 'meta')
-
-    def _fs_directory(ctx, system):
-        """Find the root filesystem directory of a system."""
-        return os.path.join(RunContext._work_directory(ctx, system), 'fs')
-
-    def system_directory(self, system=None):
+    def storage_directory(self, system=None):
         """Location of temporary system files."""
         if system is None:
             system = self.system
-        return RunContext._work_directory(self.ctx, system)
+        return self.ctx.storage_directory(system)
 
-    def checkout_directory(self, system=None):
-        """Location of ostree checkout."""
-        if system is None:
-            system = self.system
-        return RunContext._checkout_directory(self.ctx, system)
+    def current_system_directory(self):
+        """Location of the current system installation."""
+        return self.ctx.current_system_directory()
 
     def fs_directory(self, system=None):
         """Location of the systems filesystem root."""
-        if system is None:
-            system = self.system
-        return RunContext._fs_directory(self.ctx, system)
+        return self.ctx.fs_directory(system)
 
     def meta_directory(self, system=None):
         """Location of the systems meta-data directory."""
-        if system is None:
-            system = self.system
-        return RunContext._meta_directory(self.ctx, system)
+        return self.ctx.meta_directory(system)
 
     def expand_files(self, *files):
         """Map and expand files from inside to outside paths."""
@@ -122,12 +101,6 @@ class RunContext:
         if not os.path.isabs(path):
             return path
         return file.file_name(self, path)
-
-    @staticmethod
-    def _pickle_jar(ctx, system):
-        """Location of the system's pickle jar."""
-        return os.path.join(RunContext._meta_directory(ctx, system),
-                            'pickle_jar.bin')
 
     def _install_base_context(self, base_context):
         """Set up base context."""
@@ -216,9 +189,9 @@ class RunContext:
 
     def pickle(self):
         """Pickle this run_context."""
-        pickle_jar = RunContext._pickle_jar(self.ctx, self.system)
-
         ctx = self.ctx
+
+        pickle_jar = ctx.pickle_jar()
         hooks_that_ran = self.hooks_that_already_ran
 
         ctx.printer.debug('Pickling run_context into {}.'.format(pickle_jar))
@@ -234,7 +207,7 @@ class RunContext:
 
     def unpickle_base_context(self, system):
         """Create a new run_context by unpickling a file."""
-        pickle_jar = RunContext._pickle_jar(self.ctx, system)
+        pickle_jar = self.ctx.pickle_jar(system)
 
         self.ctx.printer.debug('Unpickling base run_context from {}.'
                                .format(pickle_jar))

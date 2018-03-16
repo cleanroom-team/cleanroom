@@ -5,12 +5,10 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.context as context
 import cleanroom.exceptions as ex
+import cleanroom.helper.generic.btrfs as btrfs
 
-import os
 import re
-import shutil
 
 
 class BasedCommand(cmd.Command):
@@ -47,30 +45,18 @@ class BasedCommand(cmd.Command):
         """Execute command."""
         base_system = args[1]
 
-        self._ostree_checkout(run_context, base_system)
-        self._mount_checkout_to_system_directory(run_context)
+        self._restore_base(run_context, base_system)
         self._update_base_context(run_context, base_system)
 
         run_context.run_hooks('_setup')
 
-    def _ostree_checkout(self, run_context, base_system):
-        shutil.rmtree(run_context.system_directory())
-
-        ostree = run_context.ctx.binary(context.Binaries.OSTREE)
-        repo = run_context.ctx.work_repository_directory()
-
-        run_context.run(ostree, '--repo={}'.format(repo),
-                        'checkout', base_system,
-                        run_context.checkout_directory(),
-                        outside=True,
-                        work_directory=repo)
-
-    def _mount_checkout_to_system_directory(self, run_context):
-        os.makedirs(run_context.system_directory())
-        rofiles = run_context.ctx.binary(context.Binaries.ROFILES_FUSE)
-        result = run_context.run(rofiles, run_context.checkout_directory(),
-                                 run_context.system_directory(), outside=True)
-        assert(result.stderr == '')
+    def _restore_base(self, run_context, base_system):
+        btrfs.delete_subvolume(run_context,
+                               run_context.current_system_directory())
+        btrfs.create_snapshot(run_context,
+                              run_context.storage_directory(base_system),
+                              run_context.current_system_directory(),
+                              read_only=False)
 
     def _update_base_context(self, run_context, base_system):
         run_context.unpickle_base_context(base_system)

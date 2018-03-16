@@ -4,10 +4,7 @@
 """
 
 import cleanroom.command as cmd
-import cleanroom.context as context
-
-import os.path
-import shutil
+import cleanroom.helper.generic.btrfs as btrfs
 
 
 class _TeardownCommand(cmd.Command):
@@ -26,40 +23,22 @@ class _TeardownCommand(cmd.Command):
 
         run_context.pickle()
 
-        self._unmount_system_directory(run_context)
-        self._store_to_ostree(run_context)
+        self._store(run_context)
         self._clean_temporary_data(run_context)
 
-    def _unmount_system_directory(self, run_context):
-        """Unmount system directory."""
-        if os.path.isdir(run_context.checkout_directory()):
-            run_context.run('/usr/bin/umount', run_context.system_directory())
-
-    def _store_to_ostree(self, run_context):
-        run_context.ctx.printer.debug('Storing results in ostree.')
-        ostree = run_context.ctx.binary(context.Binaries.OSTREE)
-
-        to_commit = run_context.system_directory()
-        if os.path.isdir(run_context.checkout_directory()):
-            to_commit = run_context.checkout_directory()
-
-        run_context.run(ostree,
-                        '--repo={}'
-                        .format(run_context.ctx.work_repository_directory()),
-                        'commit',
-                        '--branch', run_context.system,
-                        '--subject', run_context.timestamp,
-                        '--add-metadata-string="timestamp={}"'
-                        .format(run_context.timestamp),
-                        '--link-checkout-speedup',
-                        outside=True, work_directory=to_commit)
+    def _store(self, run_context):
+        run_context.ctx.printer.debug(
+            'Storing {} into {}.'
+            .format(run_context.current_system_directory(),
+                    run_context.storage_directory()))
+        btrfs.create_snapshot(run_context,
+                              run_context.current_system_directory(),
+                              run_context.storage_directory(), read_only=True)
 
     def _clean_temporary_data(self, run_context):
         """Clean up temporary data."""
-        if not run_context.ctx.keep_temporary_data:
-            return
-        if os.path.isdir(run_context.checkout_directory()):
-            shutil.rmtree(run_context.checkout_directory())
-            os.rmdir(run_context.system_directory())
-        else:
-            shutil.rmtree(run_context.system_directory())
+        run_context.ctx.printer.debug(
+            'Removing {}.'
+            .format(run_context.current_system_directory()))
+        btrfs.delete_subvolume(run_context,
+                               run_context.current_system_directory())

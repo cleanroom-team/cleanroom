@@ -20,7 +20,7 @@ class ModFileTest(unittest.TestCase):
         ctx = context.Context.Create()
         ctx.set_directories('/tmp/system_dir', '/tmp/work_dir')
         self._run_context = runcontext.RunContext(ctx, 'test-system')
-        self._system_dir = '/tmp/work_dir/systems/test-system/fs'
+        self._system_dir = '/tmp/work_dir/current/fs'
 
         assert(self._system_dir == self._run_context.fs_directory())
 

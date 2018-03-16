@@ -6,11 +6,9 @@
 """
 
 
-from . import context
-from . import executor
-from . import exceptions
-from . import parser
-from .helper.generic import run
+import cleanroom.exceptions as exceptions
+import cleanroom.executor as executor
+import cleanroom.parser as parser
 
 import os
 import os.path
@@ -155,12 +153,8 @@ class Generator:
     def prepare(self):
         """Prepare for generation."""
         self._ctx.printer.h2('Preparing for system generation')
-        repo_dir = self._ctx.work_repository_directory()
-        run.run(self._binary(context.Binaries.OSTREE),
-                'init',
-                '--repo={}'.format(repo_dir),
-                exit_code=0,
-                trace_output=self._ctx.printer.trace)
+        if not os.path.exists(self._ctx.storage_directory()):
+            os.makedirs(self._ctx.storage_directory())
 
     def generate(self):
         """Generate all systems in the dependency tree."""

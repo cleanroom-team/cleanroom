@@ -19,11 +19,11 @@ import os
 class Binaries(Enum):
     """Important binaries."""
 
-    OSTREE = auto()
+    BORG = auto()
+    BTRFS = auto()
     PACMAN = auto()
     PACMAN_KEY = auto()
     PACSTRAP = auto()
-    ROFILES_FUSE = auto()
 
 
 def _check_for_binary(binary):
@@ -50,11 +50,11 @@ class Context:
 
         self.printer = printer
         self.binaries = {
-            Binaries.OSTREE: _check_for_binary('/usr/bin/ostree'),
+            Binaries.BORG: _check_for_binary('/usr/bin/borg'),
+            Binaries.BTRFS: _check_for_binary('/usr/bin/btrfs'),
             Binaries.PACMAN: _check_for_binary('/usr/bin/pacman'),
             Binaries.PACMAN_KEY: _check_for_binary('/usr/bin/pacman-key'),
             Binaries.PACSTRAP: _check_for_binary('/usr/bin/pacstrap'),
-            Binaries.ROFILES_FUSE: _check_for_binary('/usr/bin/rofiles-fuse')
         }
         self.generator = generator.Generator(self)
 
@@ -90,24 +90,17 @@ class Context:
         self._command_directory \
             = os.path.join(os.path.dirname(__file__), 'commands')
 
-        self._work_repo_directory = os.path.join(work_directory, 'repo')
-        self._work_directory = os.path.join(work_directory, 'systems')
-
         # setup secondary directories:
         self._sys_cleanroom_directory \
             = os.path.join(self._systems_directory, 'cleanroom')
         self._sys_commands_directory \
             = os.path.join(self._sys_cleanroom_directory, 'commands')
 
-        self.printer.info('Context: Systems directory = "{}".'
-                          .format(self._systems_directory))
         self.printer.info('Context: Work directory    = "{}".'
                           .format(self._work_directory))
         self.printer.info('Context: Command directory = "{}".'
                           .format(self._command_directory))
 
-        self.printer.debug('Context: Repo directory   = "{}".'
-                           .format(self._work_repo_directory))
         self.printer.debug('Context: work directory   = "{}".'
                            .format(self._work_directory))
         self.printer.debug('Context: Custom cleanroom = "{}".'
@@ -127,9 +120,35 @@ class Context:
         """Get the top-level work directory."""
         return self._directory_check(self._work_directory)
 
-    def work_repository_directory(self):
-        """Get the ostree repository directory."""
-        return self._directory_check(self._work_repo_directory)
+    def current_system_directory(self):
+        """Get the current system directory."""
+        return self._directory_check(
+            os.path.join(self._work_directory, 'current'))
+
+    def storage_directory(self, system=''):
+        """Get the top-level storage directory."""
+        return self._directory_check(
+            os.path.join(self._work_directory, 'storage', system))
+
+    def meta_directory(self, system=None):
+        """Get the meta-data directory."""
+        if system is None:
+            dir = os.path.join(self.current_system_directory(), 'meta')
+        else:
+            dir = os.path.join(self.storage_directory(system), 'meta')
+        return self._directory_check(dir)
+
+    def pickle_jar(self, system=None):
+        """Return the pickle jar of a system."""
+        return os.path.join(self.meta_directory(system), 'pickle_jar.bin')
+
+    def fs_directory(self, system=None):
+        """Get the fs directory."""
+        if system is None:
+            dir = os.path.join(self.current_system_directory(), 'fs')
+        else:
+            dir = os.path.join(self.storage_directory(system), 'fs')
+        return self._directory_check(dir)
 
     def systems_directory(self):
         """Get the top-level systems directory."""
@@ -153,8 +172,10 @@ class Context:
 
     def _directory_check(self, directory):
         """Raise a ContextError if a directory is not yet set up."""
-        if directory is None:
+        if self._work_directory is None:
             raise exceptions.ContextError('Directories not set up yet.')
+        if directory is None:
+            raise exceptions.ContextError('Specific directory not set up yet.')
         return directory
 
     def preflight_check(self):

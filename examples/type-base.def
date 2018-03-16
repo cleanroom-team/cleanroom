@@ -23,6 +23,11 @@ VERSION=${TIMESTAMP}
 VERSION_ID=${TIMESTAMP}
 >>>>
 
+create /etc/machine.info <<<<PRETTY_HOSTNAME="Some machine"
+ICON_NAME="computer"
+CHASSIS="server"
+>>>>
+
 setup_readonly_usr
 
 set_timezone Europe/Berlin

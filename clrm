@@ -7,6 +7,7 @@
 
 import cleanroom.context as context
 import cleanroom.exceptions as ex
+import cleanroom.helper.generic.btrfs as btrfs
 import cleanroom.helper.generic.mount as mount
 import cleanroom.parser as parser
 import cleanroom.printer as printer
@@ -79,9 +80,6 @@ def main():
         print('Failed to unmount mounts below {}.'.format(args.work_directory))
         sys.exit(3)
 
-    if args.clear_work_directory:
-        clear_work_directory(args.work_directory)
-
     old_work_directory = os.getcwd()
     try:
         generate(pr, args)
@@ -118,6 +116,9 @@ def generate(pr, args):
     with workdir.WorkDir(ctx, args.work_directory) as work_directory:
         ctx.set_directories(systems_directory, work_directory)
 
+        if args.clear_work_directory:
+            _clear_work_directory(ctx, args.work_directory)
+
         if args.list_commands:
             parser.Parser.list_commands(ctx)
             sys.exit(0)
@@ -144,9 +145,24 @@ def generate(pr, args):
             pr.success('Generation phase.', verbosity = 2)
 
 
-def clear_work_directory(work_directory):
-    shutil.rmtree(os.path.join(work_directory, 'systems'))
-    shutil.rmtree(os.path.join(work_directory, 'repo'))
+def _subdirectories(dir):
+    return [os.path.join(dir, name) for name in os.listdir(dir)
+            if os.path.isdir(os.path.join(dir, name))]
+
+
+def _delete_subvolume(ctx, dir):
+    if btrfs.has_subvolume(ctx, dir):
+        btrfs.delete_subvolume(ctx, dir)
+
+
+def _clear_work_directory(ctx, work_directory):
+    _delete_subvolume(ctx, ctx.current_system_directory())
+
+    if os.path.isdir(ctx.storage_directory()):
+        for path in _subdirectories(ctx.storage_directory()):
+            _delete_subvolume(ctx, path)
+        os.rmdir(ctx.storage_directory())
+
 
 if __name__ == '__main__':
     main()
