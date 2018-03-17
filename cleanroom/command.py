@@ -37,6 +37,7 @@ class Command:
 
     def __call__(self, file_name, line_number, run_context, *args, **kwargs):
         """Execute command."""
+        assert(False)
         return True
 
     def syntax(self):

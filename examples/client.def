@@ -6,4 +6,4 @@ set_hostname client pretty='Client Example'
 set_machine_id f3e49ba7800bdcf23a650fc011842fec
 
 # Make the system available for deployment:
-export
+export_rootfs

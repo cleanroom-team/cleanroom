@@ -149,7 +149,7 @@ class RunContext:
         if not command_list:
             return
 
-        self.ctx.printer.h2('Running {} hooks.'.format(hook), verbosity=1)
+        self.ctx.printer.h3('Running {} hooks.'.format(hook), verbosity=1)
         for cmd in command_list:
             os.chdir(self.ctx.systems_directory())
             cmd.execute(self)

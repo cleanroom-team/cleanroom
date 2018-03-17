@@ -6,5 +6,5 @@ set_hostname server pretty='Server Example'
 set_machine_id 357eefb8bdf1542850d66d8007d620e4
 
 # Make the system available for deployment:
-export
+export_rootfs
 
