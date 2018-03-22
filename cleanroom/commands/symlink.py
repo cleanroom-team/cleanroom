@@ -17,15 +17,14 @@ class SymlinkCommand(cmd.Command):
         super().__init__('symlink <SOURCE> <TARGET> [base_directory=BASE]',
                          'Create a symlink.')
 
-    def validate_arguments(self, file_name, line_number, *args, **kwargs):
+    def validate_arguments(self, run_context, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 2:
             raise ex.ParseError('symlink needs a source and a target.',
-                                file_name=file_name, line_number=line_number)
-
+                                run_context=run_context)
         return None
 
-    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         source = args[0]
         target = args[1]

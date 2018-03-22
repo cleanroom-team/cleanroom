@@ -40,8 +40,8 @@ def expand_files(run_context, *files):
     Expand glob patterns.
     """
     to_iterate = files
-    if run_context:
-        to_iterate = map(lambda f: file_name(run_context, f), *files)
+    if run_context is not None:
+        to_iterate = map(lambda f: file_name(run_context, f), files)
 
     for pattern in to_iterate:
         for match in glob.iglob(pattern):
@@ -121,7 +121,7 @@ def _chmod(run_context, mode, *files):
 
 def chmod(run_context, mode, *files):
     """Chmod in the system filesystem."""
-    return _chmod(run_context, mode, *expand_files(run_context, files))
+    return _chmod(run_context, mode, *expand_files(run_context, *files))
 
 
 def _chown(run_context, user, group, *files):
@@ -142,7 +142,7 @@ def _chown(run_context, user, group, *files):
 
 def chown(run_context, user, group, *files):
     """Change ownership of a file in the system filesystem."""
-    return _chown(run_context, user, group, *expand_files(run_context, files))
+    return _chown(run_context, user, group, *expand_files(run_context, *files))
 
 
 def create_file(run_context, file, contents, force=False):
@@ -190,23 +190,23 @@ def _file_op(run_context, op, description, *args,
     sources = args[:-1]
     destination = args[-1]
 
-    if not from_outside:
-        sources = expand_files(None, *sources)
+    if from_outside:
+        sources = tuple(expand_files(None, *sources))
     else:
-        sources = expand_files(run_context, *sources)
+        sources = tuple(expand_files(run_context, *sources))
 
     if not to_outside:
         destination = file_name(run_context, destination)
 
-    if ignore_missing_sources and len(sources) == 0:
+    if ignore_missing_sources and not sources:
         return
 
-    assert(len(sources) >= 1)
+    assert(sources)
 
     run_context.ctx.printer.trace(description
                                   .format('", "'.join(sources), destination))
     for source in sources:
-        shutil.copyfile(source, destination, **kwargs)
+        op(source, destination, **kwargs)
 
 
 def copy(run_context, *args, **kwargs):
@@ -223,7 +223,7 @@ def move(run_context, *args, **kwargs):
 
 def remove(run_context, *files, recursive=False, force=False):
     """Delete a file inside of a system."""
-    for file in expand_files(run_context, files):
+    for file in expand_files(run_context, *files):
         run_context.ctx.printer.trace('Removing "{}".'.format(file))
 
         if not os.path.exists(file):

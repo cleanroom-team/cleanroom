@@ -7,8 +7,10 @@
 import cleanroom.command as cmd
 import cleanroom.context as context
 import cleanroom.exceptions as ex
-import cleanroom.helper.archlinux.pacman as pacman
+import cleanroom.helper.archlinux.pacman as arch
 import cleanroom.helper.generic.file as file
+
+import os.path
 
 
 class PacstrapCommand(cmd.Command):
@@ -20,40 +22,42 @@ class PacstrapCommand(cmd.Command):
                          'Run pacstrap to install <PACKAGES>.\n'
                          'Hooks: Will runs _setup hooks after pacstrapping.')
 
-    def validate_arguments(self, file_name, line_number, *args, **kwargs):
+    def validate_arguments(self, run_context, *args, **kwargs):
         """Validate the arguments."""
         if len(args) < 1:
             raise ex.ParseError('pacstrap needs at least '
                                 'one package or group to install.',
-                                file_name=file_name, line_number=line_number)
+                                run_context=run_context)
 
         if 'config' not in kwargs:
             raise ex.ParseError('pacstrap needs a "config" keyword argument.',
-                                file_name=file_name, line_number=line_number)
+                                run_context=run_context)
         return None
 
-    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
-        pac_object = pacman.Pacman(run_context)
-
         pacstrap_config = kwargs['config']
-        self._prepare_keyring(run_context, pac_object, pacstrap_config)
+        self._prepare_keyring(run_context, pacstrap_config)
 
-        pac_object.pacstrap(pacstrap_config, args)
+        arch.pacstrap(run_context, pacstrap_config, *args)
 
         # Install pacman.conf:
-        file.copy(run_context, pacstrap_config, '/etc/pacman.conf',
-                  from_outside=True)
+        run_context.execute('copy',
+                            os.path.join(run_context.ctx.systems_directory(),
+                                         pacstrap_config),
+                            '/etc/pacman.conf',
+                            from_outside=True)
 
         # Make sure DB is up-to-date:
         run_context.run('/usr/bin/pacman-db-upgrade')
 
-        file.remove(run_context, '/var/lib/pacman', recursive=True, force=True)
+        run_context.execute('remove', '/var/lib/pacman',
+                            recursive=True, force=True)
 
         run_context.set_substitution('PACKAGE_TYPE', 'pacman')
 
-        file.move(run_context, '/opt', '/usr')
-        file.symlink(run_context, 'usr/opt', 'opt', base_directory='/')
+        run_context.execute('move', '/opt', '/usr')
+        run_context.execute('symlink', 'usr/opt', 'opt', base_directory='/')
 
         run_context.run_hooks('_setup')
 
@@ -61,39 +65,33 @@ class PacstrapCommand(cmd.Command):
         run_context.run('/usr/bin/pacman', '-Sy')
         run_context.run('/usr/bin/pacman', '-Fy')
 
-    def _prepare_keyring(self, run_context, pac_object, pacstrap_config):
+    def _prepare_keyring(self, run_context, pacstrap_config):
         # Make sure important pacman directories exist:
-        file.makedirs(run_context, pac_object.host_gpg_directory())
+        file.makedirs(run_context, arch.host_gpg_directory(run_context))
         pacman_key = run_context.ctx.binary(context.Binaries.PACMAN_KEY)
         run_context.run(pacman_key,
                         '--config', pacstrap_config,
-                        '--gpgdir', pac_object.host_gpg_directory(),
+                        '--gpgdir', arch.host_gpg_directory(run_context),
                         '--init',
                         exit_code=0, outside=True,
                         work_directory=run_context.ctx.systems_directory())
         run_context.run(pacman_key,
                         '--config', pacstrap_config,
-                        '--gpgdir', pac_object.host_gpg_directory(),
+                        '--gpgdir', arch.host_gpg_directory(run_context),
                         '--populate', 'archlinux',
                         exit_code=0, outside=True,
                         work_directory=run_context.ctx.systems_directory())
 
-        gpgdir = pac_object.target_gpg_directory()
-        packageFiles = pac_object.target_cache_directory() + '/pkg/*'
+        gpgdir = arch.target_gpg_directory()
+        packageFiles = arch.target_cache_directory() + '/pkg/*'
 
         run_context.add_hook('_teardown', 'remove',
                              gpgdir + '/S.*', gpgdir + '/pubring.gpg~',
                              '/var/log/pacman.log', packageFiles,
                              recursive=True, force=True,
-                             message='cleanup pacman-key files',
-                             file_name='<pacstrap command>',
-                             line_number=1)
+                             message='cleanup pacman-key files')
         run_context.add_hook('_teardown', 'systemd_cleanup',
-                             file_name='<pacstrap command>', line_number=2,
                              message='Move systemd files into /usr')
-
-        run_context.add_hook('export', 'remove',
-                             gpgdir + '/secring.gpg*',
+        run_context.add_hook('export', 'remove', gpgdir + '/secring.gpg*',
                              force=True,
-                             file_name='<pacstrap command>', line_number=3,
                              message='Remove pacman secret keyring')

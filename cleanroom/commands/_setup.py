@@ -21,15 +21,17 @@ class _SetupCommand(cmd.Command):
                          "Implicitly run before any other command of a "
                          "system is run.")
 
-    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
+    def validate_arguments(self, run_context, *args, **kwargs):
+        return self._validate_no_arguments(run_context, *args, **kwargs)
+
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         self._setup_current_system_directory(run_context)
 
         # Make sure systemd does not create /var/lib/machines for us!
         self._setup_var_lib_machines(run_context)
 
-        self._setup_testing_hook(run_context,
-                                 file_name=file_name, line_number=line_number)
+        self._setup_testing_hook(run_context)
 
     def _setup_current_system_directory(self, run_context):
         btrfs.create_subvolume(run_context,
@@ -39,14 +41,12 @@ class _SetupCommand(cmd.Command):
 
     def _setup_var_lib_machines(self, run_context):
         machines_dir = '/var/lib/machines'
-        file.makedirs(run_context, machines_dir,
-                      mode=(stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR),
-                      user='root', group='root')
+        run_context.execute('mkdir', machines_dir,
+                            mode=(stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR),
+                            user='root', group='root')
 
-    def _setup_testing_hook(self, run_context, *,
-                            file_name='', line_number=-1):
+    def _setup_testing_hook(self, run_context):
         test_flag = 'testing_was_set_up'
         if not run_context.flags.get(test_flag, False):
-            run_context.add_hook('_test', '_test', message='testing',
-                                 file_name=file_name, line_number=line_number)
+            run_context.add_hook('_test', '_test', message='testing')
             run_context.flags[test_flag] = True

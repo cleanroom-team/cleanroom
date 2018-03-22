@@ -16,7 +16,10 @@ class _TeardownCommand(cmd.Command):
                          "Implicitly run after any other command of a "
                          "system is run.")
 
-    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
+    def validate_arguments(self, run_context, *args, **kwargs):
+        return self._validate_no_arguments(run_context, *args, **kwargs)
+
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         run_context.run_hooks('_teardown')
         run_context.run_hooks('testing')

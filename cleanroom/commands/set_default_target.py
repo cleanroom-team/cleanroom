@@ -17,15 +17,14 @@ class SetDefaultTargetCommand(cmd.Command):
         super().__init__('set_default_target <TARGET>',
                          'Set the systemd target to boot into.')
 
-    def validate_arguments(self, file_name, line_number, *args, **kwargs):
+    def validate_arguments(self, run_context, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 1:
             raise ex.ParseError('set_default_target needs a target name.',
-                                file_name=file_name, line_number=line_number)
-
+                                run_context=run_context)
         return None
 
-    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         target = args[0]
         systemd_directory = '/usr/lib/systemd/system/'
@@ -39,8 +38,8 @@ class SetDefaultTargetCommand(cmd.Command):
         default = 'default.target'
         default_path = systemd_directory + 'default.target'
 
-        file.remove(run_context, default_path, force=True)
-        file.symlink(run_context, target, default,
-                     base_directory=systemd_directory)
+        run_context.execute('remove', default_path, force=True)
+        run_context.execute('symlink', target, default,
+                            base_directory=systemd_directory)
 
         run_context.set_substitution('DEFAULT_BOOT_TARGET', target)

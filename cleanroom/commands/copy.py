@@ -18,20 +18,19 @@ class CopyFileCommand(cmd.Command):
                          '[from_outside=True] [to_outside=True]',
                          'Copy a file within the system.')
 
-    def validate_arguments(self, file_name, line_number, *args, **kwargs):
+    def validate_arguments(self, run_context, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 2:
             raise ex.ParseError('copy needs source and a destination.',
-                                file_name=file_name, line_number=line_number)
+                                run_context=run_context)
 
         if kwargs.get('from_outside', False) \
            and kwargs.get('to_outside', False):
             raise ex.ParseError('You can not copy a file from_outside '
-                                'to_outside.',
-                                file_name=file_name, line_number=line_number)
+                                'to_outside.', run_context=run_context)
 
         return None
 
-    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         file.copy(run_context, args[0], args[1], **kwargs)

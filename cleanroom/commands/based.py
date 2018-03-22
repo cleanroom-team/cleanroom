@@ -21,14 +21,13 @@ class BasedCommand(cmd.Command):
                          "Note: This command needs to be the first in the\n"
                          "system definition file!")
 
-    def validate_arguments(self, file_name, line_number, *args, **kwargs):
+    def validate_arguments(self, run_context, *args, **kwargs):
         """Validate the arguments."""
         base = None
 
         if len(args) != 2 or args[0] != 'on':
             raise ex.ParseError('"based" needs a "on" followed by a '
-                                'system name.',
-                                file_name=file_name, line_number=line_number)
+                                'system name.', run_context=run_context)
         elif len(args) == 2:
             base = args[1]
 
@@ -36,12 +35,10 @@ class BasedCommand(cmd.Command):
         system_pattern = re.compile('^[A-Za-z][A-Za-z0-9_-]*$')
         if not system_pattern.match(base):
             raise ex.ParseError('"based" got invalid base system name "{}".'
-                                .format(base),
-                                file_name=file_name, line_number=line_number)
-
+                                .format(base), run_context=run_context)
         return base
 
-    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         base_system = args[1]
 

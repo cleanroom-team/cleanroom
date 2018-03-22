@@ -43,18 +43,20 @@ class _RunContextUnpickler(pickle.Unpickler):
 class RunContext:
     """Context data for the execution os commands."""
 
-    def __init__(self, ctx, system):
+    def __init__(self, ctx, *, system,
+                 timestamp=datetime.datetime.now().strftime('%Y%m%d-%H%M%S')):
         """Constructor."""
         self.ctx = ctx
         self.system = system
         self.base_system = None
-        self.timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        self.timestamp = timestamp
         self.base_context = None
         self.hooks = {}
         self.hooks_that_already_ran = []
         self.substitutions = {}
         self.local_substitutions = {}
         self.flags = {}
+        self.reset_command()
 
         self._command = None
 
@@ -116,9 +118,20 @@ class RunContext:
         """Return the top level system definition directory of a system."""
         return self.ctx.system_definition_directory(self.system)
 
-    def set_command(self, command_name):
-        """Set the command name."""
+    def set_command(self, command_name, *,
+                    file_name, line_number, line_offset):
+        """Set the current command."""
+        assert(self._command is None)
         self._command = command_name
+        self.file_name = file_name
+        self.line_number = line_number
+        self.line_offset = line_offset
+
+    def reset_command(self):
+        """Reset the current command."""
+        self._command = None
+        self._line_number = -1
+        self._line_offset = -1
 
     def _add_hook(self, hook, exec_object):
         """Add a hook."""
@@ -129,11 +142,10 @@ class RunContext:
                                .format(hook, len(self.hooks[hook])))
 
     def add_hook(self, hook, command, *args,
-                 message='<unknown hook>', file_name=None, line_number=-1,
-                 **kwargs):
+                 message='<unknown hook>', **kwargs):
         """Add a hook."""
         self._add_hook(hook, parser.Parser.create_execute_object(
-            file_name, line_number,
+            self.file_name, self.line_number, self.line_offset,
             command, *args, message=message, **kwargs))
 
     def run_hooks(self, hook):
@@ -214,6 +226,13 @@ class RunContext:
         with open(pickle_jar, 'rb') as jar:
             base_context = _RunContextUnpickler(jar).load()
         self._install_base_context(base_context)
+
+    def execute(self, command, *args, **kwargs):
+        """Execute a command."""
+        cmd = parser.Parser.command(command)
+        dependency = cmd.validate_arguments(self, *args, **kwargs)
+        assert(dependency is None)
+        cmd(self, *args, **kwargs)
 
 
 if __name__ == '__main__':

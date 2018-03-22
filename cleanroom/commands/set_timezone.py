@@ -17,15 +17,14 @@ class SetTimezoneCommand(cmd.Command):
         super().__init__('set_timezone <TIMEZONE>',
                          'Set up the timezone for a system.')
 
-    def validate_arguments(self, file_name, line_number, *args, **kwargs):
+    def validate_arguments(self, run_context, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 1:
             raise ex.ParseError('set_timezone needs a timezone to set up.',
-                                file_name=file_name, line_number=line_number)
-
+                                run_context=run_context)
         return None
 
-    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         etc = '/etc'
         localtime = 'localtime'
@@ -36,8 +35,8 @@ class SetTimezoneCommand(cmd.Command):
         if not file.exists(run_context, full_timezone, base_directory=etc):
             raise ex.GenerateError('Timezone "{}" not found when trying to '
                                    'set timezone.'.format(timezone),
-                                   file_name=file_name,
-                                   line_number=line_number)
+                                   run_context=run_context)
 
-        file.remove(run_context, etc_localtime)
-        file.symlink(run_context, full_timezone, localtime, base_directory=etc)
+        run_context.execute('remove', etc_localtime)
+        run_context.execute('symlink', full_timezone, localtime,
+                            base_directory='/etc')

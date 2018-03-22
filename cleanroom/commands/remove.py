@@ -17,14 +17,13 @@ class RemoveCommand(cmd.Command):
         super().__init__('remove <FILE_LIST> [force=True] [recursive=True]',
                          'remove files within the system.')
 
-    def validate_arguments(self, file_name, line_number, *args, **kwargs):
+    def validate_arguments(self, run_context, *args, **kwargs):
         """Validate the arguments."""
         if len(args) == 0:
             raise ex.ParseError('remove needs a list of files to remove',
-                                file_name=file_name, line_number=line_number)
-
+                                run_context=run_context)
         return None
 
-    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         file.remove(run_context, *args, **kwargs)

@@ -9,7 +9,7 @@ from.
 """
 
 
-from . import exceptions as ex
+from .. import exceptions as ex
 
 
 class Command:
@@ -24,18 +24,25 @@ class Command:
         """Return the command name."""
         return self.__module__[19:]  # minus cleanroom.commands.
 
-    def validate_arguments(self, file_name, line_number, *args, **kwargs):
+    def validate_arguments(self, run_context, *args, **kwargs):
         """Validate all arguments.
 
         Validate all arguments and optionally return a dependency for
         the system.
         """
-        if len(args) != 0:
-            raise ex.ParseError('Command does not take arguments.',
-                                file_name=file_name, line_number=line_number)
+        assert(False)
         return None
 
-    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
+    def _validate_no_arguments(self, run_context, *args, **kwargs):
+        if len(args) != 0:
+            ex.ParseError(run_context, '{} does not take arguments.'
+                          .format(self.name()))
+        if len(kwargs) != 0:
+            ex.ParseError(run_context, '{} does not take keyword arguments.'
+                          .format(self.name()))
+        return None
+
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         assert(False)
         return True

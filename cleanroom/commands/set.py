@@ -16,15 +16,14 @@ class SetDefaultTargetCommand(cmd.Command):
         super().__init__('set <KEY> <VALUE> [local=True]',
                          'Set up a substitution.')
 
-    def validate_arguments(self, file_name, line_number, *args, **kwargs):
+    def validate_arguments(self, run_context, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 2:
             raise ex.ParseError('set needs a key and a value.',
-                                file_name=file_name, line_number=line_number)
-
+                                run_context=run_context)
         return None
 
-    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         key = args[0]
         value = args[1]

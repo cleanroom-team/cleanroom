@@ -19,29 +19,27 @@ class SetMachineIdCommand(cmd.Command):
         super().__init__('set_machine_id <ID>]',
                          'Set the machine id of the system.')
 
-    def validate_arguments(self, file_name, line_number, *args, **kwargs):
+    def validate_arguments(self, run_context, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 1:
             raise ex.ParseError('set_machine_id needs the machine id.',
-                                file_name=file_name, line_number=line_number)
+                                run_context=run_context)
 
         id = args[0]
         assert(id)
         id_pattern = re.compile('^[A-Fa-f0-9]{32}$')
         if not id_pattern.match(id):
             raise ex.ParseError('"{}" is not a valid machine-id.'.format(id),
-                                file_name=file_name, line_number=line_number)
-
+                                run_context=run_context)
         return None
 
-    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         if run_context.has_substitution('MACHINE_ID'):
             raise ex.GenerateError('Machine-id was already set.',
-                                   file_name=file_name,
-                                   line_number=line_number)
+                                   run_context=run_context)
 
         id = args[0]
         run_context.set_substitution('MACHINE_ID', id)
         id += '\n'
-        file.create_file(run_context, '/etc/machine-id', id.encode('utf-8'))
+        run_context.execute('create', '/etc/machine-id', id)

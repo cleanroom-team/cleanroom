@@ -15,14 +15,17 @@ class ExecObject:
     Describe the command to execute later during generation phase.
     """
 
-    def __init__(self, location, name, dependency, command, *args, **kwargs):
+    def __init__(self, name, file_name, line_number, line_offset,
+                 dependency, command, *args, **kwargs):
         """Constructor."""
         self._name = name
         self._command = command
         self._args = args
         self._kwargs = kwargs
         self._dependency = dependency
-        self._location = location
+        self._file_name = file_name
+        self._line_number = line_number
+        self._line_offset = line_offset
 
     def dependency(self):
         """Return dependency of the system (or None)."""
@@ -30,39 +33,33 @@ class ExecObject:
 
     def __str__(self):
         """Turn into string object."""
-        return '{}({}): {}'.format(self._location[0], self._location[1],
-                                   self._name)
+        return '{}:{}({})): {}'.format(self._file_name,
+                                       self._line_number,
+                                       self._line_offset,
+                                       self._name)
 
     def execute(self, run_context):
         """Execute the command."""
         command_object = self._command
-        run_context.set_command(self._name)
-        run_context.ctx.printer.debug('Running "{}" with arguments ({}).'
+        run_context.set_command(self._name,
+                                file_name=self._file_name,
+                                line_number=self._line_number,
+                                line_offset=self._line_offset)
+        run_context.ctx.printer.debug('Running "{}" with arguments ({}:{}).'
                                       .format(self._name,
                                               ', '.join(self._args),
                                               ', '.join(self._kwargs)))
 
         try:
-            command_object(self._location[0], self._location[1],
-                           run_context, *self._args, **self._kwargs)
+            command_object(run_context, *self._args, **self._kwargs)
         except ex.CleanRoomError as e:
-            run_context.ctx.printer.fail('{}: Failed to run "{}" with '
-                                         '({}:{}): {}.'
-                                         .format(self._location,
-                                                 self._name,
-                                                 ', '.join(self._args),
-                                                 ', '.join(self._kwargs),
-                                                 e),
+            run_context.ctx.printer.fail('{}: Failed to run: {}.'
+                                         .format(self, e),
                                          verbosity=1)
             if not run_context.ctx.ignore_errors:
                 raise
         else:
-            run_context.ctx.printer.success('{}: Ran "{}" with '
-                                            '({}:{}).'
-                                            .format(self._location,
-                                                    self._name,
-                                                    ', '.join(self._args),
-                                                    ', '.join(self._kwargs)),
+            run_context.ctx.printer.success('{}: ok.'.format(self),
                                             verbosity=1)
         finally:
-            run_context.set_command(None)
+            run_context.reset_command()

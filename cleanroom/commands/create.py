@@ -17,15 +17,15 @@ class CreateCommand(cmd.Command):
         super().__init__('create <FILENAME> <CONTENTS> [force=True]',
                          'Create a file with contents.')
 
-    def validate_arguments(self, file_name, line_number, *args, **kwargs):
+    def validate_arguments(self, run_context, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 2:
             raise ex.ParseError('create_file needs a file and its contents.',
-                                file_name=file_name, line_number=line_number)
+                                run_context=run_context)
 
         return None
 
-    def __call__(self, file_name, line_number, run_context, *args, **kwargs):
+    def __call__(self, run_context, *args, **kwargs):
         """Execute command."""
         to_write = run_context.substitute(args[1]).encode('utf-8')
         file.create_file(run_context, args[0], to_write, **kwargs)
