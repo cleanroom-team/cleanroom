@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Manage pacman and pacstrap calls.
 
@@ -9,17 +8,18 @@
 import cleanroom.context as context
 import cleanroom.exceptions as ex
 import cleanroom.helper.generic.file as file
+import cleanroom.printer as printer
 
 import os
 import os.path
 
 
-def _package_type(run_context):
-    return run_context.flags.get('package_type', None)
+def _package_type(system_context):
+    return system_context.flags.get('package_type', None)
 
 
-def _set_package_type(run_context):
-    run_context.flags['package_type'] = 'pacman'
+def _set_package_type(system_context):
+    system_context.flags['package_type'] = 'pacman'
 
 
 def target_gpg_directory():
@@ -27,9 +27,9 @@ def target_gpg_directory():
     return '/usr/lib/pacman/gpg'
 
 
-def host_gpg_directory(run_context):
+def host_gpg_directory(system_context):
     """Return the host location of the pacman GPG configuration."""
-    return file.file_name(run_context, target_gpg_directory())
+    return file.file_name(system_context, target_gpg_directory())
 
 
 def target_db_directory():
@@ -37,9 +37,9 @@ def target_db_directory():
     return '/usr/lib/pacman/db'
 
 
-def host_db_directory(run_context):
+def host_db_directory(system_context):
     """Return the host location of the pacman DB."""
-    return file.file_name(run_context, target_db_directory())
+    return file.file_name(system_context, target_db_directory())
 
 
 def target_cache_directory():
@@ -47,15 +47,15 @@ def target_cache_directory():
     return '/var/cache/pacman'
 
 
-def host_cache_directory(run_context):
+def host_cache_directory(system_context):
     """Return the host location of the pacman cache."""
-    return file.file_name(run_context, target_cache_directory())
+    return file.file_name(system_context, target_cache_directory())
 
 
-def initial_pacstrap_configuration_file(run_context):
+def initial_pacstrap_configuration_file(system_context):
     """Return the host configuration for initial pacstrap run."""
     init_config_path = os.path.join(
-        run_context.system_definition_directory(),
+        system_context.system_definition_directory(),
         'pacstrap.conf')
     if not os.path.isfile(init_config_path):
         raise ex.GenerateError('Could not find: "{}".'
@@ -63,48 +63,43 @@ def initial_pacstrap_configuration_file(run_context):
     return init_config_path
 
 
-def pacstrap(run_context, config, *packages):
+def pacstrap(system_context, config, *packages):
     """Run pacstrap on host."""
-    assert(_package_type(run_context) is None)
+    assert(_package_type(system_context) is None)
 
-    _sync_host(run_context, config)
+    _sync_host(system_context, config)
 
-    run_context.run(
-        run_context.ctx.binary(context.Binaries.PACSTRAP),
+    system_context.run(
+        system_context.ctx.binary(context.Binaries.PACSTRAP),
         '-c',  # use cache on host
         '-d',  # No mount point
         '-M',  # Do not copy host mirrorlist
         '-G',  # Do not copy host keyring
         '-C', config,  # Use config file
-        run_context.fs_directory(),
-        '--dbpath={}'.format(host_db_directory(run_context)),
-        '--gpgdir={}'.format(host_gpg_directory(run_context)),
+        system_context.fs_directory(),
+        '--dbpath={}'.format(host_db_directory(system_context)),
+        '--gpgdir={}'.format(host_gpg_directory(system_context)),
         *packages,
-        work_directory=run_context.ctx.systems_directory(),
+        work_directory=system_context.ctx.systems_directory(),
         outside=True)
 
-    _set_package_type(run_context)
+    _set_package_type(system_context)
 
 
-def _sync_host(run_context, config):
+def _sync_host(system_context, config):
     """Run pacman -Syu on the host."""
-    os.makedirs(host_db_directory(run_context))
-    run_context.run(
-        run_context.ctx.binary(context.Binaries.PACMAN),
-        '-Syu', '--config', config, '--dbpath', host_db_directory(run_context),
+    os.makedirs(host_db_directory(system_context))
+    system_context.run(
+        system_context.ctx.binary(context.Binaries.PACMAN),
+        '-Syu', '--config', config, '--dbpath', host_db_directory(system_context),
         outside=True)
 
 
-def pacman(self, run_context, *packages):
+def pacman(self, system_context, *packages):
     """Use pacman to install packages."""
-    assert(_package_type(run_context) == 'pacman')
+    assert(_package_type(system_context) == 'pacman')
 
-    run_context.ctx.printer.info('Installing {}'
-                                 .format(', '.join(packages)))
-    run_context.run(
-        run_context.ctx.binary(context.Binaries.PACMAN),
+    printer.info('Installing {}'.format(', '.join(packages)))
+    system_context.run(
+        system_context.ctx.binary(context.Binaries.PACMAN),
         '-S', '--noconfirm', '--needed', *packages)
-
-
-if __name__ == '__main__':
-    pass

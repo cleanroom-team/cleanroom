@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Run external commands.
 
@@ -98,7 +97,3 @@ def _report_output_lines(channel, headline, line_data):
     lines = line_data.split('\n')
     for line in lines:
         channel('    {}'.format(line))
-
-
-if __name__ == '__main__':
-    pass

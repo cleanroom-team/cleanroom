@@ -1,6 +1,6 @@
 # A server system
 
-based on type-baremetal
+based_on type-baremetal
 
 set_hostname server pretty='Server Example'
 set_machine_id 357eefb8bdf1542850d66d8007d620e4

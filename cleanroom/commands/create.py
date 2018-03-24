@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """create command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -14,18 +15,18 @@ class CreateCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('create <FILENAME> <CONTENTS> [force=True]',
-                         'Create a file with contents.')
+        super().__init__('create', syntax='<FILENAME> <CONTENTS> [force=True]',
+                         help='Create a file with contents.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 2:
             raise ex.ParseError('create_file needs a file and its contents.',
-                                run_context=run_context)
+                                location=location)
 
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        to_write = run_context.substitute(args[1]).encode('utf-8')
-        file.create_file(run_context, args[0], to_write, **kwargs)
+        to_write = system_context.substitute(args[1]).encode('utf-8')
+        file.create_file(system_context, args[0], to_write, **kwargs)

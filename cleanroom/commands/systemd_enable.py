@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """systemd_enable command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -14,16 +15,16 @@ class SystemdEnableCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('systemd_enable <UNIT> [<MORE_UNITS>]',
-                         'Enable systemd units.')
+        super().__init__('systemd_enable', syntax='<UNIT> [<MORE_UNITS>]',
+                         help='Enable systemd units.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         if len(args) == 0:
             raise ex.ParseError('systemd_enable needs at least one unit '
-                                'to enable.', run_context=run_context)
+                                'to enable.', location=location)
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
         sd.systemd_enable(*args)

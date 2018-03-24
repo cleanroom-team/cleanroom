@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Handle mounts.
 
@@ -40,7 +39,6 @@ def mount_points(run_context, directory):
 
 def _umount(directory):
     """Unmount a directory."""
-    print('>>>>', directory, '<<<<')
     run.run('/usr/bin/umount', directory)
 
 
@@ -65,7 +63,3 @@ def _umount_all(directory):
 def umount_all(run_context, directory):
     """Unmount all mount points below a directory of a system."""
     return _umount_all(run_context.file_name(directory))
-
-
-if __name__ == '__main__':
-    pass

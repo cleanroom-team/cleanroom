@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """group manipulation commands.
 
@@ -20,7 +19,3 @@ def groupadd(run_context, group_name, *, gid=-1, force=False, system=False):
         command += ['--system']
 
     run_context.run(*command)
-
-
-if __name__ == '__main__':
-    pass

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """move command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -14,17 +15,20 @@ class MoveCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('move <SOURCE> [<SOURCE>] <DEST> ',
-                         'Move file or directory.')
+        super().__init__('move', syntax='<SOURCE> [<SOURCE>] <DEST> ',
+                         help='Move file or directory.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         if len(args) < 2:
             raise ex.ParseError('move needs source and a destination.',
-                                run_context=run_context)
+                                location=location)
+        if kwargs.get('from_outside', False) \
+           and kwargs.get('to_outside', False):
+            raise ex.ParseError('You can not move a file from_outside '
+                                'to_outside.', location=location)
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        file.move(file.expand_files(run_context, *args[:-1]), args[-1],
-                  **kwargs)
+        file.move(system_context, *args, **kwargs)

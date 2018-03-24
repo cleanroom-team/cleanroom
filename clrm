@@ -7,10 +7,10 @@
 
 import cleanroom.context as context
 import cleanroom.exceptions as ex
-import cleanroom.helper.generic.btrfs as btrfs
-import cleanroom.helper.generic.mount as mount
+import cleanroom.generator as gen
 import cleanroom.parser as parser
 import cleanroom.printer as printer
+import cleanroom.preflight as preflight
 import cleanroom.workdir as workdir
 
 from argparse import ArgumentParser
@@ -60,6 +60,8 @@ def parse_commandline(arguments):
 
 
 def main():
+    old_work_directory = os.getcwd()
+
     args = parse_commandline(sys.argv)
 
     if not args.list_commands and not args.systems:
@@ -70,98 +72,73 @@ def main():
         print('No export repository given.')
         sys.exit(2)
 
-    pr = printer.Printer(args.verbose)
-    pr.verbose('Verbose output enabled.')
-    pr.info('Info output enabled.')
-    pr.debug('Debug output enabled.')
-    pr.trace('Trace output enabled.')
+    # Set up printing:
+    printer.Printer(verbose=args.verbose)
+    _log_verbosity_level()
 
-    if not mount._umount_all(args.work_directory):
-        print('Failed to unmount mounts below {}.'.format(args.work_directory))
-        sys.exit(3)
-
-    old_work_directory = os.getcwd()
-    try:
-        generate(pr, args)
-    except AssertionError as ae:
-        pr.fail('Assertion when generating system.', force_exit=False)
-        raise
-    except Exception as e:
-        pr.fail('System generation failed: {}.'.format(e),
-                ignore=args.ignore_errors,
-                force_exit=False)
-        raise
-    else:
-        pr.success('Done.', verbosity = 3)
-    finally:
-        os.chdir(old_work_directory)
-
-def generate(pr, args):
-    # Set up Context object:
+    # Set up global context object:
     ctx = context.Context(export_repository=args.export_repository,
-                          printer=pr, ignore_errors=args.ignore_errors)
-    try:
-        ctx.preflight_check()
-    except ex.PreflightError:
-        pr.fail('Preflight Check failed', ignore=args.ignore_errors)
-        if not args.ignore_errors:
-            raise
-    else:
-        pr.success('Preflight Check passed', verbosity = 2)
+                          ignore_errors=args.ignore_errors,
+                          keep_temporary_data=args.keep_temporary_data)
+
+    # Run pre-flight checks:
+    preflight_check(ctx)
 
     systems_directory = args.systems_directory \
        if args.systems_directory else os.getcwd()
 
-    # Do work:
-    with workdir.WorkDir(ctx, args.work_directory) as work_directory:
+    with workdir.WorkDir(ctx, work_directory=args.work_directory) as work_directory:
         ctx.set_directories(systems_directory, work_directory)
 
-        if args.clear_work_directory:
-            _clear_work_directory(ctx, args.work_directory)
-
-        if args.list_commands:
-            parser.Parser.list_commands(ctx)
-            sys.exit(0)
+        # Find commands:
+        parser.Parser.find_commands(ctx.systems_commands_directory(),
+                                    ctx.commands_directory())
 
         try:
-            ctx.generator.prepare()
-        except ex.PrepareError as e:
-            pr.fail('Preparation failed: {}'.format(e),
-                    ignore=args.ignore_errors)
+            generate(ctx, args.systems)
+        finally:
+            os.chdir(old_work_directory)
+
+
+def preflight_check(ctx):
+    try:
+        preflight.preflight_check(ctx)
+    except ex.PreflightError:
+        printer.fail('Preflight Check failed', ignore=ctx.ignore_errors)
+        if not ctx.ignore_errors:
             raise
-        else:
-            pr.success('Preparation phase.', verbosity = 2)
-
-        for s in args.systems:
-            ctx.generator.add_system(s)
-
-        try:
-            ctx.generator.generate()
-        except ex.GenerateError as e:
-            pr.fail('Generation failed: {}'.format(e),
-                    ignore=args.ignore_errors)
-            raise
-        else:
-            pr.success('Generation phase.', verbosity = 2)
+    else:
+        printer.success('Preflight Check passed', verbosity = 2)
 
 
-def _subdirectories(dir):
-    return [os.path.join(dir, name) for name in os.listdir(dir)
-            if os.path.isdir(os.path.join(dir, name))]
+def generate(ctx, systems):
+    generator = gen.Generator(ctx)
+
+    try:
+        generator.prepare()
+    except ex.PrepareError as e:
+        printer.fail('Preparation failed: {}'.format(e))
+        raise
+    else:
+        printer.success('Preparation phase.', verbosity = 2)
+
+    for s in systems:
+        generator.add_system(s)
+
+    try:
+        generator.generate()
+    except ex.GenerateError as e:
+        printer.fail('Generation failed: {}'.format(e))
+        raise
+    else:
+        printer.success('Generation phase.', verbosity = 2)
 
 
-def _delete_subvolume(ctx, dir):
-    if btrfs.has_subvolume(ctx, dir):
-        btrfs.delete_subvolume(ctx, dir)
-
-
-def _clear_work_directory(ctx, work_directory):
-    _delete_subvolume(ctx, ctx.current_system_directory())
-
-    if os.path.isdir(ctx.storage_directory()):
-        for path in _subdirectories(ctx.storage_directory()):
-            _delete_subvolume(ctx, path)
-        os.rmdir(ctx.storage_directory())
+def _log_verbosity_level():
+    printer.verbose('Verbose output enabled.')
+    printer.info('Info output enabled.')
+    printer.debug('Debug output enabled.')
+    printer.trace('Trace output enabled.')
 
 
 if __name__ == '__main__':

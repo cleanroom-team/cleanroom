@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """copy command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -9,28 +10,28 @@ import cleanroom.exceptions as ex
 import cleanroom.helper.generic.file as file
 
 
-class CopyFileCommand(cmd.Command):
+class CopyCommand(cmd.Command):
     """The copy command."""
 
     def __init__(self):
         """Constructor."""
-        super().__init__('copy <SOURCE> <DESTINATION> [force=True] '
+        super().__init__('copy',
+                         syntax='<SOURCE> [<SOURCE>] <DEST> [force=True] '
                          '[from_outside=True] [to_outside=True]',
-                         'Copy a file within the system.')
+                         help='Copy a file within the system.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) != 2:
+        if len(args) < 2:
             raise ex.ParseError('copy needs source and a destination.',
-                                run_context=run_context)
+                                location=location)
 
         if kwargs.get('from_outside', False) \
            and kwargs.get('to_outside', False):
             raise ex.ParseError('You can not copy a file from_outside '
-                                'to_outside.', run_context=run_context)
-
+                                'to_outside.', location=location)
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        file.copy(run_context, args[0], args[1], **kwargs)
+        file.copy(system_context, *args, **kwargs)

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Helpers for file system actions.
 
@@ -6,7 +5,8 @@
 """
 
 
-from ... import exceptions as ex
+import cleanroom.exceptions as ex
+import cleanroom.printer as printer
 
 import glob
 import os
@@ -24,8 +24,7 @@ def file_name(run_context, f):
         root_path = root_path[:-1]
 
     full_path = os.path.normpath(root_path + f)
-    run_context.ctx.printer.trace('Mapped file path "{}" to "{}".'
-                                  .format(f, full_path))
+    printer.trace('Mapped file path "{}" to "{}".'.format(f, full_path))
 
     if full_path != root_path and not full_path.startswith(root_path + '/'):
         raise ex.GenerateError('File path "{}" is outside of "{}"'
@@ -62,12 +61,10 @@ def _check_file(run_context, f, op, description, base_directory=None):
 
     # Report result:
     if base_directory is None:
-        run_context.ctx.printer.trace('{}: {} = {}'
-                                      .format(description, to_test, result))
+        printer.trace('{}: {} = {}'.format(description, to_test, result))
     else:
-        run_context.ctx.printer.trace('{}: {} (relative to {}) = {}'
-                                      .format(description, to_test,
-                                              base_directory, result))
+        printer.trace('{}: {} (relative to {}) = {}'
+                      .format(description, to_test, base_directory, result))
     return result
 
 
@@ -97,8 +94,7 @@ def symlink(run_context, source, destination, base_directory=None):
     if os.path.isabs(destination):
         destination = file_name(run_context, destination)
 
-    run_context.ctx.printer.trace('Symlinking "{}"->"{}".'
-                                  .format(source, destination))
+    printer.trace('Symlinking "{}"->"{}".'.format(source, destination))
     os.symlink(source, destination)
 
 
@@ -114,8 +110,7 @@ def makedirs(run_context, *dirs, user=0, group=0, mode=None):
 def _chmod(run_context, mode, *files):
     """For internal use only."""
     for f in files:
-        run_context.ctx.printer.trace('Chmod of "{}" to {}.'
-                                      .format(f, mode))
+        printer.trace('Chmod of "{}" to {}.'.format(f, mode))
         os.chmod(f, mode)
 
 
@@ -135,8 +130,7 @@ def _chown(run_context, user, group, *files):
     assert(group is not str)
 
     for f in files:
-        run_context.ctx.printer.trace('Chown of "{}" to {}:{}.'
-                                      .format(f, user, group))
+        printer.trace('Chown of "{}" to {}:{}.'.format(f, user, group))
         os.chown(f, user, group)
 
 
@@ -203,8 +197,7 @@ def _file_op(run_context, op, description, *args,
 
     assert(sources)
 
-    run_context.ctx.printer.trace(description
-                                  .format('", "'.join(sources), destination))
+    printer.trace(description.format('", "'.join(sources), destination))
     for source in sources:
         op(source, destination, **kwargs)
 
@@ -224,7 +217,7 @@ def move(run_context, *args, **kwargs):
 def remove(run_context, *files, recursive=False, force=False):
     """Delete a file inside of a system."""
     for file in expand_files(run_context, *files):
-        run_context.ctx.printer.trace('Removing "{}".'.format(file))
+        printer.trace('Removing "{}".'.format(file))
 
         if not os.path.exists(file):
             if force:
@@ -238,7 +231,3 @@ def remove(run_context, *files, recursive=False, force=False):
                 os.rmdir(file)
         else:
             os.unlink(file)
-
-
-if __name__ == '__main__':
-    pass

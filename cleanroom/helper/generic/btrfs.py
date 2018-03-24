@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Helpers for btrfs.
 
@@ -7,23 +6,28 @@
 
 
 import cleanroom.context as context
-import cleanroom.runcontext as runcontext
 import cleanroom.helper.generic.run as run
+import cleanroom.printer as printer
+import cleanroom.systemcontext as systemcontext
+
+
+def _find_ctx(ctx):
+    if isinstance(ctx, systemcontext.SystemContext):
+        return ctx.ctx
+    return ctx
 
 
 def create_subvolume(ctx, name):
     """Create a new subvolume."""
-    if isinstance(ctx, runcontext.RunContext):
-        ctx = ctx.ctx
+    ctx = _find_ctx(ctx)
 
     run.run(ctx.binary(context.Binaries.BTRFS),
-            'subvolume', 'create', name, trace_output=ctx.printer.trace)
+            'subvolume', 'create', name, trace_output=printer.trace)
 
 
 def create_snapshot(ctx, source, dest, *, read_only=False):
     """Create a new snapshot."""
-    if isinstance(ctx, runcontext.RunContext):
-        ctx = ctx.ctx
+    ctx = _find_ctx(ctx)
 
     extra_args = ()
     if read_only:
@@ -31,28 +35,22 @@ def create_snapshot(ctx, source, dest, *, read_only=False):
 
     run.run(ctx.binary(context.Binaries.BTRFS),
             'subvolume', 'snapshot', *extra_args, source, dest,
-            trace_output=ctx.printer.trace)
+            trace_output=printer.trace)
 
 
 def delete_subvolume(ctx, name):
     """Delete a subvolume."""
-    if isinstance(ctx, runcontext.RunContext):
-        ctx = ctx.ctx
+    ctx = _find_ctx(ctx)
 
     run.run(ctx.binary(context.Binaries.BTRFS),
-            'subvolume', 'delete', name, trace_output=ctx.printer.trace)
+            'subvolume', 'delete', name, trace_output=printer.trace)
 
 
 def has_subvolume(ctx, name):
     """Check whether a subdirectory is a subvolume or snapshot."""
-    if isinstance(ctx, runcontext.RunContext):
-        ctx = ctx.ctx
+    ctx = _find_ctx(ctx)
 
     result = run.run(ctx.binary(context.Binaries.BTRFS),
                      'subvolume', 'show', name,
-                     exit_code=None, trace_output=ctx.printer.trace)
+                     exit_code=None, trace_output=printer.trace)
     return result.returncode == 0
-
-
-if __name__ == '__main__':
-    pass

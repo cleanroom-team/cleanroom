@@ -1,6 +1,6 @@
 # A client system
 
-based on type-baremetal
+based_on type-baremetal
 
 set_hostname client pretty='Client Example'
 set_machine_id f3e49ba7800bdcf23a650fc011842fec

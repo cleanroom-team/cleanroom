@@ -4,8 +4,10 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
+
 import cleanroom.exceptions as exceptions
 import cleanroom.parser as parser
+import cleanroom.printer as printer
 import cleanroom.testutils as tu
 
 import os
@@ -18,6 +20,7 @@ class CommandTest(unittest.TestCase, tu.BaseParserTest):
 
     def setUp(self):
         """Set up method."""
+        printer.Printer._instance = None  # Force-reset printer
         self._create_and_setup_parser(5)
         self._tempDir = tempfile.TemporaryDirectory(prefix='clrm-cmd-test',
                                                     dir='/tmp')
@@ -27,31 +30,26 @@ class CommandTest(unittest.TestCase, tu.BaseParserTest):
 
         self.ctx.set_directories(systems_directory, work_directory)
 
-        parser.Parser.find_commands(self.ctx)
+        parser.Parser.find_commands(self.ctx.commands_directory())
 
     def tearDown(self):
         """Tear down method."""
         self._tempDir.cleanup()
 
-    def test_based(self):
+    def test_based_on(self):
         """Test based with a name."""
-        self._verify('   based on foo\n', [('based', ('on', 'foo',), {})])
+        self._verify('   based_on foo\n', [('based_on', ('foo',), {})])
 
     # Error cases:
-    def test_based_nothing(self):
-        """Test an image without 'on' and name."""
+    def test_based_on_nothing(self):
+        """Test an image without name."""
         with self.assertRaises(exceptions.ParseError):
-            self._parse('  based\n')
+            self._parse('  based_on\n')
 
-    def test_based_no_name(self):
-        """Test based without name."""
-        with self.assertRaises(exceptions.ParseError):
-            self._parse('  based  on\n')
-
-    def test_based_with_invalid_base(self):
+    def test_based_on_with_invalid_base(self):
         """Test based with invalid name."""
         with self.assertRaises(exceptions.ParseError):
-            self._parse('   based on f!oo\n')
+            self._parse('   based_on f!oo\n')
 
 
 if __name__ == '__main__':

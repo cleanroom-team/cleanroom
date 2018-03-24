@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """useradd command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -14,28 +15,29 @@ class UseraddCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('useradd <NAME> [comment=<COMMENT>] [home=<HOMEDIR>] '
+        super().__init__('useradd',
+                         syntax='<NAME> [comment=<COMMENT>] [home=<HOMEDIR>] '
                          '[gid=<GID>] [uid=<UID>] [groups=<GROUP1>,<GROUP2>] '
                          '[lock=False] [password=<CRYPTED_PASSWORD>] '
                          '[shell=<PATH>] [expire=<EXPIRE_DATE>]',
-                         'Modify an existing user.')
+                         help='Modify an existing user.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 1:
             raise ex.ParseError('useradd needs a username.',
-                                run_context=run_context)
+                                location=location)
         if len(kwargs) == 0:
             raise ex.ParseError('useradd needs keyword arguments',
-                                run_context=run_context)
+                                location=location)
 
         lock = kwargs.get('lock', None)
         if lock not in (True, None, False):
             raise ex.ParseError('"lock" must be either True, False or None.',
-                                run_context=run_context)
+                                location=location)
 
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        user.useradd(run_context, args[0], **kwargs)
+        user.useradd(system_context, args[0], **kwargs)

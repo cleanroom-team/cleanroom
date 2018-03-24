@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """usermod command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -13,40 +14,40 @@ class UsermodCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('usermod <NAME> [comment=<COMMENT>] [home=<HOMEDIR>] '
+        super().__init__('usermod',
+                         syntax='<NAME> [comment=<COMMENT>] [home=<HOMEDIR>] '
                          '[gid=<GID>] [uid=<UID>] [rename=<NEW_NAME>] '
                          '[groups=<GROUP1>,<GROUP2>] [lock=False] '
                          '[password=<CRYPTED_PASSWORD>] [shell=<PATH>] '
                          '[expire=<EXPIRE_DATE>], [append=False]',
-                         'Modify an existing user.')
+                         help='Modify an existing user.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 1:
             raise ex.ParseError('usermod needs a username.',
-                                run_context=run_context)
+                                location=location)
         if len(kwargs) == 0:
             raise ex.ParseError('usermod needs keyword arguments',
-                                run_context=run_context)
+                                location=location)
 
         lock = kwargs.get('lock', None)
         if lock not in (True, None, False):
             raise ex.ParseError('"lock" must be either True, False or None.',
-                                run_context=run_context)
+                                location=location)
 
         append = kwargs.get('append', False)
         if append not in (True, False):
             raise ex.ParseError('"append" must have either True or False as '
-                                'value.',
-                                run_context=run_context)
+                                'value.', location=location)
 
         if append and kwargs.get('groups', '') == '':
             raise ex.ParseError('"append" needs "groups" to be set, too.',
-                                run_context=run_context)
+                                location=location)
 
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
         user = args[0]
         command = ['/usr/bin/usermod', user]
@@ -101,4 +102,4 @@ class UsermodCommand(cmd.Command):
             else:
                 command += ['--expire-date', expire]
 
-        run_context.run(*command)
+        system_context.run(*command)

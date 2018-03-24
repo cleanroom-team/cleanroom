@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """set command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -13,19 +14,19 @@ class SetDefaultTargetCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('set <KEY> <VALUE> [local=True]',
-                         'Set up a substitution.')
+        super().__init__('set', syntax='<KEY> <VALUE> [local=True]',
+                         help='Set up a substitution.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 2:
             raise ex.ParseError('set needs a key and a value.',
-                                run_context=run_context)
+                                location=location)
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
         key = args[0]
         value = args[1]
 
-        run_context.set_substitution(key, value, **kwargs)
+        system_context.set_substitution(key, value, **kwargs)

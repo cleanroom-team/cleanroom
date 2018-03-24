@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """export_rootfs command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -12,12 +13,16 @@ class ExportRootFsCommand(cmd.ExportCommand):
     def __init__(self):
         """Constructor."""
         super().__init__('export_rootfs',
-                         'Export the root filesystem.')
+                         help='Export the root filesystem.')
 
-    def create_export_directory(self, run_context):
+    def validate_arguments(self, location, *args, **kwargs):
+        """Validate arguments."""
+        return self._validate_no_arguments(location, *args, **kwargs)
+
+    def create_export_directory(self, system_context):
         """Return the root directory."""
-        return run_context.fs_directory()
+        return system_context.fs_directory()
 
-    def delete_export_directory(self, run_context, export_directory):
+    def delete_export_directory(self, system_context, export_directory):
         """Nothing to see, move on."""
         pass  # Filesystem will be cleaned up automatically.

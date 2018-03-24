@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """user commands.
 
@@ -91,7 +90,3 @@ def usermod(run_context, user_name, *, comment='', home='', gid=-1, uid=-1,
         command += ['--expiredate', expire]
 
     run_context.run(*command)
-
-
-if __name__ == '__main__':
-    pass

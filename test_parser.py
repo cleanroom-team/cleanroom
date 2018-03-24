@@ -8,6 +8,7 @@ import cleanroom.testutils as tu
 import cleanroom.command as cmd
 import cleanroom.exceptions as exceptions
 import cleanroom.parser as parser
+import cleanroom.printer as printer
 
 import unittest
 
@@ -15,11 +16,11 @@ import unittest
 class TestCommand(cmd.Command):
     """Dummy command implementation."""
 
-    def __init__(self):
+    def __init__(self, name):
         """Constructor."""
-        super().__init__('test', 'test')
+        super().__init__(name, help='test')
 
-    def validate_arguments(self, file_name, line_number, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Accept all arguments."""
         return None
 
@@ -29,13 +30,17 @@ class ParserTest(tu.BaseParserTest, unittest.TestCase):
 
     def setUp(self):
         """Set up method."""
+        printer.Printer._instance = None  # Force printer to None
+
         self._create_and_setup_parser(5)
 
         self._cmd1 = 'test1'
         self._cmd2 = 'test2'
 
-        parser.Parser._commands[self._cmd1] = (TestCommand(), '<builtin>/1')
-        parser.Parser._commands[self._cmd2] = (TestCommand(), '<builtin>/2')
+        parser.Parser._commands[self._cmd1] \
+            = (TestCommand(self._cmd1), '<builtin>/1')
+        parser.Parser._commands[self._cmd2] \
+            = (TestCommand(self._cmd2), '<builtin>/2')
 
     # No command (WS or comment only):
     def test_comment(self):

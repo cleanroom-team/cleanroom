@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """pacman command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -14,17 +15,17 @@ class PacmanCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('pacman <PACKAGES>',
-                         'Run pacman to install <PACKAGES>.')
+        super().__init__('pacman', syntax='<PACKAGES>',
+                         help='Run pacman to install <PACKAGES>.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         if len(args) < 1:
             raise ex.ParseError('pacman needs at least '
                                 'one package or group to install.',
-                                run_context=run_context)
+                                location=location)
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        arch.pacman(run_context, *args)
+        arch.pacman(system_context, *args)

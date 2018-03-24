@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """systemd_cleanup command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -6,6 +7,7 @@
 
 import cleanroom.command as cmd
 import cleanroom.exceptions as ex
+import cleanroom.printer as printer
 
 import os.path
 import shutil
@@ -17,35 +19,35 @@ class SystemdCleanupCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('systemd_cleanup',
-                         'Make sure /etc/systemd/system is empty by moving '
-                         'files and links to the appropriate /usr directory.')
+                         help='Make sure /etc/systemd/system is empty by '
+                         'moving files and links to the appropriate /usr '
+                         'directory.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        return self._validate_no_arguments(run_context, *args, **kwargs)
+        return self._validate_no_arguments(location, *args, **kwargs)
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        old_base = run_context.file_name('/etc/systemd/system') + '/'
-        new_base = run_context.file_name('/usr/lib/systemd/system') + '/'
+        old_base = system_context.file_name('/etc/systemd/system') + '/'
+        new_base = system_context.file_name('/usr/lib/systemd/system') + '/'
 
-        print("walking:", old_base)
+        printer.trace("walking:", old_base)
 
         for root, dirs, files in os.walk(old_base):
             for f in files:
                 full_path = os.path.join(root, f)
-                print("Checking", full_path)
+                printer.trace("Checking", full_path)
                 if os.path.islink(full_path):
-                    print('Moving link', full_path)
-                    self._move_symlink(run_context,
+                    printer.trace('Moving link', full_path)
+                    self._move_symlink(location, system_context,
                                        old_base, new_base, full_path)
                 else:
-                    print('Moving file', full_path)
-                    self._move_file(run_context,
-                                    old_base, new_base, full_path)
+                    printer.trace('Moving file', full_path)
+                    self._move_file(location, old_base, new_base, full_path)
 
-        run_context.execute('remove', '/etc/systemd/system/*',
-                            recursive=True, force=True)
+        system_context.execute(location, 'remove', '/etc/systemd/system/*',
+                               recursive=True, force=True)
 
     def _map_base(self, old_base, new_base, input):
         assert(old_base.endswith('/'))
@@ -104,32 +106,32 @@ class SystemdCleanupCommand(cmd.Command):
         assert(os.path.isabs(host_link))
         return (os.path.join(root_directory, host_link[1:]), link_target)
 
-    def _move_symlink(self, run_context, old_base, new_base, link):
+    def _move_symlink(self, location, system_context,
+                      old_base, new_base, link):
         """Move a symlink."""
-        root_directory = run_context.fs_directory() + '/'
+        root_directory = system_context.fs_directory() + '/'
         link_target = os.readlink(link)
         (output_link, output_link_target) \
             = self._map_host_link(root_directory,
                                   old_base, new_base, link, link_target)
 
-        run_context.ctx.printer.trace('Moving link {}->{}: {} to {}'
-                                      .format(link, link_target,
-                                              output_link, output_link_target))
-
+        printer.trace('Moving link {}->{}: {} to {}'
+                      .format(link, link_target, output_link,
+                              output_link_target))
         os.makedirs(os.path.dirname(output_link), mode=0o755, exist_ok=True)
 
         if not os.path.isdir(os.path.dirname(output_link)):
             raise ex.GenerateError('"{}" is no directory when trying to move '
                                    '"{}" into /usr.'
                                    .format(output_link, link),
-                                   run_context=run_context)
+                                   location=location)
 
         if os.path.exists(output_link):
             if not os.path.islink(output_link):
                 raise ex.GenerateError('"{}" exists and is not a link when '
                                        'trying to move "{}" into /usr.'
                                        .format(output_link, link),
-                                       run_context=run_context)
+                                       location=location)
             else:
                 old_link_target = os.readlink(output_link)
                 if old_link_target != output_link_target:
@@ -137,13 +139,13 @@ class SystemdCleanupCommand(cmd.Command):
                                            'when "{}" was expected.'
                                            .format(link, old_link_target,
                                                    output_link_target),
-                                           run_context=run_context)
+                                           location=location)
                 else:
                     return  # Already correct
         else:
             os.symlink(output_link_target, output_link)
 
-    def _move_file(self, run_context, old_base, new_base, path):
+    def _move_file(self, location, old_base, new_base, path):
         """Move a file."""
         path_dir = os.path.dirname(path)
         path_name = os.path.basename(path)
@@ -152,7 +154,7 @@ class SystemdCleanupCommand(cmd.Command):
         if os.path.exists(new_dir) and not os.path.isdir(new_dir):
             raise ex.GenerateError('"{}" is not a directory when moving "{}".'
                                    .format(new_dir, path),
-                                   run_context=run_context)
+                                   location=location)
 
         if not os.path.exists(new_dir):
             os.makedirs(new_dir, 0o755)
@@ -161,6 +163,6 @@ class SystemdCleanupCommand(cmd.Command):
         if os.path.exists(new_path):
             raise ex.GenerateError('"{}" already exists when moving "{}".'
                                    .format(new_path, path),
-                                   run_context=run_context)
+                                   location=location)
 
         shutil.copyfile(path, new_path)

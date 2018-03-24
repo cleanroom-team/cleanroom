@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Exceptions used in cleanroom.
 
@@ -9,34 +8,16 @@
 class CleanRoomError(RuntimeError):
     """Base class for all cleanroom Exceptions."""
 
-    def __init__(self, *args, run_context=None,
-                 file_name=None, line_number=-1, line_offset=-1):
+    def __init__(self, *args, location=None):
         """Constructor."""
         super().__init__(*args)
-        if run_context is None:
-            self._file_name = file_name
-            self._line_number = line_number
-            self._line_offset = line_offset
-        else:
-            assert(file_name is None)
-            self._file_name = run_context.file_name
-            self._line_number = run_context.line_number
-            self._line_offset = run_context.line_offset
+        self.location = location
 
     def __str__(self):
         """Stringify exception."""
         prefix = 'Error'
-        if self._file_name:
-            if self._line_number > 0:
-                if (self._line_offset > 0):
-                    prefix = 'Error in "{}"({}-{})'.format(self._file_name,
-                                                           self._line_number,
-                                                           self._line_offset)
-                else:
-                    prefix = 'Error in "{}"({})'.format(self._file_name,
-                                                        self._line_number)
-            else:
-                prefix = 'Error in "{}"'.format(self._file_name)
+        if self.location is not None:
+            prefix += ' in {}'.format(self.location)
 
         return '{}: {}'.format(prefix, ' '.join(self.args))
 
@@ -74,8 +55,4 @@ class SystemNotFoundError(CleanRoomError):
 class ParseError(CleanRoomError):
     """Error raised while parsing system descriptions."""
 
-    pass
-
-
-if __name__ == '__main__':
     pass

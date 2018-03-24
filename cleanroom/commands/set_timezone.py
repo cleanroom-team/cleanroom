@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """set_timezone command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -14,17 +15,17 @@ class SetTimezoneCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('set_timezone <TIMEZONE>',
-                         'Set up the timezone for a system.')
+        super().__init__('set_timezone', syntax='<TIMEZONE>',
+                         help='Set up the timezone for a system.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 1:
             raise ex.ParseError('set_timezone needs a timezone to set up.',
-                                run_context=run_context)
+                                location=location)
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
         etc = '/etc'
         localtime = 'localtime'
@@ -32,11 +33,11 @@ class SetTimezoneCommand(cmd.Command):
 
         timezone = args[0]
         full_timezone = '../usr/share/zoneinfo/' + timezone
-        if not file.exists(run_context, full_timezone, base_directory=etc):
+        if not file.exists(system_context, full_timezone, base_directory=etc):
             raise ex.GenerateError('Timezone "{}" not found when trying to '
                                    'set timezone.'.format(timezone),
-                                   run_context=run_context)
+                                   location=location)
 
-        run_context.execute('remove', etc_localtime)
-        run_context.execute('symlink', full_timezone, localtime,
-                            base_directory='/etc')
+        system_context.execute(location, 'remove', etc_localtime)
+        system_context.execute(location, 'symlink', full_timezone, localtime,
+                               base_directory='/etc')

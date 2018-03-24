@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Generic support for iptables firewall management.
 
@@ -129,7 +128,3 @@ COMMIT
     file.chmod(run_context, stat.S_IRUSR | stat.S_IWUSR
                | stat.S_IRGRP | stat.S_IROTH,
                rule_file)
-
-
-if __name__ == '__main__':
-    pass

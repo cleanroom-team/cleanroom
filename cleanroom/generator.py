@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """The class that drives the system generation.
 
@@ -9,7 +8,10 @@
 import cleanroom.exceptions as exceptions
 import cleanroom.executor as executor
 import cleanroom.parser as parser
+import cleanroom.printer as printer
+import cleanroom.systemcontext as systemcontext
 
+import datetime
 import os
 import os.path
 
@@ -63,7 +65,6 @@ class Generator:
         """Constructor."""
         self._ctx = ctx
         self._systems_forest = []
-        ctx.generator = self
 
     def _binary(self, selector):
         """Get the full path to a binary."""
@@ -74,21 +75,19 @@ class Generator:
         if not system:
             return None
 
-        self._ctx.printer.debug('Adding system "{}".'
-                                .format(system if system else "<NONE>"))
+        printer.debug('Adding system "{}".'
+                      .format(system if system else "<NONE>"))
 
         node = self._find(system)
         if node:
-            self._ctx.printer.trace('Found system "{}" in system_forest.'
-                                    .format(system))
+            printer.trace('Found system "{}" in system_forest.'.format(system))
             return node
 
         system_file = self._find_system_definition_file(system)
         (base_system, command_list) \
             = self._parse_system_definition_file(system_file)
 
-        self._ctx.printer.trace('"{}" is based on "{}"'
-                                .format(system, base_system))
+        printer.trace('"{}" depends on "{}"'.format(system, base_system))
         parent_node = self.add_system(base_system)
         node = DependencyNode(system, parent_node, command_list)
 
@@ -100,8 +99,8 @@ class Generator:
         return node
 
     def _parse_system_definition_file(self, system_file):
-        self._ctx.printer.trace('Parsing "{}".'.format(system_file))
-        system_parser = parser.Parser(self._ctx)
+        printer.trace('Parsing "{}".'.format(system_file))
+        system_parser = parser.Parser()
         command_list = []
         for command in system_parser.parse(system_file):
             command_list.append(command)
@@ -137,13 +136,12 @@ class Generator:
     def _print_systems_forest(self):
         """Print the systems forest."""
         base_indent = "  "
-        self._ctx.printer.debug('Systems forest ({} trees):'
-                                .format(len(self._systems_forest)))
+        printer.debug('Systems forest ({} trees):'
+                      .format(len(self._systems_forest)))
         for node in self._walk_systems_forest():
-            self._ctx.printer.debug('  {}{} ({} children)'
-                                    .format(base_indent * node.depth(),
-                                            node.system,
-                                            len(node.children)))
+            printer.debug('  {}{} ({} children)'
+                          .format(base_indent * node.depth(), node.system,
+                                  len(node.children)))
 
     def _walk_systems_forest(self):
         for root_node in self._systems_forest:
@@ -152,40 +150,38 @@ class Generator:
 
     def prepare(self):
         """Prepare for generation."""
-        self._ctx.printer.h2('Preparing for system generation')
+        printer.h2('Preparing for system generation')
         if not os.path.exists(self._ctx.storage_directory()):
             os.makedirs(self._ctx.storage_directory())
 
     def generate(self):
         """Generate all systems in the dependency tree."""
         self._print_systems_forest()
+        timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
 
         for node in self._walk_systems_forest():
             system = node.system
             command_list = node.command_list
 
-            self._ctx.printer.h1('Generate "{}"'.format(system))
+            printer.h1('Generate "{}"'.format(system))
             try:
+                system_context \
+                    = systemcontext.SystemContext(self._ctx,
+                                                  system=system,
+                                                  timestamp=timestamp)
                 exe = executor.Executor()
-                exe.run(self._ctx, system, command_list)
+                exe.run(system_context, system, command_list)
             except AssertionError as e:
-                self._ctx.printer.fail('Generation of "{}" asserted.'
-                                       .format(system,),
-                                       force_exit=False,
-                                       ignore=self._ctx.ignore_errors)
+                printer.fail('Generation of "{}" asserted.'
+                             .format(system,), force_exit=False,
+                             ignore=self._ctx.ignore_errors)
                 if not self._ctx.ignore_errors:
                     raise
             except Exception as e:
-                self._ctx.printer.fail('Generation of "{}" failed: {}.'
-                                       .format(system, e),
-                                       force_exit=False,
-                                       ignore=self._ctx.ignore_errors)
+                printer.fail('Generation of "{}" failed: {}.'
+                             .format(system, e), force_exit=False,
+                             ignore=self._ctx.ignore_errors)
                 if not self._ctx.ignore_errors:
                     raise
             else:
-                self._ctx.printer.success('Generation of "{}" complete.'
-                                          .format(system))
-
-
-if __name__ == '__main__':
-    pass
+                printer.success('Generation of "{}" complete.'.format(system))

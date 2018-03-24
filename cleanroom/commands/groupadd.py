@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """groupadd command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -14,18 +15,19 @@ class GroupaddCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('groupadd <NAME> [force=False] [system=False] '
+        super().__init__('groupadd',
+                         syntax='<NAME> [force=False] [system=False] '
                          '[gid=<GID>]',
-                         'Add a group.')
+                         help='Add a group.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         if len(args) != 1:
             raise ex.ParseError('groupadd needs a groupname.',
-                                run_context=run_context)
+                                location=location)
 
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        group.groupadd(run_context, args[0], **kwargs)
+        group.groupadd(system_context, args[0], **kwargs)

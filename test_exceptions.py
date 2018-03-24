@@ -5,6 +5,7 @@
 """
 
 import cleanroom.exceptions as ex
+import cleanroom.location as location
 
 import unittest
 
@@ -22,20 +23,17 @@ class ExceptionsTest(unittest.TestCase):
         e = ex.CleanRoomError('message', 'something')
         self.assertEqual(str(e), 'Error: message something')
 
-    def test_base_exceptions_with_file(self):
+    def test_base_exceptions_with_location(self):
         """Test the base exception class with file."""
-        e = ex.CleanRoomError('message', file_name='/foo/bar')
-        self.assertEqual(str(e), 'Error in "/foo/bar": message')
-
-    def test_base_exceptions_with_line(self):
-        """Test the base exception class with line."""
-        e = ex.CleanRoomError('message', line_number=5)
-        self.assertEqual(str(e), 'Error: message')
+        loc = location.Location(file_name='/foo/bar')
+        e = ex.CleanRoomError('message', location=loc)
+        self.assertEqual(str(e), 'Error in /foo/bar: message')
 
     def test_base_exceptions_with_file_and_line(self):
         """Test the base exception class with file and line."""
-        e = ex.CleanRoomError('message', file_name='/foo/bar', line_number=5)
-        self.assertEqual(str(e), 'Error in "/foo/bar"(5): message')
+        loc = location.Location(file_name='/foo/bar', line_number=42)
+        e = ex.CleanRoomError('message', location=loc)
+        self.assertEqual(str(e), 'Error in /foo/bar:42: message')
 
     def test_preflight(self):
         """Test preflight exception."""

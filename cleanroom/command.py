@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Base class for commands usable in the system definition files.
 
@@ -9,47 +8,53 @@ from.
 """
 
 
-from .. import exceptions as ex
+import cleanroom.exceptions as ex
 
 
 class Command:
     """A command that can be used in to set up machines."""
 
-    def __init__(self, syntax_string, help_string):
+    def __init__(self, name, *, syntax='', help):
         """Constructor."""
-        self._syntax_string = syntax_string
-        self._help_string = help_string
+        assert(name)
+        self._name = name
+        self._syntax_string = syntax
+        self._help_string = help
 
     def name(self):
         """Return the command name."""
-        return self.__module__[19:]  # minus cleanroom.commands.
+        return self._name
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate all arguments.
 
         Validate all arguments and optionally return a dependency for
         the system.
         """
+        print('Command "{}"" called validate_arguments illegally!'
+              .format(self.name()))
         assert(False)
         return None
 
-    def _validate_no_arguments(self, run_context, *args, **kwargs):
+    def _validate_no_arguments(self, location, *args, **kwargs):
         if len(args) != 0:
-            ex.ParseError(run_context, '{} does not take arguments.'
-                          .format(self.name()))
+            ex.ParseError('{} does not take arguments.'.format(self.name()),
+                          location=location)
         if len(kwargs) != 0:
-            ex.ParseError(run_context, '{} does not take keyword arguments.'
-                          .format(self.name()))
+            ex.ParseError('{} does not take keyword arguments.'
+                          .format(self.name()), location=location)
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
         assert(False)
         return True
 
     def syntax(self):
         """Return syntax description."""
-        return self._syntax_string
+        if self._syntax_string:
+            return '{} {}'.format(self._name, self._syntax_string)
+        return self._name
 
     def help(self):
         """Print help string."""

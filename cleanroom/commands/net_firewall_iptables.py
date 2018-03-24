@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """net_firewall_iptables command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -5,7 +6,6 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.exceptions as ex
 import cleanroom.helper.archlinux.iptables as fw
 
 
@@ -15,16 +15,12 @@ class MoveCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('net_firewall_iptables',
-                         'Set up basic iptables firewall.')
+                         help='Set up basic iptables firewall.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) > 0:
-            raise ex.ParseError('net_firewall_iptables does not take '
-                                'arguments.', run_context=run_context)
+        return self._validate_no_arguments(location, args, kwargs)
 
-        return None
-
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        fw.install(run_context)
+        fw.install(system_context)

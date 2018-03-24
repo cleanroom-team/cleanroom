@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """set_locales command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -6,7 +7,6 @@
 
 import cleanroom.command as cmd
 import cleanroom.exceptions as ex
-import cleanroom.helper.generic.file as file
 
 import os.path
 
@@ -16,21 +16,21 @@ class SetLocalesCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('set_locales <LOCALE> [<MORE_LOCALES>] '
-                         '[charmap=UTF-8]',
-                         'Set the system locales.')
+        super().__init__('set_locales',
+                         syntax='<LOCALE> [<MORE_LOCALES>] [charmap=UTF-8]',
+                         help='Set the system locales.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         if len(args) < 1:
             raise ex.ParseError('set_locales needs at least one locale.',
-                                run_context=run_context)
+                                location=location)
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
         charmap = kwargs.get('charmap', 'UTF-8')
-        locales_dir = os.path.join(run_context.fs_directory(),
+        locales_dir = os.path.join(system_context.fs_directory(),
                                    'usr/share/locale')
         locales = []
         for a in args:
@@ -38,23 +38,24 @@ class SetLocalesCommand(cmd.Command):
                and not os.path.isdir(os.path.join(locales_dir, a[0:2])):
                 raise ex.ParseError('Locale "{}" not found in '
                                     '/usr/share/locale.'.format(a),
-                                    run_context=run_context)
+                                    location=location)
             locales.append('{}.{} {}'.format(a, charmap, charmap))
 
-        run_context.execute('create', '/etc/locale.gen', '\n'.join(locales),
-                            force=True)
-        self._setup_hooks(run_context)
+        system_context.execute(location,
+                               'create', '/etc/locale.gen', '\n'.join(locales),
+                               force=True)
+        self._setup_hooks(system_context, location)
 
-    def _setup_hooks(self, run_context):
+    def _setup_hooks(self, system_context, location):
         locales_flag = 'locales_set_up'
-        if not run_context.flags.get(locales_flag, False):
-            run_context.add_hook('export',
-                                 'run', '/usr/bin/locale-gen',
-                                 message='run locale-gen')
-            run_context.add_hook('export',
-                                 'remove', '/usr/share/locale/*',
-                                 '/etc/locale.gen', '/usr/bin/locale-gen',
-                                 '/usr/bin/localedef',
-                                 force=True, recursive=True,
-                                 message='Remove locale related data.')
-        run_context.flags[locales_flag] = True
+        if not system_context.flags.get(locales_flag, False):
+            location.next_line_offset('run locale-gen')
+            system_context.add_hook('export', location,
+                                    'run', '/usr/bin/locale-gen')
+            location.next_line_offset('Remove locale related data.')
+            system_context.add_hook('export', location,
+                                    'remove', '/usr/share/locale/*',
+                                    '/etc/locale.gen', '/usr/bin/locale-gen',
+                                    '/usr/bin/localedef',
+                                    force=True, recursive=True)
+        system_context.flags[locales_flag] = True

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """mkdir command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -14,16 +15,17 @@ class MkdirCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('mkdir <DIRNAME> [<DIRNAME>][user=uid] [group=gid]',
-                         'Create a new directory.')
+        super().__init__('mkdir',
+                         syntax='<DIRNAME> [<DIRNAME>] [user=uid] [group=gid]',
+                         help='Create a new directory.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) != 1:
+        if len(args) < 1:
             raise ex.ParseError('mkdir needs a directory to create.',
-                                run_context=run_context)
+                                location=location)
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        file.makedirs(run_context, *args, **kwargs)
+        file.makedirs(system_context, *args, **kwargs)

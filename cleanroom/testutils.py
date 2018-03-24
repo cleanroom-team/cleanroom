@@ -1,13 +1,14 @@
-#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """Test infrastructure for cleanroom tests.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
 
-from . import context
-from . import parser
-from . import command as cmd
+import cleanroom.command as cmd
+import cleanroom.context as context
+import cleanroom.parser as parser
+import cleanroom.printer as printer
 
 
 class TestCommand(cmd.Command):
@@ -21,17 +22,19 @@ class BaseParserTest:
 
     def _create_and_setup_parser(self, verbosity=0):
         """Set up method."""
-        self.ctx = context.Context.Create(verbosity)
-        self.parser = parser.Parser(self.ctx)
+        printer.Printer(verbosity)
+        self.ctx = context.Context()
+        parser.Parser.find_commands(self.ctx.commands_directory())
+        self.parser = parser.Parser()
         parser.Parser._commands['_setup'] \
-            = (TestCommand('_setup', 'placeholder'), '<placeholder>')
+            = (TestCommand('_setup', help='placeholder'), '<placeholder>')
         parser.Parser._commands['_teardown'] \
-            = (TestCommand('_setup', 'placeholder'), '<placeholder>')
+            = (TestCommand('_teardown', help='placeholder'), '<placeholder>')
 
     def _parse(self, data):
         """Call Parser._parse_lines and map the result."""
         input = (data,) if type(data) is str else data
-        return list(map(lambda x: (x._name, x._args, x._kwargs),
+        return list(map(lambda x: (x.command(), x.arguments(), x._kwargs),
                         self.parser._parse_lines(input, '<TEST_DATA>')))
 
     def _verify(self, data, expected):

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """pacstrap command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -18,80 +19,83 @@ class PacstrapCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('pacstrap <PACKAGES> config=<CONFIG_FILE>',
-                         'Run pacstrap to install <PACKAGES>.\n'
+        super().__init__('pacstrap', syntax='<PACKAGES> config=<CONFIG_FILE>',
+                         help='Run pacstrap to install <PACKAGES>.\n'
                          'Hooks: Will runs _setup hooks after pacstrapping.')
 
-    def validate_arguments(self, run_context, *args, **kwargs):
+    def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         if len(args) < 1:
             raise ex.ParseError('pacstrap needs at least '
                                 'one package or group to install.',
-                                run_context=run_context)
+                                location=location)
 
         if 'config' not in kwargs:
             raise ex.ParseError('pacstrap needs a "config" keyword argument.',
-                                run_context=run_context)
+                                location=location)
         return None
 
-    def __call__(self, run_context, *args, **kwargs):
+    def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
         pacstrap_config = kwargs['config']
-        self._prepare_keyring(run_context, pacstrap_config)
+        self._prepare_keyring(system_context, location, pacstrap_config)
 
-        arch.pacstrap(run_context, pacstrap_config, *args)
+        arch.pacstrap(system_context, pacstrap_config, *args)
 
         # Install pacman.conf:
-        run_context.execute('copy',
-                            os.path.join(run_context.ctx.systems_directory(),
-                                         pacstrap_config),
-                            '/etc/pacman.conf',
-                            from_outside=True)
+        system_context.execute(location, 'copy',
+                               os.path.join(
+                                   system_context.ctx.systems_directory(),
+                                   pacstrap_config),
+                               '/etc/pacman.conf', from_outside=True)
 
         # Make sure DB is up-to-date:
-        run_context.run('/usr/bin/pacman-db-upgrade')
+        system_context.run('/usr/bin/pacman-db-upgrade')
 
-        run_context.execute('remove', '/var/lib/pacman',
-                            recursive=True, force=True)
+        system_context.execute(location, 'remove', '/var/lib/pacman',
+                               recursive=True, force=True)
 
-        run_context.set_substitution('PACKAGE_TYPE', 'pacman')
+        system_context.set_substitution('PACKAGE_TYPE', 'pacman')
 
-        run_context.execute('move', '/opt', '/usr')
-        run_context.execute('symlink', 'usr/opt', 'opt', base_directory='/')
+        system_context.execute(location, 'move', '/opt', '/usr')
+        system_context.execute(location, 'symlink', 'usr/opt', 'opt',
+                               base_directory='/')
 
-        run_context.run_hooks('_setup')
+        system_context.run_hooks('_setup')
 
         # Make sure pacman DB is up-to-date:
-        run_context.run('/usr/bin/pacman', '-Sy')
-        run_context.run('/usr/bin/pacman', '-Fy')
+        system_context.run('/usr/bin/pacman', '-Sy')
+        system_context.run('/usr/bin/pacman', '-Fy')
 
-    def _prepare_keyring(self, run_context, pacstrap_config):
+    def _prepare_keyring(self, system_context, location, pacstrap_config):
         # Make sure important pacman directories exist:
-        file.makedirs(run_context, arch.host_gpg_directory(run_context))
-        pacman_key = run_context.ctx.binary(context.Binaries.PACMAN_KEY)
-        run_context.run(pacman_key,
-                        '--config', pacstrap_config,
-                        '--gpgdir', arch.host_gpg_directory(run_context),
-                        '--init',
-                        exit_code=0, outside=True,
-                        work_directory=run_context.ctx.systems_directory())
-        run_context.run(pacman_key,
-                        '--config', pacstrap_config,
-                        '--gpgdir', arch.host_gpg_directory(run_context),
-                        '--populate', 'archlinux',
-                        exit_code=0, outside=True,
-                        work_directory=run_context.ctx.systems_directory())
+        file.makedirs(system_context, arch.host_gpg_directory(system_context))
+        pacman_key = system_context.ctx.binary(context.Binaries.PACMAN_KEY)
+        systems_directory = system_context.ctx.systems_directory()
+        system_context.run(pacman_key,
+                           '--config', pacstrap_config,
+                           '--gpgdir', arch.host_gpg_directory(system_context),
+                           '--init',
+                           exit_code=0, outside=True,
+                           work_directory=systems_directory)
+        system_context.run(pacman_key,
+                           '--config', pacstrap_config,
+                           '--gpgdir', arch.host_gpg_directory(system_context),
+                           '--populate', 'archlinux',
+                           exit_code=0, outside=True,
+                           work_directory=systems_directory)
 
         gpgdir = arch.target_gpg_directory()
         packageFiles = arch.target_cache_directory() + '/pkg/*'
 
-        run_context.add_hook('_teardown', 'remove',
-                             gpgdir + '/S.*', gpgdir + '/pubring.gpg~',
-                             '/var/log/pacman.log', packageFiles,
-                             recursive=True, force=True,
-                             message='cleanup pacman-key files')
-        run_context.add_hook('_teardown', 'systemd_cleanup',
-                             message='Move systemd files into /usr')
-        run_context.add_hook('export', 'remove', gpgdir + '/secring.gpg*',
-                             force=True,
-                             message='Remove pacman secret keyring')
+        location.next_line_offset('cleanup pacman-key files')
+        system_context.add_hook('_teardown', location, 'remove',
+                                gpgdir + '/S.*', gpgdir + '/pubring.gpg~',
+                                '/var/log/pacman.log',
+                                packageFiles,
+                                recursive=True, force=True)
+        location.next_line_offset('Move systemd files into /usr')
+        system_context.add_hook('_teardown', location, 'systemd_cleanup')
+        location.next_line_offset('Remove pacman secret keyring')
+        system_context.add_hook('export', location,
+                                'remove', gpgdir + '/secring.gpg*', force=True)
