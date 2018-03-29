@@ -39,7 +39,7 @@ class _ParserState:
             and self._to_process.startswith(' ' * self._indent_depth)
 
     def reset(self):
-        assert(self._location.isValid())
+        assert(self._location.is_valid())
 
         self._args = ()
         self._kwargs = {}
@@ -66,7 +66,7 @@ class _ParserState:
                                             *args, **kwargs)
 
     def _args_to_string(self):
-        args = ','.join(self._args) + ':' \
+        args = ','.join([str(a) for a in self._args]) + ':' \
             + ','.join([k + '=' + str(v) for (k, v) in self._kwargs.items()])
         return args.replace('\n', '\\n').replace('\t', '\\t')
 
@@ -170,6 +170,8 @@ class Parser:
     def __init__(self):
         """Constructor."""
         self._command_pattern = re.compile('^[A-Za-z][A-Za-z0-9_-]*$')
+        self._octal_pattern = re.compile('^0o?([0-7]+)$')
+        self._hex_pattern = re.compile('^0x([0-9a-fA-F]+)$')
 
     def parse(self, input_file):
         """Parse a file."""
@@ -366,18 +368,27 @@ class Parser:
         assert(unused is None)
         assert(not need_arg_value)
 
-        has_value = value is not None
         if not special_string and has_value:
-            if value == 'None':
-                value = None
-            elif value == 'True':
-                value = True
-            elif value == 'False':
-                value = False
-            elif value.isdigit():
-                value = int(value)
+            value = self._process_value(value)
 
         return (has_value, value, token, to_process)
+
+    def _process_value(self, value):
+        octal_match = self._octal_pattern.match(value)
+        hex_match = self._hex_pattern.match(value)
+        if value == 'None':
+            value = None
+        elif value == 'True':
+            value = True
+        elif value == 'False':
+            value = False
+        elif octal_match:
+            value = int(octal_match.group(1), 8)
+        elif hex_match:
+            value = int(hex_match.group(1), 16)
+        elif value.isdigit():
+            value = int(value)
+        return value
 
     def _extract_multiline_argument(self, state):
         (value, token, to_process) \

@@ -20,7 +20,7 @@ class SetDefaultTargetCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        return self._validate_exact_arguments(location, 1,
+        return self._validate_arguments_exact(location, 1,
                                               '"{}" needs a target name.',
                                               *args, **kwargs)
 

@@ -19,7 +19,7 @@ class SedCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        return self._validate_exact_arguments(location, 2,
+        return self._validate_arguments_exact(location, 2,
                                               '"{}" needs a pattern and a '
                                               'file.', *args, **kwargs)
 

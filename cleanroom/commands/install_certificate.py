@@ -23,7 +23,7 @@ class InstallCertificatesCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        return self._validate_at_least_arguments(location, 1,
+        return self._validate_arguments_at_least(location, 1,
                                                  '"{}" needs at least one '
                                                  'ca certificate to add',
                                                  *args, **kwargs)

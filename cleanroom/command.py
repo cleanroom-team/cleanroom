@@ -37,17 +37,17 @@ class Command:
         return None
 
     def _validate_no_arguments(self, location, *args, **kwargs):
-        return self._validate_exact_arguments(location, 0,
+        return self._validate_arguments_exact(location, 0,
                                               '"{}"" does not take arguments.',
                                               *args, **kwargs)
 
-    def _validate_exact_arguments(self, location, arg_count, message,
+    def _validate_arguments_exact(self, location, arg_count, message,
                                   *args, **kwargs):
         self._validate_args_exact(location, arg_count, message, *args)
         self._validate_kwargs(location, (), **kwargs)
         return None
 
-    def _validate_at_least_arguments(self, location, arg_count, message,
+    def _validate_arguments_at_least(self, location, arg_count, message,
                                      *args, **kwargs):
         self._validate_args_at_least(location, arg_count, message, *args)
         self._validate_kwargs(location, (), **kwargs)
