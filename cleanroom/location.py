@@ -31,7 +31,7 @@ class Location:
         self.line_offset = None
         self.extra_information = None
 
-    def isValid(self):
+    def is_valid(self):
         """Check whether this object contains a valid location."""
         return self.file_name is not None \
             or self.extra_information is not None
