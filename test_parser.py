@@ -97,6 +97,62 @@ class ParserTest(tu.BaseParserTest, unittest.TestCase):
         """Test a command with one argument."""
         self._verify(' test1  arg1 \n', [(self._cmd1, ('arg1',), {})])
 
+    def test_command_one_int(self):
+        """Test a command with one argument 42."""
+        self._verify(' test1  42 \n', [(self._cmd1, (42,), {})])
+
+    def test_command_one_octal(self):
+        """Test a command with one argument 0o42."""
+        self._verify(' test1  0o42 \n', [(self._cmd1, (34,), {})])
+
+    def test_command_one_octal2(self):
+        """Test a command with one argument 042."""
+        self._verify(' test1  042 \n', [(self._cmd1, (34,), {})])
+
+    def test_command_one_hex(self):
+        """Test a command with one argument 0xf8."""
+        self._verify(' test1  0xf8 \n', [(self._cmd1, (248,), {})])
+
+    def test_command_one_true(self):
+        """Test a command with one argument True."""
+        self._verify(' test1  True \n', [(self._cmd1, (True,), {})])
+
+    def test_command_one_false(self):
+        """Test a command with one argument False."""
+        self._verify(' test1  False \n', [(self._cmd1, (False,), {})])
+
+    def test_command_one_none(self):
+        """Test a command with one argument None."""
+        self._verify(' test1  None \n', [(self._cmd1, (None,), {})])
+
+    def test_command_one_int_string(self):
+        """Test a command with one argument 42."""
+        self._verify(' test1  "42" \n', [(self._cmd1, ("42",), {})])
+
+    def test_command_one_octal_string(self):
+        """Test a command with one argument 0o42."""
+        self._verify(' test1  "0o42" \n', [(self._cmd1, ("0o42",), {})])
+
+    def test_command_one_octal2_string(self):
+        """Test a command with one argument 042 string."""
+        self._verify(' test1  "042" \n', [(self._cmd1, ("042",), {})])
+
+    def test_command_one_hex_string(self):
+        """Test a command with one argument 0xf8 string."""
+        self._verify(' test1  "0xf8" \n', [(self._cmd1, ("0xf8",), {})])
+
+    def test_command_one_true_string(self):
+        """Test a command with one argument True string."""
+        self._verify(' test1  "True" \n', [(self._cmd1, ("True",), {})])
+
+    def test_command_one_false_string(self):
+        """Test a command with one argument False string."""
+        self._verify(' test1  \'False\' \n', [(self._cmd1, ("False",), {})])
+
+    def test_command_one_none_string(self):
+        """Test a command with one argument None string."""
+        self._verify(' test1  "None" \n', [(self._cmd1, ("None",), {})])
+
     def test_command_two_args(self):
         """Test a command with two arguments."""
         self._verify('test1  arg1  arg2\n',
@@ -173,7 +229,7 @@ class ParserTest(tu.BaseParserTest, unittest.TestCase):
                      [(self._cmd1, ('"arg1"',), {})])
 
     def test_command_escaped_sq_kw_argument(self):
-        """Test a command with kwargument valuesurrounded by sq."""
+        """Test a command with kwargument value surrounded by sq."""
         self._verify('test1  value=\\\'arg1\\\' ',
                      [(self._cmd1, (), {'value': '\'arg1\''})])
 
@@ -207,6 +263,21 @@ class ParserTest(tu.BaseParserTest, unittest.TestCase):
         """Test a command with kwargument value of 42."""
         self._verify('test1  value=42 ',
                      [(self._cmd1, (), {'value': 42})])
+
+    def test_command_with_kw_octal(self):
+        """Test a command with kwargument value of 0o42."""
+        self._verify('test1  value=0o42 ',
+                     [(self._cmd1, (), {'value': 34})])
+
+    def test_command_with_kw_octal2(self):
+        """Test a command with kwargument value of 042."""
+        self._verify('test1  value=042 ',
+                     [(self._cmd1, (), {'value': 34})])
+
+    def test_command_with_kw_hex(self):
+        """Test a command with kwargument value of 0xf8."""
+        self._verify('test1  value=0xf8 ',
+                     [(self._cmd1, (), {'value': 248})])
 
     def test_command_with_kw_true_sq_string(self):
         """Test a command with kwargument value of 'True'."""
