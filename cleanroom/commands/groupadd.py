@@ -6,7 +6,6 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.exceptions as ex
 import cleanroom.helper.generic.group as group
 
 
@@ -22,10 +21,9 @@ class GroupaddCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) != 1:
-            raise ex.ParseError('groupadd needs a groupname.',
-                                location=location)
-
+        self._validate_args_exact(location, 1, '"{}" needs exactly one name.',
+                                  *args)
+        self._validate_kwargs(location, ('force', 'system'), **kwargs)
         return None
 
     def __call__(self, location, system_context, *args, **kwargs):

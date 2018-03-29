@@ -6,7 +6,6 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.exceptions as ex
 import cleanroom.helper.generic.file as file
 
 
@@ -20,10 +19,10 @@ class CreateCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) != 2:
-            raise ex.ParseError('create_file needs a file and its contents.',
-                                location=location)
-
+        self._validate_args_exact(location, 2,
+                                  '"{}" takes a file name and the contents '
+                                  'to store in the file.', *args)
+        self._validate_kwargs(location, ('force',), **kwargs)
         return None
 
     def __call__(self, location, system_context, *args, **kwargs):

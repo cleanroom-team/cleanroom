@@ -24,9 +24,7 @@ class UseraddCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) != 1:
-            raise ex.ParseError('useradd needs a username.',
-                                location=location)
+        self._validate_args_exact(location, 1, '"{}" needs a username.', *args)
         if len(kwargs) == 0:
             raise ex.ParseError('useradd needs keyword arguments',
                                 location=location)

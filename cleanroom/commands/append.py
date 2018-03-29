@@ -6,7 +6,6 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.exceptions as ex
 import cleanroom.helper.generic.file as file
 
 
@@ -20,10 +19,9 @@ class AppendCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) != 2:
-            raise ex.ParseError('append needs a file and contents to append.',
-                                location=location)
-        return None
+        return self._validate_exact_arguments(location, 2,
+                                              '"{}" needs a file and contents '
+                                              'to append to it.', *args)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

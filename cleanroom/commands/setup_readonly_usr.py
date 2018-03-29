@@ -6,7 +6,6 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.exceptions as ex
 
 
 class SetupReadonlyUsrCommand(cmd.Command):
@@ -19,10 +18,7 @@ class SetupReadonlyUsrCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) != 0:
-            raise ex.ParseError('setup_readonly_usr does not take any '
-                                'argument.', location=location)
-        return None
+        return self._validate_no_arguments(location, *args, **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

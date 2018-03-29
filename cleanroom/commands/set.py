@@ -6,7 +6,6 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.exceptions as ex
 
 
 class SetDefaultTargetCommand(cmd.Command):
@@ -19,10 +18,9 @@ class SetDefaultTargetCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) != 2:
-            raise ex.ParseError('set needs a key and a value.',
-                                location=location)
-        return None
+        return self._validate_exact_arguments(location, 2,
+                                              '"{}" needs a key and a value.',
+                                              *args, **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

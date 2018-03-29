@@ -28,16 +28,15 @@ class BasedOnCommand(cmd.Command):
         """Validate the arguments."""
         base = None
 
-        if len(args) != 1:
-            raise ex.ParseError('"based_on" needs a system name.',
-                                location=location)
+        self._validate_arguments_exact(location, 1,
+                                       '"{}" needs a system name.', *args)
         base = args[0]
-
         assert(base)
+
         system_pattern = re.compile('^[A-Za-z][A-Za-z0-9_-]*$')
         if not system_pattern.match(base):
-            raise ex.ParseError('"based_on" got invalid base system name "{}".'
-                                .format(base), location=location)
+            raise ex.ParseError('"{}" got invalid base system name "{}".'
+                                .format(self.name(), base), location=location)
         return base
 
     def __call__(self, location, system_context, *args, **kwargs):

@@ -6,7 +6,6 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.exceptions as ex
 
 
 class AddHookCommand(cmd.Command):
@@ -20,9 +19,10 @@ class AddHookCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) < 2:
-            raise ex.ParseError('add_hook needs a hook name and a command '
-                                'with optional arguments', location=location)
+        self._validate_args_at_least(location, 1,
+                                     '"{}" needs a hook name and a '
+                                     'command and optional arguments.', *args)
+        self._validate_kwargs(location, ('message',), **kwargs)
         return None
 
     def __call__(self, location, system_context, *args, message='', **kwargs):

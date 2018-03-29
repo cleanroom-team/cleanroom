@@ -6,10 +6,6 @@
 
 
 import cleanroom.helper.archlinux.pacman as arch
-import cleanroom.helper.generic.file as file
-import cleanroom.helper.generic.systemd as sd
-
-import stat
 
 
 def install(system_context):
@@ -24,7 +20,8 @@ def install(system_context):
 
     # FIXME: Fix systemd install section to run iptables services earlier!
 
-    sd.systemd_enable(system_context, 'iptables.service', 'ip6tables.service')
+    system_context.execute('systemd_enable',
+                           'iptables.service', 'ip6tables.service')
 
 
 def _install_packages(system_context):
@@ -40,7 +37,7 @@ def _set_firewall_type(system_context):
 
 
 def _install_v4_rules(system_context, rule_file):
-    file.create(system_context, rule_file, """
+    system_context.execute('create', rule_file, """
 # iptables rules:
 
 *filter
@@ -79,13 +76,11 @@ def _install_v4_rules(system_context, rule_file):
 
 COMMIT
 """)
-    file.chmod(system_context, stat.S_IRUSR | stat.S_IWUSR
-               | stat.S_IRGRP | stat.S_IROTH,
-               rule_file)
+    system_context.execute('chmod', 0o644, rule_file)
 
 
-def _install_v6_rules(self, rule_file):
-    file.create(system_context, rule_file, """
+def _install_v6_rules(self, system_context, rule_file):
+    system_context.execute('create', rule_file, """
 # ip6tables rules:
 
 *filter
@@ -125,6 +120,4 @@ def _install_v6_rules(self, rule_file):
 
 COMMIT
 """)
-    file.chmod(system_context, stat.S_IRUSR | stat.S_IWUSR
-               | stat.S_IRGRP | stat.S_IROTH,
-               rule_file)
+    system_context.execute('chmod', 0o644, rule_file)

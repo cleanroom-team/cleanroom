@@ -7,7 +7,6 @@
 
 import cleanroom.command as cmd
 import cleanroom.context as context
-import cleanroom.exceptions as ex
 import cleanroom.helper.archlinux.pacman as arch
 import cleanroom.helper.generic.file as file
 
@@ -25,14 +24,11 @@ class PacstrapCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) < 1:
-            raise ex.ParseError('pacstrap needs at least '
-                                'one package or group to install.',
-                                location=location)
-
-        if 'config' not in kwargs:
-            raise ex.ParseError('pacstrap needs a "config" keyword argument.',
-                                location=location)
+        self._validate_args_at_least(location, 1,
+                                     '"{}" needs at least one package '
+                                     'or group to install.', *args)
+        self._validate_kwargs(location, ('config',), **kwargs)
+        self._require_kwargs(location, ('config,'), **kwargs)
         return None
 
     def __call__(self, location, system_context, *args, **kwargs):

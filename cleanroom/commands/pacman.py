@@ -6,7 +6,6 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.exceptions as ex
 import cleanroom.helper.archlinux.pacman as arch
 
 
@@ -20,10 +19,10 @@ class PacmanCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) < 1:
-            raise ex.ParseError('pacman needs at least '
-                                'one package or group to install.',
-                                location=location)
+        return self._validate_at_least_arguments(location, 1,
+                                                '"{}"" needs at least '
+                                                'one package or group to '
+                                                'install.', *args, **kwargs)
         return None
 
     def __call__(self, location, system_context, *args, **kwargs):

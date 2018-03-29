@@ -6,7 +6,6 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.exceptions as ex
 import cleanroom.helper.generic.systemd as sd
 
 
@@ -20,10 +19,10 @@ class SystemdEnableCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) == 0:
-            raise ex.ParseError('systemd_enable needs at least one unit '
-                                'to enable.', location=location)
-        return None
+        return self._validate_at_least_arguments(location, 1,
+                                                 '"{}" needs at least one '
+                                                 'unit to enable.',
+                                                 *args, *+kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

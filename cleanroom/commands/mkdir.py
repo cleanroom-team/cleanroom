@@ -6,7 +6,6 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.exceptions as ex
 import cleanroom.helper.generic.file as file
 
 
@@ -21,9 +20,10 @@ class MkdirCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) < 1:
-            raise ex.ParseError('mkdir needs a directory to create.',
-                                location=location)
+        self._validate_args_at_least(location, 1,
+                                     '"{}" needs at least one directory '
+                                     'to create.', *args)
+        self._validate_kwargs(location, ('user', 'group'), **kwargs)
         return None
 
     def __call__(self, location, system_context, *args, **kwargs):

@@ -6,7 +6,6 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.exceptions as ex
 
 
 class SetHostnameCommand(cmd.Command):
@@ -19,9 +18,9 @@ class SetHostnameCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) != 1:
-            raise ex.ParseError('set_hostname needs the static hostname.',
-                                location=location)
+        self._validate_args_exact(location, 1, '"{}" needs a static hostname.',
+                                  *args)
+        self._validate_kwargs(location, ('pretty',), **kwargs)
         return None
 
     def __call__(self, location, system_context, *args, **kwargs):
@@ -38,7 +37,7 @@ class SetHostnameCommand(cmd.Command):
 
         system_context.execute(location,
                                'create', '/etc/hostname', static_hostname)
-        system_context.execute(location, 'sed', 
+        system_context.execute(location, 'sed',
                                '/^PRETTY_HOSTNAME=/ cPRETTY_HOSTNAME=\"{}\"'
                                .format(pretty_hostname),
                                '/etc/machine.info')

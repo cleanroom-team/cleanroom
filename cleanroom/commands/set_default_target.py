@@ -20,10 +20,9 @@ class SetDefaultTargetCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) != 1:
-            raise ex.ParseError('set_default_target needs a target name.',
-                                location=location)
-        return None
+        return self._validate_exact_arguments(location, 1,
+                                              '"{}" needs a target name.',
+                                              *args, **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

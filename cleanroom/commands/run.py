@@ -6,7 +6,6 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.exceptions as ex
 
 
 class RunCommand(cmd.Command):
@@ -22,9 +21,10 @@ class RunCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) < 1:
-            raise ex.ParseError('run needs a command to run and optional '
-                                'arguments.', location=location)
+        self._validate_args_at_least(location, 1,
+                                     '"{}" needs a command to run and '
+                                     'optional arguments.', *args)
+        self._validate_kwargs(location, ('outside', 'shell'), **kwargs)
         return None
 
     def __call__(self, location, system_context, *args, **kwargs):

@@ -21,9 +21,9 @@ class SetMachineIdCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) != 1:
-            raise ex.ParseError('set_machine_id needs the machine id.',
-                                location=location)
+        self._validate_exact_arguments(location, 1,
+                                       '"{}" needs the machine id.',
+                                       *args, **kwargs)
 
         id = args[0]
         assert(id)

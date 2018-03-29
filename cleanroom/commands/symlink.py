@@ -6,7 +6,6 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.exceptions as ex
 import cleanroom.helper.generic.file as file
 
 
@@ -21,9 +20,9 @@ class SymlinkCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) != 2:
-            raise ex.ParseError('symlink needs a source and a target.',
-                                location=location)
+        self._validate_args_exact(location, 2,
+                                  '"{}" needs a source and a target.', *args)
+        self._validate_kwargs(location, ('base_directory',), **kwargs)
         return None
 
     def __call__(self, location, system_context, *args, **kwargs):

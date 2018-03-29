@@ -6,7 +6,6 @@
 
 
 import cleanroom.command as cmd
-import cleanroom.exceptions as ex
 import cleanroom.helper.generic.file as file
 
 
@@ -20,9 +19,11 @@ class MoveCommand(cmd.Command):
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        if len(args) < 2:
-            raise ex.ParseError('move needs source and a destination.',
-                                location=location)
+        self._validate_args_at_least(location, 2,
+                                     '"{}" needs at least one '
+                                     'source and a destination.', *args)
+        self._validate_kwargs(location, ('from_outside', 'to_outside'),
+                              **kwargs)
         if kwargs.get('from_outside', False) \
            and kwargs.get('to_outside', False):
             raise ex.ParseError('You can not move a file from_outside '
