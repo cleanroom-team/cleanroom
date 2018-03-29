@@ -6,7 +6,7 @@
 
 import cleanroom.testutils as tu
 import cleanroom.command as cmd
-import cleanroom.exceptions as exceptions
+import cleanroom.exceptions as ex
 import cleanroom.parser as parser
 import cleanroom.printer as printer
 
@@ -463,43 +463,43 @@ class ParserTest(tu.BaseParserTest, unittest.TestCase):
 
     def test_keyword_argument_without_value(self):
         """Test a command with a kw argument without value."""
-        self._verify(('test1 key=\n'),
-                     [(self._cmd1, (), {'key': ''})])
+        with self.assertRaises(ex.ParseError):
+            self._parse('test1 key=\n')
 
     def test_keyword_argument_without_value_no_nl(self):
         """Test a command with a kw argument without value (no NL)."""
-        self._verify(('test1 key='),
-                     [(self._cmd1, (), {'key': ''})])
+        with self.assertRaises(ex.ParseError):
+            self._parse('test1 key=')
 
     # Error cases:
     def test_assert_on_unknown_command(self):
         """Test an invalid command."""
-        with self.assertRaises(exceptions.ParseError):
+        with self.assertRaises(ex.ParseError):
             self._parse('   foobar test\n')
 
     def test_assert_on_invalid_char_in_command(self):
         """Test an command containing an unexpected character."""
-        with self.assertRaises(exceptions.ParseError):
+        with self.assertRaises(ex.ParseError):
             self._parse('  !test1\n')
 
     def test_assert_on_missing_sq(self):
         """Test an argument with missing '."""
-        with self.assertRaises(exceptions.ParseError):
+        with self.assertRaises(ex.ParseError):
             self._parse('  test1 \'fooo  \n')
 
     def test_assert_on_missing_dq(self):
         """Test an argument with missing "."""
-        with self.assertRaises(exceptions.ParseError):
+        with self.assertRaises(ex.ParseError):
             self._parse('  test1 "baaarrrr  \n')
 
     def test_assert_on_invalid_keyword_argument(self):
         """Test an argument with missing "."""
-        with self.assertRaises(exceptions.ParseError):
+        with self.assertRaises(ex.ParseError):
             self._parse('  test1 ke!y=value  \n')
 
     def test_assert_on_invalid_keyword_argument2(self):
         """Test an argument with missing "."""
-        with self.assertRaises(exceptions.ParseError):
+        with self.assertRaises(ex.ParseError):
             self._parse('  test1 2key=value  \n')
 
 

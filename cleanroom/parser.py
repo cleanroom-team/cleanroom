@@ -77,11 +77,12 @@ class _ParserState:
         return self._incomplete_token.replace('\n', '\\n').replace('\t', '\\t')
 
     def __str__(self):
-        return '{} "{}" ({})-token:{} "{}"'.\
+        return '{} "{}" ({})-token:"{}", complete?"{}"-key:"{}"'.\
                format(self._location, self._args_to_string(),
                       self._to_process_to_string(),
+                      self._incomplete_token_to_string(),
                       self.is_token_complete(),
-                      self._incomplete_token_to_string())
+                      self._key_for_value)
 
 
 class Parser:
@@ -283,28 +284,23 @@ class Parser:
     def _extract_arguments(self, state):
         # extract arguments:
         while state._to_process != '':
-            (key, has_value, value, token, to_process,
-             need_arg_value, special_string) \
+            (key, has_value, value, to_process, token) \
                 = self._parse_next_argument(state._location,
                                             state._to_process,
-                                            state._incomplete_token, True)
+                                            state._incomplete_token)
 
-            state._incomplete_token = token
             state._to_process = to_process
+            state._incomplete_token = token
 
             if key is not None:
-                if need_arg_value:
-                    if not self._command_pattern.match(key):
-                        raise ex.ParseError('"{}" is not a valid keyword '
-                                            'argument.'.format(key),
-                                            location=state._location)
-                    if has_value:
-                        state._kwargs[key] = value
-                        state._key_for_value = ''
-                    else:
-                        state._key_for_value = key
+                if has_value:
+                    state._kwargs[key] = value
+                    state._key_for_value = ''
                 else:
-                    state._args = (*state._args, key)
+                    state._key_for_value = key
+            else:
+                if has_value:
+                    state._args = (*state._args, value)
 
         return state
 
@@ -326,54 +322,76 @@ class Parser:
 
         return command
 
-    def _parse_next_argument(self, location, line, token,
-                             is_keyword_possible=True):
-        to_process = self._strip_comment_and_ws(line)
-        if to_process == '':
-            return (None, False, None, '', '', False, False)  # return what
-
-        if to_process.startswith('<<<<'):
-            to_process = to_process[4:]
-            (value, token, to_process) \
-                = self._parse_multiline_argument(location, to_process, token)
-            return (value, False, None, token, to_process, False, True)
-        if to_process[0] == '"' or to_process[0] == '\'':
-            quote = to_process[0]
-            to_process = to_process[1:]
-            (value, to_process) \
-                = self._parse_string_argument(location, to_process, quote)
-            return (value, False, None, '', to_process, False, True)
-
-        (key_or_value, to_process, need_arg_value) \
-            = self._parse_normal_argument(location, to_process,
-                                          is_keyword_possible)
-
-        value = None
+    def _parse_next_argument(self, location, to_process, token):
+        key = None
         has_value = False
+        value = None
+        to_process = self._strip_comment_and_ws(to_process)
+        # token
 
-        if need_arg_value:
-            (has_value, value, token, to_process) \
-                = self._parse_next_argument_value(location, to_process, token)
+        (has_part, section, is_keyword, to_process, token) \
+            = self._parse_argument_part(location, to_process, token,
+                                        is_keyword_possible=True)
+        if not has_part:
+            return (key, has_value, value, to_process, token)
 
-        return (key_or_value, has_value, value, token,
-                to_process, need_arg_value, False)
+        if is_keyword:
+            key = section
+            if not self._command_pattern.match(key):
+                raise ex.ParseError('Keyword "{}" is not valid.'.format(key))
 
-    def _parse_next_argument_value(self, location, line, token):
-        (value, has_value, unused, token, to_process,
-         need_arg_value, special_string) \
-            = self._parse_next_argument(location, line, token,
-                                        is_keyword_possible=False)
+            (has_part, section, is_keyword, to_process, token) \
+                = self._parse_argument_part(location, to_process, token,
+                                            is_keyword_possible=False)
 
-        assert(not has_value)
-        assert(unused is None)
-        assert(not need_arg_value)
+            value = section
+            has_value = has_part
 
-        if not special_string and has_value:
-            value = self._process_value(value)
+            if not has_value and not token:
+                raise ex.ParseError('Keyword without a value found.',
+                                    location=location)
+            assert(not is_keyword)
+        else:
+            value = section
+            has_value = True
 
-        return (has_value, value, token, to_process)
+        return (key, has_value, value, to_process, token)
+
+    def _parse_argument_part(self, location, to_process, token, *,
+                             is_keyword_possible=False):
+        has_part = False
+        section = None
+        is_keyword = False
+        to_process = self._strip_comment_and_ws(to_process)
+        # token
+        if to_process != '':
+            if to_process.startswith('<<<<'):
+                (section, to_process, token) \
+                    = self._parse_multiline_argument(location, to_process[4:],
+                                                     token)
+                has_part = not token
+            elif to_process[0] == '"' or to_process[0] == '\'':
+                has_part = True
+                assert(not token)
+                (section, to_process) \
+                    = self._parse_string_argument(location, to_process[1:],
+                                                  to_process[0])
+            else:
+                has_part = True
+                assert(not token)
+                # Either a key-value pair or a simple value.
+                (section, to_process, is_keyword) \
+                    = self._parse_normal_argument(location, to_process,
+                                                  is_keyword_possible)
+                if not is_keyword:
+                    section = self._process_value(section)
+
+        return (has_part, section, is_keyword, to_process, token)
 
     def _process_value(self, value):
+        if value is None:
+            return None
+
         octal_match = self._octal_pattern.match(value)
         hex_match = self._hex_pattern.match(value)
         if value == 'None':
@@ -391,7 +409,7 @@ class Parser:
         return value
 
     def _extract_multiline_argument(self, state):
-        (value, token, to_process) \
+        (value, to_process, token) \
             = self._parse_multiline_argument(state._location,
                                              state._to_process,
                                              state._incomplete_token)
@@ -408,19 +426,19 @@ class Parser:
 
         return state
 
-    def _parse_multiline_argument(self, location, line, token):
+    def _parse_multiline_argument(self, location, to_process, token):
         value = None
-        to_process = ''
 
-        end_pos = line.find('>>>>')
+        end_pos = to_process.find('>>>>')
 
         if end_pos >= 0:
-            value = token + line[:end_pos]
+            value = token + to_process[:end_pos]
             token = ''
-            to_process = line[end_pos + 4:]
+            to_process = to_process[end_pos + 4:]
         else:
-            token += line
-        return (value, token, to_process)
+            token += to_process
+            to_process = ''
+        return (value, to_process, token)
 
     def _parse_string_argument(self, location, line, quote):
         must_escape = False
@@ -456,7 +474,7 @@ class Parser:
         must_escape = False
         pos = -1
         value = ''
-        need_arg_value = False
+        is_keyword = False
 
         for c in line:
             pos += 1
@@ -477,7 +495,7 @@ class Parser:
 
             if c == '=' and is_keyword_possible:
                 # end of argument, start of value...
-                need_arg_value = True
+                is_keyword = True
                 break
 
             if c.isspace() or c == '#':
@@ -486,7 +504,7 @@ class Parser:
 
             value += c
 
-        return (value, line[pos + 1:], need_arg_value)
+        return (value, line[pos + 1:], is_keyword)
 
 
 def _validate_exec_object(location, obj):
