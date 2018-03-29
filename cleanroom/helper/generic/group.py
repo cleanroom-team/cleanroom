@@ -5,7 +5,7 @@
 """
 
 
-def groupadd(run_context, group_name, *, gid=-1, force=False, system=False):
+def groupadd(system_context, group_name, *, gid=-1, force=False, system=False):
     """Execute command."""
     command = ['/usr/bin/groupadd', group_name]
 
@@ -18,4 +18,4 @@ def groupadd(run_context, group_name, *, gid=-1, force=False, system=False):
     if system:
         command += ['--system']
 
-    run_context.run(*command)
+    system_context.run(*command)

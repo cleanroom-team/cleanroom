@@ -14,12 +14,12 @@ import os.path
 import shutil
 
 
-def file_name(run_context, f):
+def file_name(system_context, f):
     """Return the full (outside) file path to a absolute (inside) file."""
     if not os.path.isabs(f):
         raise ex.GenerateError('File path "{}" is not absolute.'.format(f))
 
-    root_path = os.path.realpath(run_context.fs_directory())
+    root_path = os.path.realpath(system_context.fs_directory())
     if root_path.endswith('/'):
         root_path = root_path[:-1]
 
@@ -32,30 +32,30 @@ def file_name(run_context, f):
     return full_path
 
 
-def expand_files(run_context, *files):
+def expand_files(system_context, *files):
     """Prepend the system directory and expand glob patterns.
 
-    Prepend system directory to files iff the run_context is given.
+    Prepend system directory to files iff the system_context is given.
     Expand glob patterns.
     """
     to_iterate = files
-    if run_context is not None:
-        to_iterate = map(lambda f: file_name(run_context, f), files)
+    if system_context is not None:
+        to_iterate = map(lambda f: file_name(system_context, f), files)
 
     for pattern in to_iterate:
         for match in glob.iglob(pattern):
             yield match
 
 
-def _check_file(run_context, f, op, description, base_directory=None):
+def _check_file(system_context, f, op, description, base_directory=None):
     """Run op on a file f."""
     if base_directory is not None:
-        base_directory = file_name(run_context, base_directory)
+        base_directory = file_name(system_context, base_directory)
         os.chdir(base_directory)
 
     to_test = f
     if os.path.isabs(f):
-        to_test = file_name(run_context, f)
+        to_test = file_name(system_context, f)
 
     result = op(to_test)
 
@@ -68,58 +68,58 @@ def _check_file(run_context, f, op, description, base_directory=None):
     return result
 
 
-def exists(run_context, f, base_directory=None):
+def exists(system_context, f, base_directory=None):
     """Check whether a file exists."""
-    return _check_file(run_context, f, os.path.exists, 'file exists:',
+    return _check_file(system_context, f, os.path.exists, 'file exists:',
                        base_directory=base_directory)
 
 
-def isfile(run_context, f, base_directory=None):
+def isfile(system_context, f, base_directory=None):
     """Check whether a file exists and is a file."""
-    return _check_file(run_context, f, os.path.isfile, 'isfile:',
+    return _check_file(system_context, f, os.path.isfile, 'isfile:',
                        base_directory=base_directory)
 
 
-def isdir(run_context, f, base_directory=None):
+def isdir(system_context, f, base_directory=None):
     """Check whether a file exists and is a directory."""
-    return _check_file(run_context, f, os.path.isdir, 'isdir:',
+    return _check_file(system_context, f, os.path.isdir, 'isdir:',
                        base_directory=base_directory)
 
 
-def symlink(run_context, source, destination, base_directory=None):
+def symlink(system_context, source, destination, base_directory=None):
     """Create a symbolic link."""
     if base_directory is not None:
-        os.chdir(file_name(run_context, base_directory))
+        os.chdir(file_name(system_context, base_directory))
 
     if os.path.isabs(destination):
-        destination = file_name(run_context, destination)
+        destination = file_name(system_context, destination)
 
     printer.trace('Symlinking "{}"->"{}".'.format(source, destination))
     os.symlink(source, destination)
 
 
-def makedirs(run_context, *dirs, user=0, group=0, mode=None):
+def makedirs(system_context, *dirs, user=0, group=0, mode=None):
     """Make directories in the system filesystem."""
     for d in dirs:
-        full_path = file_name(run_context, d)
+        full_path = file_name(system_context, d)
         if os.makedirs(full_path):
-            _chmod(run_context, mode, full_path)
-        _chown(run_context, user, group, full_path)
+            _chmod(system_context, mode, full_path)
+        _chown(system_context, user, group, full_path)
 
 
-def _chmod(run_context, mode, *files):
+def _chmod(system_context, mode, *files):
     """For internal use only."""
     for f in files:
         printer.trace('Chmod of "{}" to {}.'.format(f, mode))
         os.chmod(f, mode)
 
 
-def chmod(run_context, mode, *files):
+def chmod(system_context, mode, *files):
     """Chmod in the system filesystem."""
-    return _chmod(run_context, mode, *expand_files(run_context, *files))
+    return _chmod(system_context, mode, *expand_files(system_context, *files))
 
 
-def _chown(run_context, user, group, *files):
+def _chown(system_context, user, group, *files):
     """Change owner of files."""
     if user == 'root':
         user = 0
@@ -134,14 +134,15 @@ def _chown(run_context, user, group, *files):
         os.chown(f, user, group)
 
 
-def chown(run_context, user, group, *files):
+def chown(system_context, user, group, *files):
     """Change ownership of a file in the system filesystem."""
-    return _chown(run_context, user, group, *expand_files(run_context, *files))
+    return _chown(system_context, user, group,
+                  *expand_files(system_context, *files))
 
 
-def create_file(run_context, file, contents, force=False):
+def create_file(system_context, file, contents, force=False):
     """Create a new file with the given contents."""
-    full_path = file_name(run_context, file)
+    full_path = file_name(system_context, file)
 
     if os.path.exists(full_path) and not force:
         raise ex.GenerateError('"{}" exists when trying to create a '
@@ -151,9 +152,9 @@ def create_file(run_context, file, contents, force=False):
         f.write(contents)
 
 
-def append_file(run_context, file, contents):
+def append_file(system_context, file, contents):
     """Append contents to an existing file."""
-    full_path = file_name(run_context, file)
+    full_path = file_name(system_context, file)
 
     if not os.path.exists(full_path):
         raise ex.GenerateError('"{}" does not exist when trying to append to '
@@ -163,9 +164,9 @@ def append_file(run_context, file, contents):
         f.write(contents)
 
 
-def prepend_file(run_context, file, contents):
+def prepend_file(system_context, file, contents):
     """Prepend contents to an existing file."""
-    full_path = file_name(run_context, file)
+    full_path = file_name(system_context, file)
 
     if not os.path.exists(full_path):
         raise ex.GenerateError('"{}" does not exist when trying to append to '
@@ -177,7 +178,7 @@ def prepend_file(run_context, file, contents):
         f.write(contents + content)
 
 
-def _file_op(run_context, op, description, *args,
+def _file_op(system_context, op, description, *args,
              to_outside=False, from_outside=False, ignore_missing_sources=True,
              **kwargs):
     assert(not to_outside or not from_outside)
@@ -187,10 +188,10 @@ def _file_op(run_context, op, description, *args,
     if from_outside:
         sources = tuple(expand_files(None, *sources))
     else:
-        sources = tuple(expand_files(run_context, *sources))
+        sources = tuple(expand_files(system_context, *sources))
 
     if not to_outside:
-        destination = file_name(run_context, destination)
+        destination = file_name(system_context, destination)
 
     if ignore_missing_sources and not sources:
         return
@@ -202,21 +203,21 @@ def _file_op(run_context, op, description, *args,
         op(source, destination, **kwargs)
 
 
-def copy(run_context, *args, **kwargs):
+def copy(system_context, *args, **kwargs):
     """Copy files."""
-    return _file_op(run_context, shutil.copyfile, 'Copying "{}" to "{}".',
+    return _file_op(system_context, shutil.copyfile, 'Copying "{}" to "{}".',
                     *args, **kwargs)
 
 
-def move(run_context, *args, **kwargs):
+def move(system_context, *args, **kwargs):
     """Move files."""
-    return _file_op(run_context, shutil.move, 'Moving "{}" to "{}".',
+    return _file_op(system_context, shutil.move, 'Moving "{}" to "{}".',
                     *args, **kwargs)
 
 
-def remove(run_context, *files, recursive=False, force=False):
+def remove(system_context, *files, recursive=False, force=False):
     """Delete a file inside of a system."""
-    for file in expand_files(run_context, *files):
+    for file in expand_files(system_context, *files):
         printer.trace('Removing "{}".'.format(file))
 
         if not os.path.exists(file):

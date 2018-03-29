@@ -138,8 +138,7 @@ class SystemContext:
         else:
             self.substitutions[key] = value
         printer.trace('Added substitution: "{}"="{}" ({})'
-            .format(key, value, '<LOCAL>' if local else '<GLOBAL>'))
-
+                      .format(key, value, '<LOCAL>' if local else '<GLOBAL>'))
 
     def substitution(self, key):
         """Get substitution value."""
@@ -158,7 +157,7 @@ class SystemContext:
 
     # Run shell commands:
     def run(self, *args, outside=False, **kwargs):
-        """Run a command in this run_context."""
+        """Run a command in this system_context."""
         assert('chroot' not in kwargs)
 
         if not outside:
@@ -168,7 +167,7 @@ class SystemContext:
 
     # execute cleanroom commands:
     def execute(self, location, command, *args,
-        expected_dependency=None, **kwargs):
+                expected_dependency=None, **kwargs):
         """Execute a command."""
         cmd = parser.Parser.command(command)
         dependency = cmd.validate_arguments(self, *args, **kwargs)
@@ -193,13 +192,13 @@ class SystemContext:
         return os.path.join(self.meta_directory(), 'pickle_jar.bin')
 
     def pickle(self):
-        """Pickle this run_context."""
+        """Pickle this system_context."""
         ctx = self.ctx
 
         pickle_jar = self._pickle_jar()
         hooks_that_ran = self.hooks_that_already_ran
 
-        printer.debug('Pickling run_context into {}.'.format(pickle_jar))
+        printer.debug('Pickling system_context into {}.'.format(pickle_jar))
         self.ctx = None  # Disconnect context for the pickling!
         self.hooks_that_already_ran = []
 
@@ -211,7 +210,7 @@ class SystemContext:
         self.hooks_that_already_ran = hooks_that_ran
 
     def unpickle(self):
-        """Create a new run_context by unpickling a file."""
+        """Create a new system_context by unpickling a file."""
         pickle_jar = self._pickle_jar()
 
         printer.debug('Unpickling system_context from {}.'

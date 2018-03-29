@@ -5,7 +5,7 @@
 """
 
 
-def useradd(run_context, user_name, *,
+def useradd(system_context, user_name, *,
             comment='', home='', gid=-1, uid=-1, shell='',
             groups='', password='', expire=None):
     """Add a new user to the system."""
@@ -38,10 +38,10 @@ def useradd(run_context, user_name, *,
         else:
             command += ['--expiredate', expire]
 
-    run_context.run(*command)
+    system_context.run(*command)
 
 
-def usermod(run_context, user_name, *, comment='', home='', gid=-1, uid=-1,
+def usermod(system_context, user_name, *, comment='', home='', gid=-1, uid=-1,
             lock=None, rename='', shell='', append=False, groups='',
             password='', expire=None):
     """Modify an existing user."""
@@ -89,4 +89,4 @@ def usermod(run_context, user_name, *, comment='', home='', gid=-1, uid=-1,
     if expire is not None:
         command += ['--expiredate', expire]
 
-    run_context.run(*command)
+    system_context.run(*command)

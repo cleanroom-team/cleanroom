@@ -12,35 +12,35 @@ import cleanroom.helper.generic.systemd as sd
 import stat
 
 
-def install(run_context):
+def install(system_context):
     """Install basic firewall rules."""
-    assert(_firewall_type(run_context) is None)
-    _set_firewall_type(run_context)
+    assert(_firewall_type(system_context) is None)
+    _set_firewall_type(system_context)
 
-    _install_packages(run_context)
+    _install_packages(system_context)
 
-    _install_v4_rules(run_context, '/etc/iptables/iptables.rules')
-    _install_v6_rules(run_context, '/etc/iptables/ip6tables.rules')
+    _install_v4_rules(system_context, '/etc/iptables/iptables.rules')
+    _install_v6_rules(system_context, '/etc/iptables/ip6tables.rules')
 
     # FIXME: Fix systemd install section to run iptables services earlier!
 
-    sd.systemd_enable(run_context, 'iptables.service', 'ip6tables.service')
+    sd.systemd_enable(system_context, 'iptables.service', 'ip6tables.service')
 
 
-def _install_packages(run_context):
-    arch.pacman(run_context, 'iptables')
+def _install_packages(system_context):
+    arch.pacman(system_context, 'iptables')
 
 
-def _firewall_type(run_context):
-    return run_context.flags.get('firewall_type', None)
+def _firewall_type(system_context):
+    return system_context.flags.get('firewall_type', None)
 
 
-def _set_firewall_type(run_context):
-    run_context.flags['firewall_type'] = 'iptables'
+def _set_firewall_type(system_context):
+    system_context.flags['firewall_type'] = 'iptables'
 
 
-def _install_v4_rules(run_context, rule_file):
-    file.create(run_context, rule_file, """
+def _install_v4_rules(system_context, rule_file):
+    file.create(system_context, rule_file, """
 # iptables rules:
 
 *filter
@@ -79,13 +79,13 @@ def _install_v4_rules(run_context, rule_file):
 
 COMMIT
 """)
-    file.chmod(run_context, stat.S_IRUSR | stat.S_IWUSR
+    file.chmod(system_context, stat.S_IRUSR | stat.S_IWUSR
                | stat.S_IRGRP | stat.S_IROTH,
                rule_file)
 
 
 def _install_v6_rules(self, rule_file):
-    file.create(run_context, rule_file, """
+    file.create(system_context, rule_file, """
 # ip6tables rules:
 
 *filter
@@ -125,6 +125,6 @@ def _install_v6_rules(self, rule_file):
 
 COMMIT
 """)
-    file.chmod(run_context, stat.S_IRUSR | stat.S_IWUSR
+    file.chmod(system_context, stat.S_IRUSR | stat.S_IWUSR
                | stat.S_IRGRP | stat.S_IROTH,
                rule_file)

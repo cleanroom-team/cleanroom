@@ -5,8 +5,8 @@
 """
 
 
-def systemd_enable(run_context, *services):
+def systemd_enable(system_context, *services):
     """Enable systemd service."""
-    run_context.run('/usr/bin/systemctl',
-                    '--root={}'.format(run_context.fs_directory()),
-                    'enable', *services, outside=True)
+    system_context.run('/usr/bin/systemctl',
+                       '--root={}'.format(system_context.fs_directory()),
+                       'enable', *services, outside=True)
