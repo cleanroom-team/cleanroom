@@ -14,7 +14,7 @@ class ChmodCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('chmod', syntax='<MODE> <FILE> [<FILE>]',
+        super().__init__('chmod', syntax='<MODE> <FILE>+',
                          help='Chmod a file or files.')
 
     def validate_arguments(self, location, *args, **kwargs):

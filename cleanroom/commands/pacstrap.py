@@ -28,7 +28,7 @@ class PacstrapCommand(cmd.Command):
                                      '"{}" needs at least one package '
                                      'or group to install.', *args)
         self._validate_kwargs(location, ('config',), **kwargs)
-        self._require_kwargs(location, ('config,'), **kwargs)
+        self._require_kwargs(location, ('config',), **kwargs)
         return None
 
     def __call__(self, location, system_context, *args, **kwargs):

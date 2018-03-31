@@ -15,7 +15,8 @@ class MkdirCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('mkdir',
-                         syntax='<DIRNAME> [<DIRNAME>] [user=uid] [group=gid]',
+                         syntax='<DIRNAME>+ [user=uid] [group=gid] '
+                         '[mode=0o755]',
                          help='Create a new directory.')
 
     def validate_arguments(self, location, *args, **kwargs):
@@ -23,7 +24,7 @@ class MkdirCommand(cmd.Command):
         self._validate_args_at_least(location, 1,
                                      '"{}" needs at least one directory '
                                      'to create.', *args)
-        self._validate_kwargs(location, ('user', 'group'), **kwargs)
+        self._validate_kwargs(location, ('user', 'group', 'mode'), **kwargs)
         return None
 
     def __call__(self, location, system_context, *args, **kwargs):

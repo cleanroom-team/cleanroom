@@ -18,7 +18,7 @@ class InstallCertificatesCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('install_certificate',
-                         syntax='<CA_CERT> [<MORE_CA_CERTS>]',
+                         syntax='<CA_CERT>+',
                          help='Install CA certificates.')
 
     def validate_arguments(self, location, *args, **kwargs):

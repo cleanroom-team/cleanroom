@@ -14,7 +14,7 @@ class AddHookCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('add_hook', syntax='<HOOK_NAME> <COMMAND> '
-                         '[<ARGS>] [message=<MESSAGE>] [<KWARGS>]',
+                         '<ARGS>* [message=<MESSAGE>] [<KWARGS>]',
                          help='Add a hook running command with arguments.')
 
     def validate_arguments(self, location, *args, **kwargs):
@@ -22,7 +22,6 @@ class AddHookCommand(cmd.Command):
         self._validate_args_at_least(location, 1,
                                      '"{}" needs a hook name and a '
                                      'command and optional arguments.', *args)
-        self._validate_kwargs(location, ('message',), **kwargs)
         return None
 
     def __call__(self, location, system_context, *args, message='', **kwargs):

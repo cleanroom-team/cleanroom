@@ -22,8 +22,8 @@ class SystemdEnableCommand(cmd.Command):
         return self._validate_arguments_at_least(location, 1,
                                                  '"{}" needs at least one '
                                                  'unit to enable.',
-                                                 *args, *+kwargs)
+                                                 *args, **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        sd.systemd_enable(*args)
+        sd.systemd_enable(*args, **kwargs)
