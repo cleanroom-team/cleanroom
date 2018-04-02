@@ -15,7 +15,8 @@ class RunCommand(cmd.Command):
         """Constructor."""
         super().__init__('run',
                          syntax='<COMMAND> [<ARGS>] [outside=False] '
-                         '[shell=False]',
+                         '[shell=False] [exit_code=0] [stdout=None] '
+                         '[stderr=None]',
                          help='Run a command inside/outside of the '
                          'current system.')
 
@@ -24,21 +25,11 @@ class RunCommand(cmd.Command):
         self._validate_args_at_least(location, 1,
                                      '"{}" needs a command to run and '
                                      'optional arguments.', *args)
-        self._validate_kwargs(location, ('outside', 'shell'), **kwargs)
+        self._validate_kwargs(location, ('exit_code', 'outside', 'shell',
+                                         'stderr', 'stdout'),
+                              **kwargs)
         return None
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        args = map(lambda a: system_context.substitute(a), args)
-
-        stdout = kwargs.get('stdout', None)
-        if stdout is not None:
-            stdout = system_context.substitute(stdout)
-        kwargs['stdout'] = stdout
-
-        stderr = kwargs.get('stderr', None)
-        if stderr is not None:
-            stderr = system_context.substitute(stderr)
-        kwargs['stderr'] = stderr
-
         system_context.run(*args, **kwargs)

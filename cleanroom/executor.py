@@ -43,24 +43,21 @@ class Executor:
 
     def _execute(self, location, system_context, exec_object):
         """Execute the command."""
-        printer.debug('Executing "{}" with "{}:{}".'
-                      .format(exec_object.command(),
-                              ' '.join(exec_object.arguments()),
-                              ' '.join(exec_object.kwargs())))
+        printer.debug('Executing "{}".'.format(exec_object))
 
         try:
-            system_context.execute(exec_object.location(),
-                                   exec_object.command(),
-                                   *exec_object.arguments(),
-                                   expected_dependency=exec_object.dependency(),
-                                   **exec_object.kwargs())
+            system_context.execute(
+                exec_object.location(), exec_object.command(),
+                *exec_object.arguments(),
+                expected_dependency=exec_object.dependency(),
+                **exec_object.kwargs())
         except ex.CleanRoomError as e:
             printer.fail('{}: Failed to execute: {}.'
                          .format(self, e), verbosity=1)
             if not system_context.ctx.ignore_errors:
                 raise
         else:
-            printer.success('{}: ok.'.format(self), verbosity=1)
+            printer.success('{}: ok.'.format(exec_object), verbosity=1)
 
     def _run_commands(self, command_list, system_context):
         """Run commands."""

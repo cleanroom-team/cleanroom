@@ -1,5 +1,7 @@
 # Base image
 
+based_on scratch
+
 ### cleanroom will have added the following substitution patterns:
 ###  # TIMESTAMP:   timestamp of installation
 ###  # SYSTEM:      system name
@@ -35,6 +37,6 @@ set_default_target multi-user.target
 set_locales de_DE en_US
 
 ## root password is 'root'
-usermod root password='$6$7YexNe71gbljWuon$WkE6mSHd01osomCEMj/6rSX839atK7GTklCmUqy8poME22Oo1GKvDG3VUufdiKcwmR4Eo/A9W92NK8HhVmtxo1'
+usermod root password='$$6$$7YexNe71gbljWuon$$WkE6mSHd01osomCEMj/6rSX839atK7GTklCmUqy8poME22Oo1GKvDG3VUufdiKcwmR4Eo/A9W92NK8HhVmtxo1'
 
-sed 's/^[ \\t#]*KillUserProcesses=.*$/KillUserProcesses=yes/' /etc/systemd/logind.conf
+sed 's/^[ \\t#]*KillUserProcesses=.*$$/KillUserProcesses=yes/' /etc/systemd/logind.conf

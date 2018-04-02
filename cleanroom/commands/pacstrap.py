@@ -85,13 +85,13 @@ class PacstrapCommand(cmd.Command):
         packageFiles = arch.target_cache_directory() + '/pkg/*'
 
         location.next_line_offset('cleanup pacman-key files')
-        system_context.add_hook('_teardown', location, 'remove',
+        system_context.add_hook(location, '_teardown', 'remove',
                                 gpgdir + '/S.*', gpgdir + '/pubring.gpg~',
                                 '/var/log/pacman.log',
                                 packageFiles,
                                 recursive=True, force=True)
         location.next_line_offset('Move systemd files into /usr')
-        system_context.add_hook('_teardown', location, 'systemd_cleanup')
+        system_context.add_hook(location, '_teardown', 'systemd_cleanup')
         location.next_line_offset('Remove pacman secret keyring')
-        system_context.add_hook('export', location,
+        system_context.add_hook(location, 'export',
                                 'remove', gpgdir + '/secring.gpg*', force=True)

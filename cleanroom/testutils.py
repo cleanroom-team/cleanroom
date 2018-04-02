@@ -34,13 +34,14 @@ class BaseParserTest:
     def _parse(self, data):
         """Call Parser._parse_lines and map the result."""
         input = (data,) if type(data) is str else data
-        return list(map(lambda x: (x.command(), x.arguments(), x._kwargs),
+        return list(map(lambda x: (x.command(), x.arguments(),
+                                   x.kwargs(), x.location().line_number),
                         self.parser._parse_lines(input, '<TEST_DATA>')))
 
     def _verify(self, data, expected):
         """Verify one line of input to the Parser."""
         result = self._parse(data)
         self.assertTrue(len(result) >= 2)
-        self.assertEqual(result[0], ('_setup', (), {}))
-        self.assertEqual(result[-1], ('_teardown', (), {}))
+        self.assertEqual(result[0], ('_setup', (), {}, 1))
+        self.assertEqual(result[-1], ('_teardown', (), {}, 1))
         self.assertEqual(result[1:-1], expected)

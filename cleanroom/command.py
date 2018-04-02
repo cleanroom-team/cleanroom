@@ -55,20 +55,17 @@ class Command:
 
     def _validate_args_exact(self, location, arg_count, message, *args):
         if len(args) != arg_count:
-            raise ex.ParseError(message.format(self.name()),
-                                location=location)
+            raise ex.ParseError(message.format(self.name()), location=location)
 
     def _validate_args_at_least(self, location, arg_count, message, *args):
         if len(args) < arg_count:
-            raise ex.ParseError(message.format(self.name()),
-                                location=location)
+            raise ex.ParseError(message.format(self.name()), location=location)
 
     def _validate_kwargs(self, location, known_kwargs, **kwargs):
         if not known_kwargs:
             if kwargs:
                 raise ex.ParseError('"{}" does not accept keyword arguments.'
-                                    .format(self.name()),
-                                    location=location)
+                                    .format(self.name()), location=location)
         else:
             for key, value in kwargs.items():
                 if key not in known_kwargs:

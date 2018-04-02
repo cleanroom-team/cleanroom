@@ -26,4 +26,4 @@ class SystemdEnableCommand(cmd.Command):
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        sd.systemd_enable(*args, **kwargs)
+        sd.systemd_enable(system_context, *args)

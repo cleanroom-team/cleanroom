@@ -7,7 +7,7 @@
 
 import cleanroom.exceptions as ex
 import cleanroom.execobject as execobject
-import cleanroom.location as location
+import cleanroom.location as loc
 import cleanroom.printer as printer
 
 import importlib.util
@@ -20,7 +20,9 @@ class _ParserState:
     """Hold the state of the Parser."""
 
     def __init__(self, file_name):
-        self._location = location.Location(file_name=file_name, line_number=1)
+        self._current_file_name = file_name
+        self._current_line = 1
+        self._start_line = 0
         self._to_process = ''
         self._key_for_value = ''
 
@@ -38,9 +40,23 @@ class _ParserState:
         return self._indent_depth > 0 \
             and self._to_process.startswith(' ' * self._indent_depth)
 
-    def reset(self):
-        assert(self._location.is_valid())
+    def record_command_start(self):
+        self._start_line = self._current_line
 
+    def next_line(self):
+        self._current_line += 1
+
+    def current_location(self):
+        return loc.Location(file_name=self._current_file_name,
+                            line_number=self._current_line)
+
+    def start_location(self):
+        if self._start_line < 1:
+            return None
+        return loc.Location(file_name=self._current_file_name,
+                            line_number=self._start_line)
+
+    def reset(self):
         self._args = ()
         self._kwargs = {}
 
@@ -52,9 +68,11 @@ class _ParserState:
         assert(self.is_token_complete())
 
     def create_execute_object(self):
-        if not self._args:
+        if not self._args or self._start_line == 0:
             return None
 
+        print('XXX: create_execute_object: start: {}, up to:{}'
+              .format(self._start_line, self._current_line))
         args = self._args
         kwargs = self._kwargs
         if self._key_for_value:
@@ -62,7 +80,7 @@ class _ParserState:
 
         self.reset()
 
-        return Parser.create_execute_object(self._location,
+        return Parser.create_execute_object(self.start_location(),
                                             *args, **kwargs)
 
     def _args_to_string(self):
@@ -77,8 +95,10 @@ class _ParserState:
         return self._incomplete_token.replace('\n', '\\n').replace('\t', '\\t')
 
     def __str__(self):
-        return '{} "{}" ({})-token:"{}", complete?"{}"-key:"{}"'.\
-               format(self._location, self._args_to_string(),
+        return '{}(start at:{}) "{}" ({})-token:"{}", complete?"{}"-key:"{}"'.\
+               format(self.current_location(),
+                      self._start_line,
+                      self._args_to_string(),
                       self._to_process_to_string(),
                       self._incomplete_token_to_string(),
                       self.is_token_complete(),
@@ -183,7 +203,7 @@ class Parser:
     def _parse_lines(self, iterable, file_name):
         """Parse an iterable of lines."""
         state = _ParserState(file_name)
-        built_in = location.Location(file_name='<BUILT_IN>', line_number=1)
+        built_in = loc.Location(file_name='<BUILT_IN>', line_number=1)
 
         yield execobject.ExecObject(built_in, None, '_setup')
 
@@ -197,14 +217,14 @@ class Parser:
             if state._to_process != '':
                 raise ex.ParseError('Unexpected tokens "{}" found.'
                                     .format(state._to_process),
-                                    location=self._state.location)
+                                    location=state.current_location())
 
             printer.info('  <EOL> ({}).'.format(state))
-            state._location.line_number += 1
+            state.next_line()
 
         if not state.is_token_complete():
             raise ex.ParseError('Unexpected EOF.',
-                                location=self._state.location)
+                                location=state.current_location())
 
         # Flush last exec object:
         obj = state.create_execute_object()
@@ -220,8 +240,9 @@ class Parser:
         exec_object = None
 
         if state.is_token_complete() and not state.is_command_continuation():
-            printer.trace('  Part of a new command ({}).'.format(state))
             exec_object = state.create_execute_object()
+            state.record_command_start()
+            printer.trace('  Part of a new command ({}).'.format(state))
             state = self._extract_command(state)
         else:
             if state.is_token_complete():
@@ -285,7 +306,7 @@ class Parser:
         # extract arguments:
         while state._to_process != '':
             (key, has_value, value, to_process, token) \
-                = self._parse_next_argument(state._location,
+                = self._parse_next_argument(state.start_location(),
                                             state._to_process,
                                             state._incomplete_token)
 
@@ -308,15 +329,15 @@ class Parser:
         printer.trace('      Validating command "{}".'.format(command))
         if not command:
             raise ex.ParseError('Empty command found.',
-                                location=state._location)
+                                location=state.start_location())
 
         if not self._command_pattern.match(command):
             raise ex.ParseError('Invalid command "{}".'.format(command),
-                                location=state._location)
+                                location=state.start_location())
 
         if command not in Parser._commands:
             raise ex.ParseError('Command "{}" not found.'.format(command),
-                                location=state._location)
+                                location=state.start_location())
 
         printer.info('    Command is "{}".'.format(command))
 
@@ -410,7 +431,7 @@ class Parser:
 
     def _extract_multiline_argument(self, state):
         (value, to_process, token) \
-            = self._parse_multiline_argument(state._location,
+            = self._parse_multiline_argument(state.start_location(),
                                              state._to_process,
                                              state._incomplete_token)
         state._to_process = to_process

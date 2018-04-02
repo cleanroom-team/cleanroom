@@ -20,7 +20,8 @@ class BasedOnCommand(cmd.Command):
         """Constructor."""
         super().__init__('based_on', syntax='<SYSTEM_NAME>)',
                          help='Use <SYSTEM_NAME> as a base for this '
-                         'system.\n\n'
+                         'system. Use "scratch" to start from a '
+                         'blank slate.\n\n'
                          'Note: This command needs to be the first in the '
                          'system definition file!')
 
@@ -37,19 +38,22 @@ class BasedOnCommand(cmd.Command):
         if not system_pattern.match(base):
             raise ex.ParseError('"{}" got invalid base system name "{}".'
                                 .format(self.name(), base), location=location)
-        return base
+        return None if self._is_scratch(base) else base
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
         base_system = args[0]
-        base_context = systemcontext.SystemContext(system_context.ctx,
-                                            system=base_system)
+        if self._is_scratch(base_system):
+            location.next_line_offset('testing')
+            system_context.add_hook(location, '_test', '_test')
+        else:
+            base_context = systemcontext.SystemContext(system_context.ctx,
+                                                       system=base_system)
 
+            self._restore_base(system_context, base_context)
+            self._update_base_context(system_context, base_context)
 
-        self._restore_base(system_context, base_context)
-        self._update_base_context(system_context, base_context)
-
-        system_context.run_hooks('_setup')
+            system_context.run_hooks('_setup')
 
     def _restore_base(self, system_context, base_context):
         btrfs.delete_subvolume(system_context,
@@ -62,3 +66,6 @@ class BasedOnCommand(cmd.Command):
     def _update_base_context(self, system_context, base_context):
         base_unpickle = base_context.unpickle()
         system_context.install_base_context(base_unpickle)
+
+    def _is_scratch(self, base):
+        return base == 'scratch'

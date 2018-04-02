@@ -49,15 +49,15 @@ class SetupReadonlyUsrCommand(cmd.Command):
 
         # Things to update/clean on export:
         location.next_line_offset('Run ldconfig')
-        system_context.add_hook('export', location,
+        system_context.add_hook(location, 'export',
                                 'run', '/usr/bin/ldconfig', '-X')
         location.next_line_offset('Remove ldconfig data')
-        system_context.add_hook('export', location,
+        system_context.add_hook(location, 'export',
                                 'remove', '/usr/bin/ldconfig')
         location.next_line_offset('Update HWDB')
-        system_context.add_hook('export', location,
+        system_context.add_hook(location, 'export',
                                 'run',
                                 '/usr/bin/systemd-hwdb', '--usr', 'update')
         location.next_line_offset('Remove HWDB data')
-        system_context.add_hook('export', location,
+        system_context.add_hook(location, 'export',
                                 'remove', '/usr/bin/systemd-hwdb')

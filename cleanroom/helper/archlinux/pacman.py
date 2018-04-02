@@ -15,11 +15,11 @@ import os.path
 
 
 def _package_type(system_context):
-    return system_context.flags.get('package_type', None)
+    return system_context.substitution('CLRM_PACKAGE_TYPE', None)
 
 
 def _set_package_type(system_context):
-    system_context.flags['package_type'] = 'pacman'
+    system_context.set_substitution('CLRM_PACKAGE_TYPE', 'pacman')
 
 
 def target_gpg_directory():
@@ -91,11 +91,12 @@ def _sync_host(system_context, config):
     os.makedirs(host_db_directory(system_context))
     system_context.run(
         system_context.ctx.binary(context.Binaries.PACMAN),
-        '-Syu', '--config', config, '--dbpath', host_db_directory(system_context),
+        '-Syu', '--config', config,
+        '--dbpath', host_db_directory(system_context),
         outside=True)
 
 
-def pacman(self, system_context, *packages):
+def pacman(system_context, *packages):
     """Use pacman to install packages."""
     assert(_package_type(system_context) == 'pacman')
 

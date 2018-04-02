@@ -26,11 +26,5 @@ class AddHookCommand(cmd.Command):
 
     def __call__(self, location, system_context, *args, message='', **kwargs):
         """Execute command."""
-        hook = args[0]
-        cmd = args[1]
-        cmd_args = args[2:]
-        cmd_kwargs = kwargs
         location.next_line_offset(message)
-
-        system_context.add_hook(hook, location, cmd, *cmd_args,
-                                **cmd_kwargs)
+        system_context.add_hook(location, *args, **kwargs)

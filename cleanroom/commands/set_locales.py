@@ -6,6 +6,7 @@
 
 
 import cleanroom.command as cmd
+import cleanroom.exceptions as ex
 
 import os.path
 
@@ -43,18 +44,17 @@ class SetLocalesCommand(cmd.Command):
         system_context.execute(location,
                                'create', '/etc/locale.gen', '\n'.join(locales),
                                force=True)
-        self._setup_hooks(system_context, location)
+        self._setup_hooks(location, system_context, locales)
 
-    def _setup_hooks(self, system_context, location):
-        locales_flag = 'locales_set_up'
-        if not system_context.flags.get(locales_flag, False):
+    def _setup_hooks(self, location, system_context, locales):
+        if not system_context.has_substitution('CLRM_LOCALES'):
             location.next_line_offset('run locale-gen')
-            system_context.add_hook('export', location,
+            system_context.add_hook(location, 'export',
                                     'run', '/usr/bin/locale-gen')
             location.next_line_offset('Remove locale related data.')
-            system_context.add_hook('export', location,
+            system_context.add_hook(location, 'export',
                                     'remove', '/usr/share/locale/*',
                                     '/etc/locale.gen', '/usr/bin/locale-gen',
                                     '/usr/bin/localedef',
                                     force=True, recursive=True)
-        system_context.flags[locales_flag] = True
+        system_context.set_substitution('CLRM_LOCALES', locales)

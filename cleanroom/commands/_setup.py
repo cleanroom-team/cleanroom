@@ -31,8 +31,6 @@ class _SetupCommand(cmd.Command):
         # Make sure systemd does not create /var/lib/machines for us!
         self._setup_var_lib_machines(location, system_context)
 
-        self._setup_testing_hook(location, system_context)
-
     def _setup_current_system_directory(self, system_context):
         btrfs.create_subvolume(system_context,
                                system_context.ctx.current_system_directory())
@@ -45,10 +43,3 @@ class _SetupCommand(cmd.Command):
                                mode=(stat.S_IRUSR | stat.S_IWUSR
                                      | stat.S_IXUSR),
                                user='root', group='root')
-
-    def _setup_testing_hook(self, location, system_context):
-        test_flag = 'testing_was_set_up'
-        if not system_context.flags.get(test_flag, False):
-            location.next_line_offset('testing')
-            system_context.add_hook('_test', location, '_test')
-            system_context.flags[test_flag] = True

@@ -38,7 +38,7 @@ class CommandTest(unittest.TestCase, tu.BaseParserTest):
 
     def test_based_on(self):
         """Test based with a name."""
-        self._verify('   based_on foo\n', [('based_on', ('foo',), {})])
+        self._verify('   based_on foo\n', [('based_on', ('foo',), {}, 1)])
 
     # Error cases:
     def test_based_on_nothing(self):

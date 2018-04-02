@@ -50,4 +50,4 @@ class ExecObject:
 
     def __str__(self):
         """Turn into string object."""
-        return '{}: {}'.format(self._location, self.command())
+        return '{}: {},{}'.format(self._location, self._args, self._kwargs)

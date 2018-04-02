@@ -29,11 +29,11 @@ def _install_packages(system_context):
 
 
 def _firewall_type(system_context):
-    return system_context.flags.get('firewall_type', None)
+    return system_context.substituion('CLRM_FIREWALL', None)
 
 
 def _set_firewall_type(system_context):
-    system_context.flags['firewall_type'] = 'iptables'
+    system_context.set_substitution('CLRM_FIREWALL', 'iptables')
 
 
 def _install_v4_rules(system_context, rule_file):

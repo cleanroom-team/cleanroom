@@ -23,7 +23,7 @@ class GroupaddCommand(cmd.Command):
         """Validate the arguments."""
         self._validate_args_exact(location, 1, '"{}" needs exactly one name.',
                                   *args)
-        self._validate_kwargs(location, ('force', 'system'), **kwargs)
+        self._validate_kwargs(location, ('force', 'gid', 'system'), **kwargs)
         return None
 
     def __call__(self, location, system_context, *args, **kwargs):
