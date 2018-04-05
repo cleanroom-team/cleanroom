@@ -1,0 +1,33 @@
+# A test system
+
+based_on type-base
+
+# Create a directory:
+mkdir /test_data
+
+# Create some files:
+create /test_data/test1 test1 mode=0o777
+create /test_data/test2 test2 mode=0o707
+create /test_data/test3 test3 mode=0o644
+
+create /test_data/sedtest test12345test
+
+# Copy:
+copy /test_data/test1 /test_data/test1copy
+copy /test_data/test2 /test_data/test2copy # to be moved
+copy /test_data/test3 /test_data/test3copy # to be removed
+
+# Move:
+move /test_data/test2copy /test_data/test2copymove
+
+# Remove:
+remove /test_data/test3copy
+
+# Sed:
+sed s/12345/67890/g /test_data/sedtest
+
+# Append:
+append /test_data/test1copy <<<<APPENDED>>>>
+
+# Symlink:
+symlink /test_data/test1 /test_data/link

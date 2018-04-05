@@ -176,6 +176,7 @@ class SystemContext:
                 expected_dependency=None, **kwargs):
         """Execute a command."""
         assert(isinstance(location, loc.Location))
+        printer.debug('Executing {}: {}.'.format(location, command))
         cmd = parser.Parser.command(command)
         dependency = cmd.validate_arguments(location, *args, **kwargs)
         assert(expected_dependency == dependency)
@@ -183,7 +184,6 @@ class SystemContext:
         cmd(location, self, *args, **kwargs)
 
     # Store/Restore a system:
-    # FIXME: Store/restore system -- move code here from _teardown and based_on
     def install_base_context(self, base_context):
         """Set up base context."""
         assert(base_context.system)

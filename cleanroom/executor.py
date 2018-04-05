@@ -32,7 +32,7 @@ class Executor:
             return False
 
         """Set up execution context."""
-        printer.trace('Setup for ^execution of commands of "{}".'
+        printer.trace('Setup for execution of commands of "{}".'
                       .format(system_context.system))
 
         return True

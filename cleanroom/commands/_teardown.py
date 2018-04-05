@@ -28,17 +28,11 @@ class _TeardownCommand(cmd.Command):
 
         system_context.pickle()
 
-        self._store(system_context)
+        self._store(location, system_context)
         self._clean_temporary_data(system_context)
 
-    def _store(self, system_context):
-        printer.debug('Storing {} into {}.'
-                      .format(system_context.ctx.current_system_directory(),
-                              system_context.storage_directory()))
-        btrfs.create_snapshot(system_context,
-                              system_context.ctx.current_system_directory(),
-                              system_context.storage_directory(),
-                              read_only=True)
+    def _store(self, location, system_context):
+        system_context.execute(location, '_store')
 
     def _clean_temporary_data(self, system_context):
         """Clean up temporary data."""

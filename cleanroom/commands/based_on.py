@@ -7,8 +7,7 @@
 
 import cleanroom.command as cmd
 import cleanroom.exceptions as ex
-import cleanroom.helper.generic.btrfs as btrfs
-import cleanroom.systemcontext as systemcontext
+import cleanroom.printer as printer
 
 import re
 
@@ -44,28 +43,12 @@ class BasedOnCommand(cmd.Command):
         """Execute command."""
         base_system = args[0]
         if self._is_scratch(base_system):
+            printer.verbose('Building from scratch!')
             location.next_line_offset('testing')
             system_context.add_hook(location, '_test', '_test')
         else:
-            base_context = systemcontext.SystemContext(system_context.ctx,
-                                                       system=base_system)
-
-            self._restore_base(system_context, base_context)
-            self._update_base_context(system_context, base_context)
-
-            system_context.run_hooks('_setup')
-
-    def _restore_base(self, system_context, base_context):
-        btrfs.delete_subvolume(system_context,
-                               system_context.ctx.current_system_directory())
-        btrfs.create_snapshot(system_context,
-                              base_context.storage_directory(),
-                              system_context.ctx.current_system_directory(),
-                              read_only=False)
-
-    def _update_base_context(self, system_context, base_context):
-        base_unpickle = base_context.unpickle()
-        system_context.install_base_context(base_unpickle)
+            printer.verbose('Building on top of {}.'.format(base_system))
+            system_context.execute(location, '_restore', base_system)
 
     def _is_scratch(self, base):
         return base == 'scratch'

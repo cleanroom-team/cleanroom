@@ -8,7 +8,6 @@ The Command class will be used to derive all export_* commands from.
 
 
 import cleanroom.command as cmd
-import cleanroom.context as context
 import cleanroom.exceptions as ex
 import cleanroom.printer as printer
 
@@ -30,9 +29,10 @@ class ExportCommand(cmd.Command):
         self._validate_installation(location, system_context)
 
         export_directory = self.create_export_directory(system_context)
+        system_context.set_substitution('EXPORT_DIRECTORY', export_directory)
 
         printer.debug('Exporting all data in {}.'.format(export_directory))
-        self._export(system_context, export_directory)
+        self._export(location, system_context, export_directory)
 
         printer.debug('Cleaning up export location.')
         self.delete_export_directory(system_context, export_directory)
@@ -72,16 +72,5 @@ class ExportCommand(cmd.Command):
         # Now do tests!
         system_context.run_hooks('testing')
 
-    def _export(self, system_context, export_directory):
-        # FIXME: move export_directory into system_context!
-        repository = system_context.ctx.export_repository()
-        if repository == '':
-            return
-
-        borg = system_context.ctx.binary(context.Binaries.BORG)
-        backup_name = system_context.system + '-' + system_context.timestamp
-
-        system_context.run(borg, 'create', '--compression', 'zstd,22',
-                           '--numeric-owner', '--noatime',
-                           '{}::{}'.format(repository, backup_name),
-                           export_directory, outside=True)
+    def _export(self, location, system_context, export_directory):
+        system_context.execute(location, '_export_directory', export_directory)

@@ -18,7 +18,10 @@ class _TestCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('_test',
-                         help='Implicitly run to test images.')
+                         help='Implicitly run to test images.\n\n'
+                         'Note: Will run all executable files in the '
+                         '"test" subdirectory of the systems directory and '
+                         'will pass the system name as first argument.')
 
     def validate_arguments(self, location, *args, **kwargs):
         return self._validate_no_arguments(location, *args, **kwargs)
@@ -33,7 +36,8 @@ class _TestCommand(cmd.Command):
         for test in self._find_tests(system_context):
             printer.debug('Running test {}...'.format(test))
             test_result = system_context.run(
-                test, env=env, outside=True, exit_code=None,
+                test, system_context.system,
+                env=env, outside=True, exit_code=None,
                 work_directory=system_context.fs_directory())
             if test_result.returncode == 0:
                 printer.success('Test "{}"'.format(test), verbosity=3)

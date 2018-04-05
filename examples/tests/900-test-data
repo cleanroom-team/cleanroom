@@ -1,0 +1,52 @@
+#!/usr/bin/bash
+
+function fail {
+    echo "$1"
+    exit $2
+}
+
+TEST="test_data"
+
+if "$1" == "test" ; then
+    test -d "${TEST}" || fail "/${TEST} not found on test system" 1
+    test -e "${TEST}/test1" || fail "No test1 file" 2
+    test -e "${TEST}/test2" || fail "No test2 file" 3
+    test -e "${TEST}/test3" || fail "No test3 file" 4
+    test -e "${TEST}/sedtest" || fail "No sedtest file" 5
+    test -e "${TEST}/test1copy" || fail "No test1copy file" 6
+    test -e "${TEST}/test2copy" && fail "Spurious test2copy file" 7
+    test -e "${TEST}/test3copy" && fail "Spurious test3copy file" 8
+    test -e "${TEST}/test2copymove" || fail "No test2copymove file" 9
+
+    SEDTESt_C=$(cat "${TEST}/sedtest")
+    test "x${SEDTEST_C}" == "xtest67890test" \
+        || fail "sedtest has unexpected contents" 10
+
+    TEST1_C=$(cat "${TEST}/test1")
+    test "x${TEST1_C}" == "xtest1" \
+      || fail "test1 has unexpected contents" 11
+
+
+    TEST2_C=$(cat "${TEST}/test2")
+    test "x${TEST2_C}" == "xtest2" \
+      || fail "test2 has unexpected contents" 12
+
+    TEST3_C=$(cat "${TEST}/test3")
+    test "x${TEST3_C}" == "xtest3" \
+      || fail "test3 has unexpected contents" 13
+
+    TEST1COPY_C=$(cat "${TEST}/test1copy")
+    test "x${TEST1COPY_C}" == "x${TEST1_C}APPENDED" \
+      || fail "test1copy has unexpected contents" 14
+
+    TEST3COPYMOVE_C=$(cat "${TEST}/test3copymove")
+    test "x${TEST3COPYMOVE_C}" == "x${TEST3_C}" \
+      || fail "test3copymove has unexpected contents" 15
+
+    test -L "${TEST}/link" || fail "link is not a symlink" 16
+
+    echo "/${TEST} directory found on test system, ok"
+else
+    test -d "${TEST}" && fail "/${TEST} found in non-test machine" 1
+    echo "No /${TEST} directory on non-test system, ok"
+fi

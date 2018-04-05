@@ -71,8 +71,6 @@ class _ParserState:
         if not self._args or self._start_line == 0:
             return None
 
-        print('XXX: create_execute_object: start: {}, up to:{}'
-              .format(self._start_line, self._current_line))
         args = self._args
         kwargs = self._kwargs
         if self._key_for_value:
