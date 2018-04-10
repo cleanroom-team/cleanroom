@@ -47,7 +47,9 @@ class _TestCommand(cmd.Command):
 
     def _environment(self, system_context):
         """Generate environment for the system tests."""
-        return {'PATH': '/usr/bin', **system_context.substitutions}
+        result = {k: str(v) for k, v in system_context.substitutions.items()}
+        result['PATH'] = '/usr/bin'
+        return result
 
     def _find_tests(self, system_context):
         """Find tests to run."""
