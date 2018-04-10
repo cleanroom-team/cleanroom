@@ -99,6 +99,8 @@ class SystemContext:
     # Handle Hooks:
     def _add_hook(self, hook, exec_object):
         """Add a hook."""
+        assert(exec_object is not None)
+
         printer.info('Adding hook "{}": {}.'.format(hook, exec_object))
         self.hooks.setdefault(hook, []).append(exec_object)
         printer.trace('Hook {} has {} entries.'
@@ -106,6 +108,7 @@ class SystemContext:
 
     def add_hook(self, location, hook, *args, **kwargs):
         """Add a hook."""
+        assert(isinstance(hook, str))
         self._add_hook(hook,
                        parser.Parser.create_execute_object(location,
                                                            *args, **kwargs))
@@ -176,6 +179,7 @@ class SystemContext:
                 expected_dependency=None, **kwargs):
         """Execute a command."""
         assert(isinstance(location, loc.Location))
+        assert(isinstance(command, str))
         printer.debug('Executing {}: {}.'.format(location, command))
         cmd = parser.Parser.command(command)
         dependency = cmd.validate_arguments(location, *args, **kwargs)

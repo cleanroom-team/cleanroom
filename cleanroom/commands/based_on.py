@@ -45,7 +45,7 @@ class BasedOnCommand(cmd.Command):
         if self._is_scratch(base_system):
             printer.verbose('Building from scratch!')
             location.next_line_offset('testing')
-            system_context.add_hook(location, '_test', '_test')
+            system_context.add_hook(location, 'testing', '_test')
         else:
             printer.verbose('Building on top of {}.'.format(base_system))
             system_context.execute(location, '_restore', base_system)

@@ -231,4 +231,10 @@ def remove(system_context, *files, recursive=False, force=False):
             else:
                 os.rmdir(file)
         else:
-            os.unlink(file)
+            try:
+                os.unlink(file)
+            except Exception as e:
+                if not force:
+                    raise
+                else:
+                    printer.verbose('Failed to unlink "{}".'.format(file))

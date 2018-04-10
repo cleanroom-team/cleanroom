@@ -5,6 +5,9 @@
 """
 
 
+import cleanroom.location as loc
+
+
 class ExecObject:
     """Describe command in system definition file.
 
@@ -14,6 +17,7 @@ class ExecObject:
     def __init__(self, location, dependency, *args, **kwargs):
         """Constructor."""
         assert(location)
+        assert(isinstance(location, loc.Location))
         assert(len(args) >= 1)
 
         self._location = location
