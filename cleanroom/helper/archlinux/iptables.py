@@ -8,36 +8,32 @@
 import cleanroom.helper.archlinux.pacman as arch
 
 
-def install(system_context):
+def install_rules(location, system_context):
     """Install basic firewall rules."""
-    assert(_firewall_type(system_context) is None)
-    _set_firewall_type(system_context)
+    assert(firewall_type(system_context) is None)
+    set_firewall_type(system_context)
 
-    _install_packages(system_context)
+    _install_v4_rules(location, system_context, '/etc/iptables/iptables.rules')
+    _install_v6_rules(location, system_context, '/etc/iptables/ip6tables.rules')
 
-    _install_v4_rules(system_context, '/etc/iptables/iptables.rules')
-    _install_v6_rules(system_context, '/etc/iptables/ip6tables.rules')
 
+def enable_firewall(location, system_context):
     # FIXME: Fix systemd install section to run iptables services earlier!
-
-    system_context.execute('systemd_enable',
+    assert(firewall_type(system_context) == 'iptables')
+    system_context.execute(location, 'systemd_enable',
                            'iptables.service', 'ip6tables.service')
 
 
-def _install_packages(system_context):
-    arch.pacman(system_context, 'iptables')
+def firewall_type(system_context):
+    return system_context.substitution('CLRM_FIREWALL', None)
 
 
-def _firewall_type(system_context):
-    return system_context.substituion('CLRM_FIREWALL', None)
-
-
-def _set_firewall_type(system_context):
+def set_firewall_type(system_context):
     system_context.set_substitution('CLRM_FIREWALL', 'iptables')
 
 
-def _install_v4_rules(system_context, rule_file):
-    system_context.execute('create', rule_file, """
+def _install_v4_rules(location, system_context, rule_file):
+    system_context.execute(location, 'create', rule_file, """
 # iptables rules:
 
 *filter
@@ -76,11 +72,11 @@ def _install_v4_rules(system_context, rule_file):
 
 COMMIT
 """)
-    system_context.execute('chmod', 0o644, rule_file)
+    system_context.execute(location, 'chmod', 0o644, rule_file)
 
 
-def _install_v6_rules(self, system_context, rule_file):
-    system_context.execute('create', rule_file, """
+def _install_v6_rules(location, system_context, rule_file):
+    system_context.execute(location, 'create', rule_file, """
 # ip6tables rules:
 
 *filter
@@ -120,4 +116,4 @@ def _install_v6_rules(self, system_context, rule_file):
 
 COMMIT
 """)
-    system_context.execute('chmod', 0o644, rule_file)
+    system_context.execute(location, 'chmod', 0o644, rule_file)

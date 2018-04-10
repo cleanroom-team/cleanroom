@@ -20,6 +20,8 @@ pacstrap config=type-base/pacstrap.conf
 
     sed shadow systemd
 
+net_firewall_configure
+
 append /usr/lib/os-release <<<<
 VERSION=${TIMESTAMP}
 VERSION_ID=${TIMESTAMP}
