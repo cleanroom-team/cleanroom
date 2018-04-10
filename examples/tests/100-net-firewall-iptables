@@ -5,11 +5,11 @@ function fail {
     exit $2
 }
 
-if test -e /usr/lib/iptables ; then
-    test -e /etc/iptables/iptables.rules || fail "No ipv4 iptables configuration." 1
-    test -e /etc/iptables/ip6tables.rules || fail "No ipv6 iptables configuration." 2
+if test -e usr/lib/iptables ; then
+    test -e etc/iptables/iptables.rules || fail "No ipv4 iptables configuration." 1
+    test -e etc/iptables/ip6tables.rules || fail "No ipv6 iptables configuration." 2
 
     echo "Iptables installed and configured, ok"
 else
     echo "No iptables, ok."
-
+fi
