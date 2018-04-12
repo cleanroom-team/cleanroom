@@ -5,7 +5,11 @@
 """
 
 
-import cleanroom.helper.archlinux.pacman as arch
+_TCP_MAGIC = '#### Allowed TCP ports:'
+_UDP_MAGIC = '#### Allowed UDP ports:'
+
+_IPv4_RULES = '/etc/iptables/iptables.rules'
+_IPv6_RULES = '/etc/iptables/ip6tables.rules'
 
 
 def install_rules(location, system_context):
@@ -13,11 +17,12 @@ def install_rules(location, system_context):
     assert(firewall_type(system_context) is None)
     set_firewall_type(system_context)
 
-    _install_v4_rules(location, system_context, '/etc/iptables/iptables.rules')
-    _install_v6_rules(location, system_context, '/etc/iptables/ip6tables.rules')
+    _install_v4_rules(location, system_context, _IPv4_RULES)
+    _install_v6_rules(location, system_context, _IPv6_RULES)
 
 
 def enable_firewall(location, system_context):
+    """Enable the firewall."""
     # FIXME: Fix systemd install section to run iptables services earlier!
     assert(firewall_type(system_context) == 'iptables')
     system_context.execute(location, 'systemd_enable',
@@ -25,11 +30,26 @@ def enable_firewall(location, system_context):
 
 
 def firewall_type(system_context):
+    """Get type of firewall or None if none is active."""
     return system_context.substitution('CLRM_FIREWALL', None)
 
 
 def set_firewall_type(system_context):
+    """Set the type of firewall."""
     system_context.set_substitution('CLRM_FIREWALL', 'iptables')
+
+
+def open_port(location, system_context, port, protocol='tcp', comment=None):
+    """Open a port in the firewall."""
+    magic = _TCP_MAGIC if protocol == 'tcp' else _UDP_MAGIC
+    output = '-A {0} -p {1} -m {1} --dport {2} -j ACCEPT' \
+             .format(protocol.upper(), protocol, port)
+    if comment is not None:
+        output += ' ### {}'.format(comment)
+
+    pattern = '/{}/ a{}'.format(magic, output)
+    system_context.execute(location, 'sed', pattern, _IPv4_RULES)
+    system_context.execute(location, 'sed', pattern, _IPv6_RULES)
 
 
 def _install_v4_rules(location, system_context, rule_file):
@@ -66,12 +86,12 @@ def _install_v4_rules(location, system_context, rule_file):
 
 -A OUTPUT -p udp --dport 67:68 --sport 67:68 -j ACCEPT
 
-#### Allowed TCP ports:
+{}
 
-#### Allowed UDP ports:
+{}
 
 COMMIT
-""")
+""".format(_TCP_MAGIC, _UDP_MAGIC))
     system_context.execute(location, 'chmod', 0o644, rule_file)
 
 
@@ -110,10 +130,10 @@ def _install_v6_rules(location, system_context, rule_file):
 
 -A OUTPUT -p udp --dport 67:68 --sport 67:68 -j ACCEPT
 
-#### Allowed TCP ports:
+{}
 
-#### Allowed UDP ports:
+{}
 
 COMMIT
-""")
+""".format(_TCP_MAGIC, _UDP_MAGIC))
     system_context.execute(location, 'chmod', 0o644, rule_file)

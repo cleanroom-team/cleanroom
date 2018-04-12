@@ -6,6 +6,7 @@
 
 
 import cleanroom.command as cmd
+import cleanroom.exceptions as ex
 import cleanroom.helper.generic.file as file
 
 
@@ -14,7 +15,9 @@ class MoveCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('move', syntax='<SOURCE> [<SOURCE>] <DEST> ',
+        super().__init__('move', syntax='<SOURCE> [<SOURCE>] <DEST> '
+                         ' [ignore_missing_sources=False]'
+                         ' [from_outside=False] [to_outside=False]',
                          help='Move file or directory.')
 
     def validate_arguments(self, location, *args, **kwargs):
@@ -22,7 +25,8 @@ class MoveCommand(cmd.Command):
         self._validate_args_at_least(location, 2,
                                      '"{}" needs at least one '
                                      'source and a destination.', *args)
-        self._validate_kwargs(location, ('from_outside', 'to_outside'),
+        self._validate_kwargs(location, ('from_outside', 'to_outside',
+                                         'ignore_missing_sources'),
                               **kwargs)
         if kwargs.get('from_outside', False) \
            and kwargs.get('to_outside', False):
