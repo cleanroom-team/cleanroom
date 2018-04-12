@@ -5,12 +5,15 @@
 """
 
 
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import cleanroom.exceptions as exceptions
 import cleanroom.parser as parser
 import cleanroom.printer as printer
 import cleanroom.testutils as tu
 
-import os
 import tempfile
 import unittest
 
