@@ -15,7 +15,7 @@ import random
 import unittest
 
 
-class TestPrinter(printer.Printer):
+class DummyPrinter(printer.Printer):
     """Printer class for unit testing."""
 
     def __init__(self, *args, **kwargs):
@@ -27,7 +27,7 @@ class TestPrinter(printer.Printer):
         self.buffer += ' '.join(args) + '\n'
 
 
-class PrinterTest(unittest.TestCase):
+class TestPrinter(unittest.TestCase):
     """Test for Location class of cleanroom."""
 
     def _verify(self, msg=None):
@@ -38,7 +38,7 @@ class PrinterTest(unittest.TestCase):
         """Set up printer."""
         self._message = "Message " + str(random.randint(0, 1000000))
         self.tearDown()
-        self._printer = TestPrinter(verbosity)
+        self._printer = DummyPrinter(verbosity)
 
     def tearDown(self):
         """Tear down method."""

@@ -18,7 +18,7 @@ import cleanroom.printer as printer
 import unittest
 
 
-class TestCommand(cmd.Command):
+class DummyCommand(cmd.Command):
     """Dummy command implementation."""
 
     def __init__(self, name):
@@ -43,9 +43,9 @@ class ParserTest(tu.BaseParserTest, unittest.TestCase):
         self._cmd2 = 'test2'
 
         parser.Parser._commands[self._cmd1] \
-            = (TestCommand(self._cmd1), '<builtin>/1')
+            = (DummyCommand(self._cmd1), '<builtin>/1')
         parser.Parser._commands[self._cmd2] \
-            = (TestCommand(self._cmd2), '<builtin>/2')
+            = (DummyCommand(self._cmd2), '<builtin>/2')
 
     # No command (WS or comment only):
     def test_comment(self):

@@ -18,8 +18,7 @@ TODO: Installation is not yet supported.
 
 ## Tests
 
-Tests can be run by switching into the tests directory and running
-```python -m unittest``` there.
+Use ```pytest tests``` in the top level directory to run all tests.
 
 ## Contributors
 

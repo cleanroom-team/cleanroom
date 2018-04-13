@@ -9,3 +9,4 @@ clrm-env
 
 systems/*
 clrm-run-*.sh
+.pytest_cache/*
