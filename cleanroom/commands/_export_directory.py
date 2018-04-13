@@ -30,8 +30,6 @@ class ExportDirectoryCommand(cmd.Command):
         if repository == '':
             return
 
-        return
-
         borg = system_context.ctx.binary(context.Binaries.BORG)
         backup_name = system_context.system + '-' + system_context.timestamp
 

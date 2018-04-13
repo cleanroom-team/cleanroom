@@ -59,10 +59,13 @@ def _parse_commandline(arguments):
     return parse_result
 
 
-def main():
+def run():
+    main(*sys.argv)
+
+def main(*args):
     old_work_directory = os.getcwd()
 
-    args = _parse_commandline(sys.argv)
+    args = _parse_commandline(args)
 
     if not args.list_commands and not args.systems:
         print('No systems to process.')

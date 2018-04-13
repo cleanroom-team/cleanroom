@@ -14,7 +14,7 @@ booting into it.
 
 ## Installation
 
-TODO: Installation is not yet supported.
+Use python setuptools as usual.
 
 ## Tests
 
@@ -23,6 +23,11 @@ Use ```pytest tests``` in the top level directory to run all tests.
 ## Contributors
 
 * Tobias Hunger &lt;tobias.hunger@gmail.com&gt;
+
+## Code of Conduct
+
+Everybody is expected to follow the Python Community Code of Conduct
+https://www.python.org/psf/codeofconduct/
 
 ## License
 
