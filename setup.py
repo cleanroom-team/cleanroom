@@ -16,6 +16,8 @@ setup(
     long_description_content_type='text/markdown',
     version='0.1',
     python_requires='>=3.5',
+    setup_requires=['pytest-runner',],
+    tests_require=['pytest',],
     url='https://gitlab.con/hunger/cleanroom',
     project_urls={
         'Source code': 'https://gitlab.com/hunger/cleanroom',

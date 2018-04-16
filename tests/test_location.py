@@ -5,107 +5,64 @@
 """
 
 
+import pytest
+
 import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import cleanroom.location as loc
 
-import pytest
+
+@pytest.mark.parametrize(('file_name', 'line_number', 'line_offset',
+                          'extra_information', 'result_string'), [
+    pytest.param(None, None, None, None, '<UNKNOWN>', id='nothing'),
+    pytest.param('/tmp/foo', None, None, '!extra!',
+                 '/tmp/foo "!extra!"', id='file_name, extra'),
+    pytest.param('/tmp/foo', None, None, None, '/tmp/foo',
+                 id='file_name'),
+    pytest.param('/tmp/foo', 1, None, None, '/tmp/foo:1',
+                 id='file_name, line_number=1'),
+    pytest.param('/tmp/foo', 42, None, None, '/tmp/foo:42',
+                 id='file_name, line_number=42'),
+    pytest.param('/tmp/foo', 1, None, '!extra!', '/tmp/foo:1 "!extra!"',
+                 id='file_name, line_number=1, extra'),
+    pytest.param('/tmp/foo', 42, None, '!extra!', '/tmp/foo:42 "!extra!"',
+                 id='file_name, line_number=42, extra'),
+    pytest.param('/tmp/foo', 42, 23, None, '/tmp/foo:42+23',
+                 id='file_name, line_number=42, line_offset'),
+    pytest.param('/tmp/foo', 42, 23, '!extra!', '/tmp/foo:42+23 "!extra!"',
+                 id='file_name, line_number=42, line_offset, extra'),
+    pytest.param(None, None, None, '!extra!', '"!extra!"', id='extra_info'),
+])
+def test_location(file_name, line_number, line_offset, extra_information,
+                  result_string):
+    location = loc.Location(file_name=file_name, line_number=line_number,
+                            line_offset=line_offset,
+                            extra_information=extra_information)
+    assert str(location) == result_string
 
 
-def test_nothing():
-    """Test location with no data."""
-    location = loc.Location()
-    assert str(location) == '<UNKNOWN>'
-
-
-def test_file_name():
-    """Test location with file name only."""
-    location = loc.Location(file_name='/tmp/foo')
-    assert str(location) == '/tmp/foo'
-
-
-def test_line_number():
-    """Test location with line number only."""
+@pytest.mark.parametrize(('file_name', 'line_number', 'line_offset',
+                          'extra_information'), [
+    pytest.param(None, 42, None, None, id='line_number'),
+    pytest.param(None, None, 23, None, id='line_offset'),
+    pytest.param('/tmp/foo', 0, None, None,
+                 id='file_name, invalid line_number'),
+    pytest.param('/tmp/foo', -1, None, None,
+                 id='file_name, invalid line_number 2'),
+    pytest.param('/tmp/foo', None, 23,  None,
+                 id='file_name, line_offset'),
+    pytest.param('/tmp/foo', 23, 0, None,
+                 id='file_name, line_number, invalid line_offset'),
+    pytest.param('/tmp/foo', 23, -1, None,
+                 id='file_name, line_number, invalid line_offset 2'),
+    pytest.param(None, 42, 23, '!extra!',
+                 id='line_number, line_offset, extra'),
+])
+def test_location_errors(file_name, line_number,
+                         line_offset, extra_information):
     with pytest.raises(AssertionError):
-        loc.Location(line_number=42)
-
-
-def test_line_offset():
-    """Test location with line offset only."""
-    with pytest.raises(AssertionError):
-        loc.Location(line_offset=23)
-
-
-def test_extra_information():
-    """Test location with extra information only."""
-    location = loc.Location(extra_information='!extra!')
-    assert str(location) == '"!extra!"'
-
-
-def test_fn_invalid_line_number():
-    """Test location with file name and invalid line number."""
-    with pytest.raises(AssertionError):
-        loc.Location(file_name='/tmp/foo', line_number=0)
-
-
-def test_file_name_line_number1():
-    """Test location with file name and line number 1."""
-    location = loc.Location(file_name='/tmp/foo', line_number=1)
-    assert str(location) == '/tmp/foo:1'
-
-
-def test_file_name_line_number42():
-    """Test location with file name and line number 1."""
-    location = loc.Location(file_name='/tmp/foo', line_number=42)
-    assert str(location) == '/tmp/foo:42'
-
-
-def test_file_name_line_number_extra_information():
-    """Test location with file name, line number and extra information."""
-    location = loc.Location(file_name='/tmp/foo',
-                            line_number=42,
-                            extra_information='!extra!')
-    assert str(location) == '/tmp/foo:42 "!extra!"'
-
-
-def test_file_name_line_offset():
-    """Test location with file name and line offset 23."""
-    with pytest.raises(AssertionError):
-        loc.Location(file_name='/tmp/foo', line_offset=23)
-
-
-def test_file_name_extra_information():
-    """Test location with file name and extra information."""
-    location = loc.Location(file_name='/tmp/foo',
-                            extra_information='!extra!')
-    assert str(location) == '/tmp/foo "!extra!"'
-
-
-def test_file_name_line_number_line_offset():
-    """Test location with file name, line number and line offset."""
-    location = loc.Location(file_name='/tmp/foo',
-                            line_number=42, line_offset=23)
-    assert str(location), '/tmp/foo:42+23'
-
-
-def test_file_name_line_number_invalid_line_offset():
-    """Test location with file name, line number and line offset."""
-    with pytest.raises(AssertionError):
-        loc.Location(file_name='/tmp/foo', line_number=42, line_offset=0)
-
-
-def test_file_name_line_number_line_offset_extra_information():
-    """Test location with file name, line number, line offset and extra."""
-    location = loc.Location(file_name='/tmp/foo',
-                            line_number=42, line_offset=23,
-                            extra_information='!extra!')
-    assert str(location) == '/tmp/foo:42+23 "!extra!"'
-
-
-def test_line_number_line_offset_extra_information():
-    """Test location with line number and line offset and extra info."""
-    with pytest.raises(AssertionError):
-        loc.Location(line_number=42, line_offset=23,
-                     extra_information='!extra!')
+        loc.Location(file_name=file_name, line_number=line_number,
+                     line_offset=line_offset,
+                     extra_information=extra_information)

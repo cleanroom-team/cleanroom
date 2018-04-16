@@ -10,62 +10,62 @@ import sys
 
 def h1(*args, **kwargs):
     """Print main headline."""
-    Printer._instance.h1(*args, **kwargs)
+    Printer.Instance().h1(*args, **kwargs)
 
 
 def h2(*args, **kwargs):
     """Print sub headline."""
-    Printer._instance.h2(*args, **kwargs)
+    Printer.Instance().h2(*args, **kwargs)
 
 
 def h3(*args, **kwargs):
     """Print sub-sub headline."""
-    Printer._instance.h3(*args, **kwargs)
+    Printer.Instance().h3(*args, **kwargs)
 
 
 def error(*args, **kwargs):
     """Print error message."""
-    Printer._instance.error(*args, **kwargs)
+    Printer.Instance().error(*args, **kwargs)
 
 
 def warn(*args, **kwargs):
     """Print warning message."""
-    Printer._instance.warn(*args, **kwargs)
+    Printer.Instance().warn(*args, **kwargs)
 
 
 def success(*args, **kwargs):
     """Print success message."""
-    Printer._instance.success(*args, **kwargs)
+    Printer.Instance().success(*args, **kwargs)
 
 
 def fail(*args, **kwargs):
     """Print fail message."""
-    Printer._instance.fail(*args, **kwargs)
+    Printer.Instance().fail(*args, **kwargs)
 
 
 def msg(*args, **kwargs):
     """Print arguments."""
-    Printer._instance.msg(*args, **kwargs)
+    Printer.Instance().msg(*args, **kwargs)
 
 
 def verbose(*args, **kwargs):
     """Print if verbose is set."""
-    Printer._instance.verbose(*args, **kwargs)
+    Printer.Instance().verbose(*args, **kwargs)
 
 
 def info(*args, **kwargs):
     """Print even more verbose."""
-    Printer._instance.info(*args, **kwargs)
+    Printer.Instance().info(*args, **kwargs)
 
 
 def debug(*args, **kwargs):
     """Print if debug is set."""
-    Printer._instance.debug(*args, **kwargs)
+    Printer.Instance().debug(*args, **kwargs)
 
 
 def trace(*args, **kwargs):
     """Print trace messsages."""
-    Printer._instance.trace(*args, **kwargs)
+    Printer.Instance().trace(*args, **kwargs)
 
 
 def _ansify(seq):
@@ -90,12 +90,18 @@ class Printer:
 
     _instance = None
 
-    def __init__(self, verbose):
-        """Constructor."""
-        assert(Printer._instance is None)
-        self._verbose = verbose
+    @staticmethod
+    def Instance():
+        """Get the main printer instance."""
+        if Printer._instance is None:
+            Printer._instance = Printer(verbosity=0)
+        return Printer._instance
 
-        self._prefix = '      ' if verbose > 0 else ''
+    def __init__(self, verbosity=0):
+        """Constructor."""
+        self._verbose = verbosity
+
+        self._prefix = '      ' if verbosity > 0 else ''
 
         self._ansi_reset = _ansify('\033[0m')
         self._h_prefix = _ansify('\033[1;31m')
@@ -114,6 +120,10 @@ class Printer:
 
         Printer._instance = self
 
+    def set_verbosity(self, verbosity):
+        """Set the verbosity."""
+        self._verbose = verbosity
+
     def _print(self, *args):
         print(*args)
 
@@ -122,70 +132,60 @@ class Printer:
 
     def h1(self, *args, verbosity=0):
         """Print big headline."""
-        if not self._print_at_verbosity_level(verbosity):
-            return
-        intro = '\n\n{}============================================{}'\
-                .format(self._h1_suffix, self._ansi_reset)
-        prefix = '{}== '.format(self._h1_suffix)
-        outro = '{}============================================'\
-                .format(self._h1_suffix, self._ansi_reset)
-        self._print(intro)
-        self._print(prefix, *args, self._ansi_reset)
-        self._print(outro)
-        self._print()
+        if self._print_at_verbosity_level(verbosity):
+            intro = '\n\n{}============================================{}'\
+                    .format(self._h1_suffix, self._ansi_reset)
+            prefix = '{}== '.format(self._h1_suffix)
+            outro = '{}============================================'\
+                    .format(self._h1_suffix, self._ansi_reset)
+            self._print(intro)
+            self._print(prefix, *args, self._ansi_reset)
+            self._print(outro)
+            self._print()
 
     def h2(self, *args, verbosity=0):
         """Print a headline."""
-        if not self._print_at_verbosity_level(verbosity):
-            return
-        intro = '\n{}******{}'.format(self._h_prefix, self._h1_suffix)
-        self._print(intro, *args, self._ansi_reset)
+        if self._print_at_verbosity_level(verbosity):
+            intro = '\n{}******{}'.format(self._h_prefix, self._h1_suffix)
+            self._print(intro, *args, self._ansi_reset)
 
     def h3(self, *args, verbosity=0):
         """Print a subheading."""
-        if not self._print_at_verbosity_level(verbosity):
-            return
-        intro = '\n{}******{}'.format(self._h_prefix, self._ansi_reset)
-        self._print(intro, *args)
+        if self._print_at_verbosity_level(verbosity):
+            intro = '\n{}******{}'.format(self._h_prefix, self._ansi_reset)
+            self._print(intro, *args)
 
     def error(self, *args, verbosity=0):
         """Print error message."""
-        if not self._print_at_verbosity_level(verbosity):
-            return
-
-        intro = '{}ERROR:'.format(self._error_prefix)
-        self._print(intro, *args, self._ansi_reset)
+        if self._print_at_verbosity_level(verbosity):
+            intro = '{}ERROR:'.format(self._error_prefix)
+            self._print(intro, *args, self._ansi_reset)
 
     def warn(self, *args, verbosity=0):
         """Print warning message."""
-        if not self._print_at_verbosity_level(verbosity):
-            return
-
-        intro = '{}warn: '.format(self._warn_prefix)
-        self._print(intro, *args, self._ansi_reset)
+        if self._print_at_verbosity_level(verbosity):
+            intro = '{}warn: '.format(self._warn_prefix)
+            self._print(intro, *args, self._ansi_reset)
 
     def success(self, *args, verbosity=0):
         """Print success message."""
-        if not self._print_at_verbosity_level(verbosity):
-            return
-
-        intro = '{}  OK  {}'.format(self._ok_prefix, self._ok_suffix)
-        self._print(intro, *args, self._ansi_reset)
+        if self._print_at_verbosity_level(verbosity):
+            intro = '{}  OK  {}'.format(self._ok_prefix, self._ok_suffix)
+            self._print(intro, *args, self._ansi_reset)
 
     def fail(self, *args, verbosity=0, force_exit=True, ignore=False):
         """Print fail message."""
-        if not self._print_at_verbosity_level(verbosity):
-            return
-
-        if ignore:
-            intro = '{} fail {}'.format(self._ig_fail_prefix,
-                                        self._ig_fail_suffix)
-            self._print(intro, *args, '(ignored)', self._ansi_reset)
-        else:
-            intro = '{} FAIL {}'.format(self._fail_prefix, self._fail_suffix)
-            self._print(intro, *args, self._ansi_reset)
-            if force_exit:
-                sys.exit(1)
+        if self._print_at_verbosity_level(verbosity):
+            if ignore:
+                intro = '{} fail {}'.format(self._ig_fail_prefix,
+                                            self._ig_fail_suffix)
+                self._print(intro, *args, '(ignored)', self._ansi_reset)
+            else:
+                intro = '{} FAIL {}'.format(self._fail_prefix,
+                                            self._fail_suffix)
+                self._print(intro, *args, self._ansi_reset)
+                if force_exit:
+                    sys.exit(1)
 
     def msg(self, *args):
         """Print arguments."""
@@ -193,27 +193,23 @@ class Printer:
 
     def verbose(self, *args):
         """Print if verbose is set."""
-        if not self._print_at_verbosity_level(1):
-            return
-        self._print(self._prefix, *args)
+        if self._print_at_verbosity_level(1):
+            self._print(self._prefix, *args)
 
     def info(self, *args):
         """Print even more verbose."""
-        if not self._print_at_verbosity_level(2):
-            return
-        intro = '{}......{}'.format(self._extra_prefix, self._extra_suffix)
-        self._print(intro, *args, self._ansi_reset)
+        if self._print_at_verbosity_level(2):
+            intro = '{}......{}'.format(self._extra_prefix, self._extra_suffix)
+            self._print(intro, *args, self._ansi_reset)
 
     def debug(self, *args):
         """Print if debug is set."""
-        if not self._print_at_verbosity_level(3):
-            return
-        intro = '{}------{}'.format(self._extra_prefix, self._extra_suffix)
-        self._print(intro, *args, self._ansi_reset)
+        if self._print_at_verbosity_level(3):
+            intro = '{}------{}'.format(self._extra_prefix, self._extra_suffix)
+            self._print(intro, *args, self._ansi_reset)
 
     def trace(self, *args):
         """Print trace messsages."""
-        if not self._print_at_verbosity_level(4):
-            return
-        intro = '{}++++++{}'.format(self._extra_prefix, self._extra_suffix)
-        self._print(intro, *args, self._ansi_reset)
+        if self._print_at_verbosity_level(4):
+            intro = '{}++++++{}'.format(self._extra_prefix, self._extra_suffix)
+            self._print(intro, *args, self._ansi_reset)

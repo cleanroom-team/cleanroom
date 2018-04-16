@@ -15,12 +15,11 @@ import cleanroom.workdir as workdir
 
 from argparse import ArgumentParser
 import os
-import re
-import shutil
 import sys
 
+
 def _parse_commandline(arguments):
-    """This function parses the command line options."""
+    """Parse the command line options."""
     parser = ArgumentParser(description='Cleanroom OS image script generator',
                             prog=arguments[0])
     parser.add_argument('--verbose', action='count', default=0,
@@ -60,9 +59,12 @@ def _parse_commandline(arguments):
 
 
 def run():
+    """Run cleanroom with command line arguments."""
     main(*sys.argv)
 
+
 def main(*args):
+    """Run cleanroom with arguments."""
     old_work_directory = os.getcwd()
 
     args = _parse_commandline(args)
@@ -76,7 +78,9 @@ def main(*args):
         sys.exit(2)
 
     # Set up printing:
-    printer.Printer(verbose=args.verbose)
+    pr = printer.Printer.Instance()
+    pr.set_verbosity(args.verbose)
+
     _log_verbosity_level()
 
     # Set up global context object:
@@ -88,9 +92,10 @@ def main(*args):
     _preflight_check(ctx)
 
     systems_directory = args.systems_directory \
-       if args.systems_directory else os.getcwd()
+        if args.systems_directory else os.getcwd()
 
-    with workdir.WorkDir(ctx, work_directory=args.work_directory) as work_directory:
+    with workdir.WorkDir(ctx,
+                         work_directory=args.work_directory) as work_directory:
         ctx.set_directories(systems_directory, work_directory)
 
         # Find commands:
@@ -111,7 +116,7 @@ def _preflight_check(ctx):
         if not ctx.ignore_errors:
             raise
     else:
-        printer.success('Preflight Check passed', verbosity = 2)
+        printer.success('Preflight Check passed', verbosity=2)
 
 
 def _generate(ctx, systems):
@@ -123,7 +128,7 @@ def _generate(ctx, systems):
         printer.fail('Preparation failed: {}'.format(e))
         raise
     else:
-        printer.success('Preparation phase.', verbosity = 2)
+        printer.success('Preparation phase.', verbosity=2)
 
     for s in systems:
         generator.add_system(s)
@@ -134,7 +139,7 @@ def _generate(ctx, systems):
         printer.fail('Generation failed: {}'.format(e))
         raise
     else:
-        printer.success('Generation phase.', verbosity = 2)
+        printer.success('Generation phase.', verbosity=2)
 
 
 def _log_verbosity_level():
