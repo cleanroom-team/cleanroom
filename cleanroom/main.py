@@ -131,6 +131,8 @@ def _generate(ctx, systems):
         printer.success('Preparation phase.', verbosity=2)
 
     for s in systems:
+        if s.endswith('.def'):
+            s = s[:-4]
         generator.add_system(s)
 
     try:
