@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""set_default_target command.
+"""systemd_set_default command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
@@ -10,12 +10,12 @@ import cleanroom.exceptions as ex
 import cleanroom.helper.generic.file as file
 
 
-class SetDefaultTargetCommand(cmd.Command):
-    """The set_default_target command."""
+class SystemdSetDefaultCommand(cmd.Command):
+    """The systemd_set_default command."""
 
     def __init__(self):
         """Constructor."""
-        super().__init__('set_default_target', syntax='<TARGET>',
+        super().__init__('systemd_set_default', syntax='<TARGET>',
                          help='Set the systemd target to boot into.')
 
     def validate_arguments(self, location, *args, **kwargs):

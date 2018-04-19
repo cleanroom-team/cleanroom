@@ -140,7 +140,7 @@ def chown(system_context, user, group, *files):
                   *expand_files(system_context, *files))
 
 
-def create_file(system_context, file, contents, force=False):
+def create_file(system_context, file, contents, force=False, mode=0o644):
     """Create a new file with the given contents."""
     full_path = file_name(system_context, file)
 
@@ -150,6 +150,8 @@ def create_file(system_context, file, contents, force=False):
 
     with open(full_path, 'wb') as f:
         f.write(contents)
+
+    os.chmod(full_path, mode)
 
 
 def append_file(system_context, file, contents):
