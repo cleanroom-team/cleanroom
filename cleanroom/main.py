@@ -40,7 +40,7 @@ def _parse_commandline(arguments):
 
     parser.add_argument('--export-repository', dest='export_repository',
                         action='store',
-                        help='OStree repository to export created filesystems '
+                        help='Borg repository to export created filesystems '
                         'into.')
 
     parser.add_argument('--clear-work-directory', dest='clear_work_directory',

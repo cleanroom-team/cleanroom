@@ -5,6 +5,13 @@
 """
 
 
+import collections
+
+
+User = collections.namedtuple('User', ['name', 'password', 'uid', 'gid',
+                                       'comment', 'home', 'shell'])
+
+
 def useradd(system_context, user_name, *,
             comment='', home='', gid=-1, uid=-1, shell='',
             groups='', password='', expire=None):
@@ -90,3 +97,21 @@ def usermod(system_context, user_name, *, comment='', home='', gid=-1, uid=-1,
         command += ['--expiredate', expire]
 
     system_context.run(*command)
+
+
+def _user_data(passwd_file, name):
+    with open(passwd_file, 'r') as passwd:
+        for line in passwd:
+            if line.endswith('\n'):
+                line = line[:-1]
+            current_user = line.split(':')
+            if current_user[0] == name:
+                current_user[2] = int(current_user[2])
+                current_user[3] = int(current_user[3])
+                return User(*current_user)
+    return None
+
+
+def user_data(system_context, name):
+    """Get user data from passwd file."""
+    return _user_data(system_context.file_name('/etc/passwd'), name)

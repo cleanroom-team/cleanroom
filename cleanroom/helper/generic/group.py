@@ -5,6 +5,12 @@
 """
 
 
+import collections
+
+
+Group = collections.namedtuple('Group', ['name', 'password', 'gid', 'members'])
+
+
 def groupadd(system_context, group_name, *, gid=-1, force=False, system=False):
     """Execute command."""
     command = ['/usr/bin/groupadd', group_name]
@@ -19,3 +25,25 @@ def groupadd(system_context, group_name, *, gid=-1, force=False, system=False):
         command += ['--system']
 
     system_context.run(*command)
+
+
+def _group_data(group_file, name):
+    with open(group_file, 'r') as group:
+        for line in group:
+            if line.endswith('\n'):
+                line = line[:-1]
+            current_group = line.split(':')
+            if current_group[0] == name:
+                print('XXX:{}:XXX'.format(current_group[3]))
+                current_group[2] = int(current_group[2])
+                if current_group[3] == '':
+                    current_group[3] = []
+                else:
+                    current_group[3] = list(current_group[3].split(','))
+                return Group(*current_group)
+    return None
+
+
+def group_data(system_context, name):
+    """Get user data from passwd file."""
+    return _group_data(system_context.file_name('/etc/group'), name)

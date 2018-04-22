@@ -8,6 +8,9 @@
 import cleanroom.exceptions as ex
 import cleanroom.printer as printer
 
+from . import group as groupdb
+from . import user as userdb
+
 import glob
 import os
 import os.path
@@ -104,7 +107,7 @@ def makedirs(system_context, *dirs, user=0, group=0, mode=None):
         full_path = file_name(system_context, d)
         if os.makedirs(full_path):
             _chmod(system_context, mode, full_path)
-        _chown(system_context, user, group, full_path)
+        _chown(system_context, _get_uid(user), _get_gid(group), full_path)
 
 
 def _chmod(system_context, mode, *files):
@@ -119,28 +122,47 @@ def chmod(system_context, mode, *files):
     return _chmod(system_context, mode, *expand_files(system_context, *files))
 
 
-def _chown(system_context, user, group, *files):
+def _chown(system_context, uid, gid, *files):
     """Change owner of files."""
-    if user == 'root':
-        user = 0
-    if group == 'root':
-        group = 0
-
-    assert(user is not str)
-    assert(group is not str)
+    assert(uid is not str)
+    assert(gid is not str)
 
     for f in files:
-        printer.trace('Chown of "{}" to {}:{}.'.format(f, user, group))
-        os.chown(f, user, group)
+        printer.trace('Chown of "{}" to {}:{}.'.format(f, uid, gid))
+        os.chown(f, uid, gid)
+
+
+def _get_uid(system_context, user):
+    if not user:
+        return 0
+    if user is int:
+        return user
+    data = userdb.user_data(system_context, user)
+    assert data is not None
+    return data.uid
+
+
+def _get_gid(system_context, group):
+    if not group:
+        return 0
+    if group is int:
+        return group
+    data = groupdb.group_data(system_context, group)
+    assert data is not None
+    return data.gid
 
 
 def chown(system_context, user, group, *files):
     """Change ownership of a file in the system filesystem."""
-    return _chown(system_context, user, group,
+    uid = _get_uid(user)
+    gid = _get_gid(group)
+
+    return _chown(system_context, uid, gid,
                   *expand_files(system_context, *files))
 
 
-def create_file(system_context, file, contents, force=False, mode=0o644):
+def create_file(system_context, file, contents, force=False, mode=0o644,
+                user=0, group=0):
     """Create a new file with the given contents."""
     full_path = file_name(system_context, file)
 
@@ -152,6 +174,7 @@ def create_file(system_context, file, contents, force=False, mode=0o644):
         f.write(contents)
 
     os.chmod(full_path, mode)
+    _chown(_get_uid(user), _get_gid(group), full_path)
 
 
 def append_file(system_context, file, contents):
