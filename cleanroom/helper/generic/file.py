@@ -161,6 +161,13 @@ def chown(system_context, user, group, *files):
                   *expand_files(system_context, *files))
 
 
+def read_file(system_context, file, outside=False):
+    """Read the contents of a file."""
+    if not outside:
+        file = system_context.file_name(file)
+    with open(file, 'rb') as f:
+        return f.read()
+
 def create_file(system_context, file, contents, force=False, mode=0o644,
                 user=0, group=0):
     """Create a new file with the given contents."""
@@ -198,9 +205,9 @@ def prepend_file(system_context, file, contents):
                                'it.'.format(full_path))
 
     with open(full_path, 'r+b') as f:
-        content = f.read()
+        existing_contents = f.read()
         f.seek(0, 0)
-        f.write(contents + content)
+        f.write(contents + existing_contents)
 
 
 def _file_op(system_context, op, description, *args,

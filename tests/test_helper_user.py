@@ -29,7 +29,8 @@ def passwd_file(tmpdir):
 
 @pytest.mark.parametrize(('user_name', 'expected_data'), [
     pytest.param('root', {'name': 'root', 'password': 'x', 'uid': 0, 'gid': 0,
-                          'comment': '', 'home': '/root', 'shell': '/bin/bash'},
+                          'comment': '', 'home': '/root',
+                          'shell': '/bin/bash'},
                  id='root'),
     pytest.param('bin', {'name': 'bin', 'password': 'x', 'uid': 1, 'gid': 1,
                          'comment': '', 'home': '/', 'shell': '/sbin/nologin'},
