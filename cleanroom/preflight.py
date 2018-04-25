@@ -23,7 +23,8 @@ def _find_binaries(ctx):
         context.Binaries.BTRFS: _check_for_binary('/usr/bin/btrfs'),
         context.Binaries.PACMAN: _check_for_binary('/usr/bin/pacman'),
         context.Binaries.PACMAN_KEY: _check_for_binary('/usr/bin/pacman-key'),
-        context.Binaries.PACSTRAP: _check_for_binary('/usr/bin/pacstrap')
+        context.Binaries.PACSTRAP: _check_for_binary('/usr/bin/pacstrap'),
+        context.Binaries.SBSIGN: _check_for_binary('/usr/bin/sbsign'),
         })
 
 
