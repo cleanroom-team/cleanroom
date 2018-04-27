@@ -25,6 +25,7 @@ def _find_binaries(ctx):
         context.Binaries.PACMAN_KEY: _check_for_binary('/usr/bin/pacman-key'),
         context.Binaries.PACSTRAP: _check_for_binary('/usr/bin/pacstrap'),
         context.Binaries.SBSIGN: _check_for_binary('/usr/bin/sbsign'),
+        context.Binaries.OBJCOPY: _check_for_binary('/usr/bin/objcopy')
         })
 
 

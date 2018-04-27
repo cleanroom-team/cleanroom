@@ -35,6 +35,7 @@ class _SetupCommand(cmd.Command):
         btrfs.create_subvolume(system_context,
                                system_context.ctx.current_system_directory())
         os.makedirs(system_context.fs_directory())
+        os.makedirs(system_context.boot_data_directory())
         os.makedirs(system_context.meta_directory())
 
     def _setup_var_lib_machines(self, location, system_context):

@@ -22,6 +22,7 @@ class Binaries(Enum):
     PACMAN_KEY = auto()
     PACSTRAP = auto()
     SBSIGN = auto()
+    OBJCOPY = auto()
 
 
 class Context:

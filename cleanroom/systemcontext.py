@@ -81,6 +81,10 @@ class SystemContext:
         """Location of the systems filesystem root."""
         return os.path.join(self.ctx.current_system_directory(), 'fs')
 
+    def boot_data_directory(self):
+        """Location of the systems filesystem root."""
+        return os.path.join(self.ctx.current_system_directory(), 'boot')
+
     def meta_directory(self):
         """Location of the systems meta-data directory."""
         return os.path.join(self.ctx.current_system_directory(), 'meta')

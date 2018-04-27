@@ -33,7 +33,38 @@ class SetupReadonlyUsrCommand(cmd.Command):
                                'remove', '/usr/lib/systemd-generators/'
                                'systemd-system-update_generator')
 
-        # # Remove unnecessary systemd-timers:
+        # Remove unnecessary tmpfiles.d:
+        system_context.execute(location,
+                               'remove', '/usr/lib/tmpfiles.d/man-db.conf')
+
+        # Remove arch.conf tmpfiles.d:
+        system_context.execute(location,
+                               'remove', '/usr/share/factory/etc/crypttab',
+                               '/usr/share/factory/etc/fstab',
+                               '/usr/share/factory/etc/group',
+                               '/usr/share/factory/etc/gshadow',
+                               '/usr/share/factory/etc/host.conf',
+                               '/usr/share/factory/etc/hosts',
+                               '/usr/share/factory/etc/issue',
+                               '/usr/share/factory/etc/ld.so.conf',
+                               '/usr/share/factory/etc/motd',
+                               '/usr/share/factory/etc/nsswitch.conf',
+                               '/usr/share/factory/etc/passwd',
+                               '/usr/share/factory/etc/profile',
+                               '/usr/share/factory/etc/securetty',
+                               '/usr/share/factory/etc/shadow',
+                               '/usr/share/factory/etc/shells',
+                               '/usr/lib/tmpfiles.d/arch.conf')
+
+        # Remove firstboot:
+        system_context.execute(location, 'remove',
+                               '/usr/lib/systemd/system/sysinit.target.wants/'
+                               'systemd-firstboot.service',
+                               '/usr/lib/systemd/system/'
+                               'systemd-firstboot.service',
+                               '/usr/bin/systemd-firstboot')
+
+        # Remove unnecessary systemd-timers:
         system_context.execute(location, 'remove',
                                '/usr/lib/systemd/system/timers.target.wants/'
                                'shadow.timer')
@@ -48,6 +79,11 @@ class SetupReadonlyUsrCommand(cmd.Command):
                                'systemd-hwdb-update.service')
 
         # Things to update/clean on export:
+        location.next_line_offset('Remove kernel-install')
+        system_context.add_hook(location, 'export',
+                                'remove', '/usr/lib/kernel', '/etc/kernel',
+                                '/usr/bin/kernel-install',
+                                recursive=True, force=True)
         location.next_line_offset('Run ldconfig')
         system_context.add_hook(location, 'export',
                                 'run', '/usr/bin/ldconfig', '-X')
@@ -61,3 +97,9 @@ class SetupReadonlyUsrCommand(cmd.Command):
         location.next_line_offset('Remove HWDB data')
         system_context.add_hook(location, 'export',
                                 'remove', '/usr/bin/systemd-hwdb')
+
+        # Shell cleanup:
+        location.next_line_offset('Clear ZSH files')
+        system_context.add_hook(location, '_teardown', 'run',
+                                'test', '-x', '/usr/bin/zsh',
+                                '&&', 'rm', '-rf', '/usr/share/zsh', shell=True)
