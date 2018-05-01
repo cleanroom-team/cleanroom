@@ -46,6 +46,9 @@ def _parse_commandline(arguments):
     parser.add_argument('--clear-work-directory', dest='clear_work_directory',
                         action='store_true',
                         help='Clear the work directory before proceeding.')
+    parser.add_argument('--clear-storage', dest='clear_storage',
+                        action='store_true',
+                        help='Clear the storage before proceeding.')
     parser.add_argument('--keep-temporary-data', dest='keep_temporary_data',
                         action='store_true',
                         help='Keep temporary data in work directory.')
@@ -94,8 +97,9 @@ def main(*args):
     systems_directory = args.systems_directory \
         if args.systems_directory else os.getcwd()
 
-    with workdir.WorkDir(ctx,
-                         work_directory=args.work_directory) as work_directory:
+    with workdir.WorkDir(ctx, work_directory=args.work_directory,
+                         clear_work_directory=args.clear_work_directory,
+                         clear_storage=args.clear_storage) as work_directory:
         ctx.set_directories(systems_directory, work_directory)
 
         # Find commands:

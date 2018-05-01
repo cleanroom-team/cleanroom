@@ -17,14 +17,14 @@ class RestoreCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('_restore', syntax='<STATIC> [pretty=<PRETTY>]',
-                         help='Set the hostname of the system.')
+                         help='Set the hostname of the system.',
+                         file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         self._validate_arguments_exact(location, 1,
                                        '"{}" needs a base system to restore.',
                                        *args, **kwargs)
-        return None
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

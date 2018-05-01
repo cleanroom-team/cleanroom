@@ -11,6 +11,7 @@ import cleanroom.printer as printer
 from . import group as groupdb
 from . import user as userdb
 
+import distutils.dir_util
 import glob
 import os
 import os.path
@@ -22,16 +23,19 @@ def file_name(system_context, f):
     if not os.path.isabs(f):
         raise ex.GenerateError('File path "{}" is not absolute.'.format(f))
 
-    root_path = os.path.realpath(system_context.fs_directory())
-    if root_path.endswith('/'):
-        root_path = root_path[:-1]
+    full_path = os.path.normpath(f)
+    if system_context is not None:
+        root_path = '/'
 
-    full_path = os.path.normpath(root_path + f)
+        root_path = os.path.realpath(system_context.fs_directory())
+        full_path = os.path.normpath(os.path.join(root_path, f[1:]))
+
+        if full_path != root_path and not full_path.startswith(root_path + '/'):
+            raise ex.GenerateError('File path "{}" is outside of "{}"'
+                                   .format(full_path, root_path))
+
     printer.trace('Mapped file path "{}" to "{}".'.format(f, full_path))
 
-    if full_path != root_path and not full_path.startswith(root_path + '/'):
-        raise ex.GenerateError('File path "{}" is outside of "{}"'
-                               .format(full_path, root_path))
     return full_path
 
 
@@ -41,9 +45,9 @@ def expand_files(system_context, *files):
     Prepend system directory to files iff the system_context is given.
     Expand glob patterns.
     """
-    to_iterate = files
-    if system_context is not None:
-        to_iterate = map(lambda f: file_name(system_context, f), files)
+    to_iterate = map(lambda f: os.path.join(os.getcwd(), f), files) \
+        if system_context is None \
+        else map(lambda f: file_name(system_context, f), files)
 
     for pattern in to_iterate:
         for match in glob.iglob(pattern):
@@ -52,6 +56,7 @@ def expand_files(system_context, *files):
 
 def _check_file(system_context, f, op, description, base_directory=None):
     """Run op on a file f."""
+    old_base_directory = os.getcwd()
     if base_directory is not None:
         base_directory = file_name(system_context, base_directory)
         os.chdir(base_directory)
@@ -68,6 +73,8 @@ def _check_file(system_context, f, op, description, base_directory=None):
     else:
         printer.trace('{}: {} (relative to {}) = {}'
                       .format(description, to_test, base_directory, result))
+
+    os.chdir(old_base_directory)
     return result
 
 
@@ -97,17 +104,22 @@ def symlink(system_context, source, destination, base_directory=None):
     if os.path.isabs(destination):
         destination = file_name(system_context, destination)
 
+    if os.path.isdir(destination):
+        destination = os.path.join(destination, os.path.basename(source))
+
     printer.trace('Symlinking "{}"->"{}".'.format(source, destination))
     os.symlink(source, destination)
 
 
-def makedirs(system_context, *dirs, user=0, group=0, mode=None):
+def makedirs(system_context, *dirs, user=0, group=0, mode=None, force=False):
     """Make directories in the system filesystem."""
     for d in dirs:
         full_path = file_name(system_context, d)
-        if os.makedirs(full_path):
+        if os.makedirs(full_path, exist_ok=force):
             _chmod(system_context, mode, full_path)
-        _chown(system_context, _get_uid(user), _get_gid(group), full_path)
+        _chown(system_context,
+               _get_uid(system_context, user),
+               _get_gid(system_context, group), full_path)
 
 
 def _chmod(system_context, mode, *files):
@@ -133,12 +145,13 @@ def _chown(system_context, uid, gid, *files):
 
 
 def _get_uid(system_context, user):
-    if not user:
+    if user is None:
         return 0
     if user is int:
         return user
     data = userdb.user_data(system_context, user)
-    assert data is not None
+    if data is None:  # No user file was found!
+        return 0
     return data.uid
 
 
@@ -148,16 +161,16 @@ def _get_gid(system_context, group):
     if group is int:
         return group
     data = groupdb.group_data(system_context, group)
-    assert data is not None
+    if data is None:  # No group file was found!
+        return 0
     return data.gid
 
 
 def chown(system_context, user, group, *files):
     """Change ownership of a file in the system filesystem."""
-    uid = _get_uid(user)
-    gid = _get_gid(group)
-
-    return _chown(system_context, uid, gid,
+    return _chown(system_context,
+                  _get_uid(system_context, user),
+                  _get_gid(system_context, group),
                   *expand_files(system_context, *files))
 
 
@@ -167,6 +180,7 @@ def read_file(system_context, file, outside=False):
         file = system_context.file_name(file)
     with open(file, 'rb') as f:
         return f.read()
+
 
 def create_file(system_context, file, contents, force=False, mode=0o644,
                 user=0, group=0):
@@ -181,14 +195,15 @@ def create_file(system_context, file, contents, force=False, mode=0o644,
         f.write(contents)
 
     os.chmod(full_path, mode)
-    _chown(_get_uid(user), _get_gid(group), full_path)
+    _chown(_get_uid(system_context, user), _get_gid(system_context, group),
+           full_path)
 
 
-def append_file(system_context, file, contents):
+def append_file(system_context, file, contents, *, force=False):
     """Append contents to an existing file."""
     full_path = file_name(system_context, file)
 
-    if not os.path.exists(full_path):
+    if not os.path.exists(full_path) and not force:
         raise ex.GenerateError('"{}" does not exist when trying to append to '
                                'it.'.format(full_path))
 
@@ -212,18 +227,21 @@ def prepend_file(system_context, file, contents):
 
 def _file_op(system_context, op, description, *args,
              to_outside=False, from_outside=False, ignore_missing_sources=True,
-             **kwargs):
+             recursive=False, **kwargs):
     assert(not to_outside or not from_outside)
     sources = args[:-1]
     destination = args[-1]
 
-    if from_outside:
-        sources = tuple(expand_files(None, *sources))
-    else:
-        sources = tuple(expand_files(system_context, *sources))
+    force = False
 
-    if not to_outside:
-        destination = file_name(system_context, destination)
+    if 'force' in kwargs:
+        force = kwargs['force']
+        del kwargs['force']
+
+    sources = tuple(expand_files(None if from_outside else system_context,
+                                 *sources))
+    destination = file_name(None if to_outside else system_context,
+                            destination)
 
     if ignore_missing_sources and not sources:
         return
@@ -231,14 +249,39 @@ def _file_op(system_context, op, description, *args,
     assert(sources)
 
     printer.trace(description.format('", "'.join(sources), destination))
+    print(description.format('", "'.join(sources), destination))
     for source in sources:
-        op(source, destination, **kwargs)
+        s = os.path.normpath(source)
+        d = os.path.normpath(destination)
+        assert not os.path.isfile(d) or force
+        if os.path.isdir(d):
+            d = os.path.join(d, os.path.basename(s))
+
+        assert s != d
+        op(s, d, **kwargs)
 
 
-def copy(system_context, *args, **kwargs):
+def _copy_op(source, destination, **kwargs):
+    shutil.copyfile(source, destination, **kwargs)
+
+
+def _recursive_copy_op(source, destination, **kwargs):
+    if os.path.isdir(source):
+        assert os.path.isdir(destination) or not os.path.exists(destination)
+        distutils.dir_util.copy_tree(source, destination)
+    else:
+        assert not os.path.isdir(destination)
+        assert not os.path.exists(destination)
+        shutil.copyfile(source, destination, **kwargs)
+
+
+def copy(system_context, *args, recursive=False, **kwargs):
     """Copy files."""
-    return _file_op(system_context, shutil.copyfile, 'Copying "{}" to "{}".',
-                    *args, **kwargs)
+    if recursive:
+        return _file_op(system_context, _recursive_copy_op,
+                        'Copying "{}" to "{}" (recursive).', *args, **kwargs)
+    return _file_op(system_context, _copy_op,
+                    'Copying "{}" to "{}".', *args, **kwargs)
 
 
 def move(system_context, *args, **kwargs):

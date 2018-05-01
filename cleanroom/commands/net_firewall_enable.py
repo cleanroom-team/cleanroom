@@ -15,13 +15,13 @@ class NetFirewallEnableCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('net_firewall_enable',
-                         help='Enable previously configured firewall.')
+                         help='Enable previously configured firewall.',
+                         file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        return self._validate_no_arguments(location, *args, **kwargs)
+        self._validate_no_arguments(location, *args, **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-
         fw.enable_firewall(location, system_context)

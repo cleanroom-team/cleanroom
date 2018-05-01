@@ -22,7 +22,7 @@ class BasedOnCommand(cmd.Command):
                          'system. Use "scratch" to start from a '
                          'blank slate.\n\n'
                          'Note: This command needs to be the first in the '
-                         'system definition file!')
+                         'system definition file!', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""

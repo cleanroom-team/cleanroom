@@ -18,14 +18,13 @@ class SetLocalesCommand(cmd.Command):
         """Constructor."""
         super().__init__('set_locales',
                          syntax='<LOCALE> [<MORE_LOCALES>] [charmap=UTF-8]',
-                         help='Set the system locales.')
+                         help='Set the system locales.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         self._validate_args_at_least(location, 1,
                                      '"{}" needs at least one locale.', *args)
         self._validate_kwargs(location, ('charmap',), **kwargs)
-        return None
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

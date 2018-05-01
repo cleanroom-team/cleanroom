@@ -14,11 +14,12 @@ class SetupReadonlyUsrCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('setup_readonly_usr',
-                         help='Set up system for a read-only /usr partition.')
+                         help='Set up system for a read-only /usr partition.',
+                         file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        return self._validate_no_arguments(location, *args, **kwargs)
+        self._validate_no_arguments(location, *args, **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
@@ -102,4 +103,5 @@ class SetupReadonlyUsrCommand(cmd.Command):
         location.next_line_offset('Clear ZSH files')
         system_context.add_hook(location, '_teardown', 'run',
                                 'test', '-x', '/usr/bin/zsh',
-                                '&&', 'rm', '-rf', '/usr/share/zsh', shell=True)
+                                '&&', 'rm', '-rf', '/usr/share/zsh',
+                                shell=True, exit_code=None)

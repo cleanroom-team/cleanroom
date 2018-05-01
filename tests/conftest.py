@@ -43,6 +43,37 @@ def system_context(tmpdir, global_context):
     return sys_ctx
 
 
+def _create_file(fs, file_name, contents=None):
+    if contents is None:
+        contents = file_name.encode('utf-8')
+    with open(os.path.join(fs, file_name[1:]), 'wb') as f:
+        f.write(contents)
+
+
+@pytest.fixture()
+def populated_system_context(system_context):
+    """Generate a fs tree in a system_context fs_directory."""
+    fs = system_context.fs_directory()
+    sys = system_context.ctx.systems_directory()
+
+    os.makedirs(os.path.join(fs, 'usr/bin'))
+    os.makedirs(os.path.join(fs, 'usr/lib'))
+    os.makedirs(os.path.join(fs, 'etc'))
+    os.makedirs(os.path.join(fs, 'home/test'))
+
+    _create_file(fs, '/usr/bin/ls')
+    _create_file(fs, '/usr/bin/grep')
+    _create_file(fs, '/usr/lib/libz')
+    _create_file(fs, '/etc/passwd')
+    _create_file(fs, '/home/test/example.txt')
+
+    os.makedirs(os.path.join(sys, 'data/subdata'))
+    _create_file(sys, '/data/test.txt')
+    _create_file(sys, '/data/subdata/subtest.txt')
+
+    return system_context
+
+
 class DummyCommand(cleanroom.command.Command):
     """Dummy command implementation."""
 
@@ -71,9 +102,11 @@ def _create_and_setup_parser(global_ctx):
     cleanroom.parser.Parser.find_commands(global_ctx.commands_directory())
     result = cleanroom.parser.Parser()
     cleanroom.parser.Parser._commands['_setup'] \
-        = (DummyCommand('_setup', help='placeholder'), '<placeholder>')
+        = (DummyCommand('_setup', help='placeholder', file=__file__),
+           '<placeholder>')
     cleanroom.parser.Parser._commands['_teardown'] \
-        = (DummyCommand('_teardown', help='placeholder'), '<placeholder>')
+        = (DummyCommand('_teardown', help='placeholder', file=__file__),
+           '<placeholder>')
 
     # inject for easier testing:
     result.parse_and_verify_lines \

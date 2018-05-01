@@ -13,12 +13,12 @@ class PkgAvahiCommand(cmd.Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('pkg_avahi',
-                         help='Setup MDNS using avahi.')
+        super().__init__('pkg_avahi', help='Setup MDNS using avahi.',
+                         file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        return self._validate_no_arguments(location, *args, **kwargs)
+        self._validate_no_arguments(location, *args, **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
@@ -27,8 +27,8 @@ class PkgAvahiCommand(cmd.Command):
         # Do setup:
         # Fix missing symlink:
         system_context.execute(location, 'symlink',
-                               'dbus-org.freedesktop.Avahi.service',
                                'avahi-daemon.service',
+                               'dbus-org.freedesktop.Avahi.service',
                                base_directory='/usr/lib/systemd/system')
 
         # enable the daemon (actually set up socket activation)
@@ -43,9 +43,4 @@ class PkgAvahiCommand(cmd.Command):
         system_context.execute(location, 'sed',
                                '/^hosts\\s*:/ '
                                's/resolve/mdns_minimal [NOTFOUND=return] '
-                               'resolve', '/etc/nsswitch.conf')
-
-        # Create missing symlink:
-        system_context.execute(location, 'symlink',
-                               'dbus-org.freedesktop.Avahi.service',
-                               'avahi-daemon.service')
+                               'resolve/', '/etc/nsswitch.conf')

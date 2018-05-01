@@ -16,16 +16,16 @@ class MkdirCommand(cmd.Command):
         """Constructor."""
         super().__init__('mkdir',
                          syntax='<DIRNAME>+ [user=uid] [group=gid] '
-                         '[mode=0o755]',
-                         help='Create a new directory.')
+                         '[mode=0o755] [force=False]',
+                         help='Create a new directory.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         self._validate_args_at_least(location, 1,
                                      '"{}" needs at least one directory '
                                      'to create.', *args)
-        self._validate_kwargs(location, ('user', 'group', 'mode'), **kwargs)
-        return None
+        self._validate_kwargs(location, ('user', 'group', 'mode', 'force'),
+                              **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

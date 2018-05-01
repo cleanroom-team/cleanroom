@@ -6,6 +6,7 @@
 
 
 import collections
+import os.path
 
 
 Group = collections.namedtuple('Group', ['name', 'password', 'gid', 'members'])
@@ -28,6 +29,9 @@ def groupadd(system_context, group_name, *, gid=-1, force=False, system=False):
 
 
 def _group_data(group_file, name):
+    if not os.path.exists(group_file):
+        return None
+
     with open(group_file, 'r') as group:
         for line in group:
             if line.endswith('\n'):
@@ -41,7 +45,7 @@ def _group_data(group_file, name):
                 else:
                     current_group[3] = list(current_group[3].split(','))
                 return Group(*current_group)
-    return None
+    return Group('nobody', 'x', 65534, [])
 
 
 def group_data(system_context, name):

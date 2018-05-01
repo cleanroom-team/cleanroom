@@ -22,7 +22,7 @@ class DummyCommand(cleanroom.command.Command):
 
     def __init__(self, name):
         """Constructor."""
-        super().__init__(name, help='test')
+        super().__init__(name, help='test', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Accept all arguments."""

@@ -17,8 +17,9 @@ class MoveCommand(cmd.Command):
         """Constructor."""
         super().__init__('move', syntax='<SOURCE> [<SOURCE>] <DEST> '
                          ' [ignore_missing_sources=False]'
-                         ' [from_outside=False] [to_outside=False]',
-                         help='Move file or directory.')
+                         ' [from_outside=False] [to_outside=False] '
+                         '[force=False]',
+                         help='Move file or directory.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
@@ -26,13 +27,12 @@ class MoveCommand(cmd.Command):
                                      '"{}" needs at least one '
                                      'source and a destination.', *args)
         self._validate_kwargs(location, ('from_outside', 'to_outside',
-                                         'ignore_missing_sources'),
+                                         'ignore_missing_sources', 'force'),
                               **kwargs)
         if kwargs.get('from_outside', False) \
            and kwargs.get('to_outside', False):
             raise ex.ParseError('You can not move a file from_outside '
                                 'to_outside.', location=location)
-        return None
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

@@ -21,10 +21,11 @@ class _TestCommand(cmd.Command):
                          help='Implicitly run to test images.\n\n'
                          'Note: Will run all executable files in the '
                          '"test" subdirectory of the systems directory and '
-                         'will pass the system name as first argument.')
+                         'will pass the system name as first argument.',
+                         file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
-        return self._validate_no_arguments(location, *args, **kwargs)
+        self._validate_no_arguments(location, *args, **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

@@ -6,6 +6,7 @@
 
 
 import collections
+import os.path
 
 
 User = collections.namedtuple('User', ['name', 'password', 'uid', 'gid',
@@ -100,6 +101,9 @@ def usermod(system_context, user_name, *, comment='', home='', gid=-1, uid=-1,
 
 
 def _user_data(passwd_file, name):
+    if not os.path.isfile(passwd_file):
+        return None
+
     with open(passwd_file, 'r') as passwd:
         for line in passwd:
             if line.endswith('\n'):
@@ -109,7 +113,7 @@ def _user_data(passwd_file, name):
                 current_user[2] = int(current_user[2])
                 current_user[3] = int(current_user[3])
                 return User(*current_user)
-    return None
+    return User('nobody', 'x', 65534, 65534, 'Nobody', '/', '/sbin/nologin')
 
 
 def user_data(system_context, name):

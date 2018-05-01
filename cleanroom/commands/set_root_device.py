@@ -17,7 +17,8 @@ class SetRootDeviceCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('set_root_device', syntax='<DEVICE>',
-                         help='Set the device of the root partition.')
+                         help='Set the device of the root partition.',
+                         file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
@@ -25,14 +26,14 @@ class SetRootDeviceCommand(cmd.Command):
                                        *args, **kwargs)
 
         device = args[0]
-        if not device.startswith('/dev/' and not device.startswith('/sys/')):
-            raise ex.ParseError(location, '"{}": Root device "{}" does not '
-                                'start with /dev/ or /sys/.'
-                                .format(self.nam(), device))
+        if not device.startswith('/dev/') and not device.startswith('/sys/'):
+            raise ex.ParseError('"{}": Root device "{}" does not start with /dev/ or /sys/.'
+                                .format(self.nam(), device),
+                                location=location)
 
     def _write_file(self, system_context, file_name, contents):
         with open(os.path.join(system_context.boot_data_directory(),
-                               file_name)) as f:
+                               file_name), 'wb') as f:
             f.write(contents.encode('utf-8'))
 
     def __call__(self, location, system_context, *args, **kwargs):
@@ -41,15 +42,18 @@ class SetRootDeviceCommand(cmd.Command):
 
         root_device_key = 'ROOT_DEVICE'
 
-        if system_context.substitution(root_device_key) is None:
-            raise ex.GenerateError(location,
-                                   '"{}" root device is already set.')
+        dev = system_context.substitution(root_device_key)
+        if dev is not None:
+            raise ex.GenerateError('"{}" root device is already set to "{}".'
+                                   .format(self.name(), dev),
+                                   location=location)
 
         system_context.set_substitution(root_device_key, device)
         self._write_file(system_context, 'root_device', root_device_key)
 
+        if ' ' in device:
+            device = '"{}"'.format(device)
+
         cmdline = system_context.substitution('KERNEL_CMDLINE', '')
-        cmdline = '.'.join(cmdline, 'quiet', 'system.volatile=true',
-                           'rootfstype=squashfs', 'root={}'.format(device),
-                           'rootflags=ro')
+        cmdline = ' '.join((cmdline, 'root={}'.format(device), 'rootflags=ro'))
         system_context.set_substitution('KERNEL_CMDLINE', cmdline)

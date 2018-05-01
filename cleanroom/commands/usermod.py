@@ -20,7 +20,7 @@ class UsermodCommand(cmd.Command):
                          '[groups=<GROUP1>,<GROUP2>] [lock=False] '
                          '[password=<CRYPTED_PASSWORD>] [shell=<PATH>] '
                          '[expire=<EXPIRE_DATE>], [append=False]',
-                         help='Modify an existing user.')
+                         help='Modify an existing user.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
@@ -42,8 +42,6 @@ class UsermodCommand(cmd.Command):
         if append and kwargs.get('groups', '') == '':
             raise ex.ParseError('"append" needs "groups" to be set, too.',
                                 location=location)
-
-        return None
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

@@ -188,7 +188,9 @@ class SystemContext:
         cmd = parser.Parser.command(command)
         dependency = cmd.validate_arguments(location, *args, **kwargs)
         assert(expected_dependency == dependency)
+        printer.trace('{}: Argument validation complete.'.format(command))
         location.next_line_offset(command)
+        printer.trace('{}: Execute...'.format(command))
         cmd(location, self, *args, **kwargs)
 
     # Store/Restore a system:

@@ -17,7 +17,7 @@ class NetFirewallOpenPortCommand(cmd.Command):
         """Constructor."""
         super().__init__('net_firewall_open_port',
                          syntax='<PORT> [protocol=(tcp|udp)] [comment=<TEXT>]',
-                         help='Open a port in the firewall.')
+                         help='Open a port in the firewall.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
@@ -30,7 +30,6 @@ class NetFirewallOpenPortCommand(cmd.Command):
             raise ex.ParseError('"{}" only supports protocols "tcp" and "udp".'
                                 .format(self.name()),
                                 location=location)
-        return None
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

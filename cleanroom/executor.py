@@ -43,7 +43,7 @@ class Executor:
 
     def _execute(self, location, system_context, exec_object):
         """Execute the command."""
-        printer.debug('Executing "{}".'.format(exec_object))
+        printer.trace('Executing "{}".'.format(exec_object))
 
         try:
             system_context.execute(
@@ -52,8 +52,8 @@ class Executor:
                 expected_dependency=exec_object.dependency(),
                 **exec_object.kwargs())
         except ex.CleanRoomError as e:
-            printer.fail('{}: Failed to execute: {}.'
-                         .format(self, e), verbosity=1)
+            printer.fail('Failed to execute: {}.'.format(e),
+                         verbosity=1)
             if not system_context.ctx.ignore_errors:
                 raise
         else:

@@ -23,6 +23,8 @@ class Binaries(Enum):
     PACSTRAP = auto()
     SBSIGN = auto()
     OBJCOPY = auto()
+    MKSQUASHFS = auto()
+    VERITYSETUP = auto()
 
 
 class Context:
@@ -70,11 +72,11 @@ class Context:
         printer.verbose('Context: systems directory = "{}".'
                         .format(self._systems_directory))
 
-        printer.info('Context: work directory   = "{}".'
+        printer.info('Context: work directory    = "{}".'
                      .format(self._work_directory))
-        printer.info('Context: custom cleanroom = "{}".'
+        printer.info('Context: custom cleanroom  = "{}".'
                      .format(self.systems_cleanroom_directory()))
-        printer.info('Context: custom commands  = "{}".'
+        printer.info('Context: custom commands   = "{}".'
                      .format(self.systems_commands_directory()))
 
         printer.success('Setting up directories.', verbosity=3)
@@ -91,6 +93,11 @@ class Context:
     def current_system_directory_from_work_directory(work_directory):
         """Get the current system directory based on the work_directory."""
         return os.path.join(work_directory, 'current')
+
+    @staticmethod
+    def current_export_directory_from_work_directory(work_directory):
+        """Get the current system directory based on the work_directory."""
+        return os.path.join(work_directory, 'export')
 
     def current_system_directory(self):
         """Get the current system directory."""

@@ -10,20 +10,30 @@ from.
 
 import cleanroom.exceptions as ex
 
+import os
+import os.path
+
 
 class Command:
     """A command that can be used in to set up machines."""
 
-    def __init__(self, name, *, syntax='', help):
+    def __init__(self, name, *, syntax='', help, file):
         """Constructor."""
         assert(name)
         self._name = name
         self._syntax_string = syntax
         self._help_string = help
+        self._base_directory = os.path.dirname(os.path.realpath(file))
 
     def name(self):
         """Return the command name."""
         return self._name
+
+    def helper_directory(self):
+        """Return the helper directory."""
+        full_path = os.path.join(self._base_directory, 'helper', self.name())
+        if os.path.isdir(full_path):
+            return full_path
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate all arguments.
@@ -34,24 +44,24 @@ class Command:
         print('Command "{}"" called validate_arguments illegally!'
               .format(self.name()))
         assert(False)
-        return None
 
     def _validate_no_arguments(self, location, *args, **kwargs):
-        return self._validate_arguments_exact(location, 0,
-                                              '"{}"" does not take arguments.',
-                                              *args, **kwargs)
+        self._validate_no_args(location, *args)
+        self._validate_kwargs(location, (), **kwargs)
 
     def _validate_arguments_exact(self, location, arg_count, message,
                                   *args, **kwargs):
         self._validate_args_exact(location, arg_count, message, *args)
         self._validate_kwargs(location, (), **kwargs)
-        return None
 
     def _validate_arguments_at_least(self, location, arg_count, message,
                                      *args, **kwargs):
         self._validate_args_at_least(location, arg_count, message, *args)
         self._validate_kwargs(location, (), **kwargs)
-        return None
+
+    def _validate_no_args(self, location, *args):
+        self._validate_args_exact(location, 0,
+                                  '"{}"" does not take arguments.', *args)
 
     def _validate_args_exact(self, location, arg_count, message, *args):
         if len(args) != arg_count:

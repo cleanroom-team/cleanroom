@@ -25,19 +25,29 @@ class ExportCommand(cmd.Command):
         printer.debug('Running Hooks.')
         self._run_hooks(system_context)
 
-        printer.debug('Validating installation for export.')
+        printer.trace('Preparing system for export.')
+        self.prepare_for_export(location, system_context)
+
+        printer.trace('Validating installation for export.')
         self._validate_installation(location, system_context)
 
-        export_directory = self.create_export_directory(system_context)
+        export_directory \
+            = self.create_export_directory(location, system_context)
         system_context.set_substitution('EXPORT_DIRECTORY', export_directory)
 
-        printer.debug('Exporting all data in {}.'.format(export_directory))
+        printer.trace('Exporting all data in {}.'.format(export_directory))
         self._export(location, system_context, export_directory)
 
-        printer.debug('Cleaning up export location.')
+        printer.trace('Cleaning up export location.')
         self.delete_export_directory(system_context, export_directory)
 
-    def create_export_directory(self, system_context):
+    def prepare_for_export(self, location, system_context):
+        """Prepare the current system for export.
+
+        Called before the actual export directory is created."""
+        pass
+
+    def create_export_directory(self, location, system_context):
         """Override to put all data to export into export_directory.
 
         Must return the directory to actually export.

@@ -20,7 +20,8 @@ class PacstrapCommand(cmd.Command):
         """Constructor."""
         super().__init__('pacstrap', syntax='<PACKAGES> config=<CONFIG_FILE>',
                          help='Run pacstrap to install <PACKAGES>.\n'
-                         'Hooks: Will runs _setup hooks after pacstrapping.')
+                         'Hooks: Will runs _setup hooks after pacstrapping.',
+                         file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
@@ -29,7 +30,6 @@ class PacstrapCommand(cmd.Command):
                                      'or group to install.', *args)
         self._validate_kwargs(location, ('config',), **kwargs)
         self._require_kwargs(location, ('config',), **kwargs)
-        return None
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
@@ -43,7 +43,7 @@ class PacstrapCommand(cmd.Command):
                                os.path.join(
                                    system_context.ctx.systems_directory(),
                                    pacstrap_config),
-                               '/etc/pacman.conf', from_outside=True)
+                               '/etc/pacman.conf', from_outside=True, force=True)
 
         # Make sure DB is up-to-date:
         system_context.run('/usr/bin/pacman-db-upgrade')
@@ -53,15 +53,15 @@ class PacstrapCommand(cmd.Command):
 
         system_context.set_substitution('PACKAGE_TYPE', 'pacman')
 
-        system_context.execute(location, 'move', '/opt', '/usr')
-        system_context.execute(location, 'symlink', 'usr/opt', 'opt',
-                               base_directory='/')
-
         system_context.run_hooks('_setup')
 
         # Make sure pacman DB is up-to-date:
         system_context.run('/usr/bin/pacman', '-Sy')
         system_context.run('/usr/bin/pacman', '-Fy')
+
+        system_context.add_hook(location, 'export', 'move', '/opt', '/usr')
+        system_context.add_hook(location, 'export', 'symlink',
+                                'usr/opt', 'opt', base_directory='/')
 
     def _prepare_keyring(self, system_context, location, pacstrap_config):
         # Make sure important pacman directories exist:

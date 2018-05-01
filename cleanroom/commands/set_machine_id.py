@@ -17,7 +17,8 @@ class SetMachineIdCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('set_machine_id', syntax='<ID>',
-                         help='Set the machine id of the system.')
+                         help='Set the machine id of the system.',
+                         file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
@@ -31,7 +32,6 @@ class SetMachineIdCommand(cmd.Command):
         if not id_pattern.match(id):
             raise ex.ParseError('"{}" is not a valid machine-id.'.format(id),
                                 location=location)
-        return None
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

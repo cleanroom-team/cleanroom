@@ -20,7 +20,7 @@ class UseraddCommand(cmd.Command):
                          '[gid=<GID>] [uid=<UID>] [groups=<GROUP1>,<GROUP2>] '
                          '[lock=False] [password=<CRYPTED_PASSWORD>] '
                          '[shell=<PATH>] [expire=<EXPIRE_DATE>]',
-                         help='Modify an existing user.')
+                         help='Modify an existing user.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
@@ -33,8 +33,6 @@ class UseraddCommand(cmd.Command):
         if lock not in (True, None, False):
             raise ex.ParseError('"lock" must be either True, False or None.',
                                 location=location)
-
-        return None
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

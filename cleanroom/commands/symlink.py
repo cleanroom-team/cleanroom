@@ -16,14 +16,13 @@ class SymlinkCommand(cmd.Command):
         """Constructor."""
         super().__init__('symlink',
                          syntax='<SOURCE> <TARGET> [base_directory=BASE]',
-                         help='Create a symlink.')
+                         help='Create a symlink.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         self._validate_args_exact(location, 2,
                                   '"{}" needs a source and a target.', *args)
         self._validate_kwargs(location, ('base_directory',), **kwargs)
-        return None
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

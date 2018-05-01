@@ -46,7 +46,16 @@ def test_user_data(passwd_file, user_name, expected_data):
     assert result._asdict() == expected_data
 
 
+def test_missing_user_data_file(passwd_file):
+    """Test reading a unknown user name from /etc/passwd-like file."""
+    result = user._user_data(passwd_file + 'FOO', 'root')
+    assert result is None
+
+
 def test_missing_user_data(passwd_file):
     """Test reading a unknown user name from /etc/passwd-like file."""
     result = user._user_data(passwd_file, 'unknownUser')
-    assert result is None
+    assert result._asdict() == {'name': 'nobody', 'password': 'x',
+                                'uid': 65534, 'gid': 65534,
+                                'comment': 'Nobody', 'home': '/',
+                                'shell': '/sbin/nologin'}

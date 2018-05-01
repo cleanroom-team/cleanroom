@@ -19,7 +19,9 @@ import tempfile
 class WorkDir:
     """Parse a container.conf file."""
 
-    def __init__(self, ctx, *, work_directory=None, clear_existing=True):
+    def __init__(self, ctx, *, work_directory=None,
+                 clear_work_directory=False,
+                 clear_storage=False):
         """Constructor."""
         self._path = work_directory
         self._temp_directory = None
@@ -36,9 +38,10 @@ class WorkDir:
                     raise ex.PrepareError('Failed to unmount mount in '
                                           'work directory "{}".'
                                           .format(work_directory))
-                if clear_existing:
+                if clear_work_directory:
                     _clear_work_directory(ctx, work_directory)
-
+                if clear_storage:
+                    _clear_storage(ctx, work_directory)
         else:
             printer.trace('Creating temporary work directory.')
             self._temp_directory = tempfile.TemporaryDirectory(prefix='clrm-',
@@ -89,9 +92,14 @@ def _delete_subvolume(ctx, dir):
 
 def _clear_work_directory(ctx, work_directory):
     _delete_subvolume(ctx, context.Context
+                      .current_export_directory_from_work_directory(
+                          work_directory))
+    _delete_subvolume(ctx, context.Context
                       .current_system_directory_from_work_directory(
                           work_directory))
 
+
+def _clear_storage(ctx, work_directory):
     storage_directory \
         = context.Context.storage_directory_from_work_directory(
             work_directory)

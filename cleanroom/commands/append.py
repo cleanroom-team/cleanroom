@@ -15,13 +15,14 @@ class AppendCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('append', syntax='<FILENAME> <CONTENTS>',
-                         help='Append contents to file.')
+                         help='Append contents to file.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        return self._validate_arguments_exact(location, 2,
-                                              '"{}" needs a file and contents '
-                                              'to append to it.', *args)
+        self._validate_arguments_exact(location, 2,
+                                       '"{}" needs a file and contents '
+                                       'to append to it.', *args)
+        self._validate_kwargs(location, ('force'), **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

@@ -96,11 +96,17 @@ def _sync_host(system_context, config):
         outside=True)
 
 
-def pacman(system_context, *packages):
+def pacman(system_context, *packages, remove=False):
     """Use pacman to install packages."""
     assert(_package_type(system_context) == 'pacman')
 
     printer.info('Installing {}'.format(', '.join(packages)))
-    system_context.run(
-        system_context.ctx.binary(context.Binaries.PACMAN),
-        '-S', '--noconfirm', '--needed', *packages)
+
+    if remove:
+        system_context.run(
+            system_context.ctx.binary(context.Binaries.PACMAN),
+            '-Rs', '--noconfirm', *packages)
+    else:
+        system_context.run(
+            system_context.ctx.binary(context.Binaries.PACMAN),
+            '-S', '--noconfirm', '--needed', *packages)

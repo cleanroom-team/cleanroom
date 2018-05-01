@@ -6,6 +6,7 @@ clrm-*
 
 *.user*
 .vscode
+.idea
 
 .eggs/*
 systems/*

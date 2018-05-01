@@ -15,11 +15,11 @@ class NetFirewallConfigureCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('net_firewall_configure',
-                         help='Set up basic firewall.')
+                         help='Set up basic firewall.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        return self._validate_no_arguments(location, *args, **kwargs)
+        self._validate_no_arguments(location, *args, **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

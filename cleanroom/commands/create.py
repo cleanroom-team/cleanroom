@@ -16,7 +16,7 @@ class CreateCommand(cmd.Command):
         """Constructor."""
         super().__init__('create', syntax='<FILENAME> <CONTENTS> [force=True] '
                          '[mode=0o644] [user=UID/name] [group=GID/name]',
-                         help='Create a file with contents.')
+                         help='Create a file with contents.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
@@ -25,7 +25,6 @@ class CreateCommand(cmd.Command):
                                   'to store in the file.', *args)
         self._validate_kwargs(location, ('force', 'mode', 'user', 'group'),
                               **kwargs)
-        return None
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

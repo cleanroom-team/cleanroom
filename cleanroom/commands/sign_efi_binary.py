@@ -7,9 +7,9 @@
 
 import cleanroom.command as cmd
 import cleanroom.context as ctx
-import cleanroom.helper.generic.file as file
 
 import os
+import os.path
 
 
 class SignEfiBinaryCommand(cmd.Command):
@@ -19,30 +19,30 @@ class SignEfiBinaryCommand(cmd.Command):
         """Constructor."""
         super().__init__('sign_efi_binary',
                          syntax='<FILE> [key=<KEY>] [cert=<CERT>]',
-                         help='Sign <FILE> using <KEY> and <CERT>.')
+                         help='Sign <FILE> using <KEY> and <CERT>.',
+                         file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         self._validate_args_exact(location, 1, '"{}" needs a file to sign.',
                                   *args)
-        return self._validate_kwargs(location, ('key', 'cert'), **kwargs)
+        self._validate_kwargs(location, ('key', 'cert'), **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        input = args[0]
-        output = file + '.signed'
+        input = system_context.file_name(args[0])
+        output = input + '.signed'
         key = kwargs.get('key', 'keys/efi_sign.key')
         cert = kwargs.get('cert', 'keys/efi_sign.crt')
 
-        assert os.exists(key)
-        assert os.exists(cert)
-        assert os.exists(input)
-        assert not os.exists(output)
+        assert os.path.isfile(key)
+        assert os.path.isfile(cert)
+        assert os.path.isfile(input)
+        assert not os.path.exists(output)
 
-        system_context.run(location,
-                           system_context.ctx.binary(ctx.Binaries.SBSIGN),
+        system_context.run(system_context.ctx.binary(ctx.Binaries.SBSIGN),
                            '--key', key, '--cert', cert, '--output', output,
-                           input)
+                           input, outside=True)
 
-        os.move(output, input)
-        os.chmod(0o755, input)
+        system_context.execute(location, 'move', output, input)
+        system_context.execute(location, 'chmod', 0o755, input)

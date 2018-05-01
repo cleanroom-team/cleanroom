@@ -16,7 +16,7 @@ class RemoveCommand(cmd.Command):
         """Constructor."""
         super().__init__('remove',
                          syntax='<FILE_LIST> [force=True] [recursive=True]',
-                         help='remove files within the system.')
+                         help='remove files within the system.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
@@ -24,7 +24,6 @@ class RemoveCommand(cmd.Command):
                                      '"{}" needs at least one file or '
                                      'directory to remove.', *args)
         self._validate_kwargs(location, ('force', 'recursive'), **kwargs)
-        return None
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

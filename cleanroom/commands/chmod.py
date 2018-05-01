@@ -15,14 +15,13 @@ class ChmodCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('chmod', syntax='<MODE> <FILE>+',
-                         help='Chmod a file or files.')
+                         help='Chmod a file or files.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        return self._validate_arguments_at_least(location, 2,
-                                                 '"{}" takes a moda and one '
-                                                 'or more files.',
-                                                 *args, **kwargs)
+        self._validate_arguments_at_least(location, 2,
+                                          '"{}" takes a moda and one '
+                                          'or more files.', *args, **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

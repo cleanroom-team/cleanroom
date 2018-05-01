@@ -118,7 +118,6 @@ class Parser:
             if path in checked_dirs:
                 continue
             checked_dirs.append(path)
-            printer.trace('Checking "{}" for command files.'.format(path))
             if not os.path.isdir(path):
                 continue  # skip non-existing directories
 
@@ -127,7 +126,6 @@ class Parser:
                     continue
 
                 f_path = os.path.join(path, f)
-                printer.trace('Found file: {}'.format(f_path))
 
                 cmd = f[:-3]
                 name = 'cleanroom.commands.' + cmd
@@ -217,7 +215,6 @@ class Parser:
                                     .format(state._to_process),
                                     location=state.current_location())
 
-            printer.info('  <EOL> ({}).'.format(state))
             state.next_line()
 
         if not state.is_token_complete():
@@ -233,21 +230,16 @@ class Parser:
 
     def _parse_single_line(self, state):
         """Parse a single line."""
-        printer.info('Parsing line ({}).'.format(state))
-
         exec_object = None
 
         if state.is_token_complete() and not state.is_command_continuation():
             exec_object = state.create_execute_object()
             state.record_command_start()
-            printer.trace('  Part of a new command ({}).'.format(state))
             state = self._extract_command(state)
         else:
             if state.is_token_complete():
                 state._to_process = state._to_process[state._indent_depth:]
-                printer.trace('  Continuation of command ({}).'.format(state))
             else:
-                printer.trace('  Continuation of argument ({}).'.format(state))
                 state = self._extract_multiline_argument(state)
 
         return (self._extract_arguments(state), exec_object)
@@ -258,12 +250,6 @@ class Parser:
         line = input.lstrip()
         if line == '\n' or line == '' or line.startswith('#'):
             line = ''
-
-        # Only report if there are changes:
-        if input != line:
-            printer.trace('      Stripped WS and comments ({}).'
-                          .format(line.replace('\n', '\\n')
-                                  .replace('\t', '\\t')))
 
         return line
 
@@ -296,8 +282,6 @@ class Parser:
         state._args = (self._validate_command(state, command),)
         state._to_process = line[pos:]
 
-        printer.trace('      Command found: {}.'.format(state))
-
         return state
 
     def _extract_arguments(self, state):
@@ -324,7 +308,6 @@ class Parser:
         return state
 
     def _validate_command(self, state, command):
-        printer.trace('      Validating command "{}".'.format(command))
         if not command:
             raise ex.ParseError('Empty command found.',
                                 location=state.start_location())
@@ -336,8 +319,6 @@ class Parser:
         if command not in Parser._commands:
             raise ex.ParseError('Command "{}" not found.'.format(command),
                                 location=state.start_location())
-
-        printer.info('    Command is "{}".'.format(command))
 
         return command
 
@@ -357,7 +338,8 @@ class Parser:
         if is_keyword:
             key = section
             if not self._command_pattern.match(key):
-                raise ex.ParseError('Keyword "{}" is not valid.'.format(key))
+                raise ex.ParseError('Keyword "{}" is not valid.'.format(key),
+                                    location=location)
 
             (has_part, section, is_keyword, to_process, token) \
                 = self._parse_argument_part(location, to_process, token,
@@ -440,8 +422,6 @@ class Parser:
                 state._key_for_value = ''
             else:
                 state._args = (*state._args, value)
-
-        printer.trace('      Extracting multiline ({}).'.format(state))
 
         return state
 

@@ -18,7 +18,7 @@ class RunCommand(cmd.Command):
                          '[shell=False] [exit_code=0] [stdout=None] '
                          '[stderr=None]',
                          help='Run a command inside/outside of the '
-                         'current system.')
+                         'current system.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
@@ -28,7 +28,6 @@ class RunCommand(cmd.Command):
         self._validate_kwargs(location, ('exit_code', 'outside', 'shell',
                                          'stderr', 'stdout'),
                               **kwargs)
-        return None
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

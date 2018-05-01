@@ -19,18 +19,19 @@ class RegisterContainerCommand(cmd.Command):
                          'description=<DESC> extra_args=<ARG>(,<ARG>)* '
                          'timeout=3m after=<SYSTEM>(,<SYSTEM>)* '
                          'requires=<SYSTEM>(,<SYSTEM>)*',
-                         help='Register a container with a system.')
+                         help='Register a container with a system.',
+                         file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        self._validate_exact_args(location, 1, '"{}" needs a system to '
+        self._validate_args_exact(location, 1, '"{}" needs a system to '
                                   'install as a container.', *args)
         self._validate_kwargs(location, ('description', 'extra_args', 'after',
                                          'requires', 'timeout'),
                               **kwargs)
-        return self._require_kwargs(location, ('description'), **kwargs)
+        self._require_kwargs(location, ('description',), **kwargs)
 
-    def _nspawnify(systems):
+    def _nspawnify(*systems):
         result = ' '.join(map(lambda a: 'systemd-nspawn@{}.service'.format(a),
                               systems))
         if result:
@@ -53,7 +54,7 @@ class RegisterContainerCommand(cmd.Command):
         updater_script = os.path.join(bin_directory,
                                       'update-all-containers.sh')
 
-        if not file.exists(updater_script):
+        if not file.exists(system_context, updater_script):
             system_context.execute(location, 'create', updater_script,
                                    '#!/usr/bin/bash\n')
         system_context.execute(location, 'append', updater_script,
@@ -63,7 +64,7 @@ class RegisterContainerCommand(cmd.Command):
         system_context.execute(location, 'mkdir', '{}/systemd-nspawn@{}.d'
                                .format(systemd_directory, system))
 
-        extra_args = '\n'.join(extra_args_input, ',')
+        extra_args = '\n'.join(extra_args_input.split(','))
         if extra_args:
             extra_args = '\n' + extra_args + '\n'
         after = self._nspawnify(after_input.split(','))
@@ -81,11 +82,9 @@ ExecStart=
 ExecStart=/usr/bin/systemd-nspawn --quiet --keep-unit --boot --ephemeral \
     --machine={system}{extra_args}
 '''.format(system=system, description=description, after=after,
-            requires=requires, extra_args=extra_args, timeout=timeout))
+           requires=requires, extra_args=extra_args, timeout=timeout))
 
         location.next_line_offset('Enabling container')
-        system_context.execute(location, 'mkdir', '{}/machines.target.wants'
-                               .format(systemd_directory))
         system_context.execute(location, 'symlink',
                                '../systemd-nspawn@.service',
                                'systemd-nspawn@{}.service'.format(system),

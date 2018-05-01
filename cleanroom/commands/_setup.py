@@ -19,10 +19,11 @@ class _SetupCommand(cmd.Command):
         """Constructor."""
         super().__init__('_setup',
                          help='Implicitly run before any '
-                         'other command of a system is run.')
+                         'other command of a system is run.',
+                         file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
-        return self._validate_no_arguments(location, *args, **kwargs)
+        self._validate_no_arguments(location, *args, **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

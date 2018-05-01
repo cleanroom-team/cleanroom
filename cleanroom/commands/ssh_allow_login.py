@@ -22,13 +22,13 @@ class SshAllowLoginCommand(cmd.Command):
         super().__init__('ssh_allow_login', syntax='<USER> <PUBLIC_KEYFILE> '
                          'optins=<OPTIONS>',
                          help='Authorize <PUBLIC_KEYFILE> to log in '
-                         'as <USER>.')
+                         'as <USER>.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         self._validate_args_exact(location, 2, '"{}" needs a user and '
                                   'a public keyfile.', *args)
-        return self._validate_kwargs(location, ('options'), **kwargs)
+        self._validate_kwargs(location, ('options'), **kwargs)
 
     def _check_or_create_directory(self, location, system_context, dir,
                                    **kwargs):
@@ -36,9 +36,10 @@ class SshAllowLoginCommand(cmd.Command):
             system_context.execute(location, 'mkdir', dir, **kwargs)
             return
         if not file.isdir(system_context, dir):
-            raise ex.GenerateError(location, '"{}" needs directory "{}", but '
+            raise ex.GenerateError('"{}" needs directory "{}", but '
                                    'that exists and is not a directory.'
-                                   .format(self.name(), dir))
+                                   .format(self.name(), dir),
+                                   location=location)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
@@ -47,8 +48,9 @@ class SshAllowLoginCommand(cmd.Command):
 
         user_data = userdb.user_data(system_context, user)
         if user_data is None:
-            raise ex.GenerateError(location, '"{}" could not find user "{}".'
-                                   .format(self.name(), user))
+            raise ex.GenerateError('"{}" could not find user "{}".'
+                                   .format(self.name(), user),
+                                   location=location)
 
         self._check_or_create_directory(location, system_context,
                                         user_data.home,
@@ -60,7 +62,8 @@ class SshAllowLoginCommand(cmd.Command):
                                         mode=0o600, user=user_data.uid,
                                         group=user_data.gid)
 
-        key = file.read_file(system_context, keyfile, outside=True)
+        key = file.read_file(system_context, keyfile,
+                             outside=True).decode('utf-8')
 
         authorized_file = os.path.join(ssh_directory, 'authorized_keys')
         line = ''
@@ -72,7 +75,8 @@ class SshAllowLoginCommand(cmd.Command):
         else:
             line += key + '\n'
 
-        system_context.execute(location, 'append', authorized_file, line)
+        system_context.execute(location, 'append', authorized_file, line,
+                               force=True)
         file.chown(system_context, user_data.uid, user_data.gid,
                    authorized_file)
         file.chmod(system_context, 0o644, authorized_file)

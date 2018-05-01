@@ -44,7 +44,14 @@ def test_group_data(group_file, group_name, expected_data):
     assert result._asdict() == expected_data
 
 
+def test_missing_group_data_file(group_file):
+    """Test reading from an unknown /etc/passwd-like file."""
+    result = group._group_data(group_file + 'FOO', 'root')
+    assert result is None
+
+
 def test_missing_group_data(group_file):
     """Test reading a unknown user name from /etc/passwd-like file."""
     result = group._group_data(group_file, 'unknownGroup')
-    assert result is None
+    assert result._asdict() == {'name': 'nobody', 'password': 'x',
+                                'gid': 65534, 'members': []}

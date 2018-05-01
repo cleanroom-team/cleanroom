@@ -15,13 +15,13 @@ class ExportDirectoryCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('_export_directory', syntax='<DIRECTORY>',
-                         help='Export a directory from cleanroom.')
+                         help='Export a directory from cleanroom.',
+                         file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         self._validate_arguments_exact(location, 1, '"{}" needs a directory '
                                        'to export_directory.', *args, **kwargs)
-        return None
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

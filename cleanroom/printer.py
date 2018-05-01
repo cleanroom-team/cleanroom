@@ -99,9 +99,7 @@ class Printer:
 
     def __init__(self, verbosity=0):
         """Constructor."""
-        self._verbose = verbosity
-
-        self._prefix = '      ' if verbosity > 0 else ''
+        self.set_verbosity(verbosity)
 
         self._ansi_reset = _ansify('\033[0m')
         self._h_prefix = _ansify('\033[1;31m')
@@ -123,6 +121,7 @@ class Printer:
     def set_verbosity(self, verbosity):
         """Set the verbosity."""
         self._verbose = verbosity
+        self._prefix = '      ' if verbosity > 0 else ''
 
     def _print(self, *args):
         print(*args)

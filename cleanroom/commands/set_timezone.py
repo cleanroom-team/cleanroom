@@ -6,6 +6,7 @@
 
 
 import cleanroom.command as cmd
+import cleanroom.exceptions as ex
 import cleanroom.helper.generic.file as file
 
 
@@ -15,13 +16,14 @@ class SetTimezoneCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('set_timezone', syntax='<TIMEZONE>',
-                         help='Set up the timezone for a system.')
+                         help='Set up the timezone for a system.',
+                         file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        return self._validate_arguments_exact(location, 1,
-                                              '"{}" needs a timezone to '
-                                              'set up.', *args, **kwargs)
+        self._validate_arguments_exact(location, 1,
+                                       '"{}" needs a timezone to set up.',
+                                       *args, **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

@@ -41,8 +41,6 @@ class DependencyNode:
             if cn.find(system):
                 return cn
 
-        return None
-
     def walk(self):
         """Walk the nodes in pre-order."""
         yield(self)
@@ -169,8 +167,11 @@ class Generator:
                     = systemcontext.SystemContext(self._ctx,
                                                   system=system,
                                                   timestamp=timestamp)
-                exe = executor.Executor()
-                exe.run(system_context, system, command_list)
+                if os.path.isdir(system_context.storage_directory()):
+                    printer.verbose('Taking from storage.')
+                else:
+                    exe = executor.Executor()
+                    exe.run(system_context, system, command_list)
             except AssertionError as e:
                 printer.fail('Generation of "{}" asserted.'
                              .format(system,), force_exit=False,

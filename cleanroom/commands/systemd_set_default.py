@@ -16,13 +16,14 @@ class SystemdSetDefaultCommand(cmd.Command):
     def __init__(self):
         """Constructor."""
         super().__init__('systemd_set_default', syntax='<TARGET>',
-                         help='Set the systemd target to boot into.')
+                         help='Set the systemd target to boot into.',
+                         file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        return self._validate_arguments_exact(location, 1,
-                                              '"{}" needs a target name.',
-                                              *args, **kwargs)
+        self._validate_arguments_exact(location, 1,
+                                       '"{}" needs a target name.',
+                                       *args, **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
