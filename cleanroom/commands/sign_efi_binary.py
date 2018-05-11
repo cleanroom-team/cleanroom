@@ -7,9 +7,11 @@
 
 import cleanroom.command as cmd
 import cleanroom.context as ctx
+import cleanroom.printer as printer
 
 import os
 import os.path
+import shutil
 
 
 class SignEfiBinaryCommand(cmd.Command):
@@ -30,19 +32,25 @@ class SignEfiBinaryCommand(cmd.Command):
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        input = system_context.file_name(args[0])
+        input = args[0]
         output = input + '.signed'
-        key = kwargs.get('key', 'keys/efi_sign.key')
-        cert = kwargs.get('cert', 'keys/efi_sign.crt')
+        key = os.path.join(system_context.ctx.systems_directory(),
+                           kwargs.get('key', 'config/efi/sign.key'))
+        cert = os.path.join(system_context.ctx.systems_directory(),
+                            kwargs.get('cert', 'config/efi/sign.crt'))
 
+        printer.trace('key   : {}.'.format(key))
         assert os.path.isfile(key)
+        printer.trace('cert  : {}.'.format(cert))
         assert os.path.isfile(cert)
+        printer.trace('input : {}.'.format(input))
         assert os.path.isfile(input)
+        printer.trace('output: {}.'.format(output))
         assert not os.path.exists(output)
 
         system_context.run(system_context.ctx.binary(ctx.Binaries.SBSIGN),
                            '--key', key, '--cert', cert, '--output', output,
                            input, outside=True)
 
-        system_context.execute(location, 'move', output, input)
-        system_context.execute(location, 'chmod', 0o755, input)
+        os.remove(input)
+        shutil.move(output, input)

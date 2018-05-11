@@ -36,4 +36,4 @@ class ExportDirectoryCommand(cmd.Command):
         system_context.run(borg, 'create', '--compression', 'zstd,22',
                            '--numeric-owner', '--noatime',
                            '{}::{}'.format(repository, backup_name),
-                           export_directory, outside=True)
+                           '.', outside=True, work_directory=export_directory)
