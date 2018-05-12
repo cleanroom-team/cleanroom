@@ -5,9 +5,10 @@
 """
 
 from cleanroom.generator.command import Command
-from cleanroom.generator.helper.generic.btrfs import delete_subvolume
+from cleanroom.generator.context import Binaries
 
-import cleanroom.printer as printer
+from cleanroom.helper.btrfs import delete_subvolume
+from cleanroom.printer import debug
 
 
 class _TeardownCommand(Command):
@@ -37,6 +38,6 @@ class _TeardownCommand(Command):
 
     def _clean_temporary_data(self, system_context):
         """Clean up temporary data."""
-        printer.debug('Removing {}.'
-                      .format(system_context.ctx.current_system_directory()))
-        delete_subvolume(system_context, system_context.ctx.current_system_directory())
+        debug('Removing {}.'.format(system_context.current_system_directory()))
+        delete_subvolume(system_context.current_system_directory(),
+                         command=system_context.binary(Binaries.BTRFS))

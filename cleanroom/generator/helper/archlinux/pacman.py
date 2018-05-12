@@ -68,7 +68,7 @@ def pacstrap(system_context, config, *packages):
     _sync_host(system_context, config)
 
     system_context.run(
-        system_context.ctx.binary(Binaries.PACSTRAP),
+        system_context.binary(Binaries.PACSTRAP),
         '-c',  # use cache on host
         '-d',  # No mount point
         '-M',  # Do not copy host mirrorlist
@@ -88,7 +88,7 @@ def _sync_host(system_context, config):
     """Run pacman -Syu on the host."""
     os.makedirs(host_db_directory(system_context))
     system_context.run(
-        system_context.ctx.binary(Binaries.PACMAN),
+        system_context.binary(Binaries.PACMAN),
         '-Syu', '--config', config,
         '--dbpath', host_db_directory(system_context),
         outside=True)
@@ -102,9 +102,9 @@ def pacman(system_context, *packages, remove=False):
 
     if remove:
         system_context.run(
-            system_context.ctx.binary(Binaries.PACMAN),
+            system_context.binary(Binaries.PACMAN),
             '-Rs', '--noconfirm', *packages)
     else:
         system_context.run(
-            system_context.ctx.binary(Binaries.PACMAN),
+            system_context.binary(Binaries.PACMAN),
             '-S', '--noconfirm', '--needed', *packages)

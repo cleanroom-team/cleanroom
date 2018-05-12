@@ -67,7 +67,7 @@ class PacstrapCommand(Command):
     def _prepare_keyring(self, system_context, location, pacstrap_config):
         # Make sure important pacman directories exist:
         makedirs(system_context, host_gpg_directory(system_context))
-        pacman_key = system_context.ctx.binary(Binaries.PACMAN_KEY)
+        pacman_key = system_context.binary(Binaries.PACMAN_KEY)
         systems_directory = system_context.ctx.systems_directory()
         system_context.run(pacman_key,
                            '--config', pacstrap_config,

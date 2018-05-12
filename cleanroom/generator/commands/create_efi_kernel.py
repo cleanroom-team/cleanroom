@@ -97,7 +97,7 @@ class CreateEfiKernelCommand(Command):
             initrd = self._create_initrd(tmp, *initrd_files)
             cmdline = self._create_cmdline_file(tmp, cmdline_input)
 
-            system_context.run(system_context.ctx.binary(Binaries.OBJCOPY),
+            system_context.run(system_context.binary(Binaries.OBJCOPY),
                                '--add-section',
                                '.osrel={}'.format(osrelease_file),
                                '--change-section-vma', '.osrel=0x20000',

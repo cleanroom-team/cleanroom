@@ -5,10 +5,10 @@
 """
 
 
-from .context import Context
-from .helper.generic.btrfs import (delete_subvolume, has_subvolume,)
+from .context import (Binaries, Context)
 
 from ..exceptions import PrepareError
+from ..helper.btrfs import (delete_subvolume, has_subvolume,)
 from ..helper.mount import (umount_all,)
 from ..printer import (trace,)
 
@@ -84,8 +84,8 @@ def _subdirectories(dir):
 
 
 def _delete_subvolume(ctx, dir):
-    if has_subvolume(ctx, dir):
-        delete_subvolume(ctx, dir)
+    if has_subvolume(dir, ctx.binary(Binaries.BTRFS)):
+        delete_subvolume(dir, ctx.binary(Binaries.BTRFS))
 
 
 def _clear_work_directory(ctx, work_directory):

@@ -6,10 +6,11 @@
 
 
 from cleanroom.generator.command import Command
-import cleanroom.generator.helper.generic.btrfs as btrfs
+from cleanroom.generator.context import Binaries
 from cleanroom.generator.systemcontext import SystemContext
 
-import cleanroom.printer as printer
+from cleanroom.helper.btrfs import (create_snapshot, delete_subvolume,)
+from cleanroom.printer import debug
 
 
 class RestoreCommand(Command):
@@ -30,7 +31,7 @@ class RestoreCommand(Command):
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
         base_system = args[0]
-        printer.debug('Restoring state from "{}".'.format(base_system))
+        debug('Restoring state from "{}".'.format(base_system))
         base_context = SystemContext(system_context.ctx, system=base_system)
 
         self._restore_base(system_context, base_context)
@@ -39,12 +40,12 @@ class RestoreCommand(Command):
         system_context.run_hooks('_setup')
 
     def _restore_base(self, system_context, base_context):
-        btrfs.delete_subvolume(system_context,
-                               system_context.ctx.current_system_directory())
-        btrfs.create_snapshot(system_context,
-                              base_context.storage_directory(),
-                              system_context.ctx.current_system_directory(),
-                              read_only=False)
+        delete_subvolume(system_context.current_system_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
+        create_snapshot(base_context.storage_directory(),
+                        system_context.current_system_directory(),
+                        read_only=False,
+                        command=system_context.binary(Binaries.BTRFS))
 
     def _update_base_context(self, system_context, base_context):
         base_unpickle = base_context.unpickle()

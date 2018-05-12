@@ -4,12 +4,12 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-from cleanroom.generator.context import Binaries
+from cleanroom.generator.context import (Binaries, Context,)
 from cleanroom.generator.exportcommand import ExportCommand
-from cleanroom.generator.helper.generic.btrfs import (create_subvolume, delete_subvolume)
 from cleanroom.generator.helper.generic.file import exists
 
 from cleanroom.exceptions import (GenerateError, ParseError)
+from cleanroom.helper.btrfs import (create_subvolume, delete_subvolume)
 from cleanroom.printer import verbose
 
 import os.path
@@ -109,7 +109,7 @@ class ExportSquashfsCommand(ExportCommand):
     def _create_squashfs(self, system_context, export_directory):
         squash_file = os.path.join(export_directory, 'root_{}'
                                    .format(system_context.timestamp))
-        mksquashfs = system_context.ctx.binary(Binaries.MKSQUASHFS)
+        mksquashfs = system_context.binary(Binaries.MKSQUASHFS)
         system_context.run(mksquashfs, 'usr', squash_file, '-comp',
                            'lz4', '-noappend', '-no-exports',
                            '-keep-as-directory', outside=True)
@@ -119,7 +119,7 @@ class ExportSquashfsCommand(ExportCommand):
     def _create_dmverity(self, system_context, export_directory, squashfs_file):
         verity_file = os.path.join(export_directory, 'root_{}_verity'
                                    .format(system_context.timestamp))
-        veritysetup = system_context.ctx.binary(Binaries.VERITYSETUP)
+        veritysetup = system_context.binary(Binaries.VERITYSETUP)
         result = system_context.run(veritysetup, 'format',
                                     squashfs_file, verity_file, outside=True)
 
@@ -177,9 +177,9 @@ class ExportSquashfsCommand(ExportCommand):
                             'rootfstype=squashfs'))
 
         export_volume \
-            = context.Context.current_export_directory_from_work_directory(
+            = Context.current_export_directory_from_work_directory(
                system_context.ctx.work_directory())
-        create_subvolume(system_context, export_volume)
+        create_subvolume(system_context, export_volume, command=Binaries.BTRFS)
 
         squashfs_file = self._create_squashfs(system_context, export_volume)
         (verity_file, verity_uuid, root_hash) \

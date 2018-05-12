@@ -49,7 +49,7 @@ class SignEfiBinaryCommand(Command):
         trace('output: {}.'.format(output))
         assert not os.path.exists(output)
 
-        system_context.run(system_context.ctx.binary(Binaries.SBSIGN),
+        system_context.run(system_context.binary(Binaries.SBSIGN),
                            '--key', key, '--cert', cert, '--output', output,
                            input, outside=True)
 

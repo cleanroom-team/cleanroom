@@ -74,6 +74,14 @@ class SystemContext:
         self.set_substitution('TIMESTAMP', ts)
         self.set_substitution('CLRM_BASES', ':'.join(self.bases))
 
+    def binary(self, selector):
+        """Forwarded to Context.binary."""
+        return self.ctx.binary(selector)
+
+    def current_system_directory(self):
+        """Forwarded to Context.current_system_directory."""
+        return self.ctx.current_system_directory()
+
     # Important Directories:
     def storage_directory(self):
         """Location to store system when finished building it."""
@@ -175,9 +183,6 @@ class SystemContext:
             kwargs['chroot'] = self.fs_directory()
 
         return run(*args, trace_output=trace, **kwargs)
-
-    def chroot(self, callable, *args, **kwargs):
-        callable(*args, chroot=self.fs_directory(), **kwargs)
 
     # execute cleanroom commands:
     def execute(self, location, command, *args,

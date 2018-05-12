@@ -30,7 +30,7 @@ class ExportDirectoryCommand(Command):
         if repository == '':
             return
 
-        borg = system_context.ctx.binary(Binaries.BORG)
+        borg = system_context.binary(Binaries.BORG)
         backup_name = system_context.system + '-' + system_context.timestamp
 
         system_context.run(borg, 'create', '--compression', 'zstd,22',

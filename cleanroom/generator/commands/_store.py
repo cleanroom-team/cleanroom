@@ -6,8 +6,9 @@
 
 
 from cleanroom.generator.command import Command
-from cleanroom.generator.helper.generic.btrfs import create_snapshot
+from cleanroom.generator.context import Binaries
 
+from cleanroom.helper.btrfs import create_snapshot
 import cleanroom.printer as printer
 
 
@@ -25,7 +26,8 @@ class StoreCommand(Command):
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
         printer.debug('Storing {} into {}.'
-                      .format(system_context.ctx.current_system_directory(),
+                      .format(system_context.current_system_directory(),
                               system_context.storage_directory()))
-        create_snapshot(system_context, system_context.ctx.current_system_directory(),
-                        system_context.storage_directory(), read_only=True)
+        create_snapshot(system_context.current_system_directory(),
+                        system_context.storage_directory(), read_only=True,
+                        command=system_context.binary(Binaries.BTRFS))

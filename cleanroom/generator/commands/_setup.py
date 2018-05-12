@@ -6,7 +6,9 @@
 
 
 from cleanroom.generator.command import Command
-from cleanroom.generator.helper.generic.btrfs import create_subvolume
+from cleanroom.generator.context import Binaries
+
+from cleanroom.helper.btrfs import create_subvolume
 
 import os
 import stat
@@ -33,7 +35,8 @@ class _SetupCommand(Command):
         self._setup_var_lib_machines(location, system_context)
 
     def _setup_current_system_directory(self, system_context):
-        create_subvolume(system_context, system_context.ctx.current_system_directory())
+        create_subvolume(system_context.current_system_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
         os.makedirs(system_context.fs_directory())
         os.makedirs(system_context.boot_data_directory())
         os.makedirs(system_context.meta_directory())
