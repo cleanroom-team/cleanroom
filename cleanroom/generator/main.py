@@ -7,7 +7,7 @@
 
 import cleanroom.context as context
 import cleanroom.exceptions as ex
-import cleanroom.generator as gen
+import cleanroom.generator.generator as gen
 import cleanroom.parser as parser
 import cleanroom.printer as printer
 import cleanroom.preflight as preflight
