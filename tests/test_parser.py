@@ -12,12 +12,12 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                 '..')))
 
-import cleanroom.command
+import cleanroom.generator.command as command
 import cleanroom.exceptions as ex
-import cleanroom.parser
+import cleanroom.generator.parser as parser
 
 
-class DummyCommand(cleanroom.command.Command):
+class DummyCommand(command.Command):
     """Dummy command implementation."""
 
     def __init__(self, name):
@@ -36,18 +36,14 @@ INVALID_CMD2 = '1test'
 
 
 def _setup_commands():
-    if CMD1 not in cleanroom.parser.Parser._commands:
-        cleanroom.parser.Parser._commands[CMD1] \
-            = (DummyCommand(CMD1), '<builtin>/1')
-    if CMD2 not in cleanroom.parser.Parser._commands:
-        cleanroom.parser.Parser._commands[CMD2] \
-            = (DummyCommand(CMD2), '<builtin>/2')
-    if INVALID_CMD1 not in cleanroom.parser.Parser._commands:
-        cleanroom.parser.Parser._commands[INVALID_CMD1] \
-            = (DummyCommand(INVALID_CMD1), '<builtin>/3')
-    if INVALID_CMD2 not in cleanroom.parser.Parser._commands:
-        cleanroom.parser.Parser._commands[INVALID_CMD2] \
-            = (DummyCommand(INVALID_CMD2), '<builtin>/4')
+    if CMD1 not in parser.Parser._commands:
+        parser.Parser._commands[CMD1] = (DummyCommand(CMD1), '<builtin>/1')
+    if CMD2 not in parser.Parser._commands:
+        parser.Parser._commands[CMD2] = (DummyCommand(CMD2), '<builtin>/2')
+    if INVALID_CMD1 not in parser.Parser._commands:
+        parser.Parser._commands[INVALID_CMD1] = (DummyCommand(INVALID_CMD1), '<builtin>/3')
+    if INVALID_CMD2 not in parser.Parser._commands:
+        parser.Parser._commands[INVALID_CMD2] = (DummyCommand(INVALID_CMD2), '<builtin>/4')
 
 
 @pytest.mark.parametrize(('test_input', 'expected'), [

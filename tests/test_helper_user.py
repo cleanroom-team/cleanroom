@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Test for the cleanroom.helper.generic.user
+"""Test for the cleanroom.generator.helper.generic.user
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
@@ -13,7 +13,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                 '..')))
 
-import cleanroom.helper.generic.user as user
+import cleanroom.generator.helper.generic.user as user
 
 
 @pytest.fixture()

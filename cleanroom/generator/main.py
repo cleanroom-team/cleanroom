@@ -5,13 +5,14 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-import cleanroom.context as context
-import cleanroom.exceptions as ex
-import cleanroom.generator.generator as gen
-import cleanroom.parser as parser
-import cleanroom.printer as printer
-import cleanroom.preflight as preflight
-import cleanroom.workdir as workdir
+from .context import Context
+from .generator import Generator
+from .parser import Parser
+from .preflight import preflight_check
+from .workdir import WorkDir
+
+from ..printer import (debug, fail, info, Printer, success, trace, verbose,)
+from ..exceptions import (GenerateError, PreflightError, PrepareError,)
 
 from argparse import ArgumentParser
 import os
@@ -81,15 +82,15 @@ def main(*args):
         sys.exit(2)
 
     # Set up printing:
-    pr = printer.Printer.Instance()
+    pr = Printer.Instance()
     pr.set_verbosity(args.verbose)
 
     _log_verbosity_level()
 
     # Set up global context object:
-    ctx = context.Context(export_repository=args.export_repository,
-                          ignore_errors=args.ignore_errors,
-                          keep_temporary_data=args.keep_temporary_data)
+    ctx = Context(export_repository=args.export_repository,
+                  ignore_errors=args.ignore_errors,
+                  keep_temporary_data=args.keep_temporary_data)
 
     # Run pre-flight checks:
     _preflight_check(ctx)
@@ -97,14 +98,14 @@ def main(*args):
     systems_directory = args.systems_directory \
         if args.systems_directory else os.getcwd()
 
-    with workdir.WorkDir(ctx, work_directory=args.work_directory,
-                         clear_work_directory=args.clear_work_directory,
-                         clear_storage=args.clear_storage) as work_directory:
+    with WorkDir(ctx, work_directory=args.work_directory,
+                 clear_work_directory=args.clear_work_directory,
+                 clear_storage=args.clear_storage) as work_directory:
         ctx.set_directories(systems_directory, work_directory)
 
         # Find commands:
-        parser.Parser.find_commands(ctx.systems_commands_directory(),
-                                    ctx.commands_directory())
+        Parser.find_commands(ctx.systems_commands_directory(),
+                             ctx.commands_directory())
 
         try:
             _generate(ctx, args.systems)
@@ -114,25 +115,25 @@ def main(*args):
 
 def _preflight_check(ctx):
     try:
-        preflight.preflight_check(ctx)
-    except ex.PreflightError:
-        printer.fail('Preflight Check failed', ignore=ctx.ignore_errors)
+        preflight_check(ctx)
+    except PreflightError:
+        fail('Preflight Check failed', ignore=ctx.ignore_errors)
         if not ctx.ignore_errors:
             raise
     else:
-        printer.success('Preflight Check passed', verbosity=2)
+        success('Preflight Check passed', verbosity=2)
 
 
 def _generate(ctx, systems):
-    generator = gen.Generator(ctx)
+    generator = Generator(ctx)
 
     try:
         generator.prepare()
-    except ex.PrepareError as e:
-        printer.fail('Preparation failed: {}'.format(e))
+    except PrepareError as e:
+        fail('Preparation failed: {}'.format(e))
         raise
     else:
-        printer.success('Preparation phase.', verbosity=2)
+        success('Preparation phase.', verbosity=2)
 
     for s in systems:
         if s.endswith('.def'):
@@ -141,15 +142,15 @@ def _generate(ctx, systems):
 
     try:
         generator.generate()
-    except ex.GenerateError as e:
-        printer.fail('Generation failed: {}'.format(e))
+    except GenerateError as e:
+        fail('Generation failed: {}'.format(e))
         raise
     else:
-        printer.success('Generation phase.', verbosity=2)
+        success('Generation phase.', verbosity=2)
 
 
 def _log_verbosity_level():
-    printer.verbose('Verbose output enabled.')
-    printer.info('Info output enabled.')
-    printer.debug('Debug output enabled.')
-    printer.trace('Trace output enabled.')
+    verbose('Verbose output enabled.')
+    info('Info output enabled.')
+    debug('Debug output enabled.')
+    trace('Trace output enabled.')

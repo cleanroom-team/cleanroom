@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                 '..')))
 
 import cleanroom.exceptions
-import cleanroom.helper.generic.file as filehelper
+import cleanroom.generator.helper.generic.file as filehelper
 
 
 @pytest.mark.parametrize(('input_file', 'result_file'), [

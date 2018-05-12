@@ -5,11 +5,12 @@
 """
 
 
-import cleanroom.exceptions as exceptions
-import cleanroom.executor as executor
-import cleanroom.parser as parser
-import cleanroom.printer as printer
-import cleanroom.systemcontext as systemcontext
+from .executor import Executor
+from .parser import Parser
+from .systemcontext import SystemContext
+
+from ..exceptions import SystemNotFoundError
+from ..printer import (debug, fail, h1, h2, success, trace)
 
 import datetime
 import os
@@ -73,19 +74,18 @@ class Generator:
         if not system:
             return None
 
-        printer.debug('Adding system "{}".'
-                      .format(system if system else "<NONE>"))
+        debug('Adding system "{}".'.format(system if system else "<NONE>"))
 
         node = self._find(system)
         if node:
-            printer.trace('Found system "{}" in system_forest.'.format(system))
+            trace('Found system "{}" in system_forest.'.format(system))
             return node
 
         system_file = self._find_system_definition_file(system)
         (base_system, command_list) \
             = self._parse_system_definition_file(system_file)
 
-        printer.trace('"{}" depends on "{}"'.format(system, base_system))
+        trace('"{}" depends on "{}"'.format(system, base_system))
         parent_node = self.add_system(base_system)
         node = DependencyNode(system, parent_node, command_list)
 
@@ -97,8 +97,8 @@ class Generator:
         return node
 
     def _parse_system_definition_file(self, system_file):
-        printer.trace('Parsing "{}".'.format(system_file))
-        system_parser = parser.Parser()
+        trace('Parsing "{}".'.format(system_file))
+        system_parser = Parser()
         command_list = []
         for command in system_parser.parse(system_file):
             command_list.append(command)
@@ -116,9 +116,8 @@ class Generator:
         system_file = os.path.join(self._ctx.systems_directory(),
                                    system + '.def')
         if not os.path.exists(system_file):
-            raise exceptions.SystemNotFoundError(
-                'Could not find systems file for {}, '
-                'checked in {}.'.format(system, system_file))
+            raise SystemNotFoundError('Could not find systems file for {}, checked in {}.'
+                                      .format(system, system_file))
 
         return system_file
 
@@ -134,12 +133,10 @@ class Generator:
     def _print_systems_forest(self):
         """Print the systems forest."""
         base_indent = "  "
-        printer.debug('Systems forest ({} trees):'
-                      .format(len(self._systems_forest)))
+        debug('Systems forest ({} trees):'.format(len(self._systems_forest)))
         for node in self._walk_systems_forest():
-            printer.debug('  {}{} ({} children)'
-                          .format(base_indent * node.depth(), node.system,
-                                  len(node.children)))
+            debug('  {}{} ({} children)'.format(base_indent * node.depth(),
+                                                node.system, len(node.children)))
 
     def _walk_systems_forest(self):
         for root_node in self._systems_forest:
@@ -148,7 +145,7 @@ class Generator:
 
     def prepare(self):
         """Prepare for generation."""
-        printer.h2('Preparing for system generation')
+        h2('Preparing for system generation')
         if not os.path.exists(self._ctx.storage_directory()):
             os.makedirs(self._ctx.storage_directory())
 
@@ -161,28 +158,24 @@ class Generator:
             system = node.system
             command_list = node.command_list
 
-            printer.h1('Generate "{}"'.format(system))
+            h1('Generate "{}"'.format(system))
             try:
-                system_context \
-                    = systemcontext.SystemContext(self._ctx,
-                                                  system=system,
-                                                  timestamp=timestamp)
+                system_context = SystemContext(self._ctx, system=system,
+                                               timestamp=timestamp)
                 if os.path.isdir(system_context.storage_directory()):
-                    printer.verbose('Taking from storage.')
+                    verbose('Taking from storage.')
                 else:
-                    exe = executor.Executor()
+                    exe = Executor()
                     exe.run(system_context, system, command_list)
             except AssertionError as e:
-                printer.fail('Generation of "{}" asserted.'
-                             .format(system,), force_exit=False,
-                             ignore=self._ctx.ignore_errors)
+                fail('Generation of "{}" asserted.'.format(system,),
+                     force_exit=False, ignore=self._ctx.ignore_errors)
                 if not self._ctx.ignore_errors:
                     raise
             except Exception as e:
-                printer.fail('Generation of "{}" failed: {}.'
-                             .format(system, e), force_exit=False,
-                             ignore=self._ctx.ignore_errors)
+                fail('Generation of "{}" failed: {}.'.format(system, e),
+                     force_exit=False, ignore=self._ctx.ignore_errors)
                 if not self._ctx.ignore_errors:
                     raise
             else:
-                printer.success('Generation of "{}" complete.'.format(system))
+                success('Generation of "{}" complete.'.format(system))

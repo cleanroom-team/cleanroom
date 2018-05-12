@@ -13,17 +13,18 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                 '..')))
 
-import cleanroom.command
-import cleanroom.context
-import cleanroom.parser
+from cleanroom.generator.command import Command
+from cleanroom.generator.context import Context
+from cleanroom.generator.parser import Parser
+from cleanroom.generator.systemcontext import SystemContext
+
 import cleanroom.printer
-import cleanroom.systemcontext
 
 
 @pytest.fixture()
 def global_context():
     """Generate a global context object."""
-    return cleanroom.context.Context()
+    return Context()
 
 
 @pytest.fixture()
@@ -33,10 +34,7 @@ def system_context(tmpdir, global_context):
     work_dir = tmpdir.mkdir('work')
 
     global_context.set_directories(str(system_dir), str(work_dir))
-    sys_ctx \
-        = cleanroom.systemcontext.SystemContext(global_context,
-                                                system='test-system',
-                                                timestamp='now')
+    sys_ctx = SystemContext(global_context, system='test-system', timestamp='now')
     assert(os.path.join(str(work_dir), 'current/fs')
            == sys_ctx.fs_directory())
 
@@ -74,7 +72,7 @@ def populated_system_context(system_context):
     return system_context
 
 
-class DummyCommand(cleanroom.command.Command):
+class DummyCommand(Command):
     """Dummy command implementation."""
 
     pass
@@ -99,14 +97,12 @@ def _parse_and_verify_lines(parser, data, expected):
 def _create_and_setup_parser(global_ctx):
     """Set up method."""
     cleanroom.printer.Printer.Instance()
-    cleanroom.parser.Parser.find_commands(global_ctx.commands_directory())
-    result = cleanroom.parser.Parser()
-    cleanroom.parser.Parser._commands['_setup'] \
-        = (DummyCommand('_setup', help='placeholder', file=__file__),
-           '<placeholder>')
-    cleanroom.parser.Parser._commands['_teardown'] \
-        = (DummyCommand('_teardown', help='placeholder', file=__file__),
-           '<placeholder>')
+    Parser.find_commands(global_ctx.commands_directory())
+    result = Parser()
+    Parser._commands['_setup'] = (DummyCommand('_setup', help='placeholder',
+                                               file=__file__), '<placeholder>')
+    Parser._commands['_teardown'] = (DummyCommand('_teardown', help='placeholder',
+                                                  file=__file__), '<placeholder>')
 
     # inject for easier testing:
     result.parse_and_verify_lines \

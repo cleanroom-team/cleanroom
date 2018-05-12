@@ -12,7 +12,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                 '..')))
 
-import cleanroom.commands.systemd_cleanup as systemd_cleanup
+import cleanroom.generator.commands.systemd_cleanup as systemd_cleanup
 
 
 @pytest.mark.parametrize(('test_input', 'expected'), [
