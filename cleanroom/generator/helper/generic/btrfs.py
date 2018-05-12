@@ -8,49 +8,30 @@
 from cleanroom.generator.context import Binaries
 from cleanroom.generator.systemcontext import SystemContext
 
-from cleanroom.helper.run import run
-from cleanroom.printer import trace
+import cleanroom.helper.btrfs as btrfs
 
 
-def _find_ctx(ctx):
+def _binary(ctx):
     if isinstance(ctx, SystemContext):
-        return ctx.ctx
-    return ctx
+        return ctx.ctx.binary(Binaries.BTRFS)
+    return ctx.binary(Binaries.BTRFS)
 
 
 def create_subvolume(ctx, name):
     """Create a new subvolume."""
-    ctx = _find_ctx(ctx)
-
-    run(ctx.binary(Binaries.BTRFS), 'subvolume', 'create',
-        name, trace_output=trace)
+    return btrfs.create_subvolume(name, command=_binary(ctx))
 
 
 def create_snapshot(ctx, source, dest, *, read_only=False):
     """Create a new snapshot."""
-    ctx = _find_ctx(ctx)
-
-    extra_args = ()
-    if read_only:
-        extra_args = (*extra_args, '-r')
-
-    run(ctx.binary(Binaries.BTRFS), 'subvolume', 'snapshot',
-        *extra_args, source, dest, trace_output=trace)
+    return btrfs.create_snapshot(source, dest, read_only=False, command=_binary(ctx))
 
 
 def delete_subvolume(ctx, name):
     """Delete a subvolume."""
-    ctx = _find_ctx(ctx)
-
-    run(ctx.binary(Binaries.BTRFS), 'subvolume', 'delete',
-        name, trace_output=trace)
+    return btrfs.delete_subvolume(name, command=_binary(ctx))
 
 
 def has_subvolume(ctx, name):
     """Check whether a subdirectory is a subvolume or snapshot."""
-    ctx = _find_ctx(ctx)
-
-    result = run(ctx.binary(Binaries.BTRFS),
-                 'subvolume', 'show', name,
-                 exit_code=None, trace_output=trace)
-    return result.returncode == 0
+    return btrfs.has_subvolume(name, command=_binary(ctx))
