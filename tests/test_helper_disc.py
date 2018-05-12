@@ -12,7 +12,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                 '..')))
 
-import cleanroom.generator.helper.generic.disc as disc
+import cleanroom.helper.disc as disc
 
 
 @pytest.mark.parametrize(('input', 'output'), [
