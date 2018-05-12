@@ -5,7 +5,7 @@
 """
 
 
-from cleanroom.helper.generic.run import run
+from cleanroom.helper.run import run
 
 import re
 

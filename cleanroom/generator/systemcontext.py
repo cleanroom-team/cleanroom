@@ -6,12 +6,13 @@
 
 
 from .command import Command
-from .helper.generic.run import run
 from .helper.generic.file import (expand_files, file_name)
 from .parser import Parser
 
 from ..location import Location
 from ..printer import (debug, h3, info, trace,)
+
+from ..helper.run import run
 
 import os
 import os.path

@@ -6,9 +6,9 @@
 
 
 from cleanroom.generator.context import Binaries
-from cleanroom.generator.helper.generic.run import run
 from cleanroom.generator.systemcontext import SystemContext
 
+from cleanroom.helper.run import run
 from cleanroom.printer import trace
 
 
