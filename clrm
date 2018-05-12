@@ -6,7 +6,7 @@
 """
 
 
-import cleanroom.main as main
+import cleanroom.generator.main as main
 
 
 if __name__ == '__main__':

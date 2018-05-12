@@ -47,7 +47,7 @@ setup(
     package_data={'cleanroom': ['commands/*.py']},
     entry_points={
         'console_scripts': [
-            'cleanroom=cleanroom.main:run',
+            'cleanroom=cleanroom.generator.main:run',
         ],
     },
 )
