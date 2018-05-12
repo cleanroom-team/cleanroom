@@ -123,6 +123,12 @@ class Printer:
         self._verbose = verbosity
         self._prefix = '      ' if verbosity > 0 else ''
 
+    def show_verbosity_level(self):
+        verbose('Verbose output enabled.')
+        info('Info output enabled.')
+        debug('Debug output enabled.')
+        trace('Trace output enabled.')
+
     def _print(self, *args):
         print(*args)
 

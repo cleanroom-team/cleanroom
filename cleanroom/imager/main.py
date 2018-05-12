@@ -5,19 +5,7 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-from .context import Context
-from .generator import Generator
-from .parser import Parser
-from .preflight import preflight_check
-from .workdir import WorkDir
-
-from ..printer import (fail, Printer, success)
-from ..exceptions import (GenerateError, PreflightError, PrepareError,)
-
-from argparse import ArgumentParser
-import os
-import sys
-
+from ..printer import (debug, fail, info, Printer, success, trace, verbose,)
 
 def _parse_commandline(arguments):
     """Parse the command line options."""
@@ -63,12 +51,12 @@ def _parse_commandline(arguments):
 
 
 def run():
-    """Run cleanroom with command line arguments."""
+    """Run image installer with command line arguments."""
     main(*sys.argv)
 
 
 def main(*args):
-    """Run cleanroom with arguments."""
+    """Run image installer with arguments."""
     old_work_directory = os.getcwd()
 
     args = _parse_commandline(args)
@@ -84,7 +72,6 @@ def main(*args):
     # Set up printing:
     pr = Printer.Instance()
     pr.set_verbosity(args.verbose)
-
     pr.show_verbosity_level()
 
     # Set up global context object:
@@ -147,3 +134,10 @@ def _generate(ctx, systems):
         raise
     else:
         success('Generation phase.', verbosity=2)
+
+
+def _log_verbosity_level():
+    verbose('Verbose output enabled.')
+    info('Info output enabled.')
+    debug('Debug output enabled.')
+    trace('Trace output enabled.')

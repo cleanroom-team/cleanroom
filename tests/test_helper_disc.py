@@ -60,7 +60,33 @@ def test_disc_normalize_size_errors(input):
     pytest.param(1 * 1024 * 1024)
 ])
 def test_create_image_file(tmpdir, size):
-    file = os.path.join(tmpdir, 'testfile')
-    disc.create_image_file(file, size)
+    if os.geteuid() != 0:
+        pytest.skip('This test needs root to run.')
 
-    assert size == os.path.getsize(file)
+    file = os.path.join(tmpdir, 'testfile')
+    disc.create_image_file(file, size, disk_format='raw')
+
+    # qemu-img does some rounding to sector sizes:
+    assert size <= os.path.getsize(file)
+    assert size + 1024 > os.path.getsize(file)
+
+
+def test_partitioner(tmpdir):
+    if os.geteuid() != 0:
+        pytest.skip('This test needs root to run.')
+
+    with disc.NbdDevice.NewImageFile(os.path.join(tmpdir, 'testdisk'), '512m') as device:
+        partitioner = disc.Partitioner(device)
+        assert not partitioner.is_partitioned()
+        assert partitioner.label() is None
+
+        print('LBA: {}-{}'.format(partitioner.first_lba(), partitioner.last_lba()))
+
+        parts = [disc.Partitioner.efi_partition(size='64M'),
+                 disc.Partitioner.swap_partition(size='128M'),
+                 disc.Partitioner.data_partition(name='PV0 of vg_something')]
+        partitioner.repartition(parts)
+
+        assert partitioner.is_partitioned()
+        assert partitioner.label() == 'gpt'
+
