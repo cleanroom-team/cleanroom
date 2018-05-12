@@ -176,6 +176,9 @@ class SystemContext:
 
         return run(*args, trace_output=trace, **kwargs)
 
+    def chroot(self, callable, *args, **kwargs):
+        callable(*args, chroot=self.fs_directory(), **kwargs)
+
     # execute cleanroom commands:
     def execute(self, location, command, *args,
                 expected_dependency=None, **kwargs):

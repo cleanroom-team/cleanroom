@@ -7,9 +7,9 @@
 
 from .context import Context
 from .helper.generic.btrfs import (delete_subvolume, has_subvolume,)
-from .helper.generic.mount import (_umount_all,)
 
 from ..exceptions import PrepareError
+from ..helper.mount import (umount_all,)
 from ..printer import (trace,)
 
 import os
@@ -33,7 +33,7 @@ class WorkDir:
                 os.makedirs(work_directory, 0o700)
             else:
                 trace('Using existing work directory in "{}".'.format(work_directory))
-                if not _umount_all(work_directory):
+                if not umount_all(work_directory):
                     raise PrepareError('Failed to unmount mount in work directory "{}".'
                                        .format(work_directory))
                 if clear_work_directory:
