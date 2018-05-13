@@ -39,7 +39,7 @@ class _TestCommand(Command):
             debug('Running test {}...'.format(test))
             test_result = system_context.run(
                 test, system_context.system,
-                env=env, outside=True, exit_code=None,
+                env=env, outside=True, returncode=None,
                 work_directory=system_context.fs_directory())
             if test_result.returncode == 0:
                 success('Test "{}"'.format(test), verbosity=3)

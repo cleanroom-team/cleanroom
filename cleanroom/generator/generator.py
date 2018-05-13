@@ -10,7 +10,7 @@ from .parser import Parser
 from .systemcontext import SystemContext
 
 from ..exceptions import SystemNotFoundError
-from ..printer import (debug, fail, h1, h2, success, trace)
+from ..printer import (debug, fail, h1, h2, success, trace, verbose)
 
 import datetime
 import os

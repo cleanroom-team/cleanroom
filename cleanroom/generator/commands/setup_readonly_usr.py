@@ -104,4 +104,4 @@ class SetupReadonlyUsrCommand(Command):
         system_context.add_hook(location, '_teardown', 'run',
                                 'test', '-x', '/usr/bin/zsh',
                                 '&&', 'rm', '-rf', '/usr/share/zsh',
-                                shell=True, exit_code=None)
+                                shell=True, returncode=None)

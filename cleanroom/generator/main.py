@@ -39,7 +39,7 @@ def _parse_commandline(arguments):
     parser.add_argument('--work-directory', dest='work_directory',
                         action='store', help='Work area to create files in')
 
-    parser.add_argument('--export-repository', dest='export_repository',
+    parser.add_argument('--repository', dest='repository',
                         action='store',
                         help='Borg repository to export created filesystems '
                         'into.')
@@ -77,7 +77,7 @@ def main(*args):
         print('No systems to process.')
         sys.exit(1)
 
-    if not args.export_repository:
+    if not args.repository:
         print('No export repository given.')
         sys.exit(2)
 
@@ -88,7 +88,7 @@ def main(*args):
     pr.show_verbosity_level()
 
     # Set up global context object:
-    ctx = Context(export_repository=args.export_repository,
+    ctx = Context(repository=args.repository,
                   ignore_errors=args.ignore_errors,
                   keep_temporary_data=args.keep_temporary_data)
 

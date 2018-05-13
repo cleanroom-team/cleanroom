@@ -32,7 +32,7 @@ def mount_points(directory, chroot=None):
 
     pattern = re.compile('^(.*) on (.*) type (.*)$')
     result = run('/usr/bin/mount')
-    mount_points = []
+    sub_mounts = []
     for line in result.stdout.split('\n'):
         if not line:
             continue
@@ -42,9 +42,9 @@ def mount_points(directory, chroot=None):
 
         if mount_point == directory or \
                 mount_point.startswith(directory + '/'):
-            mount_points.append(mount_point)
+            sub_mounts.append(mount_point)
 
-    return sorted(mount_points, key=len, reverse=True)
+    return sorted(sub_mounts, key=len, reverse=True)
 
 
 def umount(directory, chroot=None):
@@ -54,15 +54,15 @@ def umount(directory, chroot=None):
 
 def umount_all(directory, chroot=None):
     """Unmount all mount points below a directory."""
-    mount_points = mount_points(directory, chroot=chroot)
+    sub_mounts = mount_points(directory, chroot=chroot)
 
-    if mount_points:
-        for mp in mount_points:
+    if sub_mounts:
+        for mp in sub_mounts:
             umount(mp)
 
-        mount_points = mount_points(directory, chroot=chroot)
+        sub_mounts = mount_points(directory, chroot=chroot)
 
-    return len(mount_points) == 0
+    return len(sub_mounts) == 0
 
 
 def mount(volume, directory, *, options=None, type=None, chroot=None):

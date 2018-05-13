@@ -15,7 +15,7 @@ def run_btrfs(command, *args, **kwargs):
     return run(command, *args, **kwargs)
 
 
-def create_subvolume(name, command=None):
+def create_subvolume(name, *, command=None):
     """Create a new subvolume."""
     run_btrfs(command, 'subvolume', 'create', name,
               trace_output=trace)
@@ -31,13 +31,13 @@ def create_snapshot(source, dest, *, read_only=False, command=None):
               trace_output=trace)
 
 
-def delete_subvolume(name, command=None):
+def delete_subvolume(name, *, command=None):
     """Delete a subvolume."""
     run_btrfs(command, 'subvolume', 'delete', name, trace_output=trace)
 
 
-def has_subvolume(name, command=None):
+def has_subvolume(name, *, command=None):
     """Check whether a subdirectory is a subvolume or snapshot."""
     result = run(command, 'subvolume', 'show', name,
-                 exit_code=None, trace_output=trace)
+                 returncode=None, trace_output=trace)
     return result.returncode == 0

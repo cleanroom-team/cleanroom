@@ -182,7 +182,7 @@ class SystemContext:
         if not outside:
             kwargs['chroot'] = self.fs_directory()
 
-        return run(*args, trace_output=trace, **kwargs)
+        return run(*args, trace_output=debug, **kwargs)
 
     # execute cleanroom commands:
     def execute(self, location, command, *args,

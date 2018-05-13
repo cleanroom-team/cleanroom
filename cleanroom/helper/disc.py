@@ -162,7 +162,8 @@ class NbdDevice:
                 return None
 
             result = run(_qemu_nbd(command), '--connect={}'.format(device),
-                         '--format={}'.format(disk_format), file_name, exit_code=None)
+                         '--format={}'.format(disk_format), file_name,
+                         returncode=None)
             if result.returncode == 0:
                 trace('Device {} connected to file {}.'.format(device, file_name))
                 return device
@@ -280,13 +281,16 @@ class Partitioner:
         self._get_partition_data()
 
     def _get_partition_data(self):
+        # FIXME: The sizes/start information is pretty useless.
+        #        It is given in sectors, but there is no information
+        #        how big such a sector actually is. Assuming 512 bytes
+        #        no longer seems safe with 4K sector drives...
         result = run('/usr/bin/flock', self._device,
                      _sfdisk(self._command), '--color=never',
-                     '--json', self._device, exit_code=None)
+                     '--json', self._device, returncode=None)
         if result.returncode != 0:
             self._data = None
         else:
             json_data = json.loads(result.stdout)
             self._data = Disk(**json_data['partitiontable'])
             assert self._data.device == self._device
-            print('Label: {}'.format(self._data.label))

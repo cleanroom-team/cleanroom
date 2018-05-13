@@ -11,7 +11,7 @@ import os
 import subprocess
 
 
-def run(*args, exit_code=0, work_directory=None,
+def run(*args, returncode=0, work_directory=None,
         trace_output=None, chroot=None, shell=False,
         stdout=None, stderr=None, **kwargs):
     """Run command and trace the external command result and output."""
@@ -61,9 +61,9 @@ def run(*args, exit_code=0, work_directory=None,
 
     report_completed_process(trace_output, completed_process)
 
-    if exit_code is not None and completed_process.returncode != exit_code:
+    if returncode is not None and completed_process.returncode != returncode:
         raise GenerateError('Unexpected return value {} (expected {}).'
-                            .format(completed_process.returncode, exit_code))
+                            .format(completed_process.returncode, returncode))
 
     return completed_process
 

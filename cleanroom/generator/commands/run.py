@@ -15,7 +15,7 @@ class RunCommand(Command):
         """Constructor."""
         super().__init__('run',
                          syntax='<COMMAND> [<ARGS>] [outside=False] '
-                         '[shell=False] [exit_code=0] [stdout=None] '
+                         '[shell=False] [returncode=0] [stdout=None] '
                          '[stderr=None]',
                          help='Run a command inside/outside of the '
                          'current system.', file=__file__)
@@ -25,7 +25,7 @@ class RunCommand(Command):
         self._validate_args_at_least(location, 1,
                                      '"{}" needs a command to run and '
                                      'optional arguments.', *args)
-        self._validate_kwargs(location, ('exit_code', 'outside', 'shell',
+        self._validate_kwargs(location, ('returncode', 'outside', 'shell',
                                          'stderr', 'stdout'),
                               **kwargs)
 

@@ -26,7 +26,7 @@ class ExportDirectoryCommand(Command):
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
         export_directory = args[0]
-        repository = system_context.ctx.export_repository()
+        repository = system_context.ctx.repository()
         if repository == '':
             return
 

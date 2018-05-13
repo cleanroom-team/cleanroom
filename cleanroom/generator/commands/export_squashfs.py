@@ -94,7 +94,7 @@ class ExportSquashfsCommand(ExportCommand):
     def _sign_efi_kernel(self, location, system_context, kernel, key, cert):
         location.next_line_offset('Sign EFI kernel')
         system_context.execute(location, 'sign_efi_binary', kernel,
-                               key=key, cert=cert)
+                               key=key, cert=cert, outside=True)
 
     def _size_extend(self, file):
         size = os.path.getsize(file)
@@ -179,7 +179,7 @@ class ExportSquashfsCommand(ExportCommand):
         export_volume \
             = Context.current_export_directory_from_work_directory(
                system_context.ctx.work_directory())
-        create_subvolume(system_context, export_volume, command=Binaries.BTRFS)
+        create_subvolume(export_volume, command=system_context.binary(Binaries.BTRFS))
 
         squashfs_file = self._create_squashfs(system_context, export_volume)
         (verity_file, verity_uuid, root_hash) \
@@ -203,4 +203,4 @@ class ExportSquashfsCommand(ExportCommand):
 
     def delete_export_directory(self, system_context, export_directory):
         """Nothing to see, move on."""
-        delete_subvolume(system_context, export_directory)
+        delete_subvolume(export_directory, command=system_context.binary(Binaries.BTRFS))

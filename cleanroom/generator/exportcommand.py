@@ -12,6 +12,8 @@ from .command import Command
 from ..exceptions import GenerateError
 from ..printer import (debug, h2, trace)
 
+import os.path
+
 
 class ExportCommand(Command):
     """The export Command."""
@@ -34,6 +36,11 @@ class ExportCommand(Command):
 
         export_directory \
             = self.create_export_directory(location, system_context)
+
+        # Document export_type
+        with open(os.path.join(export_directory, 'export_type'), 'wb') as et:
+            et.write(self.name().encode('utf-8'))
+
         system_context.set_substitution('EXPORT_DIRECTORY', export_directory)
 
         trace('Exporting all data in {}.'.format(export_directory))

@@ -84,8 +84,8 @@ def _subdirectories(dir):
 
 
 def _delete_subvolume(ctx, dir):
-    if has_subvolume(dir, ctx.binary(Binaries.BTRFS)):
-        delete_subvolume(dir, ctx.binary(Binaries.BTRFS))
+    if has_subvolume(dir, command=ctx.binary(Binaries.BTRFS)):
+        delete_subvolume(dir, command=ctx.binary(Binaries.BTRFS))
 
 
 def _clear_work_directory(ctx, work_directory):

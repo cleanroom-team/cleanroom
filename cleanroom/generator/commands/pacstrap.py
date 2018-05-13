@@ -73,13 +73,13 @@ class PacstrapCommand(Command):
                            '--config', pacstrap_config,
                            '--gpgdir', host_gpg_directory(system_context),
                            '--init',
-                           exit_code=0, outside=True,
+                           returncode=0, outside=True,
                            work_directory=systems_directory)
         system_context.run(pacman_key,
                            '--config', pacstrap_config,
                            '--gpgdir', host_gpg_directory(system_context),
                            '--populate', 'archlinux',
-                           exit_code=0, outside=True,
+                           returncode=0, outside=True,
                            work_directory=systems_directory)
 
         gpgdir = target_gpg_directory()

@@ -30,12 +30,11 @@ class Binaries(Enum):
 class Context:
     """The context the generation will run in."""
 
-    def __init__(self, *, export_repository=None,
-                 ignore_errors=False, keep_temporary_data=False):
+    def __init__(self, *, repository=None, ignore_errors=False, keep_temporary_data=False):
         """Constructor."""
         self.ignore_errors = ignore_errors
         self.keep_temporary_data = keep_temporary_data
-        self._export_repository = export_repository
+        self._repository = repository
 
         self._binaries = {}
 
@@ -87,12 +86,17 @@ class Context:
         return self._directory_check(self._work_directory)
 
     @staticmethod
+    def current_export_directory_from_work_directory(work_directory):
+        """Get the current system directory based on the work_directory."""
+        return os.path.join(work_directory, 'export')
+
+    @staticmethod
     def current_system_directory_from_work_directory(work_directory):
         """Get the current system directory based on the work_directory."""
         return os.path.join(work_directory, 'current')
 
     @staticmethod
-    def current_export_directory_from_work_directory(work_directory):
+    def current_directory_from_work_directory(work_directory):
         """Get the current system directory based on the work_directory."""
         return os.path.join(work_directory, 'export')
 
@@ -127,10 +131,10 @@ class Context:
         return self._directory_check(
             os.path.join(self.systems_cleanroom_directory(), 'commands'))
 
-    def export_repository(self):
+    def repository(self):
         """Get the repository to export filesystems into."""
-        assert(self._export_repository)
-        return self._export_repository
+        assert(self._repository)
+        return self._repository
 
     def _directory_check(self, directory):
         """Raise a ContextError if a directory is not yet set up."""
