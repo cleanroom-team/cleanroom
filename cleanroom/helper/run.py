@@ -11,6 +11,11 @@ import os
 import subprocess
 
 
+def _quote_args(*args):
+    # FIXME: Do better quoting!
+    return '"' + ' '.join(args) + '"'
+
+
 def run(*args, returncode=0, work_directory=None,
         trace_output=None, chroot=None, shell=False,
         stdout=None, stderr=None, **kwargs):
@@ -19,7 +24,7 @@ def run(*args, returncode=0, work_directory=None,
         os.chdir(work_directory)
 
     if shell:
-        args = ('/usr/bin/bash', '-c', *args)
+        args = ('/usr/bin/bash', '-c', _quote_args(*args))
     if chroot is not None:
         args = ('/usr/bin/arch-chroot', chroot, *args)
 

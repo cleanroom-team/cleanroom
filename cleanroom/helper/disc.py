@@ -15,6 +15,7 @@ import math
 import os
 import os.path
 import stat
+from time import sleep
 
 
 Disk = collections.namedtuple('Disk', ['label', 'id', 'device', 'unit', 'firstlba', 'lastlba', 'partitions'])
@@ -25,7 +26,7 @@ def _is_root():
     return os.geteuid() == 0
 
 
-def _is_block_device(path):
+def is_block_device(path):
     try:
         stat_info = os.stat(path)
         return stat.S_ISBLK(stat_info.st_mode)
@@ -51,6 +52,24 @@ def _qemu_nbd(command):
 
 def _sfdisk(command):
     return _command(command, '/usr/bin/sfdisk')
+
+
+def quantify(size, block_size):
+    if size is None:
+        return None
+
+    quant_size = math.floor(size / block_size)
+    if quant_size * block_size != size:
+        quant_size += 1
+    return quant_size * block_size
+
+
+def kib_ify(size):
+    return quantify(size, 1024)
+
+
+def mib_ify(size):
+    return quantify(size, 1024 * 1024)
 
 
 def normalize_size(size):
@@ -80,7 +99,7 @@ def normalize_size(size):
             raise ValueError()
 
         number = int(number_string)
-        if number < 1:
+        if number < 0:
             raise ValueError()
 
         return number * factor
@@ -91,10 +110,7 @@ def _sfdisk_size(size):
         return None
 
     assert isinstance(size, int)
-    kib = math.floor(size / 1024)
-    if kib * 1024 == size:
-        return '{}KiB'.format(int(kib))
-    return '{}KiB'.format(int(kib) + 1)
+    return '{}KiB'.format(kib_ify(size) / 1024)
 
 
 def create_image_file(file_name, size, *, disk_format='qcow2', command=None):
@@ -103,7 +119,37 @@ def create_image_file(file_name, size, *, disk_format='qcow2', command=None):
         '-q', '-f', disk_format, file_name, str(normalize_size(size)))
 
 
-class NbdDevice:
+class Device:
+    def __init__(self, device):
+        assert is_block_device(device)
+        self._device = device
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def device(self, partition=None):
+        if partition is None:
+            return self._device
+        return '{}{}'.format(self._device, partition)
+
+    def close(self):
+        pass
+
+    def wait_for_device_node(self, partition=None):
+        dev = self.device(partition)
+        trace('Waiting for "{}".'.format(dev))
+        for i in range(10):
+            if is_block_device(dev):
+                return True
+            sleep(0.1)
+            trace('.')
+        return False
+
+
+class NbdDevice(Device):
     @staticmethod
     def NewImageFile(file_name, size, *, disk_format='qcow2',
                      command=None, qemu_img_command=None):
@@ -120,20 +166,26 @@ class NbdDevice:
         self._file_name = file_name
         self._disk_format = disk_format
 
-        self._device = self._create_nbd_block_device(file_name, disk_format=disk_format,
-                                                     command=command)
+        super().__init__(self._create_nbd_block_device(file_name, disk_format=disk_format,
+                                                       command=command))
 
         debug('Block device "{}" created for file {}.'.format(self._device, self._file_name))
 
     def __enter__(self):
-        return self._device
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._delete_nbd_block_device(self._device)
-        self._device = None
+        self.close()
 
-    def device(self):
-        return self._device
+    def close(self):
+        if self._device is not None:
+            self._delete_nbd_block_device(self._device)
+            self._device = None
+
+    def device(self, partition=None):
+        if partition is None:
+            return self._device
+        return '{}p{}'.format(self._device, partition)
 
     def disk_format(self):
         return self._disk_format
@@ -151,13 +203,13 @@ class NbdDevice:
         assert _is_root()
         assert os.path.isfile(file_name)
 
-        if not _is_block_device(NbdDevice._nbd_device(0)):
+        if not is_block_device(NbdDevice._nbd_device(0)):
             trace('Loading nbd kernel module...')
             run('/usr/bin/modprobe', 'nbd')
 
         for counter in range(257):
             device = NbdDevice._nbd_device(counter)
-            if not _is_block_device(device):
+            if not is_block_device(device):
                 trace('{} is not a block device, aborting'.format(device))
                 return None
 
@@ -176,16 +228,16 @@ class NbdDevice:
     @staticmethod
     def _delete_nbd_block_device(device, command=None):
         assert _is_root()
-        assert _is_block_device(device)
+        assert is_block_device(device)
 
         run(_qemu_nbd(command), '--disconnect', device)
+        trace('"{}" disconnected.'.format(device))
 
 
 class Partitioner:
     def __init__(self, device, *, command=None):
-        print('Partitioner created: {}.'.format(device))
         assert _is_root()
-        assert _is_block_device(device)
+        assert is_block_device(device.device())
 
         self._command = command
         self._device = device
@@ -274,9 +326,12 @@ class Partitioner:
 
             instructions += prefix + ', '.join(partition_data) + '\n'
 
-        run('/usr/bin/flock', self._device,
-            _sfdisk(self._command), '--color=never', self._device,
+        run('/usr/bin/flock', self._device.device(),
+            _sfdisk(self._command), '--color=never', self._device.device(),
             input=instructions.encode('utf-8'))
+
+        for i in range(len(partitions)):
+            assert self._device.wait_for_device_node(partition=i+1)
 
         self._get_partition_data()
 
@@ -285,12 +340,12 @@ class Partitioner:
         #        It is given in sectors, but there is no information
         #        how big such a sector actually is. Assuming 512 bytes
         #        no longer seems safe with 4K sector drives...
-        result = run('/usr/bin/flock', self._device,
+        result = run('/usr/bin/flock', self._device.device(),
                      _sfdisk(self._command), '--color=never',
-                     '--json', self._device, returncode=None)
+                     '--json', self._device.device(), returncode=None)
         if result.returncode != 0:
             self._data = None
         else:
             json_data = json.loads(result.stdout)
             self._data = Disk(**json_data['partitiontable'])
-            assert self._data.device == self._device
+            assert self._data.device == self._device.device()

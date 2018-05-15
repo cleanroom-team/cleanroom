@@ -145,10 +145,11 @@ class ExportSquashfsCommand(ExportCommand):
     def _setup_kernel_commandline(self, base_cmdline,
                                   squashfs_device, verity_device,
                                   root_hash):
-        cmdline = ' '.join((base_cmdline, 'rd.systemd.verity=yes',
-                            'roothash={}'.format(root_hash),
+        cmdline = ' '.join((base_cmdline,
+                            'systemd.verity=yes',
                             'systemd.verity_root_data={}'.format(squashfs_device),
-                            'systemd.verify_root_hash={}'.format(verity_device),
+                            'systemd.verity_root_hash={}'.format(verity_device),
+                            'roothash={}'.format(root_hash),
                             'FOO'))
         return cmdline
 
@@ -186,15 +187,15 @@ class ExportSquashfsCommand(ExportCommand):
             = self._create_dmverity(system_context, export_volume,
                                     squashfs_file)
 
-        verity_device = os.path.join('/dev/disk/by-uuid/', verity_uuid)
+        verity_device = 'UUID={}'.format(verity_uuid)
         self._create_complete_kernel(location, system_context, 'vg', cmdline,
                                      self._file_to_lv(self._volume_group, squashfs_file),
                                      verity_device, root_hash,
                                      export_volume)
 
         if self._partition_label:
-            squashfs_device = os.path.join('/dev/disk/by-partlabel/{}-{}'.format(self._partition_label,
-                                                                                 system_context.timestamp))
+            squashfs_device = 'PARTLABEL={}-{}'.format(self._partition_label,
+                                                       system_context.timestamp)
             self._create_complete_kernel(location, system_context, 'partlabel', cmdline,
                                          squashfs_device, verity_device, root_hash,
                                          export_volume)

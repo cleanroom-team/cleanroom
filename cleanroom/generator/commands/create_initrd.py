@@ -93,7 +93,7 @@ build() {
 
     add_systemd_unit "initrd-check-bios.service"
     add_symlink "/usr/lib/systemd/system/initrd-root-device.target.wants/initrd-check-bios.service" \
-                "../initrd-sysroot-setup.service"
+                "../initrd-check-bios.service"
     add_module tpm_tis tpm_atmel tpm_nsc
 }
 
@@ -112,12 +112,11 @@ HELPEOF
 
 build() {
     # Setup rescue target:
-    add_binary "/usr/bin/sulogin"
     test -f "/etc/shadow.initramfs" && add_file "/etc/shadow.initramfs" "/etc/shadow"
+    add_symlink /usr/lib/libnss_files.so.2 ./libnss_files-2.27.so
 
     add_binary "/usr/bin/journalctl"
-    add_systemd_unit "rescue.service"
-    add_systemd_unit "rescue.target"
+    # add_systemd_unit "rescue.service"
 
     # Setup etc:
     add_systemd_unit "initrd-sysroot-setup.service"
