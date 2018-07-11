@@ -40,8 +40,10 @@ class SystemdSetDefaultCommand(Command):
         default = 'default.target'
         default_path = systemd_directory + 'default.target'
 
-        system_context.execute(location, 'remove', default_path, force=True)
-        system_context.execute(location, 'symlink', target, default,
+        system_context.execute(location,
+                               'remove', default_path, force=True)
+        system_context.execute(location.next_line(),
+                               'symlink', target, default,
                                base_directory=systemd_directory)
 
         system_context.set_substitution('DEFAULT_BOOT_TARGET', target)

@@ -39,5 +39,5 @@ class SetTimezoneCommand(Command):
                                 .format(timezone), location=location)
 
         system_context.execute(location, 'remove', etc_localtime)
-        system_context.execute(location, 'symlink', full_timezone, localtime,
+        system_context.execute(location.next_line(), 'symlink', full_timezone, localtime,
                                base_directory='/etc')

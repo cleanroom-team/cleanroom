@@ -175,8 +175,8 @@ class Parser:
         if not args:
             return None
 
-        if not location.extra_information:
-            location.extra_information = args[0]
+        if not location.description:
+            location.description = args[0]
 
         obj = ExecObject(location, None, *args, **kwargs)
         obj.set_dependency(_validate_exec_object(location, obj))

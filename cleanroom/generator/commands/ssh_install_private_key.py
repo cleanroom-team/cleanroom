@@ -10,7 +10,7 @@ from cleanroom.generator.helper.generic.file import (chmod, chown, exists, isdir
 from cleanroom.generator.helper.generic.user import user_data
 
 import cleanroom.exceptions as ex
-import cleanroom.printer as printer
+from cleanroom.printer import (debug, trace,)
 
 import os.path
 
@@ -33,7 +33,7 @@ class SshInstallPrivateKeyCommand(Command):
     def _check_or_create_directory(self, location, system_context, dir,
                                    **kwargs):
         if not exists(system_context, dir):
-            system_context.execute(location, 'mkdir', dir, **kwargs)
+            system_context.execute(location.next_line(), 'mkdir', dir, **kwargs)
             return
         if not isdir(system_context, dir):
             raise ex.GenerateError('"{}" needs directory "{}", but '
@@ -46,14 +46,15 @@ class SshInstallPrivateKeyCommand(Command):
         user_name = args[0]
         key_file = args[1]
 
+        location
+
         user = user_data(system_context, user_name)
         if user is None:
             raise ex.GenerateError('"{}" could not find user "{}".'
                                    .format(self.name(), user_name),
                                    location=location)
 
-        printer.verbose('Installing "{}" to user "{}" ({}).'
-                        .format(key_file, user_name, user.home))
+        debug('Installing "{}" to user "{}" ({}).'.format(key_file, user_name, user.home))
 
         self._check_or_create_directory(location, system_context, user.home,
                                         mode=0o750, user=user.uid, group=user.gid)
@@ -64,10 +65,10 @@ class SshInstallPrivateKeyCommand(Command):
 
         installed_key_file = os.path.join(ssh_directory, os.path.basename(key_file))
 
-        system_context.execute(location, 'copy', key_file,
+        system_context.execute(location.next_line(), 'copy', key_file,
                                installed_key_file, from_outside=True)
-        printer.trace('Copied key.')
+        trace('Copied key.')
         chown(system_context, user.uid, user.gid, installed_key_file)
-        printer.trace('Ownership adjusted.')
+        trace('Ownership adjusted.')
         chmod(system_context, 0o600, installed_key_file)
-        printer.trace('Mode adjusted.')
+        trace('Mode adjusted.')

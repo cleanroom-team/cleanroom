@@ -25,8 +25,8 @@ class ExecObject:
         self._args = args
         self._kwargs = kwargs
 
-        if not self._location.extra_information:
-            self._location.extra_information = self.command()
+        if not self._location.description:
+            self._location.description = self.command()
 
     def command(self):
         """Name of the command to execute."""

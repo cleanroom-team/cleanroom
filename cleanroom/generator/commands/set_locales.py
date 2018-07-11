@@ -38,19 +38,19 @@ class SetLocalesCommand(Command):
                and not os.path.isdir(os.path.join(locales_dir, a[0:2])):
                 raise ParseError('Locale "{}" not found in /usr/share/locale.'
                                  .format(a), location=location)
-            locales.append('{}.{} {}'.format(a, charmap, charmap))
+            locales.append('{}.{} {}\n'.format(a, charmap, charmap))
 
         system_context.execute(location,
-                               'create', '/etc/locale.gen', '\n'.join(locales),
+                               'append', '/etc/locale.gen', ''.join(locales),
                                force=True)
         self._setup_hooks(location, system_context, locales)
 
     def _setup_hooks(self, location, system_context, locales):
         if not system_context.has_substitution('CLRM_LOCALES'):
-            location.next_line_offset('run locale-gen')
+            location.set_description('run locale-gen')
             system_context.add_hook(location, 'export',
                                     'run', '/usr/bin/locale-gen')
-            location.next_line_offset('Remove locale related data.')
+            location.set_description('Remove locale related data.')
             system_context.add_hook(location, 'export',
                                     'remove', '/usr/share/locale/*',
                                     '/etc/locale.gen', '/usr/bin/locale-gen',

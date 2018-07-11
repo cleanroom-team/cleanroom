@@ -10,7 +10,7 @@ The Command class will be used to derive all export_* commands from.
 from .command import Command
 
 from ..exceptions import GenerateError
-from ..printer import (debug, h2, trace)
+from ..printer import (debug, h2, info, verbose,)
 
 import os.path
 
@@ -28,14 +28,14 @@ class ExportCommand(Command):
         debug('Running Hooks.')
         self._run_hooks(system_context)
 
-        trace('Preparing system for export.')
+        verbose('Preparing system for export.')
         self.prepare_for_export(location, system_context)
 
-        trace('Validating installation for export.')
-        self._validate_installation(location, system_context)
+        info('Validating installation for export.')
+        self._validate_installation(location.next_line(), system_context)
 
         export_directory \
-            = self.create_export_directory(location, system_context)
+            = self.create_export_directory(location.next_line(), system_context)
 
         # Document export_type
         with open(os.path.join(export_directory, 'export_type'), 'wb') as et:
@@ -43,10 +43,10 @@ class ExportCommand(Command):
 
         system_context.set_substitution('EXPORT_DIRECTORY', export_directory)
 
-        trace('Exporting all data in {}.'.format(export_directory))
+        verbose('Exporting all data in {}.'.format(export_directory))
         self._export(location, system_context, export_directory)
 
-        trace('Cleaning up export location.')
+        info('Cleaning up export location.')
         self.delete_export_directory(system_context, export_directory)
 
     def prepare_for_export(self, location, system_context):
@@ -89,4 +89,4 @@ class ExportCommand(Command):
         system_context.run_hooks('testing')
 
     def _export(self, location, system_context, export_directory):
-        system_context.execute(location, '_export_directory', export_directory)
+        system_context.execute(location.next_line(), '_export_directory', export_directory)

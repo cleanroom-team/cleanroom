@@ -43,7 +43,25 @@ class PrepareError(CleanRoomError):
 class GenerateError(CleanRoomError):
     """Error raised during Generation phase."""
 
-    pass
+    def __init__(self, *args, location=None, original_exception=None):
+        """Constructor."""
+        super().__init__(*args, location=location)
+        self.original_exception = original_exception
+
+    def __str__(self):
+        """Stringify exception."""
+        prefix = 'Error'
+        if self.location is not None:
+            prefix += ' in {}'.format(self.location)
+
+        postfix = ''
+        if self.original_exception is not None:
+            if isinstance(self.original_exception, AssertionError):
+                postfix = '\n    Trigger: AssertionError.'
+            else:
+                postfix = '\n    Trigger: ' + str(self.original_exception)
+
+        return '{}: {}{}'.format(prefix, ' '.join(self.args), postfix)
 
 
 class SystemNotFoundError(CleanRoomError):

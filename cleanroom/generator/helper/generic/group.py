@@ -38,7 +38,6 @@ def _group_data(group_file, name):
                 line = line[:-1]
             current_group = line.split(':')
             if current_group[0] == name:
-                print('XXX:{}:XXX'.format(current_group[3]))
                 current_group[2] = int(current_group[2])
                 if current_group[3] == '':
                     current_group[3] = []

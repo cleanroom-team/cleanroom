@@ -33,7 +33,7 @@ class SshAllowLoginCommand(Command):
     def _check_or_create_directory(self, location, system_context, dir,
                                    **kwargs):
         if not exists(system_context, dir):
-            system_context.execute(location, 'mkdir', dir, **kwargs)
+            system_context.execute(location.next_line(), 'mkdir', dir, **kwargs)
             return
         if not isdir(system_context, dir):
             raise GenerateError('"{}" needs directory "{}", but that exists and '
@@ -44,6 +44,8 @@ class SshAllowLoginCommand(Command):
         """Execute command."""
         user = args[0]
         keyfile = args[1]
+
+        location
 
         user = user_data(system_context, user)
         if user is None:
@@ -69,7 +71,7 @@ class SshAllowLoginCommand(Command):
         else:
             line += key + '\n'
 
-        system_context.execute(location, 'append', authorized_file, line,
+        system_context.execute(location.next_line(), 'append', authorized_file, line,
                                force=True)
         chown(system_context, user.uid, user.gid, authorized_file)
         chmod(system_context, 0o644, authorized_file)

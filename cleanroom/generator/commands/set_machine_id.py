@@ -43,4 +43,4 @@ class SetMachineIdCommand(Command):
         id = args[0]
         system_context.set_substitution('MACHINE_ID', id)
         id += '\n'
-        system_context.execute(location, 'create', '/etc/machine-id', id)
+        system_context.execute(location.next_line(), 'create', '/etc/machine-id', id)

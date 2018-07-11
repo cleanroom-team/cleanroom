@@ -31,8 +31,9 @@ class _SetupCommand(Command):
         """Execute command."""
         self._setup_current_system_directory(system_context)
 
-        # Make sure systemd does not create /var/lib/machines for us!
-        self._setup_var_lib_machines(location, system_context)
+        # Make sure systemd does not create /var/lib/* for us!
+        self._setup_var_lib_directory(location, system_context, 'machines')
+        self._setup_var_lib_directory(location, system_context, 'portables')
 
     def _setup_current_system_directory(self, system_context):
         create_subvolume(system_context.current_system_directory(),
@@ -41,9 +42,7 @@ class _SetupCommand(Command):
         os.makedirs(system_context.boot_data_directory())
         os.makedirs(system_context.meta_directory())
 
-    def _setup_var_lib_machines(self, location, system_context):
-        machines_dir = '/var/lib/machines'
-        system_context.execute(location, 'mkdir', machines_dir,
-                               mode=(stat.S_IRUSR | stat.S_IWUSR
-                                     | stat.S_IXUSR),
-                               user='root', group='root')
+    def _setup_var_lib_directory(self, location, system_context, dir):
+        todo_dir = os.path.join('/var/lib', dir)
+        system_context.execute(location,
+                               'mkdir', todo_dir, mode=0o700, user='root', group='root')

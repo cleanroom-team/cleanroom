@@ -34,9 +34,9 @@ class InstallCertificatesCommand(Command):
                 else os.path.join(system_context.ctx.systems_directory(), f)
             dest = os.path.join('/etc/ca-certificates/trust-source/anchors',
                                 os.path.basename(f))
-            system_context.execute(location, 'copy',
+            system_context.execute(location.next_line(), 'copy',
                                    source, dest, from_outside=True)
-            system_context.execute(location, 'chmod',
+            system_context.execute(location.next_line(), 'chmod',
                                    stat.S_IRUSR | stat.S_IWUSR
                                    | stat.S_IRGRP | stat.S_IROTH, dest)
 

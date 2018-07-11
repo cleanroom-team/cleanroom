@@ -8,7 +8,7 @@
 from cleanroom.generator.command import Command
 
 from cleanroom.exceptions import ParseError
-import cleanroom.printer as printer
+from cleanroom.printer import debug
 
 import re
 
@@ -44,11 +44,11 @@ class BasedOnCommand(Command):
         """Execute command."""
         base_system = args[0]
         if self._is_scratch(base_system):
-            printer.verbose('Building from scratch!')
-            location.next_line_offset('testing')
+            debug('Building from scratch!')
+            location.set_description('testing')
             system_context.add_hook(location, 'testing', '_test')
         else:
-            printer.verbose('Building on top of {}.'.format(base_system))
+            debug('Building on top of {}.'.format(base_system))
             system_context.execute(location, '_restore', base_system)
 
     def _is_scratch(self, base):

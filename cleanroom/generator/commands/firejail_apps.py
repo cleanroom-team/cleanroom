@@ -30,11 +30,11 @@ class FirejailAppsConfigureCommand(Command):
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
         for a in args:
-            location.next_line_offset('Processing application {}.'
+            location.set_description('Processing application {}.'
                                       .format(a))
             desktop_file = '/usr/share/applications/{}.desktop'.format(a)
             if not os.path.exists(desktop_file):
                 raise ex.GenerateError('Desktop file "{}" not found.'
                                        .format(desktop_file), location=location)
-            system_context.execute(location, 'sed', '/^Exec=.*$$/ '
+            system_context.execute(location.next_line(), 'sed', '/^Exec=.*$$/ '
                                    's/^Exec=/Exec=\/usr\/bin\/firejail /', desktop_file)

@@ -51,7 +51,8 @@ class SshdSetHostkeysCommand(Command):
             raise GenerateError('"{}": No /etc/ssh directory found in system.'
                                 .format(self.name()), location=location)
 
-        system_context.execute(location, 'copy', self._key_files(key_directory),
+        system_context.execute(location.next_line(),
+                               'copy', self._key_files(key_directory),
                                '/etc/ssh', from_outside=True)
         chown(system_context, 'root', 'root', self._key_files('/etc/ssh'))
         chmod(system_context, 0o600, '/etc/ssh/ssh_host_*_key')

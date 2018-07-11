@@ -20,7 +20,7 @@ class ChmodCommand(Command):
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         self._validate_arguments_at_least(location, 2,
-                                          '"{}" takes a moda and one '
+                                          '"{}" takes a mode and one '
                                           'or more files.', *args, **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):

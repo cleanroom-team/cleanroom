@@ -8,7 +8,7 @@
 from cleanroom.generator.command import Command
 from cleanroom.generator.context import Binaries
 
-from cleanroom.printer import verbose
+from cleanroom.printer import info
 
 import os
 import os.path
@@ -41,8 +41,8 @@ class SignEfiBinaryCommand(Command):
         cert = os.path.join(system_context.ctx.systems_directory(),
                             kwargs.get('cert', 'config/efi/sign.crt'))
 
-        verbose('Signing EFI binary {} using key {} and cert {}.'
-                .format(input, key, cert))
+        info('Signing EFI binary {} using key {} and cert {}.'
+             .format(input, key, cert))
         output = to_sign + '.signed'
         assert os.path.isfile(key)
         assert os.path.isfile(cert)

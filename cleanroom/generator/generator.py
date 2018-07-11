@@ -9,12 +9,13 @@ from .executor import Executor
 from .parser import Parser
 from .systemcontext import SystemContext
 
-from ..exceptions import SystemNotFoundError
-from ..printer import (debug, fail, h1, h2, success, trace, verbose)
+from ..exceptions import (SystemNotFoundError, GenerateError,)
+from ..printer import (debug, fail, h1, h2, success, trace, verbose, Printer,)
 
 import datetime
 import os
 import os.path
+import traceback
 
 
 class DependencyNode:
@@ -149,7 +150,29 @@ class Generator:
         if not os.path.exists(self._ctx.storage_directory()):
             os.makedirs(self._ctx.storage_directory())
 
-    def generate(self):
+    def _report_error(self, system, exception, ignore_errors=False):
+        if isinstance(exception, AssertionError):
+            fail('Generation of "{}" asserted.'.format(system), force_exit=False)
+        else:
+            fail('Generation of "{}" failed: {}'.format(system, str(exception)),
+                 force_exit=False)
+
+        self._report_error_details(system, exception, ignore_errors=ignore_errors)
+
+    def _report_error_details(self, system, exception, ignore_errors=False):
+        if isinstance(exception, GenerateError) and exception.original_exception is not None:
+            self._report_error_details(system, exception.original_exception, ignore_errors=ignore_errors)
+            return
+
+        print('\nError report:')
+        Printer.Instance().flush()
+        print('\n\nTraceback Information:')
+        traceback.print_tb(exception.__traceback__)
+        print('\n\n>>>>>> END OF ERROR REPORT <<<<<<')
+        if not ignore_errors:
+            raise GenerateError('Generation failed.', original_exception=exception)
+
+    def generate(self, ignore_errors=False):
         """Generate all systems in the dependency tree."""
         self._print_systems_forest()
         timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -167,15 +190,10 @@ class Generator:
                 else:
                     exe = Executor()
                     exe.run(system_context, system, command_list)
-            except AssertionError as e:
-                fail('Generation of "{}" asserted.'.format(system,),
-                     force_exit=False, ignore=self._ctx.ignore_errors)
-                if not self._ctx.ignore_errors:
-                    raise
+
+            except GenerateError as e:
+                self._report_error(system, e, ignore_errors=ignore_errors)
             except Exception as e:
-                fail('Generation of "{}" failed: {}.'.format(system, e),
-                     force_exit=False, ignore=self._ctx.ignore_errors)
-                if not self._ctx.ignore_errors:
-                    raise
+                self._report_error(system, e, ignore_errors=ignore_errors)
             else:
                 success('Generation of "{}" complete.'.format(system))

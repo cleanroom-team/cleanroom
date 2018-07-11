@@ -6,7 +6,7 @@
 
 
 from ..exceptions import ContextError
-from ..printer import (h2, info, success, trace, verbose,)
+from ..printer import (debug, h2, info, success, trace,)
 
 from enum import Enum, auto, unique
 import os
@@ -66,14 +66,12 @@ class Context:
         self._systems_directory = system_directory
         self._work_directory = work_directory
 
-        verbose('Context: command directory = "{}".'
-                        .format(self._command_directory))
-        verbose('Context: systems directory = "{}".'
-                        .format(self._systems_directory))
+        info('Context: command directory = "{}".'.format(self._command_directory))
+        info('Context: systems directory = "{}".'.format(self._systems_directory))
 
-        info('Context: work directory    = "{}".'.format(self._work_directory))
-        info('Context: custom cleanroom  = "{}".'.format(self.systems_cleanroom_directory()))
-        info('Context: custom commands   = "{}".'.format(self.systems_commands_directory()))
+        debug('Context: work directory    = "{}".'.format(self._work_directory))
+        debug('Context: custom commands   = "{}".'.format(self.systems_commands_directory()))
+        debug('Context: custom cleanroom  = "{}".'.format(self.systems_cleanroom_directory()))
 
         success('Setting up directories.', verbosity=3)
 

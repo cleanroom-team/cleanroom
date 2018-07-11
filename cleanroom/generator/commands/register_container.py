@@ -50,18 +50,18 @@ class RegisterContainerCommand(Command):
         bin_directory = '/usr/bin'
         systemd_directory = '/usr/lib/systemd/system'
 
-        location.next_line_offset('Update update-all-containers.sh')
+        location.set_description('Update update-all-containers.sh')
         updater_script = os.path.join(bin_directory,
                                       'update-all-containers.sh')
 
         if not exists(system_context, updater_script):
-            system_context.execute(location, 'create', updater_script,
+            system_context.execute(location.next_line(), 'create', updater_script,
                                    '#!/usr/bin/bash\n')
-        system_context.execute(location, 'append', updater_script,
+        system_context.execute(location.next_line(), 'append', updater_script,
                                '/usr/bin/update-container.sh "{}" || exit 1\n')
 
-        location.next_line_offset('')
-        system_context.execute(location, 'mkdir', '{}/systemd-nspawn@{}.d'
+        location.set_description('')
+        system_context.execute(location.next_line(), 'mkdir', '{}/systemd-nspawn@{}.d'
                                .format(systemd_directory, system))
 
         extra_args = '\n'.join(extra_args_input.split(','))
@@ -70,7 +70,7 @@ class RegisterContainerCommand(Command):
         after = self._nspawnify(after_input.split(','))
         requires = self._nspawnify(requires_input.split(','))
 
-        system_context.execute(location, 'create',
+        system_context.execute(location.next_line(), 'create',
                                '{}/systemd-nspawn@{}.d/'
                                'override.conf'
                                .format(systemd_directory, system), '''[Unit]
@@ -84,8 +84,8 @@ ExecStart=/usr/bin/systemd-nspawn --quiet --keep-unit --boot --ephemeral \
 '''.format(system=system, description=description, after=after,
            requires=requires, extra_args=extra_args, timeout=timeout))
 
-        location.next_line_offset('Enabling container')
-        system_context.execute(location, 'symlink',
+        location.set_description('Enabling container')
+        system_context.execute(location.next_line(), 'symlink',
                                '../systemd-nspawn@.service',
                                'systemd-nspawn@{}.service'.format(system),
                                base_directory='{}/machines.target.wants'

@@ -31,6 +31,8 @@ class SystemdCleanupCommand(Command):
         old_base = system_context.file_name('/etc/systemd/system') + '/'
         new_base = system_context.file_name('/usr/lib/systemd/system') + '/'
 
+        location
+
         trace("walking:", old_base)
 
         for root, dirs, files in os.walk(old_base):
@@ -45,7 +47,8 @@ class SystemdCleanupCommand(Command):
                     trace('Moving file', full_path)
                     self._move_file(location, old_base, new_base, full_path)
 
-        system_context.execute(location, 'remove', '/etc/systemd/system/*',
+        system_context.execute(location.next_line(),
+                               'remove', '/etc/systemd/system/*',
                                recursive=True, force=True)
 
     def _map_base(self, old_base, new_base, input):

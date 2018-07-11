@@ -8,57 +8,58 @@
 class Location:
     """Context data for the execution os commands."""
 
-    def __init__(self, *, file_name=None,
-                 line_number=None, line_offset=None,
-                 extra_information=None):
+    def __init__(self, *,
+                 file_name=None, line_number=None, description=None,
+                 parent=None):
         """Constructor."""
         if line_number is not None:
             assert(line_number > 0)
             assert(file_name is not None)
-        if line_offset is not None:
-            assert(line_offset > 0)
-            assert(line_number is not None)
 
         self.file_name = file_name
         self.line_number = line_number
-        self.line_offset = line_offset
-        self.extra_information = extra_information
-
-    def reset(self):
-        """Reset the current command."""
-        self.file_name = None
-        self.line_number = None
-        self.line_offset = None
-        self.extra_information = None
+        self.description = description
+        self.parent = parent
 
     def is_valid(self):
         """Check whether this object contains a valid location."""
         return self.file_name is not None \
-            or self.extra_information is not None
+            or self.description is not None
 
-    def next_line_offset(self, message):
-        """Increment line_offset and update extra_information with message."""
-        if self.line_offset is None:
-            self.line_offset = 0
-        self.line_offset += 1
-        self.extra_information = message
+    def set_description(self, message):
+        """Set location description."""
+        self.description = message
+
+    def create_child(self, *, file_name=None, line_number=None, description=None):
+        return Location(file_name=file_name,
+                        line_number=line_number,
+                        description=description,
+                        parent=self)
+
+    def next_line(self):
+        if self.line_number is None:
+            self.line_number = 1
+        else:
+            self.line_number += 1
+        return self
 
     def __str__(self):
-        """Strigify location."""
+        """Stringify location."""
         if self.file_name is None:
-            if self.extra_information:
-                return '"{}"'.format(self.extra_information)
-            return '<UNKNOWN>'
+            if self.description:
+                result = '"{}"'.format(self.description)
+            else:
+                result = '<UNKNOWN>'
 
-        result = self.file_name
+        else:
+            result = self.file_name
 
-        if self.line_number is not None and self.line_number > 0:
-            result += ':{}'.format(self.line_number)
+            if self.line_number is not None and self.line_number > 0:
+                result += ':{}'.format(self.line_number)
 
-        if self.line_offset is not None and self.line_offset > 0:
-            result += '+{}'.format(self.line_offset)
+            if self.description is not None:
+                result += ' "{}"'.format(self.description)
 
-        if self.extra_information is not None:
-            result += ' "{}"'.format(self.extra_information)
-
+        if self.parent is not None:
+            result = str(self.parent) + " => " + result
         return result

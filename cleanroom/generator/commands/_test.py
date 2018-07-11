@@ -57,7 +57,7 @@ class _TestCommand(Command):
         """Find tests to run."""
         test_directory = os.path.join(system_context.ctx.systems_directory(),
                                       'tests')
-        verbose('Searching for tests in "{}".'.format(test_directory))
+        debug('Searching for tests in "{}".'.format(test_directory))
         for f in sorted(os.listdir(test_directory)):
             test = os.path.join(test_directory, f)
             if not os.path.isfile(test):

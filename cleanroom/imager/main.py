@@ -7,7 +7,8 @@
 
 from ..helper import disc
 from ..helper.run import run as helper_run
-from ..printer import (debug, fail, Printer, trace, verbose,)
+from ..printer import (debug, fail, Printer, success, trace, verbose,)
+from ..export import (Exporter, ExportContents)
 
 from argparse import ArgumentParser
 import collections
@@ -42,10 +43,10 @@ def _parse_commandline(arguments):
                         help='Repartition device or file.')
 
     parser.add_argument('--efi-size', dest='efi_size', action='store',
-                        nargs='?', default='512M',
+                        nargs='?', default='128M',
                         help='Size of EFI partition.')
     parser.add_argument('--swap-size', dest='swap_size', action='store',
-                        nargs='?', default='2G',
+                        nargs='?', default='512M',
                         help='Size of swap partition (0 to avoid creation).')
     parser.add_argument('--extra-partition', dest='extra_partitions', action='append',
                         help='Add an extra partition (SIZE:FILESYSTEM:LABEL:TARBALL).')
@@ -80,6 +81,13 @@ def _parse_extra_partition_value(value):
     size = disc.mib_ify(disc.normalize_size(parts[0]))
     assert size is not None
 
+    if not parts[1]:
+        parts[1] = None
+    if not parts[2]:
+        parts[2] = None
+    if not parts[3]:
+        parts[3] = None
+
     return ExtraPartition(size=size, filesystem=parts[1], label=parts[2],
                           contents=parts[3])
 
@@ -101,7 +109,7 @@ def main(*args):
     pr.set_verbosity(args.verbose)
     pr.show_verbosity_level()
 
-    trace('Setup done.')
+    success('Setup done.', verbosity=4)
 
     extra_partitions = tuple(map(_parse_extra_partition_value, args.extra_partitions))
 
@@ -110,8 +118,15 @@ def main(*args):
                                disc.mib_ify(disc.normalize_size(args.efi_size)),
                                disc.mib_ify(disc.normalize_size(args.swap_size)),
                                extra_partitions)
-
-    _root_only_part(image_config, system, args.timestamp, args.repository)
+    try:
+        _root_only_part(image_config, system, args.timestamp, args.repository)
+    except Exception as e:
+        fail('Failed to create image: {}'.format(str(e)))
+        raise e
+    else:
+        success('Image file {} created.'.format(image_config.path), verbosity=0)
+    finally:
+        pr.flush()
 
 
 def _root_only_part(image_config, system, timestamp, repository):
@@ -123,26 +138,28 @@ def _root_only_part(image_config, system, timestamp, repository):
     trace('Validating inputs.')
     _validate_image_config_path(image_config.path, image_config.force)
 
+    exporter = Exporter(repository)
     if timestamp is None:
-        (full_system_name, timestamp) = _find_latest_system_timestamp(repository, system)
-        if full_system_name is None:
+        system_timestamps = exporter.timestamps(system)
+        if len(system_timestamps) == 0:
             fail('Could not find system "{}" in repository "{}".'
                  .format(system, repository))
+        else:
+            timestamp = system_timestamps[-1].timestamp
     else:
-        full_system_name = _find_system_with_timestamp(repository, system, timestamp)
-        if full_system_name is None:
+        if not exporter.has_system_with_timestamp(system, timestamp):
             fail('Could not find system "{}" with timestamp "{}" in repository "{}".'
                  .format(system, timestamp, repository))
 
-    debug('Creating image from "{}".'.format(full_system_name))
-    _validate_full_system(repository, full_system_name)
+    full_system_name = '{}-{}'.format(system, timestamp)
 
-    kernel_size = _get_size(_backup_name(repository, full_system_name),
-                            _kernel_name(timestamp))
-    root_size = _get_size(_backup_name(repository, full_system_name),
-                          _root_name(timestamp))
-    verity_size = _get_size(_backup_name(repository, full_system_name),
-                            _verity_name(timestamp))
+    debug('Creating image from "{}".'.format(full_system_name))
+    contents = exporter.export(system, timestamp)
+    _validate_contents(contents)
+
+    kernel_size = contents.file(contents.kernel_name()).size
+    root_size = contents.file(contents.root_name()).size
+    verity_size = contents.file(contents.verity_name()).size
 
     extra_text = 'extra: '
     extra_total = 0
@@ -169,25 +186,27 @@ def _root_only_part(image_config, system, timestamp, repository):
         for name, dev in partition_devices.items():
             trace('Created partition "{}": {}.'.format(name, dev))
 
+        success('Basic partitions in place.', verbosity=2)
+
         if 'swap' in partition_devices:
             helper_run('/usr/bin/mkswap', '-L', 'main', partition_devices['swap'])
         assert 'root' in partition_devices
-        _write_to_partition(partition_devices['root'],
-                            _backup_name(repository, full_system_name),
-                            _root_name(timestamp))
+        _write_to_partition(partition_devices['root'], contents.root_name(), contents)
+        success('Root partition installed.', verbosity=2)
+
         assert 'verity' in partition_devices
-        _write_to_partition(partition_devices['verity'],
-                            _backup_name(repository, full_system_name),
-                            _verity_name(timestamp))
+        _write_to_partition(partition_devices['verity'], contents.verity_name(), contents)
+        success('Verity partition installed.', verbosity=2)
         assert 'efi' in partition_devices
         _prepare_efi_partition(partition_devices['efi'], partition_devices['root'],
-                               _backup_name(repository, full_system_name),
-                               timestamp)
+                               contents)
+        success('EFI partition installed.', verbosity=2)
         for i in range(len(image_config.extra_partitions)):
             ep = image_config.extra_partitions[i]
             _prepare_extra_partition(partition_devices['extra{}'.format(i+1)],
                                      filesystem=ep.filesystem, label=ep.label,
                                      contents=ep.contents)
+        success('Extra partitions installed.', verbosity=2)
 
     sys.exit(0)
 
@@ -206,67 +225,6 @@ def _root_name(timestamp):
 
 def _verity_name(timestamp):
     return _root_name(timestamp) + '_verity'
-
-
-def _run_borg(*args, **kwargs):
-    env = os.environ
-    env['LC_ALL'] = 'C'
-    print(*args)
-    result = helper_run('/usr/bin/borg', *args,
-                        env=env, trace_output=trace, **kwargs)
-    if result.returncode != 0:
-        fail('Failed to retrieve data from borg.')
-
-    return result
-
-
-def _parse_borg_list(repository):
-    trace('Running borg list on repository "{}".'.format(repository))
-    result = _run_borg('list', repository)
-
-    pattern = re.compile('(([a-zA-Z][a-zA-Z0-9_-]*)-([0-9]+-[0-9]+))\s+(.*) \\[([a-fA-F0-9]+)\\]')
-
-    for line in result.stdout.splitlines():
-        if not line:
-            continue
-
-        match = pattern.search(line)
-        if match is None:
-            fail('Failed to parse borg list output.')
-
-        yield match.groups()
-
-
-def _find_latest_system_timestamp(repository, system):
-    latest_timestamp = '00000000-000000'
-    full_system_name = None
-    for (current_full_name, current_system, current_timestamp, _, _) in _parse_borg_list(repository):
-        if system != current_system:
-            continue
-
-        if current_timestamp > latest_timestamp:
-            latest_timestamp = current_timestamp
-            full_system_name = current_full_name
-
-    return full_system_name, latest_timestamp
-
-
-def _find_system_with_timestamp(repository, system, timestamp):
-    for (current_full_name, current_system, current_timestamp, _, _) in _parse_borg_list(repository):
-        if system == current_system and timestamp == current_timestamp:
-            return current_full_name
-
-    return None
-
-
-def _get_size(backup, file_name):
-    result = _run_borg('list', '--json-lines', backup, file_name)
-    for line in result.stdout.splitlines():
-        json_data = json.loads(line)
-        assert json_data.get('path') == file_name
-        assert json_data.get('type') == '-'
-        assert json_data.get('healthy', False)
-        return json_data.get('size')
 
 
 def _calculate_minimum_size(kernel_size, root_size, verity_size,
@@ -290,15 +248,10 @@ def _calculate_minimum_size(kernel_size, root_size, verity_size,
             2 * mib)       # Blank space in back
 
 
-def _validate_full_system(repository, full_system_name):
-    debug('Validating system: {}.'.format(full_system_name))
-
-    borg_path = _backup_name(repository, full_system_name)
-    borg_extract_result = _run_borg('extract', '--stdout', borg_path, 'export_type')
-
-    if borg_extract_result.stdout != 'export_squashfs':
-        fail('{} is not a squashfs filesystem export.'.format(full_system_name))
-
+def _validate_contents(contents):
+    type = contents.extract('export_type')
+    if type != 'export_squashfs':
+        fail('Failed with invalid export_type in archive (was "{}")'.format(type))
 
 def _validate_image_config_path(path, force):
     if disc.is_block_device(path):
@@ -357,7 +310,7 @@ def _repartition(device, repartition, timestamp, *,
         devices['swap'] = device.device(4)
 
     extra_counter = 0
-    print('Adding extra partitions: {}.'.format(extra_partitions))
+    debug('Adding extra partitions: {}.'.format(extra_partitions))
     for ep in extra_partitions:
         extra_counter += 1
 
@@ -377,9 +330,11 @@ def _copy_efi_file(source, destination):
     os.chmod(destination, 0o755)
 
 
-def _prepare_efi_partition(device, root_dev, backup, timestamp):
-    helper_run('/usr/bin/mkfs.vfat', device, trace_output=trace)
+def _prepare_efi_partition(device, root_dev, contents):
+    trace('Preparing EFI partition.')
+    _prepare_extra_partition(device, filesystem='vfat', label='EFI')
 
+    trace('... Partition created.')
     cwd = os.getcwd()
     with tempfile.TemporaryDirectory() as mnt_point:
         boot_mnt = os.path.join(mnt_point, 'boot')
@@ -390,33 +345,45 @@ def _prepare_efi_partition(device, root_dev, backup, timestamp):
             os.makedirs(root_mnt)
             helper_run('/usr/bin/mount', '-t', 'squashfs', root_dev, root_mnt, trace_output=trace)
 
+            trace('... boot and root are mounted.')
+
             loader = os.path.join(root_mnt, 'usr/lib/systemd/boot/efi/systemd-bootx64.efi')
             os.makedirs(os.path.join(boot_mnt, 'EFI/Boot'))
+            trace('... "EFI/boot" directory created.')
             _copy_efi_file(loader, os.path.join(boot_mnt, 'EFI/Boot/BOOTX64.EFI'))
+            trace('... default boot loader installed')
             os.makedirs(os.path.join(boot_mnt, 'EFI/systemd'))
+            trace('... "EFI/systemd" directory created.')
             _copy_efi_file(loader, os.path.join(boot_mnt, 'EFI/systemd/systemd-bootx64.efi'))
+            trace('... systemd boot loader installed.')
             os.makedirs(os.path.join(boot_mnt, 'loader/entries'))
             with open(os.path.join(boot_mnt, 'loader/loader.conf'), 'w') as lc:
                 lc.write('#timeout 3\n')
                 lc.write('default linux-*\n')
 
+            trace('... loader.conf written.')
+
             linux_dir = os.path.join(boot_mnt, 'EFI/Linux')
             os.makedirs(linux_dir)
-            _run_borg('extract', backup, _kernel_name(timestamp),
-                      work_directory=linux_dir)
-            input_kernel = os.path.join(linux_dir, _kernel_name(timestamp))
-            kernel = os.path.join(linux_dir, 'linux-{}.efi'.format(timestamp))
+            trace('... "EFI/Linux" created.')
+            contents.extract(contents.kernel_name(), work_directory=linux_dir)
+            trace('... kernel extracted')
+            input_kernel = os.path.join(linux_dir, contents.kernel_name())
+            kernel = os.path.join(linux_dir, contents.base_kernel_name())
+            trace('... preparing: {} -> {}'.format(input_kernel, kernel))
             _copy_efi_file(input_kernel, kernel)
             os.remove(input_kernel)
+            trace('... kernel moved.')
 
         finally:
+            trace('... cleaning up.')
             os.chdir(cwd)
             helper_run('/usr/bin/umount', boot_mnt, trace_output=trace, returncode=None)
             helper_run('/usr/bin/umount', root_mnt, trace_output=trace, returncode=None)
 
 
-def _write_to_partition(device, backup, file_name):
-    _run_borg('extract', '--stdout', backup, file_name, stdout=device)
+def _write_to_partition(device, file_name, contents):
+    contents.extract(file_name, stdout=device)
 
 
 def _format_partition(device, filesystem, *label_args):
@@ -428,8 +395,11 @@ def _prepare_extra_partition(device, *, filesystem=None, label=None, contents=No
         assert contents is None
         return
 
+    verbose('Preparing extra partition on {} using {}.'.format(device, filesystem))
+
     label_args = ()
     if label is not None:
+        debug('... setting label to "{}".'.format(label))
         if filesystem == 'fat' or filesystem == 'vfat':
             label_args = ('-n', label)
         if filesystem.startswith('ext') or filesystem == 'btrfs' or filesystem == 'xfs':
@@ -438,5 +408,7 @@ def _prepare_extra_partition(device, *, filesystem=None, label=None, contents=No
     _format_partition(device, filesystem, *label_args)
 
     if contents is not None:
+        # FIXME: Implement this!
+        assert contents is None
         return
 

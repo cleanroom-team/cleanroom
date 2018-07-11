@@ -30,21 +30,21 @@ class SetupReadonlyUsrCommand(Command):
 
         # Remove unnecessary systemd-generators:
         # Must keep fstab and cryptsetup generator for mkinitcpio
-        system_context.execute(location,
+        system_context.execute(location.next_line(),
                                'remove', '/usr/lib/systemd-generators/'
                                'systemd-system-update_generator')
 
         # Remove unnecessary tmpfiles.d:
-        system_context.execute(location,
+        system_context.execute(location.next_line(),
                                'remove', '/usr/lib/tmpfiles.d/man-db.conf')
 
-        # Remove arch.conf tmpfiles.d:
-        system_context.execute(location,
-                               'remove', '/usr/share/factory/etc/crypttab',
+        # Remove arch.conf tmpfiles.d and related files:
+        system_context.execute(location.next_line(),
+                               'remove', '/usr/lib/tmpfiles.d/arch.conf',
+                               '/usr/share/factory/etc/crypttab',
                                '/usr/share/factory/etc/fstab',
                                '/usr/share/factory/etc/group',
                                '/usr/share/factory/etc/gshadow',
-                               '/usr/share/factory/etc/host.conf',
                                '/usr/share/factory/etc/hosts',
                                '/usr/share/factory/etc/issue',
                                '/usr/share/factory/etc/ld.so.conf',
@@ -54,11 +54,10 @@ class SetupReadonlyUsrCommand(Command):
                                '/usr/share/factory/etc/profile',
                                '/usr/share/factory/etc/securetty',
                                '/usr/share/factory/etc/shadow',
-                               '/usr/share/factory/etc/shells',
-                               '/usr/lib/tmpfiles.d/arch.conf')
+                               '/usr/share/factory/etc/shells')
 
         # Remove firstboot:
-        system_context.execute(location, 'remove',
+        system_context.execute(location.next_line(), 'remove',
                                '/usr/lib/systemd/system/sysinit.target.wants/'
                                'systemd-firstboot.service',
                                '/usr/lib/systemd/system/'
@@ -66,41 +65,44 @@ class SetupReadonlyUsrCommand(Command):
                                '/usr/bin/systemd-firstboot')
 
         # Remove unnecessary systemd-timers:
-        system_context.execute(location, 'remove',
+        system_context.execute(location.next_line(), 'remove',
                                '/usr/lib/systemd/system/timers.target.wants/'
                                'shadow.timer')
 
         # Remove unnecessary systemd-services:
-        system_context.execute(location, 'remove',
+        system_context.execute(location.next_line(), 'remove',
                                '/usr/lib/systemd/system/*/ldconfig.service',
                                '/usr/lib/systemd/system/ldconfig.service',
                                '/usr/lib/systemd/system/*/'
                                'systemd-hwdb-update.service',
                                '/usr/lib/systemd/system/'
-                               'systemd-hwdb-update.service')
+                               'systemd-hwdb-update.service',
+                               '/usr/lib/systemd/system/*/systemd-sysusers.service',
+                               '/usr/lib/systemd/system/systemd-sysusers.service')
 
         # Things to update/clean on export:
-        location.next_line_offset('Remove kernel-install')
+        location.set_description('Remove kernel-install and systemd-sysusers')
         system_context.add_hook(location, 'export',
                                 'remove', '/usr/lib/kernel', '/etc/kernel',
                                 '/usr/bin/kernel-install',
+                                '/usr/lib/sysusers.d', '/usr/bin/systemd-sysusers',
                                 recursive=True, force=True)
-        location.next_line_offset('Run ldconfig')
+        location.set_description('Run ldconfig')
         system_context.add_hook(location, 'export',
                                 'run', '/usr/bin/ldconfig', '-X')
-        location.next_line_offset('Remove ldconfig data')
+        location.set_description('Remove ldconfig data')
         system_context.add_hook(location, 'export',
                                 'remove', '/usr/bin/ldconfig')
-        location.next_line_offset('Update HWDB')
+        location.set_description('Update HWDB')
         system_context.add_hook(location, 'export',
                                 'run',
                                 '/usr/bin/systemd-hwdb', '--usr', 'update')
-        location.next_line_offset('Remove HWDB data')
+        location.set_description('Remove HWDB data')
         system_context.add_hook(location, 'export',
                                 'remove', '/usr/bin/systemd-hwdb')
 
         # Shell cleanup:
-        location.next_line_offset('Clear ZSH files')
+        location.set_description('Clear ZSH files')
         system_context.add_hook(location, '_teardown', 'run',
                                 'test', '-x', '/usr/bin/zsh',
                                 '&&', 'rm', '-rf', '/usr/share/zsh',

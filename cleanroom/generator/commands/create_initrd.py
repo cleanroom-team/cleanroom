@@ -25,11 +25,11 @@ class CreateInitrdCommand(Command):
                                   *args, **kwargs)
 
     def _copy_extra_file(self, location, system_context, file):
-        location.next_line_offset('Installing extra mkinitcpio file {}'
+        location.set_description('Installing extra mkinitcpio file {}'
                                   .format(file))
         source_path = os.path.join(self.helper_directory(), file)
         dest_path = os.path.join('/usr/bin', file)
-        system_context.execute(location, 'copy', source_path, dest_path,
+        system_context.execute(location.next_line(), 'copy', source_path, dest_path,
                                from_outside=True)
         return dest_path
 
@@ -42,14 +42,14 @@ class CreateInitrdCommand(Command):
         return to_clean_up
 
     def _install_mkinitcpio(self, location, system_context):
-        to_clean_up = ['/etc/mkinitcpio.d/*', '/etc/mkinitcpio.conf',
+        to_clean_up = ['/etc/mkinitcpio.d', '/etc/mkinitcpio.conf',
                        '/boot/vmlinu*']
 
-        location.next_line_offset('Install mkinitcpio')
-        system_context.execute(location, 'pacman', 'mkinitcpio')
+        location.set_description('Install mkinitcpio')
+        system_context.execute(location.next_line(), 'pacman', 'mkinitcpio')
 
-        location.next_line_offset('Fix up mkinitcpio.conf')
-        system_context.execute(location, 'sed',
+        location.set_description('Fix up mkinitcpio.conf')
+        system_context.execute(location.next_line(), 'sed',
                                '/^HOOKS=/ '
                                'cHOOKS="base systemd keyboard sd-vconsole '
                                'sd-encrypt sd-lvm2 block filesystems '
@@ -57,26 +57,26 @@ class CreateInitrdCommand(Command):
                                'sd-volatile sd-shutdown"',
                                '/etc/mkinitcpio.conf')
 
-        location.next_line_offset('Fix up mkinitcpio presets')
-        system_context.execute(location, 'sed',
+        location.set_description('Fix up mkinitcpio presets')
+        system_context.execute(location.next_line(), 'sed',
                                "/^PRESETS=/ cPRESETS=('default')",
                                '/etc/mkinitcpio.d/linux.preset')
-        system_context.execute(location, 'sed',
+        system_context.execute(location.next_line(), 'sed',
                                "/'fallback'/ d",
                                '/etc/mkinitcpio.d/linux.preset')
-        system_context.execute(location, 'sed',
+        system_context.execute(location.next_line(), 'sed',
                                's%/vmlinuz-linux.*"%/vmlinuz"%',
                                '/etc/mkinitcpio.d/linux.preset')
-        system_context.execute(location, 'sed',
+        system_context.execute(location.next_line(), 'sed',
                                's%/initramfs-linux.*.img%/initrd%',
                                '/etc/mkinitcpio.d/linux.preset')
         return to_clean_up
 
     def _create_install_hook(self, location, system_context, name, contents):
-        location.next_line_offset('install mkinitcpio install hook {}'
+        location.set_description('install mkinitcpio install hook {}'
                                   .format(name))
         path = os.path.join('/usr/lib/initcpio/install', name)
-        system_context.execute(location, 'create', path, contents)
+        system_context.execute(location.next_line(), 'create', path, contents)
         return path
 
     def _install_mkinitcpio_hooks(self, location, system_context):
@@ -136,7 +136,7 @@ build() {
 
 help() {
     cat <<HELPEOF
-This hook allows for setting up the rootfs from /usr/lib/modules/boot/rootfs.tar
+This hook allows for setting up the rootfs from /usr/lib/boot/root-fs.tar
 HELPEOF
 }
 
@@ -185,12 +185,12 @@ HELPEOF
         return to_clean_up
 
     def _run_mkinitcpio(self, location, system_context):
-        location.next_line_offset('Run mkinitcpio')
+        location.set_description('Run mkinitcpio')
         system_context.run('/usr/bin/mkinitcpio', '-p', 'linux')
 
     def _cleanup_extra_files(self, location, system_context, *files):
-        location.next_line_offset('Remove extra mkinitcpio files')
-        system_context.execute(location, 'remove', *files, force=True)
+        location.set_description('Remove extra mkinitcpio files')
+        system_context.execute(location.next_line(), 'remove', *files, force=True, recursive=True)
 
     def _remove_mkinitcpio(self, location, system_context):
         # FIXME: Remove mkinitcpio once linux and ostree no longer depend on it!
@@ -199,6 +199,7 @@ HELPEOF
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
+        location
         initrd = args[0]
 
         to_clean_up = []
@@ -211,7 +212,7 @@ HELPEOF
         initrd_directory = os.path.dirname(initrd)
         if not os.path.isdir(initrd_directory):
             os.makedirs(initrd_directory)
-        system_context.execute(location, 'move', '/boot/initrd', initrd,
+        system_context.execute(location.next_line(), 'move', '/boot/initrd', initrd,
                                to_outside=True)
 
         self._cleanup_extra_files(location, system_context, *to_clean_up)

@@ -115,8 +115,8 @@ def makedirs(system_context, *dirs, user=0, group=0, mode=None, force=False):
     """Make directories in the system filesystem."""
     for d in dirs:
         full_path = file_name(system_context, d)
-        if os.makedirs(full_path, exist_ok=force):
-            _chmod(system_context, mode, full_path)
+        os.makedirs(full_path, exist_ok=force)
+        _chmod(system_context, mode, full_path)
         _chown(system_context,
                _get_uid(system_context, user),
                _get_gid(system_context, group), full_path)
@@ -124,6 +124,8 @@ def makedirs(system_context, *dirs, user=0, group=0, mode=None, force=False):
 
 def _chmod(system_context, mode, *files):
     """For internal use only."""
+    if mode is None:
+        return
     for f in files:
         trace('Chmod of "{}" to {}.'.format(f, mode))
         os.chmod(f, mode)
@@ -136,8 +138,8 @@ def chmod(system_context, mode, *files):
 
 def _chown(system_context, uid, gid, *files):
     """Change owner of files."""
-    assert(uid is not str)
-    assert(gid is not str)
+    assert uid is not str
+    assert gid is not str
 
     for f in files:
         trace('Chown of "{}" to {}:{}.'.format(f, uid, gid))
@@ -227,33 +229,32 @@ def prepend_file(system_context, file, contents):
 
 def _file_op(system_context, op, description, *args,
              to_outside=False, from_outside=False, ignore_missing_sources=True,
-             recursive=False, **kwargs):
+             recursive=False, force=False, **kwargs):
     assert(not to_outside or not from_outside)
     sources = args[:-1]
     destination = args[-1]
-
-    force = False
-
-    if 'force' in kwargs:
-        force = kwargs['force']
-        del kwargs['force']
 
     sources = tuple(expand_files(None if from_outside else system_context,
                                  *sources))
     destination = file_name(None if to_outside else system_context,
                             destination)
 
-    if ignore_missing_sources and not sources:
-        return
-
-    assert(sources)
+    assert sources or ignore_missing_sources
 
     trace(description.format('", "'.join(sources), destination))
-    print(description.format('", "'.join(sources), destination))
     for source in sources:
         s = os.path.normpath(source)
+        if not os.path.exists(s):
+            if ignore_missing_sources:
+                continue
+            else:
+                raise OSError('Source file "{}" does not exist.'.format(s))
+
         d = os.path.normpath(destination)
-        assert not os.path.isfile(d) or force
+        if os.path.isfile(d):
+            if not force:
+                raise OSError('Destination "{}" exists already.'.format(d))
+
         if os.path.isdir(d):
             d = os.path.join(d, os.path.basename(s))
 

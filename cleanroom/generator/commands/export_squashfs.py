@@ -10,7 +10,7 @@ from cleanroom.generator.helper.generic.file import exists
 
 from cleanroom.exceptions import (GenerateError, ParseError)
 from cleanroom.helper.btrfs import (create_subvolume, delete_subvolume)
-from cleanroom.printer import verbose
+from cleanroom.printer import debug
 
 import os.path
 import shutil
@@ -26,7 +26,8 @@ class ExportSquashfsCommand(ExportCommand):
         self._volume_group = None
 
         super().__init__('export_squashfs',
-                         syntax='[key=<KEY>] [cert=<CERT>] [vg=<VG_BASE>]',
+                         syntax='[key=<KEY>] [cert=<CERT>] [vg=<VG_BASE>]'
+                             '[compression=lz4]',
                          help='Export the root filesystem as squashfs.',
                          file=__file__)
 
@@ -35,7 +36,10 @@ class ExportSquashfsCommand(ExportCommand):
         self._key = kwargs.get('key')
         self._cert = kwargs.get('cert')
         self._volume_group = kwargs.get('vg', '')
+        self._compression = kwargs.get('compression', 'lz4')
         self._partition_label = kwargs.get('partlabel', '')
+
+        location
 
         super().__call__(location, *args, **kwargs)
 
@@ -43,6 +47,7 @@ class ExportSquashfsCommand(ExportCommand):
         tar_directory = '/usr/lib/boot'
         system_context.execute(location, 'mkdir', tar_directory)
 
+        ## tarball = os.path.join(tar_directory, 'root-fs.tar')
         tarball = os.path.join(tar_directory, 'root-fs.tar')
         if exists(system_context, tarball):
             raise GenerateError('"{}": Root tarball "{}" already exists.'
@@ -57,12 +62,12 @@ class ExportSquashfsCommand(ExportCommand):
                             'linux-{}{}.efi'.format(system_context.timestamp, full_label))
 
     def _create_initramfs(self, location, system_context):
-        location.next_line_offset('Create initrd')
+        location.set_description('Create initrd')
         initrd_parts = os.path.join(system_context
                                     .boot_data_directory(),
                                     'initrd-parts')
         os.makedirs(initrd_parts)
-        system_context.execute(location, 'create_initrd',
+        system_context.execute(location.next_line(), 'create_initrd',
                                os.path.join(initrd_parts, '50-mkinitcpio'))
 
     def prepare_for_export(self, location, system_context):
@@ -72,7 +77,7 @@ class ExportSquashfsCommand(ExportCommand):
     def validate_arguments(self, location, *args, **kwargs):
         """Validate arguments."""
         self._validate_no_args(location, *args)
-        self._validate_kwargs(location, ('key', 'cert', 'vg', 'partlabel'), **kwargs)
+        self._validate_kwargs(location, ('key', 'cert', 'vg', 'partlabel', 'compression'), **kwargs)
 
         if 'key' in kwargs:
             if not 'cert' in kwargs:
@@ -84,16 +89,16 @@ class ExportSquashfsCommand(ExportCommand):
                                  location=location)
 
     def _create_efi_kernel(self, location, system_context, kernel_name, cmdline):
-        location.next_line_offset('Create EFI kernel')
+        location.set_description('Create EFI kernel')
         boot_data = system_context.boot_data_directory()
-        system_context.execute(location, 'create_efi_kernel', kernel_name,
+        system_context.execute(location.next_line(), 'create_efi_kernel', kernel_name,
                                kernel=os.path.join(system_context.boot_data_directory(), 'vmlinuz'),
                                initrd=os.path.join(boot_data, 'initrd-parts'),
                                commandline=cmdline)
 
     def _sign_efi_kernel(self, location, system_context, kernel, key, cert):
-        location.next_line_offset('Sign EFI kernel')
-        system_context.execute(location, 'sign_efi_binary', kernel,
+        location.set_description('Sign EFI kernel')
+        system_context.execute(location.next_line(), 'sign_efi_binary', kernel,
                                key=key, cert=cert, outside=True)
 
     def _size_extend(self, file):
@@ -111,8 +116,9 @@ class ExportSquashfsCommand(ExportCommand):
                                    .format(system_context.timestamp))
         mksquashfs = system_context.binary(Binaries.MKSQUASHFS)
         system_context.run(mksquashfs, 'usr', squash_file, '-comp',
-                           'lz4', '-noappend', '-no-exports',
-                           '-keep-as-directory', outside=True)
+                           self._compression, '-noappend', '-no-exports',
+                           '-keep-as-directory', outside=True,
+                           work_directory=system_context.fs_directory())
         self._size_extend(squash_file)
         return squash_file
 
@@ -164,7 +170,7 @@ class ExportSquashfsCommand(ExportCommand):
         self._create_efi_kernel(location, system_context, kernel_name, full_cmdline)
 
         if self._key is not None and self._cert is not None:
-            verbose('Signing EFI kernel.')
+            debug('Signing EFI kernel.')
             self._sign_efi_kernel(location, system_context, kernel_name,
                                   self._key, self._cert)
 
@@ -204,4 +210,5 @@ class ExportSquashfsCommand(ExportCommand):
 
     def delete_export_directory(self, system_context, export_directory):
         """Nothing to see, move on."""
-        delete_subvolume(export_directory, command=system_context.binary(Binaries.BTRFS))
+        # delete_subvolume(export_directory, command=system_context.binary(Binaries.BTRFS))
+        pass

@@ -155,8 +155,8 @@ class NbdDevice(Device):
                      command=None, qemu_img_command=None):
         create_image_file(file_name, size, disk_format=disk_format,
                           command=qemu_img_command)
-        verbose('New image file {} ({}) created with size {}.'
-                .format(file_name, disk_format, size))
+        debug('New image file {} ({}) created with size {}.'
+              .format(file_name, disk_format, size))
         return NbdDevice(file_name, disk_format=disk_format, command=command)
 
     def __init__(self, file_name, *, disk_format='qcow2', command=None):

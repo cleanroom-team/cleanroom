@@ -49,7 +49,8 @@ class PacstrapCommand(Command):
         # Make sure DB is up-to-date:
         system_context.run('/usr/bin/pacman-db-upgrade')
 
-        system_context.execute(location, 'remove', '/var/lib/pacman',
+        system_context.execute(location.next_line(),
+                               'remove', '/var/lib/pacman',
                                recursive=True, force=True)
 
         system_context.set_substitution('PACKAGE_TYPE', 'pacman')
@@ -85,14 +86,14 @@ class PacstrapCommand(Command):
         gpgdir = target_gpg_directory()
         packageFiles = target_cache_directory() + '/pkg/*'
 
-        location.next_line_offset('cleanup pacman-key files')
+        location.set_description('cleanup pacman-key files')
         system_context.add_hook(location, '_teardown', 'remove',
                                 gpgdir + '/S.*', gpgdir + '/pubring.gpg~',
                                 '/var/log/pacman.log',
                                 packageFiles,
                                 recursive=True, force=True)
-        location.next_line_offset('Move systemd files into /usr')
+        location.set_description('Move systemd files into /usr')
         system_context.add_hook(location, '_teardown', 'systemd_cleanup')
-        location.next_line_offset('Remove pacman secret keyring')
+        location.set_description('Remove pacman secret keyring')
         system_context.add_hook(location, 'export',
                                 'remove', gpgdir + '/secring.gpg*', force=True)

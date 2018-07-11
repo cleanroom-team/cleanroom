@@ -10,7 +10,7 @@ from .helper.generic.file import (expand_files, file_name)
 from .parser import Parser
 
 from ..location import Location
-from ..printer import (debug, h3, info, trace,)
+from ..printer import (debug, h3, info, success, trace,)
 
 from ..helper.run import run
 
@@ -58,8 +58,8 @@ class SystemContext:
 
         self._setup_core_substitutions()
 
-        assert(self.ctx)
-        assert(self.system)
+        assert self.ctx
+        assert self.system
 
     def _setup_core_substitutions(self):
         """Core substitutions that may not get overriden by base system."""
@@ -113,7 +113,7 @@ class SystemContext:
     # Handle Hooks:
     def _add_hook(self, hook, exec_object):
         """Add a hook."""
-        assert(exec_object is not None)
+        assert exec_object is not None
 
         info('Adding hook "{}": {}.'.format(hook, exec_object))
         self.hooks.setdefault(hook, []).append(exec_object)
@@ -121,7 +121,7 @@ class SystemContext:
 
     def add_hook(self, location, hook, *args, **kwargs):
         """Add a hook."""
-        assert(isinstance(hook, str))
+        assert isinstance(hook, str)
         self._add_hook(hook, Parser.create_execute_object(location,
                                                           *args, **kwargs))
 
@@ -141,6 +141,7 @@ class SystemContext:
             os.chdir(self.ctx.systems_directory())
             self.execute(cmd.location(),
                          cmd.command(), *cmd.arguments(), **cmd.kwargs())
+        success('All {} hooks were run successfully.', verbosity=2)
 
         self.hooks_that_already_ran.append(hook)
 
@@ -165,7 +166,7 @@ class SystemContext:
     # Run shell commands:
     def run(self, *args, outside=False, **kwargs):
         """Run a command in this system_context."""
-        assert('chroot' not in kwargs)
+        assert 'chroot' not in kwargs
 
         args = map(lambda a: self.substitute(str(a)), args)
 
@@ -188,21 +189,31 @@ class SystemContext:
     def execute(self, location, command, *args,
                 expected_dependency=None, **kwargs):
         """Execute a command."""
-        assert(isinstance(location, Location))
-        assert(isinstance(command, str))
+        assert location is not None
+        assert location.is_valid()
+        assert isinstance(location, Location)
+        assert isinstance(command, str)
+
         debug('Executing {}: {}.'.format(location, command))
+
         cmd = Parser.command(command)
+        assert cmd is not None
+
         dependency = cmd.validate_arguments(location, *args, **kwargs)
-        assert(expected_dependency == dependency)
+        assert expected_dependency == dependency
+
         trace('{}: Argument validation complete.'.format(command))
-        location.next_line_offset(command)
         trace('{}: Execute...'.format(command))
-        cmd(location, self, *args, **kwargs)
+
+        child = location.create_child(file_name='<COMMAND "{}">'.format(command),
+                                      description='{} {},{}'.format(command, args, kwargs))
+        assert child is not None
+        cmd(child, self, *args, **kwargs)
 
     # Store/Restore a system:
     def install_base_context(self, base_context):
         """Set up base context."""
-        assert(base_context.system)
+        assert base_context.system
 
         self.base_context = base_context
         self.timestamp = base_context.timestamp
@@ -240,4 +251,5 @@ class SystemContext:
         debug('Unpickling system_context from {}.'.format(pickle_jar))
         with open(pickle_jar, 'rb') as jar:
             base_context = _SystemContextUnpickler(jar).load()
+        debug('Unpickled base context.')
         return base_context

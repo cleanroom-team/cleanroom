@@ -126,6 +126,7 @@ def _preflight_check(ctx):
 
 def _generate(ctx, systems):
     generator = Generator(ctx)
+    failed_to_generate = []
 
     try:
         generator.prepare()
@@ -141,9 +142,8 @@ def _generate(ctx, systems):
         generator.add_system(s)
 
     try:
-        generator.generate()
+        generator.generate(ctx.ignore_errors)
     except GenerateError as e:
-        fail('Generation failed: {}'.format(e))
-        raise
+        fail('Generation failed.', verbosity=2)
     else:
         success('Generation phase.', verbosity=2)

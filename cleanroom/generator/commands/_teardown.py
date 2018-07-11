@@ -30,11 +30,12 @@ class _TeardownCommand(Command):
 
         system_context.pickle()
 
+        location
         self._store(location, system_context)
         self._clean_temporary_data(system_context)
 
     def _store(self, location, system_context):
-        system_context.execute(location, '_store')
+        system_context.execute(location.next_line(), '_store')
 
     def _clean_temporary_data(self, system_context):
         """Clean up temporary data."""

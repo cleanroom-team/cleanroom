@@ -25,6 +25,7 @@ def enable_firewall(location, system_context):
     """Enable the firewall."""
     # FIXME: Fix systemd install section to run iptables services earlier!
     assert(firewall_type(system_context) == 'iptables')
+    location.set_description('Enable firewall')
     system_context.execute(location, 'systemd_enable',
                            'iptables.service', 'ip6tables.service')
 
@@ -48,11 +49,14 @@ def open_port(location, system_context, port, protocol='tcp', comment=None):
         output += ' ### {}'.format(comment)
 
     pattern = '/{}/ a{}'.format(magic, output)
+    location.set_description('Open IPv4 port')
     system_context.execute(location, 'sed', pattern, _IPv4_RULES)
+    location.set_description('Open IPv6 port')
     system_context.execute(location, 'sed', pattern, _IPv6_RULES)
 
 
 def _install_v4_rules(location, system_context, rule_file):
+    location.set_description('Install IPv4 rules')
     system_context.execute(location, 'create', rule_file, """
 # iptables rules:
 
@@ -92,10 +96,12 @@ def _install_v4_rules(location, system_context, rule_file):
 
 COMMIT
 """.format(_TCP_MAGIC, _UDP_MAGIC))
+    location.set_description('Chmod IPv4 rules')
     system_context.execute(location, 'chmod', 0o644, rule_file)
 
 
 def _install_v6_rules(location, system_context, rule_file):
+    location.set_description('Install IPv6 rules')
     system_context.execute(location, 'create', rule_file, """
 # ip6tables rules:
 
@@ -136,4 +142,5 @@ def _install_v6_rules(location, system_context, rule_file):
 
 COMMIT
 """.format(_TCP_MAGIC, _UDP_MAGIC))
+    location.set_description('Chmod IPv6 rules')
     system_context.execute(location, 'chmod', 0o644, rule_file)

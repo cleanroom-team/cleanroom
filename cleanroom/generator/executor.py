@@ -5,8 +5,8 @@
 """
 
 
-from ..exceptions import CleanRoomError
 from ..printer import (fail, h2, trace, success,)
+from ..exceptions import GenerateError
 
 import os
 import os.path
@@ -50,11 +50,10 @@ class Executor:
                 *exec_object.arguments(),
                 expected_dependency=exec_object.dependency(),
                 **exec_object.kwargs())
-        except CleanRoomError as e:
-            fail('Failed to execute: {}.'.format(e),
-                         verbosity=1)
-            if not system_context.ctx.ignore_errors:
-                raise
+        except Exception as e:
+            raise GenerateError('Failed to execute {} for system {}.'
+                                .format(exec_object, system_context.system),
+                                location=location, original_exception=e)
         else:
             success('{}: ok.'.format(exec_object), verbosity=1)
 

@@ -37,7 +37,7 @@ class SetHostnameCommand(Command):
 
         system_context.execute(location,
                                'create', '/etc/hostname', static_hostname)
-        system_context.execute(location, 'sed',
+        system_context.execute(location.next_line(), 'sed',
                                '/^PRETTY_HOSTNAME=/ cPRETTY_HOSTNAME=\"{}\"'
                                .format(pretty_hostname),
                                '/etc/machine.info')
