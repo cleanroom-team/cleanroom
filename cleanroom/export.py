@@ -128,8 +128,8 @@ class ExportContents:
         assert self._has_contents(path)
         return path
 
-    def extract(self, path, **kwargs):
-        result = Exporter._run_borg('extract', '--stdout', self._backup_name(), path, **kwargs)
+    def extract(self, path, *args, **kwargs):
+        result = Exporter._run_borg('extract', *args, self._backup_name(), path, **kwargs)
         if result.returncode != 0:
             fail('Failed to extract "{}" from {}.'.format(path, self._backup_name()))
         return result.stdout

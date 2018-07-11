@@ -186,7 +186,7 @@ def _root_only_part(image_config, system, timestamp, repository):
         for name, dev in partition_devices.items():
             trace('Created partition "{}": {}.'.format(name, dev))
 
-        success('Basic partitions in place.', verbosity=2)
+        success('Partitions created.', verbosity=2)
 
         if 'swap' in partition_devices:
             helper_run('/usr/bin/mkswap', '-L', 'main', partition_devices['swap'])
@@ -249,9 +249,10 @@ def _calculate_minimum_size(kernel_size, root_size, verity_size,
 
 
 def _validate_contents(contents):
-    type = contents.extract('export_type')
+    type = contents.extract('export_type', '--stdout')
     if type != 'export_squashfs':
         fail('Failed with invalid export_type in archive (was "{}")'.format(type))
+    trace('export_type contents was export_squashfs, as expected.')
 
 def _validate_image_config_path(path, force):
     if disc.is_block_device(path):
@@ -298,6 +299,7 @@ def _repartition(device, repartition, timestamp, *,
         fail('"{}" is already partitioned, use --repartition to force repartitioning.'
              .format(device.device()))
 
+    trace('Setting basic partitions')
     partitions = [partitioner.efi_partition(start='2m', size=efi_size),
                   partitioner.data_partition(size=root_size,
                                              name='clrm-{}'.format(timestamp)),
@@ -305,6 +307,8 @@ def _repartition(device, repartition, timestamp, *,
                                              name='vrty-{}'.format(timestamp))]
     devices = {'efi': device.device(1), 'root': device.device(2),
                'verity': device.device(3)}
+
+    trace('Adding swap (if necessary)')
     if swap_size > 0:
         partitions.append(partitioner.swap_partition(size=swap_size))
         devices['swap'] = device.device(4)
@@ -320,6 +324,7 @@ def _repartition(device, repartition, timestamp, *,
         partitions.append(partitioner.data_partition(size=ep.size, name=label))
         devices[name] = device.device(4 + extra_counter)
 
+    trace('*** REPARTITION NOW ***')
     partitioner.repartition(partitions)
 
     return devices
@@ -383,7 +388,7 @@ def _prepare_efi_partition(device, root_dev, contents):
 
 
 def _write_to_partition(device, file_name, contents):
-    contents.extract(file_name, stdout=device)
+    contents.extract(file_name, '--stdout', stdout=device)
 
 
 def _format_partition(device, filesystem, *label_args):
