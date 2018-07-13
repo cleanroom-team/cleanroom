@@ -1,12 +1,12 @@
 __pycache__
 *.pyc
-.spyproject
-*.swp
-clrm-*
+Pipfile.lock
 
 *.user*
 .vscode
 .idea
+*.swp
+.spyproject
 
 .eggs/*
 systems/*
@@ -14,4 +14,3 @@ systems/*
 *.egg-info
 build/*
 dist/*
-
