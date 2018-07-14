@@ -24,7 +24,7 @@ class DummyPrinter(cleanroom.printer.Printer):
         super().__init__(*args, **kwargs)
         self.buffer = ''
 
-    def _print(self, *args):
+    def _printImpl(self, *args):
         self.buffer += ' '.join(args) + '\n'
 
 
