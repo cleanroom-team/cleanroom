@@ -26,7 +26,7 @@ mib = 1024 * 1024
 ExtraPartition = collections.namedtuple('ExtraPartition',
                                         ['size', 'filesystem', 'label', 'contents'])
 ImageConfig = collections.namedtuple('ImageConfig',
-                                     ['path', 'force', 'repartition', 'efi_size',
+                                     ['path', 'disk_format', 'force', 'repartition', 'efi_size',
                                       'swap_size', 'extra_partitions'])
 
 
@@ -55,7 +55,9 @@ def _parse_commandline(arguments):
                         default=[], action='append',
                         help='Add an extra partition (SIZE:FILESYSTEM:LABEL:TARBALL).')
 
-    # FIXME: Add option to override format
+    parser.add_argument('--image-format', dest='disk_format', action='store',
+                        default='qcow2', nargs='?',
+                        help='The format of the image file to generate.')
 
     parser.add_argument('--timestamp', dest='timestamp', action='store',
                         nargs='?', default=None,
@@ -118,7 +120,7 @@ def main(*args):
     extra_partitions = tuple(map(_parse_extra_partition_value, args.extra_partitions))
 
     system = args.system
-    image_config = ImageConfig(args.image, args.force, args.repartition,
+    image_config = ImageConfig(args.image, args.disk_format, args.force, args.repartition,
                                disc.mib_ify(disc.normalize_size(args.efi_size)),
                                disc.mib_ify(disc.normalize_size(args.swap_size)),
                                extra_partitions)
@@ -185,7 +187,8 @@ def _root_only_part(image_config, system, timestamp, repository):
     verbose('Sizes: kernel: {}b, root: {}b, verity: {}b => min device size: {}b'
             .format(kernel_size, root_size, verity_size, min_device_size))
 
-    with _find_or_create_device_node(image_config.path, min_device_size) as device:
+    with _find_or_create_device_node(image_config.path, image_config.disk_format,
+                                     min_device_size) as device:
 
         partition_devices = _repartition(device, image_config.repartition, timestamp,
                                          efi_size=efi_size, root_size=root_size,
@@ -287,11 +290,11 @@ def _validate_image_file(path, force):
                  .format(path))
 
 
-def  _find_or_create_device_node(path, min_device_size):
+def  _find_or_create_device_node(path, disk_format, min_device_size):
     if disc.is_block_device(path):
         _validate_size_of_block_device(path, min_device_size)
         return disc.Device(path)
-    return _create_nbd_device(path, min_device_size)
+    return _create_nbd_device(path, disk_format, min_device_size)
 
 
 def _validate_size_of_block_device(path, min_device_size):
@@ -301,8 +304,8 @@ def _validate_size_of_block_device(path, min_device_size):
              .format(path, min_device_size))
 
 
-def _create_nbd_device(path, min_device_size):
-    return disc.NbdDevice.NewImageFile(path, min_device_size)
+def _create_nbd_device(path, disk_format, min_device_size):
+    return disc.NbdDevice.NewImageFile(path, min_device_size, disk_format=disk_format)
 
 
 def _repartition(device, repartition, timestamp, *,
