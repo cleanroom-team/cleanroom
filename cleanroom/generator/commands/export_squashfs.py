@@ -26,8 +26,7 @@ class ExportSquashfsCommand(ExportCommand):
         self._volume_group = None
 
         super().__init__('export_squashfs',
-                         syntax='[key=<KEY>] [cert=<CERT>] [vg=<VG_BASE>]'
-                             '[compression=lz4]',
+                         syntax='[key=<KEY>] [cert=<CERT>] [compression=lz4]',
                          help='Export the root filesystem as squashfs.',
                          file=__file__)
 
@@ -35,9 +34,7 @@ class ExportSquashfsCommand(ExportCommand):
         """Execute command."""
         self._key = kwargs.get('key')
         self._cert = kwargs.get('cert')
-        self._volume_group = kwargs.get('vg', '')
         self._compression = kwargs.get('compression', 'lz4')
-        self._partition_label = kwargs.get('partlabel', '')
 
         location
 
@@ -55,11 +52,10 @@ class ExportSquashfsCommand(ExportCommand):
         system_context.run('/usr/bin/tar', '-cf', tarball,
                            '--sort=name', 'etc', 'root', work_directory='/')
 
-    def _kernel_name(self, system_context, label):
+    def _kernel_name(self, system_context):
         boot_data = system_context.boot_data_directory()
-        full_label = '-{}'.format(label) if label else ''
         return os.path.join(boot_data,
-                            'linux-{}{}.efi'.format(system_context.timestamp, full_label))
+                            'linux-{}.efi'.format(system_context.timestamp))
 
     def _create_initramfs(self, location, system_context):
         location.set_description('Create initrd')
@@ -77,7 +73,7 @@ class ExportSquashfsCommand(ExportCommand):
     def validate_arguments(self, location, *args, **kwargs):
         """Validate arguments."""
         self._validate_no_args(location, *args)
-        self._validate_kwargs(location, ('key', 'cert', 'vg', 'partlabel', 'compression'), **kwargs)
+        self._validate_kwargs(location, ('key', 'cert', 'compression'), **kwargs)
 
         if 'key' in kwargs:
             if not 'cert' in kwargs:
@@ -123,7 +119,7 @@ class ExportSquashfsCommand(ExportCommand):
         return squash_file
 
     def _create_dmverity(self, system_context, export_directory, squashfs_file):
-        verity_file = os.path.join(export_directory, 'root_{}_verity'
+        verity_file = os.path.join(export_directory, 'vrty_{}'
                                    .format(system_context.timestamp))
         veritysetup = system_context.binary(Binaries.VERITYSETUP)
         result = system_context.run(veritysetup, 'format',
@@ -143,11 +139,6 @@ class ExportSquashfsCommand(ExportCommand):
         assert uuid is not None
         return (verity_file, uuid, root_hash)
 
-    def _file_to_lv(self, vg, file_name):
-        result = '/dev/mapper/' + vg + '-' + file_name
-        result.replace('-', '--')
-        return result
-
     def _setup_kernel_commandline(self, base_cmdline,
                                   squashfs_device, verity_device,
                                   root_hash):
@@ -159,13 +150,11 @@ class ExportSquashfsCommand(ExportCommand):
                             'FOO'))
         return cmdline
 
-    def _create_complete_kernel(self, location, system_context,
-                                label, base_cmdline,
+    def _create_complete_kernel(self, location, system_context, base_cmdline,
                                 squashfs_device, verity_device, root_hash,
                                 export_volume):
-        full_cmdline = self._setup_kernel_commandline(base_cmdline, squashfs_device, verity_device,
-                                                      root_hash)
-        kernel_name = self._kernel_name(system_context, label)
+        full_cmdline = self._setup_kernel_commandline(base_cmdline, squashfs_device, verity_device, root_hash)
+        kernel_name = self._kernel_name(system_context)
 
         self._create_efi_kernel(location, system_context, kernel_name, full_cmdline)
 
@@ -194,17 +183,14 @@ class ExportSquashfsCommand(ExportCommand):
                                     squashfs_file)
 
         verity_device = 'UUID={}'.format(verity_uuid)
-        self._create_complete_kernel(location, system_context, 'vg', cmdline,
-                                     self._file_to_lv(self._volume_group, squashfs_file),
-                                     verity_device, root_hash,
+        partlabel=system_context.substitution('ROOTFS_PARTLABEL', '')
+        if not partlabel:
+            partlabel = '{}_{}'.format(system_context.substitution('DISTRO_ID', 'clrm'),
+                                       system_context.substitution('DISTRO_VERSION_ID', system_context.timestamp))
+        squashfs_device = 'PARTLABEL={}'.format(partlabel)
+        self._create_complete_kernel(location, system_context,  cmdline,
+                                     squashfs_device, verity_device, root_hash,
                                      export_volume)
-
-        if self._partition_label:
-            squashfs_device = 'PARTLABEL={}-{}'.format(self._partition_label,
-                                                       system_context.timestamp)
-            self._create_complete_kernel(location, system_context, 'partlabel', cmdline,
-                                         squashfs_device, verity_device, root_hash,
-                                         export_volume)
 
         return export_volume
 

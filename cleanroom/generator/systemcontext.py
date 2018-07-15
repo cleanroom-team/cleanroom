@@ -74,6 +74,14 @@ class SystemContext:
         self.set_substitution('TIMESTAMP', ts)
         self.set_substitution('CLRM_BASES', ':'.join(self.bases))
 
+        self.set_substitution('DISTRO_NAME', 'cleanroom')
+        self.set_substitution('DISTRO_PRETTY_NAME', 'cleanroom')
+        self.set_substitution('DISTRO_ID', 'clrm')
+        self.set_substitution('DISTRO_VERSION', ts)
+        self.set_substitution('DISTRO_VERSION_ID', ts)
+
+        self.set_substitution('DEFAULT_VG', 'vg_int')
+
     def binary(self, selector):
         """Forwarded to Context.binary."""
         return self.ctx.binary(selector)
@@ -199,14 +207,15 @@ class SystemContext:
         cmd = Parser.command(command)
         assert cmd is not None
 
-        dependency = cmd.validate_arguments(location, *args, **kwargs)
+        child = location.create_child(file_name='<COMMAND "{}">'.format(command),
+                                      description='{} {},{}'.format(command, args, kwargs))
+
+        dependency = cmd.validate_arguments(child, *args, **kwargs)
         assert expected_dependency == dependency
 
         trace('{}: Argument validation complete.'.format(command))
         trace('{}: Execute...'.format(command))
 
-        child = location.create_child(file_name='<COMMAND "{}">'.format(command),
-                                      description='{} {},{}'.format(command, args, kwargs))
         assert child is not None
         cmd(child, self, *args, **kwargs)
 

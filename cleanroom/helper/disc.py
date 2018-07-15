@@ -7,7 +7,7 @@
 
 from .run import run
 
-from ..printer import (verbose, debug, trace)
+from ..printer import (verbose, debug, trace, warn)
 
 import collections
 import json
@@ -141,11 +141,12 @@ class Device:
     def wait_for_device_node(self, partition=None):
         dev = self.device(partition)
         trace('Waiting for "{}".'.format(dev))
-        for i in range(10):
+        for i in range(20):
             if is_block_device(dev):
                 return True
-            sleep(0.1)
-            trace('.')
+            elif os.path.exists(dev):
+                warn('"{}" exists but is no block device!'.format(dev))
+            sleep(0.5)
         return False
 
 
@@ -324,11 +325,15 @@ class Partitioner:
             if p.name is not None:
                 partition_data.append('name="{}"'.format(p.name))
 
-            instructions += prefix + ', '.join(partition_data) + '\n'
+            instructions += prefix + ', '.join(partition_data) + '\nprint\n'
+
+        trace('SFDISK partition instructions:\n{}---EOF---'.format(instructions))
 
         run('/usr/bin/flock', self._device.device(),
             _sfdisk(self._command), '--color=never', self._device.device(),
             input=instructions.encode('utf-8'))
+
+        trace('SFDISK done.')
 
         for i in range(len(partitions)):
             assert self._device.wait_for_device_node(partition=i+1)

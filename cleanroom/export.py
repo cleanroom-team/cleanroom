@@ -42,7 +42,7 @@ class Exporter:
         trace('Running borg list on repository "{}".'.format(self._repository))
         result = Exporter._run_borg('list', self._repository)
 
-        pattern = re.compile('(([a-zA-Z][a-zA-Z0-9_-]*)-([0-9]+-[0-9]+))\s+(.*) \\[([a-fA-F0-9]+)\\]')
+        pattern = re.compile('(([a-zA-Z][a-zA-Z0-9_-]*)[_-]([0-9]+[\._-][0-9]+))\s+(.*) \\[([a-fA-F0-9]+)\\]')
 
         for line in result.stdout.splitlines():
             if not line:
@@ -104,27 +104,18 @@ class ExportContents:
     def _has_contents(self, path):
         return [f for f in self._contents if f.path == path]
 
-    def kernel_name(self, *, use_vg=False):
-        path = 'linux-{}'.format(self._timestamp)
-        if use_vg:
-            path += '-vg.efi'
-        else:
-            path += '-partlabel.efi'
+    def kernel_name(self,):
+        path = 'linux-{}.efi'.format(self._timestamp)
         assert self._has_contents(path)
         return path
-
-    def base_kernel_name(self):
-        return 'linux-{}.efi'.format(self._timestamp)
-
 
     def root_name(self):
         path = 'root_{}'.format(self._timestamp)
         assert self._has_contents(path)
         return path
 
-
     def verity_name(self):
-        path = self.root_name() + '_verity'
+        path = 'vrty_{}'.format(self._timestamp)
         assert self._has_contents(path)
         return path
 

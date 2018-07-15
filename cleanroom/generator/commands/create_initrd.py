@@ -41,6 +41,65 @@ class CreateInitrdCommand(Command):
                                                 'initrd-mnencode'))
         return to_clean_up
 
+    def _create_systemd_units(self, location, system_context):
+        location.set_description('Install extra systemd units')
+        to_clean_up = ['/usr/lib/systemd/system/initrd-check-bios.service',
+                       '/usr/lib/systemd/system/initrd-sysroot-setup.service',
+                       '/usr/lib/systemd/system/initrd-find-root-lv-partitions.service']
+        system_context.execute(location.next_line(), 'create', '/usr/lib/systemd/system/initrd-check-bios.service',
+                               '''[Unit]
+Description=Print TPM configuration
+Before=initrd-root-device.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/check-bios.sh
+StandardOutput=journal+console
+
+[Install]
+WantedBy=initrd-root-device.target
+''', mode=0o644)
+
+        system_context.execute(location.next_line(), 'create', '/usr/lib/systemd/system/initrd-sysroot-setup.service',
+                               '''[Unit]
+Description=Set up root fs in /sysroot
+DefaultDependencies=no
+ConditionPathExists=/sysroot/usr/lib/boot/root-fs.tar
+Requires=sysroot.mount
+After=sysroot.mount systemd-volatile-root.service
+Before=initrd-root-fs.target shutdown.target
+Conflicts=shutdown.target
+AssertPathExists=/etc/initrd-release
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/tar -C /sysroot -xf /sysroot/usr/lib/boot/root-fs.tar
+''', mode=0o644)
+
+        device_name = 'dev-{}-{}'.format(self._vg, self._lv)
+        system_context.execute(location.next_line(), 'create', '/usr/lib/systemd/system/initrd-find-root-lv-partitions.service',
+                               '''[Unit]
+Description=Find partitions in root LV
+DefaultDependencies=no
+After={0}.device
+BindsTo={0}.device
+Requisite={0}.device
+
+[Service]
+WorkingDirectory=/
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/losetup --partscan --find /dev/{1}/{2}
+ExecStop=/usr/bin/losetup --detach-all
+
+[Install]
+WantedBy={0}.device
+'''.format(device_name, self._vg, self._lv), mode=0o644)
+
+        return to_clean_up
+
     def _install_mkinitcpio(self, location, system_context):
         to_clean_up = ['/etc/mkinitcpio.d', '/etc/mkinitcpio.conf',
                        '/boot/vmlinu*']
@@ -79,11 +138,57 @@ class CreateInitrdCommand(Command):
         system_context.execute(location.next_line(), 'create', path, contents)
         return path
 
+    def _sd_stateless_hook(self):
+        hook = '''#!/usr/bin/bash
+
+build() {
+    # Setup rescue target:
+    test -f "/etc/shadow.initramfs" && add_file "/etc/shadow.initramfs" "/etc/shadow"
+    ### FIXME: Rescue target is broken in arch:-/
+    add_symlink /usr/lib/libnss_files.so.2 ./libnss_files-2.27.so
+
+    add_binary "/usr/bin/journalctl"
+
+    # Setup etc:
+    add_systemd_unit "initrd-sysroot-setup.service"
+    add_symlink "/usr/lib/systemd/system/initrd.target.wants/initrd-sysroot-setup.service" \
+                "../initrd-sysroot-setup.service"
+
+    # Partprobe root LV:
+    add_systemd_unit "initrd-find-root-lv-partitions.service"
+    '''
+        hook += "    add_symlink \"/usr/lib/systemd/system/dev-{0}-{1}.device.wants/initrd-find-root-lv-partitions.service\" \\"\
+            .format(self._vg, self._lv)
+        hook += '''
+                "../initrd-find-root-lv-partitions.service"
+
+    # squashfs:
+    add_module squashfs
+
+    # /var setup
+    if test -e "/usr/lib/systemd/system/sysroot-var.mount" ; then
+        add_systemd_unit "sysroot-var.mount"
+        add_symlink "/usr/lib/systemd/system/initrd-fs.target.wants/sysroot-var.mount" \
+                    "../sysroot-var.mount"
+    fi
+}
+
+help() {
+    cat <<HELPEOF
+This hook allows for setting up the rootfs from /usr/lib/boot/root-fs.tar as
+well as mounting var and finding the rootfs in a LV.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
+'''
+        return hook
+
     def _install_mkinitcpio_hooks(self, location, system_context):
         to_clean_up = []
         to_clean_up.append(self._create_install_hook(location, system_context,
                                                      'sd-check-bios',
-                                                     '''#!/bin/bash
+                                                     '''#!/usr/bin/bash
 
 build() {
     # Setup rescue target:
@@ -108,43 +213,11 @@ HELPEOF
 
         to_clean_up.append(self._create_install_hook(location, system_context,
                                                      'sd-stateless',
-                                                     '''#!/bin/bash
+                                                     self._sd_stateless_hook()))
 
-build() {
-    # Setup rescue target:
-    test -f "/etc/shadow.initramfs" && add_file "/etc/shadow.initramfs" "/etc/shadow"
-    add_symlink /usr/lib/libnss_files.so.2 ./libnss_files-2.27.so
-
-    add_binary "/usr/bin/journalctl"
-    # add_systemd_unit "rescue.service"
-
-    # Setup etc:
-    add_systemd_unit "initrd-sysroot-setup.service"
-    add_symlink "/usr/lib/systemd/system/initrd.target.wants/initrd-sysroot-setup.service" \
-                "../initrd-sysroot-setup.service"
-
-    # squashfs:
-    add_module squashfs
-
-    # /var setup
-    if test -e "/usr/lib/systemd/system/sysroot-var.mount" ; then
-        add_systemd_unit "sysroot-var.mount"
-        add_symlink "/usr/lib/systemd/system/initrd-fs.target.wants/sysroot-var.mount" \
-                    "../sysroot-var.mount"
-    fi
-}
-
-help() {
-    cat <<HELPEOF
-This hook allows for setting up the rootfs from /usr/lib/boot/root-fs.tar
-HELPEOF
-}
-
-# vim: set ft=sh ts=4 sw=4 et:
-'''))
         to_clean_up.append(self._create_install_hook(location, system_context,
                                                      'sd-verity',
-                                                     '''#!/bin/bash
+                                                     '''#!/usr/bin/bash
 
 build() {
     add_binary "/usr/lib/systemd/systemd-veritysetup"
@@ -163,7 +236,7 @@ HELPEOF
 
         to_clean_up.append(self._create_install_hook(location, system_context,
                                                      'sd-volatile',
-                                                     '''#!/bin/bash
+                                                     '''#!/usr/bin/bash
 
 build() {
     # volatile root:
@@ -199,11 +272,16 @@ HELPEOF
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        location
+        self._vg = system_context.substitution('DEFAULT_VG', 'vg_int')
+        lv_prefix = system_context.substitution('DISTRO_ID', 'clrm')
+        lv_version = system_context.substitution('DISTRO_VERSION_ID', system_context.timestamp)
+        self._lv = "{}_{}".format(lv_prefix, lv_version)
+
         initrd = args[0]
 
         to_clean_up = []
         to_clean_up += self._install_extra_binaries(location, system_context)
+        to_clean_up += self._create_systemd_units(location, system_context)
         to_clean_up += self._install_mkinitcpio(location, system_context)
         to_clean_up += self._install_mkinitcpio_hooks(location, system_context)
 

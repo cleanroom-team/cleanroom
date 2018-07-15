@@ -20,6 +20,9 @@ import sys
 import tempfile
 
 
+mib = 1024 * 1024
+
+
 ExtraPartition = collections.namedtuple('ExtraPartition',
                                         ['size', 'filesystem', 'label', 'contents'])
 ImageConfig = collections.namedtuple('ImageConfig',
@@ -43,12 +46,13 @@ def _parse_commandline(arguments):
                         help='Repartition device or file.')
 
     parser.add_argument('--efi-size', dest='efi_size', action='store',
-                        nargs='?', default='128M',
-                        help='Size of EFI partition.')
+                        nargs='?', default='0',
+                        help='Size of EFI partition (defaults to minimum).')
     parser.add_argument('--swap-size', dest='swap_size', action='store',
                         nargs='?', default='512M',
                         help='Size of swap partition (0 to avoid creation).')
-    parser.add_argument('--extra-partition', dest='extra_partitions', action='append',
+    parser.add_argument('--extra-partition', dest='extra_partitions',
+                        default=[], action='append',
                         help='Add an extra partition (SIZE:FILESYSTEM:LABEL:TARBALL).')
 
     # FIXME: Add option to override format
@@ -118,15 +122,19 @@ def main(*args):
                                disc.mib_ify(disc.normalize_size(args.efi_size)),
                                disc.mib_ify(disc.normalize_size(args.swap_size)),
                                extra_partitions)
+
+    trace('Validating inputs.')
+    _validate_image_config_path(image_config.path, image_config.force)
+
     try:
         _root_only_part(image_config, system, args.timestamp, args.repository)
     except Exception as e:
         fail('Failed to create image: {}'.format(str(e)))
         raise e
-    else:
-        success('Image file {} created.'.format(image_config.path), verbosity=0)
     finally:
         pr.flush()
+
+    success('Image file {} created.'.format(image_config.path), verbosity=0)
 
 
 def _root_only_part(image_config, system, timestamp, repository):
@@ -134,9 +142,6 @@ def _root_only_part(image_config, system, timestamp, repository):
         fail('Not running as root.')
 
     trace('Running as root.')
-
-    trace('Validating inputs.')
-    _validate_image_config_path(image_config.path, image_config.force)
 
     exporter = Exporter(repository)
     if timestamp is None:
@@ -161,17 +166,20 @@ def _root_only_part(image_config, system, timestamp, repository):
     root_size = contents.file(contents.root_name()).size
     verity_size = contents.file(contents.verity_name()).size
 
-    extra_text = 'extra: '
+    trace('Got sizes from repository: kernel: {}b, root: {}b, verity: {}b'
+          .format(kernel_size, root_size, verity_size))
+
     extra_total = 0
     for ep in image_config.extra_partitions:
         extra_total += ep.size
-        extra_text += '{}b, '.format(ep.size)
-    extra_text += 'Total: {}b'
-    trace('External sizes: EFI: {}b, Swap: {}b, extra: {}'
-          .format(image_config.efi_size, image_config.swap_size, extra_text))
+    trace('Calculated total extra partition size: {}b'.format(extra_total))
+
+    efi_size = _calculate_efi_size(kernel_size, image_config.efi_size)
+    trace('EFI size: {}b, Swap size: {}b, extra partitions: {}'
+          .format(efi_size, image_config.swap_size, extra_total))
 
     min_device_size = _calculate_minimum_size(kernel_size, root_size, verity_size,
-                                              image_config.efi_size, image_config.swap_size,
+                                              efi_size, image_config.swap_size,
                                               image_config.extra_partitions)
 
     verbose('Sizes: kernel: {}b, root: {}b, verity: {}b => min device size: {}b'
@@ -180,7 +188,7 @@ def _root_only_part(image_config, system, timestamp, repository):
     with _find_or_create_device_node(image_config.path, min_device_size) as device:
 
         partition_devices = _repartition(device, image_config.repartition, timestamp,
-                                         efi_size=image_config.efi_size, root_size=root_size,
+                                         efi_size=efi_size, root_size=root_size,
                                          verity_size=verity_size, swap_size=image_config.swap_size,
                                          extra_partitions=image_config.extra_partitions)
         for name, dev in partition_devices.items():
@@ -208,15 +216,13 @@ def _root_only_part(image_config, system, timestamp, repository):
                                      contents=ep.contents)
         success('Extra partitions installed.', verbosity=2)
 
-    sys.exit(0)
-
 
 def _backup_name(repository, full_system_name):
     return '{}::{}'.format(repository, full_system_name)
 
 
 def _kernel_name(timestamp):
-    return 'linux-{}-partlabel.efi'.format(timestamp)
+    return 'linux-{}.efi'.format(timestamp)
 
 
 def _root_name(timestamp):
@@ -224,15 +230,23 @@ def _root_name(timestamp):
 
 
 def _verity_name(timestamp):
-    return _root_name(timestamp) + '_verity'
+    return 'vrty_{}'.format(timestamp)
+
+
+def _minimum_efi_size(kernel_size):
+    bootloader_size = 1 * mib  # size of systemd-boot (+ some spare)
+    return int((kernel_size + 2 * bootloader_size) * 1.05)
+
+
+def _calculate_efi_size(kernel_size, efi_size):
+    if efi_size > 0:
+        return efi_size
+    return _minimum_efi_size(kernel_size)
 
 
 def _calculate_minimum_size(kernel_size, root_size, verity_size,
                             efi_size, swap_size, extra_partitions):
-    mib = 1024 * 1024
-    bootloader_size = 1 * mib  # size of systemd-boot (+ some spare)
-
-    if (kernel_size + 2 * bootloader_size) * 1.1 > efi_size:
+    if efi_size < _minimum_efi_size(kernel_size):
         fail('EFI partition is too small to hold the kernel.')
 
     total_extra_size = 0
@@ -302,9 +316,9 @@ def _repartition(device, repartition, timestamp, *,
     trace('Setting basic partitions')
     partitions = [partitioner.efi_partition(start='2m', size=efi_size),
                   partitioner.data_partition(size=root_size,
-                                             name='clrm-{}'.format(timestamp)),
+                                             name='clrm_{}'.format(timestamp)),
                   partitioner.data_partition(size=verity_size,
-                                             name='vrty-{}'.format(timestamp))]
+                                             name='vrty_{}'.format(timestamp))]
     devices = {'efi': device.device(1), 'root': device.device(2),
                'verity': device.device(3)}
 
@@ -373,12 +387,6 @@ def _prepare_efi_partition(device, root_dev, contents):
             trace('... "EFI/Linux" created.')
             contents.extract(contents.kernel_name(), work_directory=linux_dir)
             trace('... kernel extracted')
-            input_kernel = os.path.join(linux_dir, contents.kernel_name())
-            kernel = os.path.join(linux_dir, contents.base_kernel_name())
-            trace('... preparing: {} -> {}'.format(input_kernel, kernel))
-            _copy_efi_file(input_kernel, kernel)
-            os.remove(input_kernel)
-            trace('... kernel moved.')
 
         finally:
             trace('... cleaning up.')
@@ -416,4 +424,3 @@ def _prepare_extra_partition(device, *, filesystem=None, label=None, contents=No
         # FIXME: Implement this!
         assert contents is None
         return
-

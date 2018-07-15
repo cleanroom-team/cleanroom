@@ -175,7 +175,7 @@ class Generator:
     def generate(self, ignore_errors=False):
         """Generate all systems in the dependency tree."""
         self._print_systems_forest()
-        timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        timestamp = datetime.datetime.now().strftime('%Y%m%d.%H%M')
 
         for node in self._walk_systems_forest():
             system = node.system
