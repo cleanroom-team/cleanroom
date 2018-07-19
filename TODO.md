@@ -7,7 +7,11 @@ option infrastructure:
 
 Examine current system: Does it look functional?
 
-* Generate /usr/lib/os-release from DISTRO_* substitutions
+* Generate /usr/lib/os-release from DISTRO_* substitutions [test]
 * Do not install systemd loop-hook when no LVM is used
 * Make verity partition name configurable (uuid is used anyway:-)
-* Fix imager not to depend on clrm_* for root partitions
+* Fix imager not to depend on clrm_* for root partitions [fixme]
+
+* No /var/log/journal in VM. Normal?
+* /var/log/pacman.log: Where does that come from? pacstrap
+  should delete that in _teardown hook

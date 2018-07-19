@@ -301,7 +301,7 @@ def remove(system_context, *files, recursive=False, force=False):
                 continue
             raise GenerateError('Failed to delete: "{}" does not exist.'
                                 .format(file))
-        if os.path.isdir(file):
+        if os.path.isdir(file) and not os.path.islink(file):
             if recursive:
                 shutil.rmtree(file)
             else:

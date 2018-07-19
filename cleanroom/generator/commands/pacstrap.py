@@ -61,9 +61,12 @@ class PacstrapCommand(Command):
         system_context.run('/usr/bin/pacman', '-Sy')
         system_context.run('/usr/bin/pacman', '-Fy')
 
-        system_context.add_hook(location, 'export', 'move', '/opt', '/usr')
+        system_context.add_hook(location.next_line(), 'export', 'move', '/opt', '/usr')
         system_context.add_hook(location, 'export', 'symlink',
                                 'usr/opt', 'opt', base_directory='/')
+
+        # Generate os-release:
+        system_context.execute(location.next_line(), 'create_os_release')
 
     def _prepare_keyring(self, system_context, location, pacstrap_config):
         # Make sure important pacman directories exist:

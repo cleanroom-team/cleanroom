@@ -9,6 +9,7 @@ from.
 
 
 from ..exceptions import ParseError
+from ..printer import trace
 
 import os
 import os.path
@@ -61,17 +62,20 @@ class Command:
 
     def _validate_no_args(self, location, *args):
         self._validate_args_exact(location, 0,
-                                  '"{}"" does not take arguments.', *args)
+                                  '"{}" does not take arguments.', *args)
 
     def _validate_args_exact(self, location, arg_count, message, *args):
+        trace('Validating arguments: "{}".'.format('", "'.join(str(args))))
         if len(args) != arg_count:
             raise ParseError(message.format(self.name()), location=location)
 
     def _validate_args_at_least(self, location, arg_count, message, *args):
+        trace('Validating arguments: "{}".'.format('", "'.join(str(args))))
         if len(args) < arg_count:
             raise ParseError(message.format(self.name()), location=location)
 
     def _validate_kwargs(self, location, known_kwargs, **kwargs):
+        trace('Validating keyword arguments: "{}"'.format('", "'.join([ '{}={}'.format(k, str(kwargs[k])) for k in kwargs.keys()])))
         if not known_kwargs:
             if kwargs:
                 raise ParseError('"{}" does not accept keyword arguments.'

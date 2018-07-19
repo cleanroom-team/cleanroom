@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """Main CleanRoom functionality.
 
+FIXME: Allow for different distro ids
+
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
