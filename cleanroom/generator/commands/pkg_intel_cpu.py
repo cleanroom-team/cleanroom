@@ -37,7 +37,12 @@ class PkgIntelCpuCommand(Command):
         initrd_parts = os.path.join(system_context
                                     .boot_data_directory(),
                                     'initrd-parts')
-        os.makedirs(initrd_parts)
+        os.makedirs(initrd_parts, exist_ok=True)
         system_context.execute(location, 'move', '/boot/intel-ucode.img',
                                os.path.join(initrd_parts, '00-intel-ucode'),
                                to_outside=True)
+
+        # enable kms:
+        system_context.execute(location, 'sed',
+                               's/^MODULES=(/MODULES=(crc32c-intel /',
+                               '/etc/mkinitcpio.conf')

@@ -62,7 +62,7 @@ class ExportSquashfsCommand(ExportCommand):
         initrd_parts = os.path.join(system_context
                                     .boot_data_directory(),
                                     'initrd-parts')
-        os.makedirs(initrd_parts)
+        os.makedirs(initrd_parts, exist_ok=True)
         system_context.execute(location.next_line(), 'create_initrd',
                                os.path.join(initrd_parts, '50-mkinitcpio'))
 

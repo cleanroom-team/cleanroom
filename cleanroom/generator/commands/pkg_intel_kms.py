@@ -26,6 +26,7 @@ class PkgIntelKmsCommand(Command):
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
 
-        # Enable KMS:
-        system_context.execute(location, 'sed', '/etc/mkinitcpio.conf',
-                's/^MODULES=\(/MODULES=(crc32c-intel intel_agp i915 /"')
+        # enable kms:
+        system_context.execute(location, 'sed',
+                               's/^MODULES=(/MODULES=(intel_agp i915 /',
+                               '/etc/mkinitcpio.conf')
