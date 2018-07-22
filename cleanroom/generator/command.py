@@ -61,16 +61,26 @@ class Command:
         self._validate_kwargs(location, (), **kwargs)
 
     def _validate_no_args(self, location, *args):
+        if args is list:
+            trace('Validating arguments: "{}".'.format('", "'.join(str(args))))
+        else:
+            trace('Validating argument: "{}".'.format(args))
         self._validate_args_exact(location, 0,
                                   '"{}" does not take arguments.', *args)
 
     def _validate_args_exact(self, location, arg_count, message, *args):
-        trace('Validating arguments: "{}".'.format('", "'.join(str(args))))
+        if args is list:
+            trace('Validating arguments: "{}".'.format('", "'.join(str(args))))
+        else:
+            trace('Validating argument: "{}".'.format(args))
         if len(args) != arg_count:
             raise ParseError(message.format(self.name()), location=location)
 
     def _validate_args_at_least(self, location, arg_count, message, *args):
-        trace('Validating arguments: "{}".'.format('", "'.join(str(args))))
+        if args is list:
+            trace('Validating arguments: "{}".'.format('", "'.join(str(args))))
+        else:
+            trace('Validating argument: "{}".'.format(args))
         if len(args) < arg_count:
             raise ParseError(message.format(self.name()), location=location)
 

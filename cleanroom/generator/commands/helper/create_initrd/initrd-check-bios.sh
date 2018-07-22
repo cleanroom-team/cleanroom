@@ -1,6 +1,6 @@
 #!/usr/bin/sh
 
-MNENCODE="/usr/bin/mnencode"
+MNENCODE="/usr/bin/initrd-mnencode"
 HASH="/usr/bin/md5sum"
 
 HAVE_TPM="no"
@@ -25,7 +25,7 @@ if test -z "${PCRS}" ; then
 fi
 
 HRESULT=`echo "${PCRS}" | "${HASH}" | cut -d' ' -f1`
-RESULT=`echo "${HRESULT}" | "${MNENCODE}"`
+RESULT=`echo "${HRESULT}" | tr -d '\n' | "${MNENCODE}"`
 echo "${HRESULT}"
 echo "${RESULT}"
 

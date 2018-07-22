@@ -94,7 +94,7 @@ def _sync_host(system_context, config):
         outside=True)
 
 
-def pacman(system_context, *packages, remove=False):
+def pacman(system_context, *packages, remove=False, overwrite=''):
     """Use pacman to install packages."""
     assert(_package_type(system_context) == 'pacman')
 
@@ -105,6 +105,9 @@ def pacman(system_context, *packages, remove=False):
             system_context.binary(Binaries.PACMAN),
             '-Rs', '--noconfirm', *packages)
     else:
+        args = [ '-S', '--noconfirm', '--needed']
+        if overwrite:
+            args += ['--overwrite', overwrite]
+        args += [ *packages ]
         system_context.run(
-            system_context.binary(Binaries.PACMAN),
-            '-S', '--noconfirm', '--needed', *packages)
+            system_context.binary(Binaries.PACMAN), *args)

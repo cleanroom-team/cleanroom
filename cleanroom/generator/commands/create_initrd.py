@@ -45,7 +45,9 @@ class CreateInitrdCommand(Command):
         location.set_description('Install extra systemd units')
         to_clean_up = ['/usr/lib/systemd/system/initrd-check-bios.service',
                        '/usr/lib/systemd/system/initrd-sysroot-setup.service',
-                       '/usr/lib/systemd/system/initrd-find-root-lv-partitions.service']
+                       '/usr/lib/systemd/system/initrd-find-root-lv-partitions.service',
+                       '/usr/lib/systemd/system/images.mount',
+                       '/usr/lib/systemd/system/initrd-find-image-partitions.service']
         system_context.execute(location.next_line(), 'create', '/usr/lib/systemd/system/initrd-check-bios.service',
                                '''[Unit]
 Description=Print TPM configuration
@@ -54,7 +56,7 @@ Before=initrd-root-device.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/local/bin/check-bios.sh
+ExecStart=/usr/bin/initrd-check-bios.sh
 StandardOutput=journal+console
 
 [Install]
@@ -78,7 +80,7 @@ RemainAfterExit=yes
 ExecStart=/usr/bin/tar -C /sysroot -xf /sysroot/usr/lib/boot/root-fs.tar
 ''', mode=0o644)
 
-        device_name = 'dev-{}-{}'.format(self._vg, self._lv)
+        device_name = 'dev-{}-{}'.format(self._vg, self._full_name)
         system_context.execute(location.next_line(), 'create', '/usr/lib/systemd/system/initrd-find-root-lv-partitions.service',
                                '''[Unit]
 Description=Find partitions in root LV
@@ -96,7 +98,41 @@ ExecStop=/usr/bin/losetup --detach-all
 
 [Install]
 WantedBy={0}.device
-'''.format(device_name, self._vg, self._lv), mode=0o644)
+'''.format(device_name, self._vg, self._full_name), mode=0o644)
+
+        system_context.execute(location.next_line(), 'create', '/usr/lib/systemd/system/images.mount',
+                               '''[Unit]
+Description=Mount /images in initrd
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target unmount.target
+
+[Mount]
+What=/dev/disk/by-partlabel/IMAGES
+Where=/images
+Type=ext2
+Options=ro
+''', mode=0o644)
+
+        system_context.execute(location.next_line(), 'create', '/usr/lib/systemd/system/initrd-find-image-partitions.service',
+                               '''[Unit]
+Description=Find partitions in image files
+DefaultDependencies=no
+ConditionFileNotEmpty=/images/{0}
+After=images.mount
+BindsTo=images.mount
+Requisite=images.mount
+
+[Service]
+WorkingDirectory=/
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/losetup --partscan --find /images/{0}
+ExecStop=/usr/bin/losetup --detach-all
+
+[Install]
+WantedBy=images.mount
+'''.format(self._full_name), mode=0o644)
 
         return to_clean_up
 
@@ -113,7 +149,8 @@ WantedBy={0}.device
                                'cHOOKS="base systemd keyboard sd-vconsole '
                                'sd-encrypt sd-lvm2 block filesystems '
                                'sd-check-bios sd-stateless sd-verity '
-                               'sd-volatile sd-shutdown"',
+                               'sd-volatile sd-boot-image '
+                               'sd-shutdown"',
                                '/etc/mkinitcpio.conf')
 
         location.set_description('Fix up mkinitcpio presets')
@@ -138,45 +175,35 @@ WantedBy={0}.device
         system_context.execute(location.next_line(), 'create', path, contents)
         return path
 
-    def _sd_stateless_hook(self):
+    def _sd_boot_image_hook(self):
         hook = '''#!/usr/bin/bash
 
 build() {
-    # Setup rescue target:
-    test -f "/etc/shadow.initramfs" && add_file "/etc/shadow.initramfs" "/etc/shadow"
-    ### FIXME: Rescue target is broken in arch:-/
-    add_symlink /usr/lib/libnss_files.so.2 ./libnss_files-2.27.so
-
-    add_binary "/usr/bin/journalctl"
-
-    # Setup etc:
-    add_systemd_unit "initrd-sysroot-setup.service"
-    add_symlink "/usr/lib/systemd/system/initrd.target.wants/initrd-sysroot-setup.service" \
-                "../initrd-sysroot-setup.service"
-
-    # Partprobe root LV:
+'''
+        if self._vg:
+            hook += '''
+    # losetup LV:
     add_systemd_unit "initrd-find-root-lv-partitions.service"
-    '''
-        hook += "    add_symlink \"/usr/lib/systemd/system/dev-{0}-{1}.device.wants/initrd-find-root-lv-partitions.service\" \\"\
-            .format(self._vg, self._lv)
+'''
+            hook += "    add_symlink \"/usr/lib/systemd/system/dev-{0}-{1}.device.wants/initrd-find-root-lv-partitions.service\" \\"\
+                 .format(self._vg, self._full_name)
+            hook += '''
+        "../initrd-find-root-lv-partitions.service"
+
+'''
         hook += '''
-                "../initrd-find-root-lv-partitions.service"
-
-    # squashfs:
-    add_module squashfs
-
-    # /var setup
-    if test -e "/usr/lib/systemd/system/sysroot-var.mount" ; then
-        add_systemd_unit "sysroot-var.mount"
-        add_symlink "/usr/lib/systemd/system/initrd-fs.target.wants/sysroot-var.mount" \
-                    "../sysroot-var.mount"
-    fi
+    # losetup image files:
+    add_systemd_unit "images.mount"
+    add_symlink "/usr/lib/systemd/system/dev-disk-by\\\\x2dpartlabel-IMAGES.device.wants/images.mount" \
+        "../images.mount"
+    add_systemd_unit "initrd-find-image-partitions.service"
+    add_symlink "/usr/lib/systemd/system/images.mount.wants/initrd-find-image-partitions.service" \
+                "../initrd-find-image-partitions.service"
 }
 
 help() {
     cat <<HELPEOF
-This hook allows for setting up the rootfs from /usr/lib/boot/root-fs.tar as
-well as mounting var and finding the rootfs in a LV.
+Enables booting from images stored in a filesystem or on a LV.
 HELPEOF
 }
 
@@ -192,8 +219,8 @@ HELPEOF
 
 build() {
     # Setup rescue target:
-    add_binary "/usr/bin/initrd-check-bios.sh" "/usr/bin/check-bios.sh"
-    add_binary "/usr/bin/initrd-mnencode" "/usr/bin/mnencode"
+    add_binary "/usr/bin/initrd-check-bios.sh"
+    add_binary "/usr/bin/initrd-mnencode"
     add_binary "/usr/bin/md5sum"
 
     add_systemd_unit "initrd-check-bios.service"
@@ -213,7 +240,47 @@ HELPEOF
 
         to_clean_up.append(self._create_install_hook(location, system_context,
                                                      'sd-stateless',
-                                                     self._sd_stateless_hook()))
+                                                     '''#!/usr/bin/bash
+
+build() {
+    # Setup rescue target:
+    test -f "/etc/shadow.initramfs" && add_file "/etc/shadow.initramfs" "/etc/shadow"
+    ### FIXME: Rescue target is broken in arch since libnss_files.so is missing its symlinks:-/
+    BASE=$$(cd /usr/lib ; readlink -f libnss_files.so)
+    for i in $$(ls /usr/lib/libnss_files.so*); do
+        add_symlink "$${i}" "$${BASE}"
+    done
+
+    add_binary "/usr/bin/journalctl"
+
+    # Setup etc:
+    add_systemd_unit "initrd-sysroot-setup.service"
+    add_symlink "/usr/lib/systemd/system/initrd.target.wants/initrd-sysroot-setup.service" \
+                "../initrd-sysroot-setup.service"
+
+    # squashfs:
+    add_module squashfs
+
+    # /var setup
+    if test -e "/usr/lib/systemd/system/sysroot-var.mount" ; then
+        add_systemd_unit "sysroot-var.mount"
+        add_symlink "/usr/lib/systemd/system/initrd-fs.target.wants/sysroot-var.mount" \
+                    "../sysroot-var.mount"
+    fi
+}
+
+help() {
+    cat <<HELPEOF
+This hook allows for setting up the rootfs from /usr/lib/boot/root-fs.tar.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
+'''))
+
+        to_clean_up.append(self._create_install_hook(location, system_context,
+                                                     'sd-boot-image',
+                                                     self._sd_boot_image_hook()))
 
         to_clean_up.append(self._create_install_hook(location, system_context,
                                                      'sd-verity',
@@ -273,9 +340,9 @@ HELPEOF
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
         self._vg = system_context.substitution('DEFAULT_VG', 'vg_int')
-        lv_prefix = system_context.substitution('DISTRO_ID', 'clrm')
-        lv_version = system_context.substitution('DISTRO_VERSION_ID', system_context.timestamp)
-        self._lv = "{}_{}".format(lv_prefix, lv_version)
+        name_prefix = system_context.substitution('DISTRO_ID', 'clrm')
+        name_version = system_context.substitution('DISTRO_VERSION_ID', system_context.timestamp)
+        self._full_name = "{}_{}".format(name_prefix, name_version)
 
         initrd = args[0]
 
@@ -288,10 +355,9 @@ HELPEOF
         self._run_mkinitcpio(location, system_context)
 
         initrd_directory = os.path.dirname(initrd)
-        if not os.path.isdir(initrd_directory):
-            os.makedirs(initrd_directory)
+        os.makedirs(initrd_directory, exist_ok=True)
         system_context.execute(location.next_line(), 'move', '/boot/initrd', initrd,
                                to_outside=True)
 
-        self._cleanup_extra_files(location, system_context, *to_clean_up)
+        # self._cleanup_extra_files(location, system_context, *to_clean_up)
         self._remove_mkinitcpio(location, system_context)
