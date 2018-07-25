@@ -111,6 +111,10 @@ class Command:
         assert(False)
         return True
 
+    def config_directory(self, system_context):
+        return os.path.join(system_context.ctx.systems_directory(), 'config',
+                            self.name())
+
     def syntax(self):
         """Return syntax description."""
         if self._syntax_string:

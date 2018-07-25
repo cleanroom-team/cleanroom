@@ -85,6 +85,7 @@ ExecStart=/usr/bin/tar -C /sysroot -xf /sysroot/usr/lib/boot/root-fs.tar
                                '''[Unit]
 Description=Find partitions in root LV
 DefaultDependencies=no
+ConditionPathExists=/dev/{1}/{2}
 After={0}.device
 BindsTo={0}.device
 Requisite={0}.device
@@ -111,7 +112,7 @@ Before=local-fs.target unmount.target
 What=/dev/disk/by-partlabel/IMAGES
 Where=/images
 Type=ext2
-Options=ro
+Options=rw
 ''', mode=0o644)
 
         system_context.execute(location.next_line(), 'create', '/usr/lib/systemd/system/initrd-find-image-partitions.service',

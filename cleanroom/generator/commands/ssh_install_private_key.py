@@ -6,7 +6,7 @@
 
 
 from cleanroom.generator.command import Command
-from cleanroom.generator.helper.generic.file import (chmod, chown, exists, isdir,)
+from cleanroom.generator.helper.generic.file import (chmod, chown, exists, isdir, makedirs,)
 from cleanroom.generator.helper.generic.user import user_data
 
 import cleanroom.exceptions as ex
@@ -33,7 +33,7 @@ class SshInstallPrivateKeyCommand(Command):
     def _check_or_create_directory(self, location, system_context, dir,
                                    **kwargs):
         if not exists(system_context, dir):
-            system_context.execute(location.next_line(), 'mkdir', dir, **kwargs)
+            makedirs(system_context, dir, **kwargs)
             return
         if not isdir(system_context, dir):
             raise ex.GenerateError('"{}" needs directory "{}", but '

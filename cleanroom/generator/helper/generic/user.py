@@ -103,6 +103,8 @@ def usermod(system_context, user_name, *, comment='', home='', gid=-1, uid=-1,
 def _user_data(passwd_file, name):
     if not os.path.isfile(passwd_file):
         return None
+    if name == 'root':
+        return User('root', 'x', 0, 0, 'root', '/', '/usr/bin/bash')
 
     with open(passwd_file, 'r') as passwd:
         for line in passwd:

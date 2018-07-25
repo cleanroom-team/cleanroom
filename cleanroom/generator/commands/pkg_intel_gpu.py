@@ -29,6 +29,8 @@ class PkgIntelGpuCommand(Command):
         # Enable KMS:
         system_context.execute(location, 'pkg_intel_kms')
 
+        system_context.execute(location, 'pkg_xorg')
+
         # Set some kernel parameters:
         cmdline = system_context.substitution('KERNEL_CMDLINE', '')
         if cmdline:
@@ -37,7 +39,7 @@ class PkgIntelGpuCommand(Command):
         system_context.set_substitution('KERNEL_CMDLINE', cmdline)
 
         system_context.execute(location, 'pacman', 'libva-intel-driver',
-                               'mesa', 'vulkan-intel')
+                               'mesa', 'vulkan-intel', 'xf86-video-intel')
 
         system_context.execute(location, 'create', '/etc/modprobe.d/i915-guc.conf',
                                'options i915 enable_guc=3')
