@@ -17,6 +17,7 @@ import cleanroom.helper.disc as disc
 
 @pytest.mark.parametrize(('input', 'output'), [
     pytest.param(1, 1, id='int 1'),
+    pytest.param(0, 0, id='0'),
     pytest.param(1024, 1024, id='int 1024'),
     pytest.param('9', 9, id='9 as string'),
     pytest.param('1024', 1024, id='1024 as string'),
@@ -40,7 +41,6 @@ def test_disc_normalize_size(input, output):
 # Error cases:
 @pytest.mark.parametrize('input', [
     pytest.param('12,3', id='float'),
-    pytest.param('0', id='0'),
     pytest.param('-12', id='negative int'),
     pytest.param('12.3b', id='float b'),
     pytest.param('test', id='test'),

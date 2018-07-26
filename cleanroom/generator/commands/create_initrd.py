@@ -6,6 +6,7 @@
 
 
 from cleanroom.generator.command import Command
+import cleanroom.generator.helper.generic.file as filehelper
 
 import os.path
 
@@ -29,8 +30,8 @@ class CreateInitrdCommand(Command):
                                   .format(file))
         source_path = os.path.join(self.helper_directory(), file)
         dest_path = os.path.join('/usr/bin', file)
-        system_context.execute(location.next_line(), 'copy', source_path, dest_path,
-                               from_outside=True)
+        filehelper.copy(system_context, source_path, dest_path, from_outside=True)
+        filehelper.chmod(system_context, 0o755, dest_path)
         return dest_path
 
     def _install_extra_binaries(self, location, system_context):
@@ -48,7 +49,7 @@ class CreateInitrdCommand(Command):
                        '/usr/lib/systemd/system/initrd-find-root-lv-partitions.service',
                        '/usr/lib/systemd/system/images.mount',
                        '/usr/lib/systemd/system/initrd-find-image-partitions.service']
-        system_context.execute(location.next_line(), 'create', '/usr/lib/systemd/system/initrd-check-bios.service',
+        filehelper.create_file(system_context, '/usr/lib/systemd/system/initrd-check-bios.service',
                                '''[Unit]
 Description=Print TPM configuration
 Before=initrd-root-device.target
@@ -61,9 +62,9 @@ StandardOutput=journal+console
 
 [Install]
 WantedBy=initrd-root-device.target
-''', mode=0o644)
+'''.encode('utf-8'), mode=0o644)
 
-        system_context.execute(location.next_line(), 'create', '/usr/lib/systemd/system/initrd-sysroot-setup.service',
+        filehelper.create_file(system_context, '/usr/lib/systemd/system/initrd-sysroot-setup.service',
                                '''[Unit]
 Description=Set up root fs in /sysroot
 DefaultDependencies=no
@@ -78,10 +79,10 @@ AssertPathExists=/etc/initrd-release
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/bin/tar -C /sysroot -xf /sysroot/usr/lib/boot/root-fs.tar
-''', mode=0o644)
+'''.encode('utf-8'), mode=0o644)
 
         device_name = 'dev-{}-{}'.format(self._vg, self._full_name)
-        system_context.execute(location.next_line(), 'create', '/usr/lib/systemd/system/initrd-find-root-lv-partitions.service',
+        filehelper.create_file(system_context, '/usr/lib/systemd/system/initrd-find-root-lv-partitions.service',
                                '''[Unit]
 Description=Find partitions in root LV
 DefaultDependencies=no
@@ -99,9 +100,9 @@ ExecStop=/usr/bin/losetup --detach-all
 
 [Install]
 WantedBy={0}.device
-'''.format(device_name, self._vg, self._full_name), mode=0o644)
+'''.format(device_name, self._vg, self._full_name).encode('utf-8'), mode=0o644)
 
-        system_context.execute(location.next_line(), 'create', '/usr/lib/systemd/system/images.mount',
+        filehelper.create_file(system_context, '/usr/lib/systemd/system/images.mount',
                                '''[Unit]
 Description=Mount /images in initrd
 DefaultDependencies=no
@@ -113,9 +114,9 @@ What=/dev/disk/by-partlabel/IMAGES
 Where=/images
 Type=ext2
 Options=rw
-''', mode=0o644)
+'''.encode('utf-8'), mode=0o644)
 
-        system_context.execute(location.next_line(), 'create', '/usr/lib/systemd/system/initrd-find-image-partitions.service',
+        filehelper.create_file(system_context, '/usr/lib/systemd/system/initrd-find-image-partitions.service',
                                '''[Unit]
 Description=Find partitions in image files
 DefaultDependencies=no
@@ -133,7 +134,7 @@ ExecStop=/usr/bin/losetup --detach-all
 
 [Install]
 WantedBy=images.mount
-'''.format(self._full_name), mode=0o644)
+'''.format(self._full_name).encode('utf-8'), mode=0o644)
 
         return to_clean_up
 
@@ -173,7 +174,7 @@ WantedBy=images.mount
         location.set_description('install mkinitcpio install hook {}'
                                   .format(name))
         path = os.path.join('/usr/lib/initcpio/install', name)
-        system_context.execute(location.next_line(), 'create', path, contents)
+        filehelper.create_file(system_context, path, contents.encode('utf-8'))
         return path
 
     def _sd_boot_image_hook(self):
@@ -247,9 +248,9 @@ build() {
     # Setup rescue target:
     test -f "/etc/shadow.initramfs" && add_file "/etc/shadow.initramfs" "/etc/shadow"
     ### FIXME: Rescue target is broken in arch since libnss_files.so is missing its symlinks:-/
-    BASE=$$(cd /usr/lib ; readlink -f libnss_files.so)
-    for i in $$(ls /usr/lib/libnss_files.so*); do
-        add_symlink "$${i}" "$${BASE}"
+    BASE=$(cd /usr/lib ; readlink -f libnss_files.so)
+    for i in $(ls /usr/lib/libnss_files.so*); do
+        add_symlink "${i}" "${BASE}"
     done
 
     add_binary "/usr/bin/journalctl"
@@ -331,7 +332,7 @@ HELPEOF
 
     def _cleanup_extra_files(self, location, system_context, *files):
         location.set_description('Remove extra mkinitcpio files')
-        system_context.execute(location.next_line(), 'remove', *files, force=True, recursive=True)
+        filehelper.remove(system_context, *files, force=True, recursive=True)
 
     def _remove_mkinitcpio(self, location, system_context):
         # FIXME: Remove mkinitcpio once linux and ostree no longer depend on it!
@@ -357,8 +358,7 @@ HELPEOF
 
         initrd_directory = os.path.dirname(initrd)
         os.makedirs(initrd_directory, exist_ok=True)
-        system_context.execute(location.next_line(), 'move', '/boot/initrd', initrd,
-                               to_outside=True)
+        filehelper.move(system_context, '/boot/initrd', initrd, to_outside=True)
 
-        # self._cleanup_extra_files(location, system_context, *to_clean_up)
+        self._cleanup_extra_files(location, system_context, *to_clean_up)
         self._remove_mkinitcpio(location, system_context)

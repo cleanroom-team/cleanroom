@@ -15,3 +15,6 @@ Examine current system: Does it look functional?
 * No /var/log/journal in VM. Normal?
 * /var/log/pacman.log: Where does that come from? pacstrap
   should delete that in _teardown hook
+
+* FIX multiline args starting with 4 spaces
+* FIX tests!!!

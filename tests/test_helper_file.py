@@ -67,14 +67,14 @@ def test_file_to_file_copy(populated_system_context):
 def test_same_file_copy(populated_system_context):
     """Test copying file to file."""
     system_context = populated_system_context
-    with pytest.raises(AssertionError):
+    with pytest.raises(OSError):
         filehelper.copy(system_context, '/usr/bin/ls', '/usr/bin/ls')
 
 
 def test_same_file_different_path_copy(populated_system_context):
     """Test copying file to file."""
     system_context = populated_system_context
-    with pytest.raises(AssertionError):
+    with pytest.raises(OSError):
         filehelper.copy(system_context, '/usr/bin/ls', '/usr/../usr/bin/ls')
 
 
@@ -88,7 +88,7 @@ def test_same_file_in_parent_copy(populated_system_context):
 def test_file_to_existing_file_copy(populated_system_context):
     """Test copying file to file."""
     system_context = populated_system_context
-    with pytest.raises(AssertionError):
+    with pytest.raises(OSError):
         filehelper.copy(system_context, '/usr/bin/ls', '/etc/passwd')
 
 
@@ -161,7 +161,7 @@ def test_file_to_file_move(populated_system_context):
 def test_same_file_different_path_move(populated_system_context):
     """Test moving file to file."""
     system_context = populated_system_context
-    with pytest.raises(AssertionError):
+    with pytest.raises(OSError):
         filehelper.move(system_context, '/usr/bin/ls', '/usr/../usr/bin/ls')
 
 
@@ -175,7 +175,7 @@ def test_same_file_in_parent_move(populated_system_context):
 def test_file_to_existing_file_move(populated_system_context):
     """Test moving file to file."""
     system_context = populated_system_context
-    with pytest.raises(AssertionError):
+    with pytest.raises(OSError):
         filehelper.move(system_context, '/usr/bin/ls', '/etc/passwd')
 
 
@@ -202,7 +202,7 @@ def test_file_to_dir_move(populated_system_context):
 def test_dir_to_file_move(populated_system_context):
     """Test moving a directory into a file."""
     system_context = populated_system_context
-    with pytest.raises(AssertionError):
+    with pytest.raises(OSError):
         filehelper.move(system_context, '/usr/bin', '/etc/passwd')
 
 
