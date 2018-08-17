@@ -151,7 +151,7 @@ WantedBy=images.mount
         system_context.execute(location.next_line(), 'sed',
                                '/^HOOKS=/ '
                                'cHOOKS="base systemd keyboard sd-vconsole '
-                               'sd-encrypt sd-lvm2 block filesystems '
+                               'sd-encrypt block sd-lvm2 filesystems '
                                'sd-check-bios sd-stateless sd-verity '
                                'sd-volatile sd-boot-image '
                                'sd-shutdown"',
