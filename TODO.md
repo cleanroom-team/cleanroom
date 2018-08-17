@@ -17,4 +17,9 @@ Examine current system: Does it look functional?
   should delete that in _teardown hook
 
 * FIX multiline args starting with 4 spaces
-* FIX tests!!!
+
+* Add git [test]
+* Add devtools [test]
+* Add firefox/chromium [test]
+* sudoers file not set up [test]
+

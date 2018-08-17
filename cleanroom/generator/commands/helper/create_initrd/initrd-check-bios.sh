@@ -25,7 +25,7 @@ if test -z "${PCRS}" ; then
 fi
 
 HRESULT=`echo "${PCRS}" | "${HASH}" | cut -d' ' -f1`
-RESULT=`echo "${HRESULT}" | tr -d '\n' | "${MNENCODE}"`
+RESULT=`printf "${HRESULT}" | "${MNENCODE}"`
 echo "${HRESULT}"
 echo "${RESULT}"
 

@@ -52,7 +52,11 @@ class CreateInitrdCommand(Command):
         filehelper.create_file(system_context, '/usr/lib/systemd/system/initrd-check-bios.service',
                                '''[Unit]
 Description=Print TPM configuration
-Before=initrd-root-device.target
+DefaultDependencies=no
+Requires=sysroot.mount
+After=sysroot.mount systemd-volatile-root.service
+Before=initrd-root-fs.target shutdown.target
+Conflicts=shutdown.target
 
 [Service]
 Type=oneshot
@@ -95,8 +99,7 @@ Requisite={0}.device
 WorkingDirectory=/
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/bin/losetup --partscan --find /dev/{1}/{2}
-ExecStop=/usr/bin/losetup --detach-all
+ExecStart=/usr/bin/partprobe /dev/{1}/{2}
 
 [Install]
 WantedBy={0}.device
@@ -129,8 +132,7 @@ Requisite=images.mount
 WorkingDirectory=/
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/bin/losetup --partscan --find /images/{0}
-ExecStop=/usr/bin/losetup --detach-all
+ExecStart=/usr/bin/partprobe /images/{0}
 
 [Install]
 WantedBy=images.mount
@@ -184,7 +186,7 @@ build() {
 '''
         if self._vg:
             hook += '''
-    # losetup LV:
+    # partprobe LV:
     add_systemd_unit "initrd-find-root-lv-partitions.service"
 '''
             hook += "    add_symlink \"/usr/lib/systemd/system/dev-{0}-{1}.device.wants/initrd-find-root-lv-partitions.service\" \\"\
@@ -194,7 +196,7 @@ build() {
 
 '''
         hook += '''
-    # losetup image files:
+    # partprobe image files:
     add_systemd_unit "images.mount"
     add_symlink "/usr/lib/systemd/system/dev-disk-by\\\\x2dpartlabel-IMAGES.device.wants/images.mount" \
         "../images.mount"
