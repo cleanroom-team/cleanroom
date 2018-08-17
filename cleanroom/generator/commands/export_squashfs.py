@@ -113,7 +113,9 @@ class ExportSquashfsCommand(ExportCommand):
         mksquashfs = system_context.binary(Binaries.MKSQUASHFS)
         system_context.run(mksquashfs, 'usr', squash_file, '-comp',
                            self._compression, '-noappend', '-no-exports',
-                           '-keep-as-directory', outside=True,
+                           '-keep-as-directory',
+                           '-noI', '-noD', '-noF', '-noX',
+                           outside=True,
                            work_directory=system_context.fs_directory())
         self._size_extend(squash_file)
         return squash_file
