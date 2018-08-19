@@ -19,11 +19,38 @@ class CreateInitrdCommand(Command):
         super().__init__('create_initrd', syntax='<INITRD_FILE>',
                          help='Create an initrd.', file=__file__)
 
+        self._vg = None
+        self._image_fs = None
+        self._image_device = None
+        self._image_options = None
+
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         self._validate_args_exact(location, 1,
                                   '"{}" takes an initrd to create.',
                                   *args, **kwargs)
+
+    def _escape_device(self, device):
+        if device.startswith('PARTLABEL='):
+            device = '/dev/disk/by-partlabel/' + device[10:]
+        elif device.startswith('LABEL='):
+            device = '/dev/disk/by-label/' + device[6:]
+        elif device.startswith('PARTUUID='):
+            device = '/dev/disk/by-partuuid/' + device[9:]
+        elif device.startswith('UUID='):
+            device = '/dev/disk/by-uuid/' + device[5:]
+        elif device.startswith('ID='):
+            device = '/dev/disk/by-id/' + device[3:]
+        elif device.startswith('PATH='):
+            device = '/dev/disk/by-path/' + device[5:]
+
+        assert device.startswith('/dev/')
+        device = device.replace('-', '\\x2d')
+        device = device.replace('=', '\\x3d')
+        device = device.replace(';', '\\x3b')
+        device = device.replace('/', '-')
+
+        return device[1:]
 
     def _copy_extra_file(self, location, system_context, file):
         location.set_description('Installing extra mkinitcpio file {}'
@@ -85,8 +112,9 @@ RemainAfterExit=yes
 ExecStart=/usr/bin/tar -C /sysroot -xf /sysroot/usr/lib/boot/root-fs.tar
 '''.encode('utf-8'), mode=0o644)
 
-        device_name = 'dev-{}-{}'.format(self._vg, self._full_name)
-        filehelper.create_file(system_context, '/usr/lib/systemd/system/initrd-find-root-lv-partitions.service',
+        if self._vg is not None:
+            device_name = 'dev-{}-{}'.format(self._vg, self._full_name)
+            filehelper.create_file(system_context, '/usr/lib/systemd/system/initrd-find-root-lv-partitions.service',
                                '''[Unit]
 Description=Find partitions in root LV
 DefaultDependencies=no
@@ -105,7 +133,8 @@ ExecStart=/usr/bin/partprobe /dev/{1}/{2}
 WantedBy={0}.device
 '''.format(device_name, self._vg, self._full_name).encode('utf-8'), mode=0o644)
 
-        filehelper.create_file(system_context, '/usr/lib/systemd/system/images.mount',
+        if self._image_device is not None:
+            filehelper.create_file(system_context, '/usr/lib/systemd/system/images.mount',
                                '''[Unit]
 Description=Mount /images in initrd
 DefaultDependencies=no
@@ -113,13 +142,14 @@ Conflicts=umount.target
 Before=local-fs.target unmount.target
 
 [Mount]
-What=/dev/disk/by-partlabel/IMAGES
+What={}
 Where=/images
-Type=ext2
-Options=rw
-'''.encode('utf-8'), mode=0o644)
+Type={}
+Options={}
+'''.format(self._image_device, self._image_fs, self._image_options)
+   .encode('utf-8'), mode=0o644)
 
-        filehelper.create_file(system_context, '/usr/lib/systemd/system/initrd-find-image-partitions.service',
+            filehelper.create_file(system_context, '/usr/lib/systemd/system/initrd-find-image-partitions.service',
                                '''[Unit]
 Description=Find partitions in image files
 DefaultDependencies=no
@@ -132,7 +162,8 @@ Requisite=images.mount
 WorkingDirectory=/
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/bin/partprobe /images/{0}
+ExecStart=/usr/bin/losetup --find --partscan /images/{0}
+ExecStop=/usr/bin/losetup --detach-all
 
 [Install]
 WantedBy=images.mount
@@ -151,7 +182,7 @@ WantedBy=images.mount
         system_context.execute(location.next_line(), 'sed',
                                '/^HOOKS=/ '
                                'cHOOKS="base systemd keyboard sd-vconsole '
-                               'sd-encrypt block sd-lvm2 filesystems '
+                               'sd-encrypt block sd-lvm2 filesystems btrfs '
                                'sd-check-bios sd-stateless sd-verity '
                                'sd-volatile sd-boot-image '
                                'sd-shutdown"',
@@ -184,7 +215,7 @@ WantedBy=images.mount
 
 build() {
 '''
-        if self._vg:
+        if self._vg is not None:
             hook += '''
     # partprobe LV:
     add_systemd_unit "initrd-find-root-lv-partitions.service"
@@ -195,14 +226,20 @@ build() {
         "../initrd-find-root-lv-partitions.service"
 
 '''
-        hook += '''
-    # partprobe image files:
+        if self._image_device is not None:
+            escaped_device = self._escape_device(self._image_device)
+            hook += '''
+    # losetup image files:
+    add_binary /usr/bin/losetup
+
     add_systemd_unit "images.mount"
-    add_symlink "/usr/lib/systemd/system/dev-disk-by\\\\x2dpartlabel-IMAGES.device.wants/images.mount" \
+    add_symlink "/usr/lib/systemd/system/{}.device.wants/images.mount" \
         "../images.mount"
     add_systemd_unit "initrd-find-image-partitions.service"
     add_symlink "/usr/lib/systemd/system/images.mount.wants/initrd-find-image-partitions.service" \
                 "../initrd-find-image-partitions.service"
+'''.format(escaped_device)
+        hook += '''
 }
 
 help() {
@@ -343,7 +380,14 @@ HELPEOF
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        self._vg = system_context.substitution('DEFAULT_VG', 'vg_int')
+        self._vg = system_context.substitution('DEFAULT_VG', None)
+        if not self._vg:
+            self._vg = None
+
+        self._image_fs = system_context.substitution('IMAGE_FS', 'ext2')
+        self._image_device = system_context.substitution('IMAGE_DEVICE', '')
+        self._image_options = system_context.substitution('IMAGE_OPTIONS', 'rw')
+
         name_prefix = system_context.substitution('DISTRO_ID', 'clrm')
         name_version = system_context.substitution('DISTRO_VERSION_ID', system_context.timestamp)
         self._full_name = "{}_{}".format(name_prefix, name_version)

@@ -82,6 +82,10 @@ class SystemContext:
 
         self.set_substitution('DEFAULT_VG', 'vg_int')
 
+        self.set_substitution('IMAGE_FS', 'ext2')
+        self.set_substitution('IMAGE_OPTIONS', 'rw')
+        self.set_substitution('IMAGE_DEVICE', '')
+
     def binary(self, selector):
         """Forwarded to Context.binary."""
         return self.ctx.binary(selector)
