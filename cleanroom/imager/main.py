@@ -69,7 +69,7 @@ def _parse_commandline(arguments):
                         help='system to turn into an image.')
 
     parser.add_argument(dest='image', metavar='<image>',
-                        help='name of the image file or device.')
+                        help='name of the image file or device. "XXXXXX" will be replaced by timestamp.')
 
     parse_result = parser.parse_args(arguments[1:])
 
@@ -130,15 +130,17 @@ def main(*args):
     trace('Validating inputs.')
     _validate_image_config_path(image_config.path, image_config.force)
 
+    path = image_config.path
+
     try:
-        _root_only_part(image_config, system, args.timestamp, args.repository)
+        path = _root_only_part(image_config, system, args.timestamp, args.repository)
     except Exception as e:
         fail('Failed to create image: {}'.format(str(e)))
         raise e
     finally:
         pr.flush()
 
-    success('Image file {} created.'.format(image_config.path), verbosity=0)
+    success('Image file {} created.'.format(path), verbosity=0)
 
 
 def _root_only_part(image_config, system, timestamp, repository):
@@ -160,9 +162,14 @@ def _root_only_part(image_config, system, timestamp, repository):
             fail('Could not find system "{}" with timestamp "{}" in repository "{}".'
                  .format(system, timestamp, repository))
 
+    debug('Using timestamp "{}".'.format(timestamp))
+
+    path = image_config.path.replace('XXXXXX', timestamp)
+
     full_system_name = '{}-{}'.format(system, timestamp)
 
-    debug('Creating image from "{}".'.format(full_system_name))
+    debug('Creating image "{}" from "{}".'.format(path, full_system_name))
+
     contents = exporter.export(system, timestamp)
     _validate_contents(contents)
 
@@ -189,7 +196,7 @@ def _root_only_part(image_config, system, timestamp, repository):
     verbose('Sizes: kernel: {}b, root: {}b, verity: {}b => min device size: {}b'
             .format(kernel_size, root_size, verity_size, min_device_size))
 
-    with _find_or_create_device_node(image_config.path, image_config.disk_format,
+    with _find_or_create_device_node(path, image_config.disk_format,
                                      min_device_size) as device:
 
         partition_devices = _repartition(device, image_config.repartition, timestamp,
@@ -220,6 +227,8 @@ def _root_only_part(image_config, system, timestamp, repository):
                                      filesystem=ep.filesystem, label=ep.label,
                                      contents=ep.contents)
         success('Extra partitions installed.', verbosity=2)
+
+    return path
 
 
 def _backup_name(repository, full_system_name):
