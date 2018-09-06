@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+python-language-server = {version = "*", extras = ["all"]}
 
 [dev-packages]
 pytest = "*"
