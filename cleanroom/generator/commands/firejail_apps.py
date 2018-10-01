@@ -37,4 +37,4 @@ class FirejailAppsConfigureCommand(Command):
                 raise ex.GenerateError('Desktop file "{}" not found.'
                                        .format(desktop_file), location=location)
             system_context.execute(location.next_line(), 'sed', '/^Exec=.*$$/ '
-                                   's/^Exec=/Exec=\/usr\/bin\/firejail /', desktop_file)
+                                   's!^Exec=!Exec=/usr/bin/firejail !', desktop_file)
