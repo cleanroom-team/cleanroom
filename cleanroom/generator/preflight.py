@@ -5,19 +5,19 @@
 """
 
 
-from .context import Binaries
+from .context import Binaries, Context
 from ..exceptions import PreflightError
 from ..printer import (debug, info, h2, warn,)
 
 import os
 
 
-def _check_for_binary(binary):
+def _check_for_binary(binary: str) -> str:
     """Check for binaries (with full path!)."""
     return binary if os.access(binary, os.X_OK) else ''
 
 
-def _find_binaries(ctx):
+def _find_binaries(ctx: Context) -> None:
     ctx.set_binaries({
         Binaries.BORG: _check_for_binary('/usr/bin/borg'),
         Binaries.BTRFS: _check_for_binary('/usr/bin/btrfs'),
@@ -31,7 +31,7 @@ def _find_binaries(ctx):
         })
 
 
-def preflight_check(ctx):
+def preflight_check(ctx: Context) -> None:
     """Run a fast pre-flight check on the context."""
     h2('Running Preflight Checks.', verbosity=2)
 
@@ -44,7 +44,7 @@ def preflight_check(ctx):
         raise PreflightError('Preflight Check failed.')
 
 
-def _preflight_binaries_check(ctx):
+def _preflight_binaries_check(ctx: Context) -> bool:
     """Check executables."""
     passed = True
     for b in ctx._binaries.items():
@@ -56,7 +56,7 @@ def _preflight_binaries_check(ctx):
     return passed
 
 
-def _preflight_users_check(ctx):
+def _preflight_users_check(ctx: Context) -> bool:
     """Check tha the script is running as root."""
     if os.geteuid() == 0:
         debug('Running as root.')

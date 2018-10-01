@@ -17,9 +17,10 @@ from ..exceptions import (GenerateError, PreflightError, PrepareError,)
 from argparse import ArgumentParser
 import os
 import sys
+import typing
 
 
-def _parse_commandline(arguments):
+def _parse_commandline(*arguments: str):
     """Parse the command line options."""
     parser = ArgumentParser(description='Cleanroom OS image script generator',
                             prog=arguments[0])
@@ -62,16 +63,16 @@ def _parse_commandline(arguments):
     return parse_result
 
 
-def run():
+def run() -> None:
     """Run cleanroom with command line arguments."""
     main(*sys.argv)
 
 
-def main(*args):
+def main(*args: str) -> None:
     """Run cleanroom with arguments."""
     old_work_directory = os.getcwd()
 
-    args = _parse_commandline(args)
+    args = _parse_commandline(*args)
 
     if not args.list_commands and not args.systems:
         print('No systems to process.')
@@ -104,8 +105,11 @@ def main(*args):
         ctx.set_directories(systems_directory, work_directory)
 
         # Find commands:
-        Parser.find_commands(ctx.systems_commands_directory(),
-                             ctx.commands_directory())
+        systems_commands_dir = ctx.systems_commands_directory()
+        assert systems_commands_dir
+        commands_dir = ctx.commands_directory()
+        assert commands_dir
+        Parser.find_commands(systems_commands_dir, commands_dir)
 
         try:
             _generate(ctx, args.systems)
@@ -113,7 +117,7 @@ def main(*args):
             os.chdir(old_work_directory)
 
 
-def _preflight_check(ctx):
+def _preflight_check(ctx: Context) -> None:
     try:
         preflight_check(ctx)
     except PreflightError:
@@ -124,9 +128,9 @@ def _preflight_check(ctx):
         success('Preflight Check passed', verbosity=2)
 
 
-def _generate(ctx, systems):
+def _generate(ctx: Context, systems: typing.List[str]):
     generator = Generator(ctx)
-    failed_to_generate = []
+    failed_to_generate: typing.List[str] = []
 
     try:
         generator.prepare()

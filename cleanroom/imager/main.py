@@ -20,6 +20,7 @@ import re
 import shutil
 import sys
 import tempfile
+import typing
 
 
 mib = 1024 * 1024
@@ -32,7 +33,7 @@ ImageConfig = collections.namedtuple('ImageConfig',
                                       'swap_size', 'extra_partitions'])
 
 
-def _parse_commandline(arguments):
+def _parse_commandline(*arguments: str):
     """Parse the command line options."""
     parser = ArgumentParser(description='Cleanroom OS image writer',
                             prog=arguments[0])
@@ -76,33 +77,26 @@ def _parse_commandline(arguments):
     return parse_result
 
 
-def run():
+def run() -> None:
     """Run image installer with command line arguments."""
     main(*sys.argv)
 
 
-def _parse_extra_partition_value(value):
+def _parse_extra_partition_value(value: str) -> typing.Optional[ExtraPartition]:
     parts = value.split(':')
     while len(parts) < 4:
-        parts.append(None)
+        parts.append('')
 
     size = disc.mib_ify(disc.normalize_size(parts[0]))
-    assert size is not None
-
-    if not parts[1]:
-        parts[1] = None
-    if not parts[2]:
-        parts[2] = None
-    if not parts[3]:
-        parts[3] = None
+    assert size
 
     return ExtraPartition(size=size, filesystem=parts[1], label=parts[2],
                           contents=parts[3])
 
 
-def main(*args):
+def main(*args: str):
     """Run image installer with arguments."""
-    args = _parse_commandline(args)
+    args = _parse_commandline(*args)
 
     if not args.system:
         print('No system to process.')
@@ -143,7 +137,7 @@ def main(*args):
     success('Image file {} created.'.format(path), verbosity=0)
 
 
-def _root_only_part(image_config, system, timestamp, repository):
+def _root_only_part(image_config: ImageConfig, system: str, timestamp: str, repository: str) -> None:
     if os.geteuid() != 0:
         fail('Not running as root.')
 
@@ -174,8 +168,11 @@ def _root_only_part(image_config, system, timestamp, repository):
     _validate_contents(contents)
 
     kernel_size = contents.file(contents.kernel_name()).size
+    assert kernel_size
     root_size = contents.file(contents.root_name()).size
+    assert root_size
     verity_size = contents.file(contents.verity_name()).size
+    assert verity_size
 
     trace('Got sizes from repository: kernel: {}b, root: {}b, verity: {}b'
           .format(kernel_size, root_size, verity_size))
@@ -231,35 +228,36 @@ def _root_only_part(image_config, system, timestamp, repository):
     return path
 
 
-def _backup_name(repository, full_system_name):
+def _backup_name(repository: str, full_system_name: str) -> str:
     return '{}::{}'.format(repository, full_system_name)
 
 
-def _kernel_name(timestamp):
+def _kernel_name(timestamp: str) -> str:
     return 'linux-{}.efi'.format(timestamp)
 
 
-def _root_name(timestamp):
+def _root_name(timestamp: str) -> str:
     return 'root_{}'.format(timestamp)
 
 
-def _verity_name(timestamp):
+def _verity_name(timestamp: str) -> str:
     return 'vrty_{}'.format(timestamp)
 
 
-def _minimum_efi_size(kernel_size):
+def _minimum_efi_size(kernel_size: int) -> int:
     bootloader_size = 1 * mib  # size of systemd-boot (+ some spare)
     return int((kernel_size + 2 * bootloader_size) * 1.05)
 
 
-def _calculate_efi_size(kernel_size, efi_size):
+def _calculate_efi_size(kernel_size: int, efi_size: int) -> int:
     if efi_size > 0:
         return efi_size
     return _minimum_efi_size(kernel_size)
 
 
-def _calculate_minimum_size(kernel_size, root_size, verity_size,
-                            efi_size, swap_size, extra_partitions):
+def _calculate_minimum_size(kernel_size: int, root_size: int, verity_size: int,
+                            efi_size: int, swap_size: int,
+                            extra_partitions: typing.List[ExtraPartition]) -> int:
     if efi_size < _minimum_efi_size(kernel_size):
         fail('EFI partition is too small to hold the kernel.')
 
@@ -276,51 +274,52 @@ def _calculate_minimum_size(kernel_size, root_size, verity_size,
             2 * mib)       # Blank space in back
 
 
-def _validate_contents(contents):
+def _validate_contents(contents: ExportContents) -> None:
     type = contents.extract('export_type', '--stdout')
     if type != 'export_squashfs':
         fail('Failed with invalid export_type in archive (was "{}")'.format(type))
     trace('export_type contents was export_squashfs, as expected.')
 
-def _validate_image_config_path(path, force):
+def _validate_image_config_path(path: str, force: bool) -> bool:
     if disc.is_block_device(path):
         return _validate_device(path, force)
     return _validate_image_file(path, force)
 
 
-def _validate_device(path, force):
+def _validate_device(path: str, force: bool) -> None:
     if not force:
         fail('You need to --force to work with block device "{}".'
              .format(path))
 
 
-def _validate_image_file(path, force):
+def _validate_image_file(path: str, force: bool) -> None:
     if os.path.exists(path):
         if not force:
             fail('You need to --force override of existing image file "{}".'
                  .format(path))
 
 
-def  _find_or_create_device_node(path, disk_format, min_device_size):
+def _find_or_create_device_node(path: str, disk_format: str, min_device_size: int) -> None:
     if disc.is_block_device(path):
         _validate_size_of_block_device(path, min_device_size)
         return disc.Device(path)
     return _create_nbd_device(path, disk_format, min_device_size)
 
 
-def _validate_size_of_block_device(path, min_device_size):
+def _validate_size_of_block_device(path: str, min_device_size: int) -> None:
     result = helper_run('/usr/bin/blockdev', '--getsize64', path, trace_output=trace)
     if int(result.stdout) < min_device_size:
         fail('"{}" is too small for image data. Minimum size is {}b.'
              .format(path, min_device_size))
 
 
-def _create_nbd_device(path, disk_format, min_device_size):
+def _create_nbd_device(path: str, disk_format: str, min_device_size: int) -> None:
     return disc.NbdDevice.NewImageFile(path, min_device_size, disk_format=disk_format)
 
 
-def _repartition(device, repartition, timestamp, *,
-                 efi_size, root_size, verity_size, swap_size=0, extra_partitions=[]):
+def _repartition(device: str, repartition: bool, timestamp: str, *,
+                 efi_size: int, root_size: int, verity_size: int, swap_size: int=0,
+                 extra_partitions: typing.List[ExtraPartition]=[]) -> typing.List[str]:
     partitioner = disc.Partitioner(device)
 
     if partitioner.is_partitioned() and not repartition:
@@ -358,12 +357,12 @@ def _repartition(device, repartition, timestamp, *,
     return devices
 
 
-def _copy_efi_file(source, destination):
+def _copy_efi_file(source: str, destination: str) -> None:
     shutil.copyfile(source, destination)
     os.chmod(destination, 0o755)
 
 
-def _prepare_efi_partition(device, root_dev, contents):
+def _prepare_efi_partition(device: str, root_dev: str, contents: str) -> None:
     trace('Preparing EFI partition.')
     _prepare_extra_partition(device, filesystem='vfat', label='EFI')
 
@@ -409,15 +408,18 @@ def _prepare_efi_partition(device, root_dev, contents):
             helper_run('/usr/bin/umount', root_mnt, trace_output=trace, returncode=None)
 
 
-def _write_to_partition(device, file_name, contents):
+def _write_to_partition(device: str, file_name: str, contents: str) -> None:
     contents.extract(file_name, '--stdout', stdout=device)
 
 
-def _format_partition(device, filesystem, *label_args):
+def _format_partition(device: str, filesystem: str, *label_args: str) -> None:
     helper_run('/usr/bin/mkfs.{}'.format(filesystem), *label_args, device)
 
 
-def _prepare_extra_partition(device, *, filesystem=None, label=None, contents=None):
+def _prepare_extra_partition(device: str, *,
+                             filesystem: typing.Optional[str]=None,
+                             label: typing.Optional[str]=None,
+                             contents: typing.Optional[str]=None) -> None:
     if filesystem is None:
         assert contents is None
         return

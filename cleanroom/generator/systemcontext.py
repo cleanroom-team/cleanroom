@@ -5,7 +5,11 @@
 """
 
 
+from __future__ import annotations
+
 from .command import Command
+from .context import Binaries, Context
+from .execobject import ExecObject
 from .helper.generic.file import (expand_files, file_name)
 from .parser import Parser
 
@@ -18,12 +22,13 @@ import os
 import os.path
 import pickle
 import string
+import typing
 
 
 class _SystemContextPickler(pickle.Pickler):
     """Pickler for the SystemContext."""
 
-    def persistent_id(self, obj):
+    def persistent_id(self, obj: typing.Any) -> typing.Optional[typing.Tuple[str, str]]:
         """Treat commands special when pickling."""
         if isinstance(obj, Command):
             return ('Command', obj.name())
@@ -33,7 +38,7 @@ class _SystemContextPickler(pickle.Pickler):
 class _SystemContextUnpickler(pickle.Unpickler):
     """Unpickler for the SystemContext."""
 
-    def persistent_load(self, pid):
+    def persistent_load(self, pid) -> Command:
         tag, cmd = pid
 
         if tag == 'Command':
@@ -45,23 +50,23 @@ class _SystemContextUnpickler(pickle.Unpickler):
 class SystemContext:
     """Context data for the execution os commands."""
 
-    def __init__(self, ctx, *, system, timestamp=None):
+    def __init__(self, ctx: Context, *, system: str, timestamp: typing.Optional[str]=None) -> None:
         """Constructor."""
-        self.ctx = ctx
+        self.ctx: typing.Optional[Context] = ctx
         self.system = system
-        self.base_context = None
+        self.base_context: typing.Optional[SystemContext] = None
         self.timestamp = timestamp
-        self.hooks = {}
-        self.hooks_that_already_ran = []
-        self.substitutions = {}
-        self.bases = ()
+        self.hooks: typing.Dict[str, typing.List[ExecObject]] = {}
+        self.hooks_that_already_ran: typing.List[str] = []
+        self.substitutions: typing.Dict[str, str] = {}
+        self.bases: typing.Tuple[str, ...] = ()
 
         self._setup_core_substitutions()
 
         assert self.ctx
         assert self.system
 
-    def _setup_core_substitutions(self):
+    def _setup_core_substitutions(self) -> None:
         """Core substitutions that may not get overriden by base system."""
         if self.base_context:
             self.set_substitution('BASE_SYSTEM', self.base_context.system)
@@ -86,97 +91,111 @@ class SystemContext:
         self.set_substitution('IMAGE_OPTIONS', 'rw')
         self.set_substitution('IMAGE_DEVICE', '')
 
-    def binary(self, selector):
+    def binary(self, selector: Binaries) -> typing.Optional[str]:
         """Forwarded to Context.binary."""
+        assert self.ctx
         return self.ctx.binary(selector)
 
-    def current_system_directory(self):
+    def systems_directory(self) -> str:
+        assert self.ctx
+        base = self.ctx.systems_directory()
+        assert base
+        return base
+
+    def current_system_directory(self) -> str:
         """Forwarded to Context.current_system_directory."""
-        return self.ctx.current_system_directory()
+        assert self.ctx
+        base = self.ctx.current_system_directory()
+        assert base
+        return base
 
     # Important Directories:
-    def storage_directory(self):
+    def storage_directory(self) -> str:
         """Location to store system when finished building it."""
-        return os.path.join(self.ctx.storage_directory(), self.system)
+        assert self.ctx
+        base = self.ctx.storage_directory()
+        assert base
+        return os.path.join(base, self.system)
 
-    def fs_directory(self):
+    def fs_directory(self) -> str:
         """Location of the systems filesystem root."""
-        return os.path.join(self.ctx.current_system_directory(), 'fs')
+        return os.path.join(self.current_system_directory(), 'fs')
 
-    def boot_data_directory(self):
+    def boot_data_directory(self) -> str:
         """Location of the systems filesystem root."""
-        return os.path.join(self.ctx.current_system_directory(), 'boot')
+        return os.path.join(self.current_system_directory(), 'boot')
 
-    def meta_directory(self):
+    def meta_directory(self) -> str:
         """Location of the systems meta-data directory."""
-        return os.path.join(self.ctx.current_system_directory(), 'meta')
+        return os.path.join(self.current_system_directory(), 'meta')
 
     # Work with system files:
-    def expand_files(self, *files):
+    def expand_files(self, *files: str) -> typing.List[str] :
         """Map and expand files from inside to outside paths."""
         return expand_files(self, *files)
 
-    def file_name(self, path):
+    def file_name(self, path: str) -> str:
         """Map a file from inside to outside path."""
         if not os.path.isabs(path):
             return path
         return file_name(self, path)
 
     # Handle Hooks:
-    def _add_hook(self, hook, exec_object):
+    def _add_hook(self, hook: str, exec_obj: typing.Optional[ExecObject]) -> None:
         """Add a hook."""
-        assert exec_object is not None
+        if not exec_obj:
+            return
 
-        info('Adding hook "{}": {}.'.format(hook, exec_object))
-        self.hooks.setdefault(hook, []).append(exec_object)
+        info('Adding hook "{}": {}.'.format(hook, exec_obj))
+        self.hooks.setdefault(hook, []).append(exec_obj)
         trace('Hook {} has {} entries.'.format(hook, len(self.hooks[hook])))
 
-    def add_hook(self, location, hook, *args, **kwargs):
+    def add_hook(self, location: Location, hook: str,
+                 *args: typing.Any, **kwargs: typing.Any) -> None:
         """Add a hook."""
         assert isinstance(hook, str)
-        self._add_hook(hook, Parser.create_execute_object(location,
-                                                          *args, **kwargs))
+        self._add_hook(hook, Parser.create_execute_object(location, *args, **kwargs))
 
-    def run_hooks(self, hook):
+    def run_hooks(self, hook: str):
         """Run all the registered hooks."""
         if hook in self.hooks_that_already_ran:
             trace('Skipping hooks "{}": Already ran them.'.format(hook))
             return
 
-        command_list = self.hooks.setdefault(hook, [])
-        trace('Runnnig hook {} with {} entries.'.format(hook, len(command_list)))
-        if not command_list:
+        exec_obj_list = self.hooks.setdefault(hook, [])
+        trace('Runnnig hook {} with {} entries.'.format(hook, len(exec_obj_list)))
+        if not exec_obj_list:
             return
 
         h3('Running {} hooks.'.format(hook), verbosity=1)
-        for cmd in command_list:
-            os.chdir(self.ctx.systems_directory())
-            self.execute(cmd.location(),
-                         cmd.command(), *cmd.arguments(), **cmd.kwargs())
+        for exec_obj in exec_obj_list:
+            os.chdir(self.systems_directory())
+            self.execute(exec_obj.location(),
+                         exec_obj.command(), *exec_obj.arguments(), **exec_obj.kwargs())
         success('All {} hooks were run successfully.', verbosity=2)
 
         self.hooks_that_already_ran.append(hook)
 
     # Handle substitutions:
-    def set_substitution(self, key, value):
+    def set_substitution(self, key: str, value: str):
         """Add a substitution to the substitution table."""
         self.substitutions[key] = value
         trace('Added substitution: "{}"="{}".'.format(key, value))
 
-    def substitution(self, key, default_value=None):
+    def substitution(self, key: str, default_value: typing.Optional[str]=None):
         """Get substitution value."""
         return self.substitutions.get(key, default_value)
 
-    def has_substitution(self, key):
+    def has_substitution(self, key: str) -> bool:
         """Check wether a substitution is defined."""
         return key in self.substitutions
 
-    def substitute(self, text):
+    def substitute(self, text: str):
         """Substitute variables in text."""
         return string.Template(text).substitute(**self.substitutions)
 
     # Run shell commands:
-    def run(self, *args, outside=False, **kwargs):
+    def run(self, *args: typing.Any, outside: bool=False, **kwargs: typing.Any):
         """Run a command in this system_context."""
         assert 'chroot' not in kwargs
 
@@ -198,8 +217,8 @@ class SystemContext:
         return run(*args, trace_output=debug, **kwargs)
 
     # execute cleanroom commands:
-    def execute(self, location, command, *args,
-                expected_dependency=None, **kwargs):
+    def execute(self, location: Location, command: str, *args: typing.Any,
+                expected_dependency: typing.Optional[str]=None, **kwargs: typing.Any) -> None:
         """Execute a command."""
         assert location is not None
         assert location.is_valid()
@@ -224,7 +243,7 @@ class SystemContext:
         cmd(child, self, *args, **kwargs)
 
     # Store/Restore a system:
-    def install_base_context(self, base_context):
+    def install_base_context(self, base_context: SystemContext) -> None:
         """Set up base context."""
         assert base_context.system
 
@@ -236,10 +255,10 @@ class SystemContext:
 
         self._setup_core_substitutions()  # Fore core substitutions
 
-    def _pickle_jar(self):
+    def _pickle_jar(self) -> str:
         return os.path.join(self.meta_directory(), 'pickle_jar.bin')
 
-    def pickle(self):
+    def pickle(self) -> None:
         """Pickle this system_context."""
         ctx = self.ctx
 
@@ -257,7 +276,7 @@ class SystemContext:
         self.ctx = ctx
         self.hooks_that_already_ran = hooks_that_ran
 
-    def unpickle(self):
+    def unpickle(self) -> None:
         """Create a new system_context by unpickling a file."""
         pickle_jar = self._pickle_jar()
 

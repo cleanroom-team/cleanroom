@@ -5,25 +5,28 @@
 """
 
 
+from .command import Command
+from .context import Context
 from .execobject import ExecObject
 
 from ..exceptions import ParseError
-from ..location import  Location
-from ..printer import (debug, h2,)
+from ..location import Location
+from ..printer import debug, h2
 
 import importlib.util
 import inspect
 import os
 import re
+import typing
 
 
 class _ParserState:
     """Hold the state of the Parser."""
 
-    def __init__(self, file_name):
+    def __init__(self, file_name: str) -> None:
         self._current_file_name = file_name
         self._current_line = 1
-        self._start_line = 0
+        self._start_line = 1
         self._to_process = ''
         self._key_for_value = ''
 
@@ -31,33 +34,33 @@ class _ParserState:
 
         self.reset()
 
-    def is_token_complete(self):
+    def is_token_complete(self) -> bool:
         return self._incomplete_token == ''
 
-    def is_command_continuation(self):
+    def is_command_continuation(self) -> bool:
         if self._to_process == '' or self._to_process == '\n':
             return True
 
         return self._indent_depth > 0 \
             and self._to_process.startswith(' ' * self._indent_depth)
 
-    def record_command_start(self):
+    def record_command_start(self) -> None:
         self._start_line = self._current_line
 
-    def next_line(self):
+    def next_line(self) -> None:
         self._current_line += 1
 
-    def current_location(self):
+    def current_location(self) -> Location:
         return Location(file_name=self._current_file_name, line_number=self._current_line)
 
-    def start_location(self):
+    def start_location(self) -> typing.Optional[Location]:
         if self._start_line < 1:
             return None
         return Location(file_name=self._current_file_name, line_number=self._start_line)
 
-    def reset(self):
-        self._args = ()
-        self._kwargs = {}
+    def reset(self) -> None:
+        self._args: typing.List[typing.Any] = []
+        self._kwargs: typing.Dict[str, typing.Any] = {}
 
         self._key_for_value = ''
         self._incomplete_token = ''
@@ -66,7 +69,7 @@ class _ParserState:
 
         assert(self.is_token_complete())
 
-    def create_execute_object(self):
+    def create_execute_object(self) -> typing.Optional[ExecObject]:
         if not self._args or self._start_line == 0:
             return None
 
@@ -77,21 +80,22 @@ class _ParserState:
 
         self.reset()
 
-        return Parser.create_execute_object(self.start_location(),
-                                            *args, **kwargs)
+        location = self.start_location()
+        assert location
+        return Parser.create_execute_object(location, *args, **kwargs)
 
-    def _args_to_string(self):
+    def _args_to_string(self) -> str:
         args = ','.join([str(a) for a in self._args]) + ':' \
             + ','.join([k + '=' + str(v) for (k, v) in self._kwargs.items()])
         return args.replace('\n', '\\n').replace('\t', '\\t')
 
-    def _to_process_to_string(self):
+    def _to_process_to_string(self) -> str:
         return self._to_process.replace('\n', '\\n').replace('\t', '\\t')
 
-    def _incomplete_token_to_string(self):
+    def _incomplete_token_to_string(self) -> str:
         return self._incomplete_token.replace('\n', '\\n').replace('\t', '\\t')
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '{}(start at:{}) "{}" ({})-token:"{}", complete?"{}"-key:"{}"'.\
                format(self.current_location(),
                       self._start_line,
@@ -105,14 +109,14 @@ class _ParserState:
 class Parser:
     """Parse a system definition file."""
 
-    _commands = {}
+    _commands: typing.Dict[str, typing.Tuple[Command, str]] = {}
     """A list of known commands."""
 
     @staticmethod
-    def find_commands(*directories):
+    def find_commands(*directories: str) -> None:
         """Find possible commands in the file system."""
         h2('Searching for available commands', verbosity=2)
-        checked_dirs = []
+        checked_dirs: typing.List[str] = []
         for path in directories:
             if path in checked_dirs:
                 continue
@@ -131,6 +135,7 @@ class Parser:
 
                 spec = importlib.util.spec_from_file_location(name, f_path)
                 cmd_module = importlib.util.module_from_spec(spec)
+                assert spec and spec.loader
                 spec.loader.exec_module(cmd_module)
 
                 def is_command(x):
@@ -147,7 +152,7 @@ class Parser:
             debug('  {}: "{}"'.format(name, path))
 
     @staticmethod
-    def list_commands(ctx):
+    def list_commands(ctx: Context) -> None:
         """Print a list of all known commands."""
         h2('Command List:')
 
@@ -160,17 +165,18 @@ class Parser:
                           path))
 
     @staticmethod
-    def command(name):
+    def command(name: str) -> Command:
         """Retrieve a command."""
         return Parser._commands[name][0]
 
     @staticmethod
-    def command_file(name):
+    def command_file(name: str) -> str:
         """Retrieve the file containing a command."""
         return Parser._commands[name][1]
 
     @staticmethod
-    def create_execute_object(location, *args, **kwargs):
+    def create_execute_object(location: Location,
+                              *args: typing.Any, **kwargs: typing.Any) -> typing.Optional[ExecObject]:
         """Create an execute object based on command and arguments."""
         if not args:
             return None
@@ -183,19 +189,20 @@ class Parser:
 
         return obj
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor."""
         self._command_pattern = re.compile('^[A-Za-z][A-Za-z0-9_-]*$')
         self._octal_pattern = re.compile('^0o?([0-7]+)$')
         self._hex_pattern = re.compile('^0x([0-9a-fA-F]+)$')
 
-    def parse(self, input_file):
+    def parse(self, input_file: str) -> typing.Generator[ExecObject, None, None]:
         """Parse a file."""
         with open(input_file, 'r') as f:
             for result in self._parse_lines(f, input_file):
                 yield result
 
-    def _parse_lines(self, iterable, file_name):
+    def _parse_lines(self, iterable: typing.Iterator[str],
+                     file_name: str) -> typing.Generator[ExecObject, None, None]:
         """Parse an iterable of lines."""
         state = _ParserState(file_name)
         built_in = Location(file_name='<BUILT_IN>', line_number=1)
@@ -221,13 +228,14 @@ class Parser:
                              location=state.current_location())
 
         # Flush last exec object:
-        obj = state.create_execute_object()
-        if obj:
-            yield obj
+        flush_obj = state.create_execute_object()
+        if flush_obj:
+            yield flush_obj
 
         yield ExecObject(built_in, None, '_teardown')
 
-    def _parse_single_line(self, state):
+    def _parse_single_line(self, state: _ParserState) \
+            -> typing.Tuple[_ParserState, typing.Optional[ExecObject]]:
         """Parse a single line."""
         exec_object = None
 
@@ -243,7 +251,7 @@ class Parser:
 
         return (self._extract_arguments(state), exec_object)
 
-    def _strip_comment_and_ws(self, line):
+    def _strip_comment_and_ws(self, line: str) -> str:
         """Extract a comment up to the end of the line."""
         input = line
         line = input.lstrip()
@@ -252,10 +260,10 @@ class Parser:
 
         return line
 
-    def _extract_command(self, state):
+    def _extract_command(self, state: _ParserState) -> _ParserState:
         """Extract the command from a line."""
         assert(state._indent_depth == 0)
-        assert(state._args == ())
+        assert(state._args == [])
         assert(state._kwargs == {})
 
         indent_depth = \
@@ -278,18 +286,18 @@ class Parser:
             pos += 1
             command += c
 
-        state._args = (self._validate_command(state, command),)
+        state._args = [self._validate_command(state, command),]
         state._to_process = line[pos:]
 
         return state
 
-    def _extract_arguments(self, state):
+    def _extract_arguments(self, state: _ParserState) -> _ParserState:
         # extract arguments:
         while state._to_process != '':
+            location = state.start_location()
+            assert(location)
             (key, has_value, value, to_process, token) \
-                = self._parse_next_argument(state.start_location(),
-                                            state._to_process,
-                                            state._incomplete_token)
+                = self._parse_next_argument(location, state._to_process, state._incomplete_token)
 
             state._to_process = to_process
             state._incomplete_token = token
@@ -302,11 +310,11 @@ class Parser:
                     state._key_for_value = key
             else:
                 if has_value:
-                    state._args = (*state._args, value)
+                    state._args.append(value)
 
         return state
 
-    def _validate_command(self, state, command):
+    def _validate_command(self, state: _ParserState, command: str) -> str:
         if not command:
             raise ParseError('Empty command found.', location=state.start_location())
 
@@ -320,7 +328,9 @@ class Parser:
 
         return command
 
-    def _parse_next_argument(self, location, to_process, token):
+    def _parse_next_argument(self, location: Location, to_process: str,
+                             token: str) -> typing.Tuple[typing.Optional[str], bool,
+                                                         typing.Optional[str], str, str]:
         key = None
         has_value = False
         value = None
@@ -335,6 +345,7 @@ class Parser:
 
         if is_keyword:
             key = section
+            assert key
             if not self._command_pattern.match(key):
                 raise ParseError('Keyword "{}" is not valid.'.format(key),
                                  location=location)
@@ -356,8 +367,9 @@ class Parser:
 
         return (key, has_value, value, to_process, token)
 
-    def _parse_argument_part(self, location, to_process, token, *,
-                             is_keyword_possible=False):
+    def _parse_argument_part(self, location: Location, to_process: str, token: str, *,
+                             is_keyword_possible: bool=False) \
+            -> typing.Tuple[bool, typing.Optional[str], bool, str, str]:
         has_part = False
         section = None
         is_keyword = False
@@ -387,31 +399,31 @@ class Parser:
 
         return (has_part, section, is_keyword, to_process, token)
 
-    def _process_value(self, value):
+    def _process_value(self, value: str) -> typing.Any:
         if value is None:
             return None
 
         octal_match = self._octal_pattern.match(value)
         hex_match = self._hex_pattern.match(value)
         if value == 'None':
-            value = None
-        elif value == 'True':
-            value = True
-        elif value == 'False':
-            value = False
-        elif octal_match:
-            value = int(octal_match.group(1), 8)
-        elif hex_match:
-            value = int(hex_match.group(1), 16)
-        elif value.isdigit():
-            value = int(value)
+            return None
+        if value == 'True':
+            return True
+        if value == 'False':
+            return False
+        if octal_match:
+            return int(octal_match.group(1), 8)
+        if hex_match:
+            return int(hex_match.group(1), 16)
+        if value.isdigit():
+            return int(value)
         return value
 
-    def _extract_multiline_argument(self, state):
+    def _extract_multiline_argument(self, state: _ParserState) -> _ParserState:
+        location = state.start_location()
+        assert location
         (value, to_process, token) \
-            = self._parse_multiline_argument(state.start_location(),
-                                             state._to_process,
-                                             state._incomplete_token)
+            = self._parse_multiline_argument(location, state._to_process, state._incomplete_token)
         state._to_process = to_process
         state._incomplete_token = token
         if token == '':
@@ -419,11 +431,13 @@ class Parser:
                 state._kwargs[state._key_for_value] = value
                 state._key_for_value = ''
             else:
-                state._args = (*state._args, value)
+                state._args.append(value)
 
         return state
 
-    def _parse_multiline_argument(self, location, to_process, token):
+    def _parse_multiline_argument(self, location: Location,
+                                  to_process: str, token: str) \
+            -> typing.Tuple[typing.Optional[str], str, str]:
         value = None
 
         end_pos = to_process.find('>>>>')
@@ -437,7 +451,8 @@ class Parser:
             to_process = ''
         return (value, to_process, token)
 
-    def _parse_string_argument(self, location, line, quote):
+    def _parse_string_argument(self, location: Location,
+                               line: str, quote: str) -> typing.Tuple[str, str]:
         must_escape = False
         pos = -1
         value = ''
@@ -466,8 +481,8 @@ class Parser:
         raise ParseError('Missing closing "{}" quote.'.format(quote),
                          location=location)
 
-    def _parse_normal_argument(self, location, line,
-                               is_keyword_possible=True):
+    def _parse_normal_argument(self, location: Location, line: str,
+                               is_keyword_possible: bool=True) -> typing.Tuple[str, str, bool]:
         must_escape = False
         pos = -1
         value = ''
@@ -503,7 +518,7 @@ class Parser:
         return (value, line[pos + 1:], is_keyword)
 
 
-def _validate_exec_object(location, obj):
+def _validate_exec_object(location: Location, obj: ExecObject) -> typing.Optional[str]:
     command_name = obj.command()
     args = obj.arguments()
     kwargs = obj._kwargs

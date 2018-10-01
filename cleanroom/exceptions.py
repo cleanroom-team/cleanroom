@@ -5,15 +5,20 @@
 """
 
 
+from .location import Location
+
+import typing
+
+
 class CleanRoomError(RuntimeError):
     """Base class for all cleanroom Exceptions."""
 
-    def __init__(self, *args, location=None):
+    def __init__(self, *args: typing.Any, location: Location=None) -> None:
         """Constructor."""
         super().__init__(*args)
         self.location = location
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Stringify exception."""
         prefix = 'Error'
         if self.location is not None:
@@ -43,12 +48,13 @@ class PrepareError(CleanRoomError):
 class GenerateError(CleanRoomError):
     """Error raised during Generation phase."""
 
-    def __init__(self, *args, location=None, original_exception=None):
+    def __init__(self, *args: typing.Any, location: Location=None,
+                 original_exception: Exception=None) -> None:
         """Constructor."""
         super().__init__(*args, location=location)
         self.original_exception = original_exception
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Stringify exception."""
         prefix = 'Error'
         if self.location is not None:
