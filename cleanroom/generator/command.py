@@ -10,6 +10,7 @@ from.
 
 from __future__ import annotations
 
+from .execobject import ExecObject
 from ..exceptions import ParseError
 from ..location import Location
 from ..printer import trace
@@ -137,3 +138,8 @@ class Command:
     def help(self) -> str:
         """Print help string."""
         return self._help_string
+
+    def exec_object(self, location: Location,
+                    *args: typing.Any, **kwargs: typing.Any) -> ExecObject:
+        dependency = self.validate_arguments(location, *args, **kwargs)
+        return ExecObject(location, dependency, self.name(), *args, **kwargs)

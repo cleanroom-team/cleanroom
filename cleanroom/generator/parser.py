@@ -84,7 +84,9 @@ class _ParserState:
 
         location = self.start_location()
         assert location
-        return self._command_manager.create_execute_object(location, *args, **kwargs)
+        command = self._command_manager.command(args[0])
+        assert command
+        return command.exec_object(location, *args[1:], **kwargs)
 
     def _args_to_string(self) -> str:
         args = ','.join([str(a) for a in self._args]) + ':' \

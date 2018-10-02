@@ -17,15 +17,14 @@ class ExecObject:
     """
 
     def __init__(self, location: Location, dependency: typing.Optional[str],
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+                 command: str, *args: typing.Any, **kwargs: typing.Any) -> None:
         """Constructor."""
-        assert(location)
-        assert(isinstance(location, Location))
-        assert(len(args) >= 1)
+        assert command
 
         self._location = location
         self._dependency = dependency
         self._args = args
+        self._command = command
         self._kwargs = kwargs
 
         if not self._location.description:
@@ -33,11 +32,11 @@ class ExecObject:
 
     def command(self) -> str:
         """Name of the command to execute."""
-        return self._args[0]
+        return self._command
 
     def arguments(self) -> typing.Tuple[typing.Any, ...]:
         """Arguments passed to command()."""
-        return self._args[1:]
+        return self._args
 
     def kwargs(self) -> typing.Dict[str, typing.Any]:
         """Keyword arguments to command()."""

@@ -12,13 +12,13 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                 '..')))
 
-import cleanroom.generator.command as command
+from cleanroom.generator.command import Command
 from cleanroom.generator.commandmanager import CommandManager
 import cleanroom.exceptions as ex
 import cleanroom.generator.parser as parser
 
 
-class DummyCommand(command.Command):
+class DummyCommand(Command):
     """Dummy command implementation."""
 
     def __init__(self, name):

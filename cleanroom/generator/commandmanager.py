@@ -22,7 +22,7 @@ class CommandManager:
 
     def __init__(self):
         self._commands: typing.Dict[str, typing.Tuple[Command, str]] = {}
-        
+
     def _add_command(self, name: str, command: Command, file_name: str) -> None:
         self._commands[name] = (command, file_name)
 
@@ -84,29 +84,3 @@ class CommandManager:
         """Retrieve the file containing a command."""
         return self._commands.get(name, (None, None))[1]
 
-    def create_execute_object(self,
-                              location: Location,
-                              command: str,
-                              *args: typing.Any, **kwargs: typing.Any) \
-            -> typing.Optional[ExecObject]:
-        """Create an execute object based on command and arguments."""
-        if not command:
-            return None
-
-        if not location.description:
-            location.description = command
-
-        obj = ExecObject(location, None, command, *args, **kwargs)
-        obj.set_dependency(self._validate_exec_object(location, obj))
-
-        return obj
-
-    def _validate_exec_object(self, location: Location, obj: ExecObject) \
-            -> typing.Optional[str]:
-        command_name = obj.command()
-        args = obj.arguments()
-        kwargs = obj._kwargs
-
-        command = self.command(command_name)
-        assert command
-        return command.validate_arguments(location, *args, **kwargs)
