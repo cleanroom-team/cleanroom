@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                 '..')))
 
 import cleanroom.generator.command as command
+from cleanroom.generator.commandmanager import CommandManager
 import cleanroom.exceptions as ex
 import cleanroom.generator.parser as parser
 
@@ -35,15 +36,16 @@ INVALID_CMD1 = 'test!1'
 INVALID_CMD2 = '1test'
 
 
-def _setup_commands():
-    if CMD1 not in parser.Parser._commands:
-        parser.Parser._commands[CMD1] = (DummyCommand(CMD1), '<builtin>/1')
-    if CMD2 not in parser.Parser._commands:
-        parser.Parser._commands[CMD2] = (DummyCommand(CMD2), '<builtin>/2')
-    if INVALID_CMD1 not in parser.Parser._commands:
-        parser.Parser._commands[INVALID_CMD1] = (DummyCommand(INVALID_CMD1), '<builtin>/3')
-    if INVALID_CMD2 not in parser.Parser._commands:
-        parser.Parser._commands[INVALID_CMD2] = (DummyCommand(INVALID_CMD2), '<builtin>/4')
+def _setup_commands(parser):
+    cm = parser._command_manager
+    if not cm.command(CMD1):
+        cm._add_command(CMD1, DummyCommand(CMD1), '<builtin>/1')
+    if not cm.command(CMD2):
+        cm._add_command(CMD2, DummyCommand(CMD2), '<builtin>/2')
+    if not cm.command(INVALID_CMD1):
+        cm._add_command(INVALID_CMD1, DummyCommand(INVALID_CMD1), '<builtin>/3')
+    if not cm.command(INVALID_CMD1):
+        cm._add_command(INVALID_CMD2, DummyCommand(INVALID_CMD2), '<builtin>/4')
 
 
 @pytest.mark.parametrize(('test_input', 'expected'), [
@@ -653,9 +655,9 @@ def _setup_commands():
 ])
 def test_parser(parser, test_input, expected):
     """Test parsing of lines."""
-    _setup_commands()
+    _setup_commands(parser)
 
-    # parse_and_verify_lines was injected into the parser by the fixture!
+    print(parser._command_manager.list_commands())
     parser.parse_and_verify_lines(test_input, expected)
 
 
@@ -682,6 +684,6 @@ def test_parser(parser, test_input, expected):
 ])
 def test_parse_errors(parser, test_input):
     """Test parse errors."""
-    _setup_commands()
+    _setup_commands(parser)
     with pytest.raises(ex.ParseError):
         parser.parse_and_verify_lines((test_input,), [])

@@ -6,6 +6,7 @@
 
 
 from .command import Command
+from .commandmanager import CommandManager
 from .context import Context
 from .execobject import ExecObject
 
@@ -23,7 +24,8 @@ import typing
 class _ParserState:
     """Hold the state of the Parser."""
 
-    def __init__(self, file_name: str) -> None:
+    def __init__(self, file_name: str, command_manager: CommandManager) -> None:
+        self._command_manager = command_manager
         self._current_file_name = file_name
         self._current_line = 1
         self._start_line = 1
@@ -82,7 +84,7 @@ class _ParserState:
 
         location = self.start_location()
         assert location
-        return Parser.create_execute_object(location, *args, **kwargs)
+        return self._command_manager.create_execute_object(location, *args, **kwargs)
 
     def _args_to_string(self) -> str:
         args = ','.join([str(a) for a in self._args]) + ':' \
@@ -108,89 +110,10 @@ class _ParserState:
 
 class Parser:
     """Parse a system definition file."""
-
-    _commands: typing.Dict[str, typing.Tuple[Command, str]] = {}
-    """A list of known commands."""
-
-    @staticmethod
-    def find_commands(*directories: str) -> None:
-        """Find possible commands in the file system."""
-        h2('Searching for available commands', verbosity=2)
-        checked_dirs: typing.List[str] = []
-        for path in directories:
-            if path in checked_dirs:
-                continue
-            checked_dirs.append(path)
-            if not os.path.isdir(path):
-                continue  # skip non-existing directories
-
-            for f in os.listdir(path):
-                if not f.endswith('.py'):
-                    continue
-
-                f_path = os.path.join(path, f)
-
-                cmd = f[:-3]
-                name = 'cleanroom.generator.commands.' + cmd
-
-                spec = importlib.util.spec_from_file_location(name, f_path)
-                cmd_module = importlib.util.module_from_spec(spec)
-                assert spec and spec.loader
-                spec.loader.exec_module(cmd_module)
-
-                def is_command(x):
-                    return inspect.isclass(x) and \
-                        x.__name__.endswith('Command') and \
-                        x.__module__ == name
-                klass = inspect.getmembers(cmd_module, is_command)
-                instance = klass[0][1]()
-                Parser._commands[cmd] = (instance, f_path)
-
-        debug('Commands found:')
-        for (name, value) in Parser._commands.items():
-            path = value[1]
-            debug('  {}: "{}"'.format(name, path))
-
-    @staticmethod
-    def list_commands(ctx: Context) -> None:
-        """Print a list of all known commands."""
-        h2('Command List:')
-
-        for key in sorted(Parser._commands):
-            cmd, path = Parser._commands[key]
-
-            long_help_lines = cmd.help().split('\n')
-            print('{}\n          {}\n\n          Definition in: {}\n\n'
-                  .format(cmd.syntax(), '\n          '.join(long_help_lines),
-                          path))
-
-    @staticmethod
-    def command(name: str) -> Command:
-        """Retrieve a command."""
-        return Parser._commands[name][0]
-
-    @staticmethod
-    def command_file(name: str) -> str:
-        """Retrieve the file containing a command."""
-        return Parser._commands[name][1]
-
-    @staticmethod
-    def create_execute_object(location: Location,
-                              *args: typing.Any, **kwargs: typing.Any) -> typing.Optional[ExecObject]:
-        """Create an execute object based on command and arguments."""
-        if not args:
-            return None
-
-        if not location.description:
-            location.description = args[0]
-
-        obj = ExecObject(location, None, *args, **kwargs)
-        obj.set_dependency(_validate_exec_object(location, obj))
-
-        return obj
-
-    def __init__(self) -> None:
+    def __init__(self, command_manager: CommandManager) -> None:
         """Constructor."""
+        self._command_manager = command_manager
+
         self._command_pattern = re.compile('^[A-Za-z][A-Za-z0-9_-]*$')
         self._octal_pattern = re.compile('^0o?([0-7]+)$')
         self._hex_pattern = re.compile('^0x([0-9a-fA-F]+)$')
@@ -204,7 +127,7 @@ class Parser:
     def _parse_lines(self, iterable: typing.Iterator[str],
                      file_name: str) -> typing.Generator[ExecObject, None, None]:
         """Parse an iterable of lines."""
-        state = _ParserState(file_name)
+        state = _ParserState(file_name, self._command_manager)
         built_in = Location(file_name='<BUILT_IN>', line_number=1)
 
         yield ExecObject(built_in, None, '_setup')
@@ -322,7 +245,7 @@ class Parser:
             raise ParseError('Invalid command "{}".'.format(command),
                              location=state.start_location())
 
-        if command not in Parser._commands:
+        if not self._command_manager.command(command):
             raise ParseError('Command "{}" not found.'.format(command),
                              location=state.start_location())
 
@@ -516,12 +439,3 @@ class Parser:
             value += c
 
         return (value, line[pos + 1:], is_keyword)
-
-
-def _validate_exec_object(location: Location, obj: ExecObject) -> typing.Optional[str]:
-    command_name = obj.command()
-    args = obj.arguments()
-    kwargs = obj._kwargs
-
-    command = Parser.command(command_name)
-    return command.validate_arguments(location, *args, **kwargs)

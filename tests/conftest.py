@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                 '..')))
 
 from cleanroom.generator.command import Command
+from cleanroom.generator.commandmanager import CommandManager
 from cleanroom.generator.context import Context
 from cleanroom.generator.parser import Parser
 from cleanroom.generator.systemcontext import SystemContext
@@ -97,12 +98,11 @@ def _parse_and_verify_lines(parser, data, expected):
 def _create_and_setup_parser(global_ctx):
     """Set up method."""
     cleanroom.printer.Printer.Instance()
-    Parser.find_commands(global_ctx.commands_directory())
-    result = Parser()
-    Parser._commands['_setup'] = (DummyCommand('_setup', help='placeholder',
-                                               file=__file__), '<placeholder>')
-    Parser._commands['_teardown'] = (DummyCommand('_teardown', help='placeholder',
-                                                  file=__file__), '<placeholder>')
+    command_manager = CommandManager()
+    command_manager.find_commands(global_ctx.commands_directory())
+    command_manager._add_command('_setup', DummyCommand('_setup', help='placeholder', file=__file__), '<placeholder>')
+    command_manager._add_command('_teardown', DummyCommand('_teardown', help='placeholder', file=__file__), '<placeholder>')
+    result = Parser(command_manager)
 
     # inject for easier testing:
     result.parse_and_verify_lines \
