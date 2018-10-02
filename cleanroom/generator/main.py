@@ -7,7 +7,6 @@
 
 from .context import Context
 from .generator import Generator
-from .parser import Parser
 from .preflight import preflight_check
 from .workdir import WorkDir
 
@@ -103,13 +102,6 @@ def main(*args: str) -> None:
                  clear_work_directory=args.clear_work_directory,
                  clear_storage=args.clear_storage) as work_directory:
         ctx.set_directories(systems_directory, work_directory)
-
-        # Find commands:
-        systems_commands_dir = ctx.systems_commands_directory()
-        assert systems_commands_dir
-        commands_dir = ctx.commands_directory()
-        assert commands_dir
-        Parser.find_commands(systems_commands_dir, commands_dir)
 
         try:
             _generate(ctx, args.systems)

@@ -23,7 +23,7 @@ def test_base_exceptions():
 def test_base_exceptions_multi_args():
     """Test the base exception class."""
     e = ex.CleanRoomError('message', 'something')
-    assert str(e) == 'Error: message something'
+    assert str(e) == 'Error: (\'message\', \'something\')'
 
 
 def test_base_exceptions_with_location():

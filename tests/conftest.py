@@ -35,7 +35,9 @@ def system_context(tmpdir, global_context):
     work_dir = tmpdir.mkdir('work')
 
     global_context.set_directories(str(system_dir), str(work_dir))
-    sys_ctx = SystemContext(global_context, system='test-system', timestamp='now')
+    command_manager = CommandManager()
+    sys_ctx = SystemContext(global_context, command_manager,
+                            system='test-system', timestamp='now')
     assert(os.path.join(str(work_dir), 'current/fs')
            == sys_ctx.fs_directory())
 
@@ -87,7 +89,7 @@ def _parse_and_verify_lines(parser, data, expected):
     """Verify one line of input to the Parser."""
     result = list(map(lambda x: (x.command(), x.arguments(),
                                  x.kwargs(), x.location().line_number),
-                      parser._parse_lines(data, '<TEST_DATA>')))
+                      parser._parse_string(''.join(data), '<TEST_DATA>')))
 
     assert len(result) >= 2
     assert result[0] == ('_setup', (), {}, 1)
@@ -102,7 +104,7 @@ def _create_and_setup_parser(global_ctx):
     command_manager.find_commands(global_ctx.commands_directory())
     command_manager._add_command('_setup', DummyCommand('_setup', help='placeholder', file=__file__), '<placeholder>')
     command_manager._add_command('_teardown', DummyCommand('_teardown', help='placeholder', file=__file__), '<placeholder>')
-    result = Parser(command_manager)
+    result = Parser(command_manager, debug=True)
 
     # inject for easier testing:
     result.parse_and_verify_lines \

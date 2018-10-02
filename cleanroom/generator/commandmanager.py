@@ -9,7 +9,7 @@ from .command import Command
 from .execobject import ExecObject
 
 from ..location import Location
-from ..printer import debug, h2
+from ..printer import debug, h2, verbose
 
 import importlib.util
 import inspect

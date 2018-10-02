@@ -10,21 +10,33 @@ from .location import Location
 import typing
 
 
-class CleanRoomError(RuntimeError):
+class CleanRoomError(Exception):
     """Base class for all cleanroom Exceptions."""
 
-    def __init__(self, *args: typing.Any, location: Location=None) -> None:
+    def __init__(self, *args: typing.Any, location: Location=None,
+                 original_exception: typing.Optional[Exception]=None) -> None:
         """Constructor."""
         super().__init__(*args)
+        self.location = location
+        self.original_exception = original_exception
+
+    def set_location(self, location: Location):
         self.location = location
 
     def __str__(self) -> str:
         """Stringify exception."""
         prefix = 'Error'
-        if self.location is not None:
+        if self.location:
             prefix += ' in {}'.format(self.location)
 
-        return '{}: {}'.format(prefix, ' '.join(self.args))
+        postfix = ''
+        if self.original_exception is not None:
+            if isinstance(self.original_exception, AssertionError):
+                postfix = '\n    Trigger: AssertionError.'
+            else:
+                postfix = '\n    Trigger: ' + str(self.original_exception)
+
+        return '{}: {}{}'.format(prefix, super().__str__(), postfix)
 
 
 class PreflightError(CleanRoomError):
@@ -48,26 +60,7 @@ class PrepareError(CleanRoomError):
 class GenerateError(CleanRoomError):
     """Error raised during Generation phase."""
 
-    def __init__(self, *args: typing.Any, location: Location=None,
-                 original_exception: Exception=None) -> None:
-        """Constructor."""
-        super().__init__(*args, location=location)
-        self.original_exception = original_exception
-
-    def __str__(self) -> str:
-        """Stringify exception."""
-        prefix = 'Error'
-        if self.location is not None:
-            prefix += ' in {}'.format(self.location)
-
-        postfix = ''
-        if self.original_exception is not None:
-            if isinstance(self.original_exception, AssertionError):
-                postfix = '\n    Trigger: AssertionError.'
-            else:
-                postfix = '\n    Trigger: ' + str(self.original_exception)
-
-        return '{}: {}{}'.format(prefix, ' '.join(self.args), postfix)
+    pass
 
 
 class SystemNotFoundError(CleanRoomError):

@@ -8,11 +8,12 @@
 from __future__ import annotations
 
 from .command import Command
+from .commandmanager import CommandManager
 from .context import Binaries, Context
 from .execobject import ExecObject
 from .helper.generic.file import (expand_files, file_name)
-from .parser import Parser
 
+from ..exceptions import GenerateError
 from ..location import Location
 from ..printer import (debug, h3, info, success, trace,)
 
@@ -38,11 +39,15 @@ class _SystemContextPickler(pickle.Pickler):
 class _SystemContextUnpickler(pickle.Unpickler):
     """Unpickler for the SystemContext."""
 
+    def __init__(self, jar: str, context_manager: ContextManager) -> None:
+        self._context_manager = context_manager
+        super().__init__(jar)
+
     def persistent_load(self, pid) -> Command:
         tag, cmd = pid
 
         if tag == 'Command':
-            return Parser.command(cmd)
+            return self._context_manager.command(cmd)
         else:
             raise pickle.UnpicklingError('Unsupported persistent object.')
 
@@ -50,9 +55,11 @@ class _SystemContextUnpickler(pickle.Unpickler):
 class SystemContext:
     """Context data for the execution os commands."""
 
-    def __init__(self, ctx: Context, *, system: str, timestamp: typing.Optional[str]=None) -> None:
+    def __init__(self, ctx: Context, command_manager: CommandManager, *,
+                 system: str, timestamp: typing.Optional[str]=None) -> None:
         """Constructor."""
         self.ctx: typing.Optional[Context] = ctx
+        self._command_manager = command_manager
         self.system = system
         self.base_context: typing.Optional[SystemContext] = None
         self.timestamp = timestamp
@@ -65,6 +72,10 @@ class SystemContext:
 
         assert self.ctx
         assert self.system
+
+    def create_system_context(self, system: str) -> SystemContext:
+        return SystemContext(self.ctx, self._command_manager, system=system,
+                             timestamp=self.timestamp)
 
     def _setup_core_substitutions(self) -> None:
         """Core substitutions that may not get overriden by base system."""
@@ -154,7 +165,14 @@ class SystemContext:
                  *args: typing.Any, **kwargs: typing.Any) -> None:
         """Add a hook."""
         assert isinstance(hook, str)
-        self._add_hook(hook, Parser.create_execute_object(location, *args, **kwargs))
+        if len(args) == 0:
+            raise GenerateError('No command passed to add_hook.', location=location)
+        command_name = args[0]
+        cmd = self._command_manager.command(command_name)
+        if not cmd:
+            raise GenerateError('Invalid command passed to add_hook.',
+                                location=location)
+        self._add_hook(hook, cmd.exec_object(location, *args[1:], **kwargs))
 
     def run_hooks(self, hook: str):
         """Run all the registered hooks."""
@@ -227,14 +245,19 @@ class SystemContext:
 
         debug('Executing {}: {}.'.format(location, command))
 
-        cmd = Parser.command(command)
-        assert cmd is not None
+        cmd = self._command_manager.command(command)
+        if not cmd:
+            raise GenerateError('Command {} not found.'.format(command),
+                                location=location)
 
         child = location.create_child(file_name='<COMMAND "{}">'.format(command),
                                       description='{} {},{}'.format(command, args, kwargs))
 
         dependency = cmd.validate_arguments(child, *args, **kwargs)
-        assert expected_dependency == dependency
+        if expected_dependency != dependency:
+            raise GenerateError('Command {} returned an unexpected dependency (got: {}, expected: {}).'
+                                .format(command, dependency, expected_dependency),
+                                location=location)
 
         trace('{}: Argument validation complete.'.format(command))
         trace('{}: Execute...'.format(command))
@@ -282,6 +305,6 @@ class SystemContext:
 
         debug('Unpickling system_context from {}.'.format(pickle_jar))
         with open(pickle_jar, 'rb') as jar:
-            base_context = _SystemContextUnpickler(jar).load()
+            base_context = _SystemContextUnpickler(jar, self._command_manager).load()
         debug('Unpickled base context.')
         return base_context

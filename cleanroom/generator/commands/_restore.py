@@ -32,7 +32,7 @@ class RestoreCommand(Command):
         """Execute command."""
         base_system = args[0]
         debug('Restoring state from "{}".'.format(base_system))
-        base_context = SystemContext(system_context.ctx, system=base_system)
+        base_context = system_context.create_system_context(base_system)
 
         self._restore_base(system_context, base_context)
         self._update_base_context(system_context, base_context)

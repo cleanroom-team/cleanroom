@@ -7,13 +7,14 @@
 
 from __future__ import annotations
 
+from .commandmanager import CommandManager
 from .context import Binaries, Context
 from .execobject import ExecObject
 from .executor import Executor
 from .parser import Parser
 from .systemcontext import SystemContext
 
-from ..exceptions import (SystemNotFoundError, GenerateError,)
+from ..exceptions import CleanRoomError, GenerateError, SystemNotFoundError
 from ..printer import (debug, fail, h1, h2, success, trace, verbose, Printer,)
 
 import datetime
@@ -74,6 +75,14 @@ class Generator:
         self._ctx = ctx
         self._systems_forest: typing.List[DependencyNode] = []
 
+        # Find commands:
+        self._command_manager = CommandManager()
+        systems_commands_dir = ctx.systems_commands_directory()
+        assert systems_commands_dir
+        commands_dir = ctx.commands_directory()
+        assert commands_dir
+        self._command_manager.find_commands(systems_commands_dir, commands_dir)
+
     def _binary(self, selector: Binaries):
         """Get the full path to a binary."""
         return self._ctx.binary(selector)
@@ -108,7 +117,7 @@ class Generator:
     def _parse_system_definition_file(self, system_file: str) \
             -> typing.Tuple[typing.Optional[str], typing.List[ExecObject]]:
         trace('Parsing "{}".'.format(system_file))
-        system_parser = Parser()
+        system_parser = Parser(self._command_manager)
         exec_obj_list: typing.List[ExecObject] = []
         for exec_obj in system_parser.parse(system_file):
             exec_obj_list.append(exec_obj)
@@ -174,7 +183,7 @@ class Generator:
 
     def _report_error_details(self, system: str, exception: Exception,
                               ignore_errors: bool=False) -> None:
-        if isinstance(exception, GenerateError) and exception.original_exception is not None:
+        if isinstance(exception, CleanRoomError) and exception.original_exception is not None:
             self._report_error_details(system, exception.original_exception, ignore_errors=ignore_errors)
             return
 
@@ -197,7 +206,8 @@ class Generator:
 
             h1('Generate "{}"'.format(system))
             try:
-                system_context = SystemContext(self._ctx, system=system,
+                system_context = SystemContext(self._ctx, self._command_manager,
+                                               system=system,
                                                timestamp=timestamp)
                 if os.path.isdir(system_context.storage_directory()):
                     verbose('Taking from storage.')
@@ -205,8 +215,6 @@ class Generator:
                     exe = Executor()
                     exe.run(system_context, system, exec_obj_list)
 
-            except GenerateError as e:
-                self._report_error(system, e, ignore_errors=ignore_errors)
             except Exception as e:
                 self._report_error(system, e, ignore_errors=ignore_errors)
             else:
