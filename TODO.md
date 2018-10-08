@@ -1,3 +1,7 @@
+Pacman:
+ * Remove /usr/lib/libalpm with hooks, etc.?
+ * Use --hookdir to override default hooks?
+
 create_initrd.py:
   * Test
 

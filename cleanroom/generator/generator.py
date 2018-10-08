@@ -38,8 +38,8 @@ class DependencyNode:
         self.system = system
         self.exec_obj_list = exec_obj_list
 
-        assert(system)
-        assert(len(exec_obj_list) >= 2)  # At least _setup and _teardown!
+        assert system
+        assert len(exec_obj_list) >= 2  # At least _setup and _teardown
 
     def find(self, system: str) -> typing.Optional[DependencyNode]:
         """Find a system in the dependency tree."""

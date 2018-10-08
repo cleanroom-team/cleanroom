@@ -25,7 +25,7 @@ class Command:
 
     def __init__(self, name: str, *, syntax: str='', help: str, file: str) -> None:
         """Constructor."""
-        assert(name)
+        assert name
         self._name = name
         self._syntax_string = syntax
         self._help_string = help
@@ -51,7 +51,7 @@ class Command:
         """
         print('Command "{}"" called validate_arguments illegally!'
               .format(self.name()))
-        assert(False)
+        assert False
         return None
 
     def _validate_no_arguments(self, location: Location,
@@ -122,7 +122,7 @@ class Command:
     def __call__(self, location: Location, system_context: SystemContext,
                  *args: typing.Any, **kwargs: typing.Any) -> bool:
         """Execute command."""
-        assert(False)
+        assert False
         return True
 
     def config_directory(self, system_context: SystemContext) -> str:

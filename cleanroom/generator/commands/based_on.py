@@ -32,7 +32,7 @@ class BasedOnCommand(Command):
         self._validate_arguments_exact(location, 1,
                                        '"{}" needs a system name.', *args)
         base = args[0]
-        assert(base)
+        assert base
 
         system_pattern = re.compile('^[A-Za-z][A-Za-z0-9_-]*$')
         if not system_pattern.match(base):

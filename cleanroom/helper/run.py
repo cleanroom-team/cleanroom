@@ -57,7 +57,7 @@ def run(*args, returncode=0, work_directory=None,
         if stderr is not None:
             stderrFd.close()
 
-    assert(completed_process is not None)
+    assert completed_process is not None
 
     if completed_process.stdout is not None:
         completed_process.stdout = completed_process.stdout.decode('utf-8')

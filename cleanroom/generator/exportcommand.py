@@ -60,11 +60,11 @@ class ExportCommand(Command):
 
         Must return the directory to actually export.
         """
-        assert(False)
+        assert False
 
     def delete_export_directory(self, system_context, export_directory):
         """Override to clean up the export_directory again."""
-        assert(False)
+        assert False
 
     def extra_validation(self, location, system_context):
         """Add extra validation steps here."""

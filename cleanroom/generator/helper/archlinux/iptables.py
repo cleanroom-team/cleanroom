@@ -14,7 +14,7 @@ _IPv6_RULES = '/etc/iptables/ip6tables.rules'
 
 def install_rules(location, system_context):
     """Install basic firewall rules."""
-    assert(firewall_type(system_context) is None)
+    assert firewall_type(system_context) is None
     set_firewall_type(system_context)
 
     _install_v4_rules(location, system_context, _IPv4_RULES)
@@ -24,7 +24,7 @@ def install_rules(location, system_context):
 def enable_firewall(location, system_context):
     """Enable the firewall."""
     # FIXME: Fix systemd install section to run iptables services earlier!
-    assert(firewall_type(system_context) == 'iptables')
+    assert firewall_type(system_context) == 'iptables'
     location.set_description('Enable firewall')
     system_context.execute(location, 'systemd_enable',
                            'iptables.service', 'ip6tables.service')

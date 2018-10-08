@@ -63,7 +63,7 @@ def initial_pacstrap_configuration_file(system_context):
 
 def pacstrap(system_context, config, *packages):
     """Run pacstrap on host."""
-    assert(_package_type(system_context) is None)
+    assert _package_type(system_context) is None
 
     _sync_host(system_context, config)
 
@@ -96,7 +96,7 @@ def _sync_host(system_context, config):
 
 def pacman(system_context, *packages, remove=False, overwrite=''):
     """Use pacman to install packages."""
-    assert(_package_type(system_context) == 'pacman')
+    assert _package_type(system_context) == 'pacman'
 
     info('Installing {}'.format(', '.join(packages)))
 

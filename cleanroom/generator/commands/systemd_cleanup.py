@@ -52,7 +52,7 @@ class SystemdCleanupCommand(Command):
                                recursive=True, force=True)
 
     def _map_base(self, old_base, new_base, input):
-        assert(old_base.endswith('/'))
+        assert old_base.endswith('/')
 
         input = os.path.normpath(input)
         if not input.startswith(old_base):
@@ -64,9 +64,9 @@ class SystemdCleanupCommand(Command):
         return (output, input)
 
     def _map_target_link(self, old_base, new_base, link, link_target):
-        assert(old_base.endswith('/'))
-        assert(new_base.endswith('/'))
-        assert(link.startswith(old_base))
+        assert old_base.endswith('/')
+        assert new_base.endswith('/')
+        assert link.startswith(old_base)
 
         link_directory = os.path.dirname(link)
 
@@ -85,15 +85,15 @@ class SystemdCleanupCommand(Command):
 
     def _map_host_link(self, root_directory, old_base, new_base,
                        link, link_target):
-        assert(root_directory.endswith('/'))
-        assert(old_base.startswith(root_directory))
-        assert(new_base.startswith(root_directory))
+        assert root_directory.endswith('/')
+        assert old_base.startswith(root_directory)
+        assert new_base.startswith(root_directory)
 
-        assert(old_base.endswith('/'))
-        assert(new_base.endswith('/'))
-        assert(link.startswith(old_base))
+        assert old_base.endswith('/')
+        assert new_base.endswith('/')
+        assert link.startswith(old_base)
 
-        assert(not link_target.startswith(root_directory))
+        assert not link_target.startswith(root_directory)
 
         root_directory_length = len(root_directory) - 1  # minus last '/'
 
@@ -105,7 +105,7 @@ class SystemdCleanupCommand(Command):
             = self._map_target_link(host_old_base, host_new_base,
                                     host_link, link_target)
 
-        assert(os.path.isabs(host_link))
+        assert os.path.isabs(host_link)
         return (os.path.join(root_directory, host_link[1:]), link_target)
 
     def _move_symlink(self, location, system_context,

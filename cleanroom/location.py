@@ -18,8 +18,8 @@ class Location:
                  parent: "Location"=None) -> None:
         """Constructor."""
         if line_number is not None:
-            assert(line_number > 0)
-            assert(file_name is not None)
+            assert line_number > 0
+            assert file_name is not None
 
         self.file_name = file_name
         self.line_number = line_number

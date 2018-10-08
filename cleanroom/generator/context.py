@@ -53,7 +53,7 @@ class Context:
 
     def binary(self, selector: Binaries) -> typing.Optional[str]:
         """Get a binary from the context."""
-        assert(len(self._binaries) > 0)
+        assert len(self._binaries) > 0
 
         binary = self._binaries[selector]
         trace('Getting binary for {}: {}.'.format(selector, binary))
@@ -130,7 +130,7 @@ class Context:
 
     def repository(self) -> str:
         """Get the repository to export filesystems into."""
-        assert(self._repository)
+        assert self._repository
         return self._repository
 
     def _directory_check(self, directory: typing.Optional[str]) -> str:

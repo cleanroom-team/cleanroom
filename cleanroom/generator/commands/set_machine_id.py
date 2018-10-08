@@ -28,7 +28,7 @@ class SetMachineIdCommand(Command):
                                        *args, **kwargs)
 
         id = args[0]
-        assert(id)
+        assert id
         id_pattern = re.compile('^[A-Fa-f0-9]{32}$')
         if not id_pattern.match(id):
             raise ParseError('"{}" is not a valid machine-id.'.format(id),

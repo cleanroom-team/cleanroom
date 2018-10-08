@@ -38,8 +38,8 @@ def system_context(tmpdir, global_context):
     command_manager = CommandManager()
     sys_ctx = SystemContext(global_context, command_manager,
                             system='test-system', timestamp='now')
-    assert(os.path.join(str(work_dir), 'current/fs')
-           == sys_ctx.fs_directory())
+    assert os.path.join(str(work_dir), 'current/fs') \
+           == sys_ctx.fs_directory()
 
     return sys_ctx
 
