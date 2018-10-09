@@ -78,4 +78,5 @@ def mount(volume, directory, *, options=None, type=None, chroot=None):
         volume = _map_into_chroot(volume, chroot)
 
     args += [volume, _map_into_chroot(directory, chroot)]
-    run('/usr/bin/mount', args)
+
+    run('/usr/bin/mount', *args)

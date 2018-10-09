@@ -291,9 +291,10 @@ def move(system_context, *args, **kwargs):
                     *args, **kwargs)
 
 
-def remove(system_context, *files, recursive=False, force=False):
+def remove(system_context, *files, recursive=False, force=False, outside=False):
     """Delete a file inside of a system."""
-    for file in expand_files(system_context, *files):
+    sc = None if outside else system_context
+    for file in expand_files(sc, *files):
         trace('Removing "{}".'.format(file))
 
         if not os.path.exists(file):

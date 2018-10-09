@@ -6,25 +6,26 @@
 
 
 from cleanroom.generator.command import Command
-from cleanroom.generator.context import Binaries
-from cleanroom.generator.helper.archlinux.pacman import (host_gpg_directory, pacstrap,
-                                                         target_cache_directory, target_gpg_directory)
-from cleanroom.generator.helper.generic.file import makedirs
+from cleanroom.generator.helper.archlinux.pacman import pacstrap
+from cleanroom.generator.systemcontext import SystemContext
+from cleanroom.location import Location
 
 import os.path
+import typing
 
 
 class PacstrapCommand(Command):
     """The pacstrap command."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor."""
-        super().__init__('pacstrap', syntax='<PACKAGES> config=<CONFIG_FILE>',
+        super().__init__('pacstrap', syntax='<PACKAGES> config=<config>',
                          help='Run pacstrap to install <PACKAGES>.\n'
                          'Hooks: Will runs _setup hooks after pacstrapping.',
                          file=__file__)
 
-    def validate_arguments(self, location, *args, **kwargs):
+    def validate_arguments(self, location: Location,
+                           *args: str, **kwargs: typing.Any) -> typing.Optional[str]:
         """Validate the arguments."""
         self._validate_args_at_least(location, 1,
                                      '"{}" needs at least one package '
@@ -32,71 +33,47 @@ class PacstrapCommand(Command):
         self._validate_kwargs(location, ('config',), **kwargs)
         self._require_kwargs(location, ('config',), **kwargs)
 
-    def __call__(self, location, system_context, *args, **kwargs):
+        return None
+
+    def __call__(self, location: Location, system_context: SystemContext,
+                 *args: str, **kwargs: typing.Any) -> bool:
         """Execute command."""
-        pacstrap_config = kwargs['config']
-        self._prepare_keyring(system_context, location, pacstrap_config)
-
-        pacstrap(system_context, pacstrap_config, *args)
-
-        # Install pacman.conf:
-        system_context.execute(location, 'copy',
-                               os.path.join(
-                                   system_context.ctx.systems_directory(),
-                                   pacstrap_config),
-                               '/etc/pacman.conf', from_outside=True, force=True)
-
-        # Make sure DB is up-to-date:
-        system_context.run('/usr/bin/pacman-db-upgrade')
-
-        system_context.execute(location.next_line(),
-                               'remove', '/var/lib/pacman',
-                               recursive=True, force=True)
-
-        system_context.set_substitution('PACKAGE_TYPE', 'pacman')
+        pacstrap(system_context, *args, **kwargs)
 
         system_context.run_hooks('_setup')
 
-        # Make sure pacman DB is up-to-date:
-        system_context.run('/usr/bin/pacman', '-Sy')
-        system_context.run('/usr/bin/pacman', '-Fy')
+        system_context.execute(location.next_line(), 'create_os_release')
 
+        self._setup_hooks(location, system_context)
+
+        return True
+
+    def _setup_hooks(self, location: Location, system_context: SystemContext) -> None:
+        igpgdir = '/usr/lib/pacman/gpg'
+        ipackages = '/var/cache/pacman/pkg/*'
+
+        location.set_description('cleanup pacman-key files (internal)')
+        system_context.add_hook(location, '_teardown', 'remove',
+                                igpgdir + '/S.*', igpgdir + '/pubring.gpg~',
+                                igpgdir + '/secring.gpg*',
+                                '/var/log/pacman.log', ipackages,
+                                recursive=True, force=True)
+
+        location.set_description('Cleanup pacman-key files (external)')
+        ogpgdir = os.path.join(system_context.meta_directory(), 'pacman/gpg')
+        system_context.add_hook(location, '_teardown', 'remove',
+                                ogpgdir + '/S.*', ogpgdir + '/pubring.gpg~',
+                                ogpgdir + '/secring.gpg*',
+                                recursive=True, force=True, outside=True)
+
+        location.set_description('Move systemd files into /usr')
+        system_context.add_hook(location, '_teardown', 'systemd_cleanup')
+
+        location.set_description('Moving /opt into /usr')
         system_context.add_hook(location.next_line(), 'export', 'move', '/opt', '/usr')
         system_context.add_hook(location, 'export', 'symlink',
                                 'usr/opt', 'opt', base_directory='/')
 
-        # Generate os-release:
-        system_context.execute(location.next_line(), 'create_os_release')
-
-    def _prepare_keyring(self, system_context, location, pacstrap_config):
-        # Make sure important pacman directories exist:
-        makedirs(system_context, target_gpg_directory())
-        pacman_key = system_context.binary(Binaries.PACMAN_KEY)
-        systems_directory = system_context.ctx.systems_directory()
-        system_context.run(pacman_key,
-                           '--config', pacstrap_config,
-                           '--gpgdir', host_gpg_directory(system_context),
-                           '--init',
-                           returncode=0, outside=True,
-                           work_directory=systems_directory)
-        system_context.run(pacman_key,
-                           '--config', pacstrap_config,
-                           '--gpgdir', host_gpg_directory(system_context),
-                           '--populate', 'archlinux',
-                           returncode=0, outside=True,
-                           work_directory=systems_directory)
-
-        gpgdir = target_gpg_directory()
-        packageFiles = target_cache_directory() + '/pkg/*'
-
-        location.set_description('cleanup pacman-key files')
-        system_context.add_hook(location, '_teardown', 'remove',
-                                gpgdir + '/S.*', gpgdir + '/pubring.gpg~',
-                                '/var/log/pacman.log',
-                                packageFiles,
-                                recursive=True, force=True)
-        location.set_description('Move systemd files into /usr')
-        system_context.add_hook(location, '_teardown', 'systemd_cleanup')
-        location.set_description('Remove pacman secret keyring')
-        system_context.add_hook(location, 'export',
-                                'remove', gpgdir + '/secring.gpg*', force=True)
+        location.set_description('Writing package information to FS.')
+        system_context.add_hook(location.next_line(), 'export',
+                                '_pacman_write_package_data')

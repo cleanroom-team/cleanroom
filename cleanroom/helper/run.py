@@ -51,6 +51,10 @@ def run(*args, returncode=0, work_directory=None,
         completed_process = subprocess.run(args,
                                            stdout=stdoutFd, stderr=stderrFd,
                                            **kwargs)
+    except subprocess.TimeoutExpired as to:
+        print('Timeout: STDOUT so far: {}\nSTDERR so far:{}\n.'.format(to.stdout, to.stderr))
+        raise
+
     finally:
         if stdout is not None:
             stdoutFd.close()

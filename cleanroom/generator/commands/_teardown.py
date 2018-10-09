@@ -30,7 +30,9 @@ class _TeardownCommand(Command):
 
         system_context.pickle()
 
-        location
+        delete_subvolume(system_context.cache_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
+
         self._store(location, system_context)
         self._clean_temporary_data(system_context)
 

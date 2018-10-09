@@ -9,6 +9,7 @@ from cleanroom.generator.command import Command
 from cleanroom.generator.context import Binaries
 
 from cleanroom.helper.btrfs import create_subvolume
+from cleanroom.helper.run import run
 
 import os
 import stat
@@ -32,8 +33,8 @@ class _SetupCommand(Command):
         self._setup_current_system_directory(system_context)
 
         # Make sure systemd does not create /var/lib/* for us!
-        self._setup_var_lib_directory(location, system_context, 'machines')
-        self._setup_var_lib_directory(location, system_context, 'portables')
+        os.makedirs(system_context.file_name('/var/lib/machines'))
+        os.makedirs(system_context.file_name('/var/lib/portables'))
 
     def _setup_current_system_directory(self, system_context):
         create_subvolume(system_context.current_system_directory(),
@@ -41,8 +42,17 @@ class _SetupCommand(Command):
         os.makedirs(system_context.fs_directory())
         os.makedirs(system_context.boot_data_directory())
         os.makedirs(system_context.meta_directory())
+        create_subvolume(system_context.cache_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
 
-    def _setup_var_lib_directory(self, location, system_context, dir):
-        todo_dir = os.path.join('/var/lib', dir)
-        system_context.execute(location,
-                               'mkdir', todo_dir, mode=0o700, user='root', group='root')
+        # Make sure there is /dev/null in the filesystem:
+        os.makedirs(system_context.file_name('/dev'))
+        
+        run('/usr/bin/mknod', '--mode=666',
+            system_context.file_name('/dev/null'), 'c', '1', '3')
+        run('/usr/bin/mknod', '--mode=666',
+            system_context.file_name('/dev/zero'), 'c', '1', '5')
+        run('/usr/bin/mknod', '--mode=666',
+            system_context.file_name('/dev/random'), 'c', '1', '8')
+
+

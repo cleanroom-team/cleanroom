@@ -89,8 +89,12 @@ def _delete_subvolume(ctx, dir):
 
 
 def _clear_work_directory(ctx, work_directory):
-    _delete_subvolume(ctx, Context.current_export_directory_from_work_directory(work_directory))
-    _delete_subvolume(ctx, Context.current_system_directory_from_work_directory(work_directory))
+    ed = Context.current_export_directory_from_work_directory(work_directory)
+    wd = Context.current_system_directory_from_work_directory(work_directory)
+
+    _delete_subvolume(ctx, ed)
+    _delete_subvolume(ctx, os.path.join(wd, 'cache'))
+    _delete_subvolume(ctx, wd)
 
 
 def _clear_storage(ctx, work_directory):

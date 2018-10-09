@@ -39,15 +39,16 @@ class _SystemContextPickler(pickle.Pickler):
 class _SystemContextUnpickler(pickle.Unpickler):
     """Unpickler for the SystemContext."""
 
-    def __init__(self, jar: str, context_manager: ContextManager) -> None:
-        self._context_manager = context_manager
+    def __init__(self, jar: typing.IO[bytes],
+                 command_manager: CommandManager) -> None:
+        self._command_manager = command_manager
         super().__init__(jar)
 
-    def persistent_load(self, pid) -> Command:
+    def persistent_load(self, pid) -> typing.Optional[Command]:
         tag, cmd = pid
 
         if tag == 'Command':
-            return self._context_manager.command(cmd)
+            return self._command_manager.command(cmd)
         else:
             raise pickle.UnpicklingError('Unsupported persistent object.')
 
@@ -65,7 +66,7 @@ class SystemContext:
         self.timestamp = timestamp
         self.hooks: typing.Dict[str, typing.List[ExecObject]] = {}
         self.hooks_that_already_ran: typing.List[str] = []
-        self.substitutions: typing.Dict[str, str] = {}
+        self.substitutions: typing.MutableMapping[str, str] = {}
         self.bases: typing.Tuple[str, ...] = ()
 
         self._setup_core_substitutions()
@@ -74,6 +75,7 @@ class SystemContext:
         assert self.system
 
     def create_system_context(self, system: str) -> SystemContext:
+        assert self.ctx
         return SystemContext(self.ctx, self._command_manager, system=system,
                              timestamp=self.timestamp)
 
@@ -139,6 +141,10 @@ class SystemContext:
     def meta_directory(self) -> str:
         """Location of the systems meta-data directory."""
         return os.path.join(self.current_system_directory(), 'meta')
+
+    def cache_directory(self) -> str:
+        """Location of the systems meta-data directory."""
+        return os.path.join(self.current_system_directory(), 'cache')
 
     # Work with system files:
     def expand_files(self, *files: str) -> typing.List[str] :
@@ -208,7 +214,7 @@ class SystemContext:
         """Check wether a substitution is defined."""
         return key in self.substitutions
 
-    def substitute(self, text: str):
+    def substitute(self, text: str) -> str:
         """Substitute variables in text."""
         return string.Template(text).substitute(**self.substitutions)
 
@@ -217,7 +223,7 @@ class SystemContext:
         """Run a command in this system_context."""
         assert 'chroot' not in kwargs
 
-        args = map(lambda a: self.substitute(str(a)), args)
+        mapped_args = map(lambda a: self.substitute(str(a)), args)
 
         stdout = kwargs.get('stdout', None)
         if stdout is not None:
@@ -232,7 +238,7 @@ class SystemContext:
         if not outside:
             kwargs['chroot'] = self.fs_directory()
 
-        return run(*args, trace_output=debug, **kwargs)
+        return run(*mapped_args, trace_output=debug, **kwargs)
 
     # execute cleanroom commands:
     def execute(self, location: Location, command: str, *args: typing.Any,
