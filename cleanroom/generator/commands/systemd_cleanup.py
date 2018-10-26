@@ -141,9 +141,11 @@ class SystemdCleanupCommand(Command):
                                                  output_link_target),
                                         location=location)
                 else:
+                    os.unlink(link)
                     return  # Already correct
         else:
             os.symlink(output_link_target, output_link)
+            os.unlink(link)
 
     def _move_file(self, location, old_base, new_base, path):
         """Move a file."""

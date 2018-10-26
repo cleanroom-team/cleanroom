@@ -14,15 +14,17 @@ class SystemdEnableCommand(Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('systemd_enable', syntax='<UNIT> [<MORE_UNITS>]',
+        super().__init__('systemd_enable',
+                         syntax='<UNIT> [<MORE_UNITS>] [user=False]',
                          help='Enable systemd units.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
-        self._validate_arguments_at_least(location, 1,
-                                          '"{}" needs at least one '
-                                          'unit to enable.', *args, **kwargs)
+        self._validate_args_at_least(location, 1,
+                                     '"{}" needs at least one '
+                                     'unit to enable.', *args)
+        self._validate_kwargs(location, ('user'), **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        systemd_enable(system_context, *args)
+        systemd_enable(system_context, *args, **kwargs)

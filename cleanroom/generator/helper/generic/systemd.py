@@ -5,8 +5,11 @@
 """
 
 
-def systemd_enable(system_context, *services):
+def systemd_enable(system_context, *services, **kwargs):
     """Enable systemd service."""
+    all_args = ['--root={}'.format(system_context.fs_directory()),]
+    if kwargs.get('user', False):
+        all_args += ['--global']
+    all_args += ['enable',]
     system_context.run('/usr/bin/systemctl',
-                       '--root={}'.format(system_context.fs_directory()),
-                       'enable', *services, outside=True)
+                       *all_args, *services, outside=True)
