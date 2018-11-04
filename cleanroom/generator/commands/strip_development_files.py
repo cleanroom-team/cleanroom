@@ -26,4 +26,5 @@ class StripDevelopmentFilesCommand(Command):
                                 'remove',  '/usr/include/*', '/usr/src/*',
                                 '/usr/share/pkgconfig/*',
                                 '/usr/share/aclocal/*', '/usr/lib/cmake/*',
+                                '/usr/share/gir-1.0/*',
                                 recursive=True, force=True)
