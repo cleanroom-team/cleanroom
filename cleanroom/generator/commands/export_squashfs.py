@@ -198,5 +198,4 @@ class ExportSquashfsCommand(ExportCommand):
 
     def delete_export_directory(self, system_context, export_directory):
         """Nothing to see, move on."""
-        # delete_subvolume(export_directory, command=system_context.binary(Binaries.BTRFS))
-        pass
+        delete_subvolume(export_directory, command=system_context.binary(Binaries.BTRFS))
