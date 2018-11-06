@@ -43,10 +43,11 @@ def set_firewall_type(system_context):
 def open_port(location, system_context, port, protocol='tcp', comment=None):
     """Open a port in the firewall."""
     magic = _TCP_MAGIC if protocol == 'tcp' else _UDP_MAGIC
-    output = '-A {0} -p {1} -m {1} --dport {2} -j ACCEPT' \
+    output = ''
+    if comment:
+        output = '### {}\n'.format(comment)
+    output += '-A {0} -p {1} -m {1} --dport {2} -j ACCEPT' \
              .format(protocol.upper(), protocol, port)
-    if comment is not None:
-        output += ' ### {}'.format(comment)
 
     pattern = '/{}/ a{}'.format(magic, output)
     location.set_description('Open IPv4 port')
