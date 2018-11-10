@@ -44,8 +44,6 @@ def open_port(location, system_context, port, protocol='tcp', comment=None):
     """Open a port in the firewall."""
     magic = _TCP_MAGIC if protocol == 'tcp' else _UDP_MAGIC
     output = ''
-    if comment:
-        output = '### {}\n'.format(comment)
     output += '-A {0} -p {1} -m {1} --dport {2} -j ACCEPT' \
              .format(protocol.upper(), protocol, port)
 
@@ -96,9 +94,7 @@ def _install_v4_rules(location, system_context, rule_file):
 {}
 
 COMMIT
-""".format(_TCP_MAGIC, _UDP_MAGIC))
-    location.set_description('Chmod IPv4 rules')
-    system_context.execute(location, 'chmod', 0o644, rule_file)
+""".format(_TCP_MAGIC, _UDP_MAGIC), force=True, mode=0o644)
 
 
 def _install_v6_rules(location, system_context, rule_file):
@@ -142,6 +138,4 @@ def _install_v6_rules(location, system_context, rule_file):
 {}
 
 COMMIT
-""".format(_TCP_MAGIC, _UDP_MAGIC))
-    location.set_description('Chmod IPv6 rules')
-    system_context.execute(location, 'chmod', 0o644, rule_file)
+""".format(_TCP_MAGIC, _UDP_MAGIC), force=True, mode=0o644)
