@@ -42,5 +42,15 @@ class _TeardownCommand(Command):
     def _clean_temporary_data(self, system_context):
         """Clean up temporary data."""
         debug('Removing {}.'.format(system_context.current_system_directory()))
+
+        delete_subvolume(system_context.fs_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
+        delete_subvolume(system_context.boot_data_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
+        delete_subvolume(system_context.meta_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
+        delete_subvolume(system_context.cache_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
+
         delete_subvolume(system_context.current_system_directory(),
                          command=system_context.binary(Binaries.BTRFS))

@@ -94,6 +94,9 @@ def _clear_work_directory(ctx, work_directory):
 
     _delete_subvolume(ctx, ed)
     _delete_subvolume(ctx, os.path.join(wd, 'cache'))
+    _delete_subvolume(ctx, os.path.join(wd, 'fs'))
+    _delete_subvolume(ctx, os.path.join(wd, 'boot'))
+    _delete_subvolume(ctx, os.path.join(wd, 'meta'))
     _delete_subvolume(ctx, wd)
 
 

@@ -46,6 +46,16 @@ class RestoreCommand(Command):
         # Clean up:
         delete_subvolume(os.path.join(system_dir, 'cache'),
                          command=system_context.binary(Binaries.BTRFS))
+
+        delete_subvolume(system_context.fs_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
+        delete_subvolume(system_context.boot_data_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
+        delete_subvolume(system_context.meta_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
+        delete_subvolume(system_context.cache_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
+
         delete_subvolume(system_dir,
                          command=system_context.binary(Binaries.BTRFS))
 

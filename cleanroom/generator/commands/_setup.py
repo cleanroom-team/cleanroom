@@ -39,9 +39,12 @@ class _SetupCommand(Command):
     def _setup_current_system_directory(self, system_context):
         create_subvolume(system_context.current_system_directory(),
                          command=system_context.binary(Binaries.BTRFS))
-        os.makedirs(system_context.fs_directory())
-        os.makedirs(system_context.boot_data_directory())
-        os.makedirs(system_context.meta_directory())
+        create_subvolume(system_context.fs_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
+        create_subvolume(system_context.boot_data_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
+        create_subvolume(system_context.meta_directory(),
+                         command=system_context.binary(Binaries.BTRFS))
         create_subvolume(system_context.cache_directory(),
                          command=system_context.binary(Binaries.BTRFS))
 
