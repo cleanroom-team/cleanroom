@@ -22,7 +22,7 @@ class CreateOsReleaseCommand(Command):
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        os_release =  'NAME="S{}"\n'.format(system_context.substitution('DISTRO_NAME', 'Arch Linux'))
+        os_release =  'NAME="{}"\n'.format(system_context.substitution('DISTRO_NAME', 'Arch Linux'))
         os_release += 'PRETTY_NAME=\"{}\"\n'.format(system_context.substitution('DISTRO_PRETTY_NAME', 'Arch Linux'))
         os_release += 'ID=\"{}\"\n'.format(system_context.substitution('DISTRO_ID', 'arch'))
         os_release += 'ID_LIKE=\"archlinux\"\n'
