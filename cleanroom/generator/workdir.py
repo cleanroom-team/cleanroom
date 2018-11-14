@@ -5,12 +5,13 @@
 """
 
 
-from .context import (Binaries, Context)
+from .context import Binaries, Context
 
-from ..exceptions import PrepareError
-from ..helper.btrfs import (delete_subvolume, has_subvolume,)
-from ..helper.mount import (umount_all,)
-from ..printer import (trace,)
+from ..exceptions import GenerateError, PrepareError
+from ..helper.btrfs import create_snapshot, create_subvolume, \
+    delete_subvolume_recursive, has_subvolume
+from ..helper.mount import umount_all
+from ..printer import trace
 
 import os
 import os.path
@@ -37,7 +38,7 @@ class WorkDir:
                     raise PrepareError('Failed to unmount mount in work directory "{}".'
                                        .format(work_directory))
                 if clear_work_directory:
-                    _clear_work_directory(ctx, work_directory)
+                    delete_current_system_directory(ctx, work_directory=work_directory)
                 if clear_storage:
                     _clear_storage(ctx, work_directory)
         else:
@@ -83,26 +84,83 @@ def _subdirectories(dir):
             if os.path.isdir(os.path.join(dir, name))]
 
 
-def _delete_subvolume(ctx, dir):
-    if has_subvolume(dir, command=ctx.binary(Binaries.BTRFS)):
-        delete_subvolume(dir, command=ctx.binary(Binaries.BTRFS))
+def _create_subvolume(ctx, directory, exists_ok=False):
+    if has_subvolume(directory, command=ctx.binary(Binaries.BTRFS)):
+        if exists_ok:
+            trace('Subvolume {} already exists, continuing.'.format(directory))
+            return
+        else:
+            raise GenerateError('Directory {} already exists when trying to create a subvolume.'.format(directory))
+    elif os.path.isdir(directory):
+            raise GenerateError('Directory {} already exists and is not a subvolume.'.format(directory))
+
+    create_subvolume(directory, command=ctx.binary(Binaries.BTRFS))
 
 
-def _clear_work_directory(ctx, work_directory):
-    ed = Context.current_export_directory_from_work_directory(work_directory)
-    wd = Context.current_system_directory_from_work_directory(work_directory)
+def delete_work_directory(ctx, *, work_directory=None):
+    wd = work_directory if work_directory else ctx.work_directory()
+    trace('Deleting work directory {}.'.format(wd))
+    delete_subvolume_recursive(wd, command=ctx.binary(Binaries.BTRFS))
 
-    _delete_subvolume(ctx, ed)
-    _delete_subvolume(ctx, os.path.join(wd, 'cache'))
-    _delete_subvolume(ctx, os.path.join(wd, 'fs'))
-    _delete_subvolume(ctx, os.path.join(wd, 'boot'))
-    _delete_subvolume(ctx, os.path.join(wd, 'meta'))
-    _delete_subvolume(ctx, wd)
+
+def delete_current_system_directory(ctx, *, work_directory=None):
+    wd = work_directory if work_directory else ctx.work_directory()
+    sd = Context.current_system_directory_from_work_directory(wd)
+
+    trace('Deleting current system directory {}.'.format(wd))
+    if os.path.exists(sd):
+        delete_subvolume_recursive(sd, command=ctx.binary(Binaries.BTRFS))
+
+
+def create_work_directory(ctx):
+    wd = ctx.work_directory()
+    sd = Context.current_system_directory_from_work_directory(wd)
+
+    trace('Create work directory {}.'.format(wd))
+    if not os.path.exists(wd):
+        os.makedirs(wd)
+    _create_subvolume(ctx, sd, exists_ok=True)
+    _create_subvolume(ctx, os.path.join(sd, 'cache'))
+    _create_subvolume(ctx, os.path.join(sd, 'fs'))
+    _create_subvolume(ctx, os.path.join(sd, 'boot'))
+    _create_subvolume(ctx, os.path.join(sd, 'meta'))
+
+
+def store_work_directory(ctx, system_directory, storage_directory):
+    trace('Store work directory {} in {}.'
+          .format(system_directory, storage_directory))
+
+    create_subvolume(storage_directory, command=ctx.binary(Binaries.BTRFS))
+    create_snapshot(os.path.join(system_directory, 'fs'),
+                    os.path.join(storage_directory, 'fs'),
+                    command=ctx.binary(Binaries.BTRFS), read_only=True)
+    create_snapshot(os.path.join(system_directory, 'boot'),
+                    os.path.join(storage_directory, 'boot'),
+                    command=ctx.binary(Binaries.BTRFS), read_only=True)
+    create_snapshot(os.path.join(system_directory, 'meta'),
+                    os.path.join(storage_directory, 'meta'),
+                    command=ctx.binary(Binaries.BTRFS), read_only=True)
+
+
+def restore_work_directory(ctx, storage_directory, system_directory):
+    trace('Restore storage directory {} to {}.'
+          .format(storage_directory, system_directory))
+
+    _create_subvolume(ctx, system_directory, exists_ok=True)
+    _create_subvolume(ctx, os.path.join(system_directory, 'cache'))
+    create_snapshot(os.path.join(storage_directory, 'fs'),
+                    os.path.join(system_directory, 'fs'),
+                    command=ctx.binary(Binaries.BTRFS))
+    create_snapshot(os.path.join(storage_directory, 'boot'),
+                    os.path.join(system_directory, 'boot'),
+                    command=ctx.binary(Binaries.BTRFS))
+    create_snapshot(os.path.join(storage_directory, 'meta'),
+                    os.path.join(system_directory, 'meta'),
+                    command=ctx.binary(Binaries.BTRFS))
 
 
 def _clear_storage(ctx, work_directory):
     storage_directory = Context.storage_directory_from_work_directory(work_directory)
     if os.path.isdir(storage_directory):
-        for path in _subdirectories(storage_directory):
-            _delete_subvolume(ctx, path)
+        delete_subvolume_recursive(storage_directory, command=ctx.binary(Binaries.BTRFS))
         os.rmdir(storage_directory)

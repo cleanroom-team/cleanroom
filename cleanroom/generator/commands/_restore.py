@@ -8,8 +8,8 @@
 from cleanroom.generator.command import Command
 from cleanroom.generator.context import Binaries
 from cleanroom.generator.systemcontext import SystemContext
+from cleanroom.generator.workdir import delete_current_system_directory, restore_work_directory
 
-from cleanroom.helper.btrfs import create_snapshot, create_subvolume, delete_subvolume
 from cleanroom.printer import debug
 
 import os
@@ -42,30 +42,13 @@ class RestoreCommand(Command):
         system_context.run_hooks('_setup')
 
     def _restore_base(self, system_context, base_context):
-        system_dir = system_context.current_system_directory()
         # Clean up:
-        delete_subvolume(os.path.join(system_dir, 'cache'),
-                         command=system_context.binary(Binaries.BTRFS))
-
-        delete_subvolume(system_context.fs_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
-        delete_subvolume(system_context.boot_data_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
-        delete_subvolume(system_context.meta_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
-        delete_subvolume(system_context.cache_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
-
-        delete_subvolume(system_dir,
-                         command=system_context.binary(Binaries.BTRFS))
+        delete_current_system_directory(system_context.ctx)
 
         # Set up from base_context:
-        create_snapshot(base_context.storage_directory(),
-                        system_context.current_system_directory(),
-                        read_only=False,
-                        command=system_context.binary(Binaries.BTRFS))
-        create_subvolume(os.path.join(system_dir, 'cache'),
-                         command=system_context.binary(Binaries.BTRFS))
+        restore_work_directory(system_context.ctx,
+                               base_context.storage_directory(),
+                               system_context.current_system_directory())
 
     def _update_base_context(self, system_context, base_context):
         base_unpickle = base_context.unpickle()

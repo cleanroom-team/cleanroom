@@ -7,8 +7,8 @@
 
 from cleanroom.generator.command import Command
 from cleanroom.generator.context import Binaries
+from cleanroom.generator.workdir import store_work_directory
 
-from cleanroom.helper.btrfs import create_snapshot
 import cleanroom.printer as printer
 
 
@@ -28,6 +28,6 @@ class StoreCommand(Command):
         printer.debug('Storing {} into {}.'
                       .format(system_context.current_system_directory(),
                               system_context.storage_directory()))
-        create_snapshot(system_context.current_system_directory(),
-                        system_context.storage_directory(), read_only=True,
-                        command=system_context.binary(Binaries.BTRFS))
+        store_work_directory(system_context.ctx,
+                             system_context.current_system_directory(),
+                             system_context.storage_directory())

@@ -7,8 +7,8 @@
 
 from cleanroom.generator.command import Command
 from cleanroom.generator.context import Binaries
+from cleanroom.generator.workdir import create_work_directory
 
-from cleanroom.helper.btrfs import create_subvolume
 from cleanroom.helper.run import run
 
 import os
@@ -37,16 +37,7 @@ class _SetupCommand(Command):
         os.makedirs(system_context.file_name('/var/lib/portables'))
 
     def _setup_current_system_directory(self, system_context):
-        create_subvolume(system_context.current_system_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
-        create_subvolume(system_context.fs_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
-        create_subvolume(system_context.boot_data_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
-        create_subvolume(system_context.meta_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
-        create_subvolume(system_context.cache_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
+        create_work_directory(system_context.ctx)
 
         # Make sure there is /dev/null in the filesystem:
         os.makedirs(system_context.file_name('/dev'))

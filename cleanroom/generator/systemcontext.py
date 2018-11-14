@@ -196,7 +196,7 @@ class SystemContext:
             os.chdir(self.systems_directory())
             self.execute(exec_obj.location(),
                          exec_obj.command(), *exec_obj.arguments(), **exec_obj.kwargs())
-        success('All {} hooks were run successfully.', verbosity=2)
+        success('All {} hooks were run successfully.'.format(hook), verbosity=2)
 
         self.hooks_that_already_ran.append(hook)
 

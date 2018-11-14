@@ -6,23 +6,71 @@
 
 from cleanroom.generator.exportcommand import ExportCommand
 
+from cleanroom.generator.context import Binaries
+from cleanroom.helper.btrfs import create_snapshot, create_subvolume, \
+    delete_subvolume, delete_subvolume_recursive
+
+import os.path
 
 class ExportRootFsCommand(ExportCommand):
     """The export_rootfs Command."""
 
     def __init__(self):
         """Constructor."""
-        super().__init__('export_rootfs', help='Export the root filesystem.',
+        super().__init__('export_rootfs',
+                         syntax='[tarballs={dir: name, dir2: name2}]',
+                         help='Export the root filesystem.',
                          file=__file__)
+        self._tarballs=''
+        self._export_volume = ''
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate arguments."""
-        self._validate_no_arguments(location, *args, **kwargs)
+        self._validate_no_args(location, *args)
+        self._validate_kwargs(location, ('tarballs'), **kwargs)
+
+    def set_arguments_and_kwargs(self, *args, **kwargs):
+        self._tarballs = kwargs.get('tarballs', '')
+
+    def _create_tarballs(self, location, system_context, directory, tarball):
+        system_context.run('tar', '-cf',
+                           os.path.join(self._export_volume, tarball), '.',
+                           work_directory=system_context.file_name(directory),
+                           outside=True)
+        system_context.execute(location, 'remove', directory + '/*',
+                               recursive=True, force=True)
 
     def create_export_directory(self, location, system_context):
         """Return the root directory."""
-        return system_context.fs_directory()
+        self._export_volume = os.path.join(system_context.ctx.work_directory(), 'export')
+        if os.path.isdir(self._export_volume):
+            delete_subvolume_recursive(self._export_volume, 
+                                       command=system_context.binary(Binaries.BTRFS))
+        
+        create_subvolume(self._export_volume,
+                         command=system_context.binary(Binaries.BTRFS))
+        
+        for tb in self._tarballs.split(','):
+            if not tb:
+                continue
+
+            (directory, tarball) = tb.split(':')
+            if not tarball:
+                raise ParseError('No tarball name given.', location)
+            self._create_tarballs(location, system_context,
+                                  directory, tarball)
+
+        create_snapshot(system_context.fs_directory(),
+                        os.path.join(self._export_volume, 'fs'),
+                        command=system_context.binary(Binaries.BTRFS))
+
+        return self._export_volume
 
     def delete_export_directory(self, system_context, export_directory):
         """Nothing to see, move on."""
-        pass  # Filesystem will be cleaned up automatically.
+        delete_subvolume(os.path.join(export_directory, 'fs'),
+                         command=system_context.binary(Binaries.BTRFS))
+        delete_subvolume(export_directory,
+                         command=system_context.binary(Binaries.BTRFS))
+
+        self._export_volume = ''

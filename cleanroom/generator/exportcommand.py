@@ -24,6 +24,8 @@ class ExportCommand(Command):
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
+        self.set_arguments_and_kwargs(*args, **kwargs)
+        
         h2('Exporting system "{}".'.format(system_context.system))
         debug('Running Hooks.')
         self._run_hooks(system_context)
@@ -48,6 +50,10 @@ class ExportCommand(Command):
 
         info('Cleaning up export location.')
         self.delete_export_directory(system_context, export_directory)
+
+    def set_arguments_and_kwargs(self, *args, **kwargs):
+        """Set arguments and kwargs."""
+        pass
 
     def prepare_for_export(self, location, system_context):
         """Prepare the current system for export.

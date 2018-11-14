@@ -174,9 +174,7 @@ class ExportSquashfsCommand(ExportCommand):
         cmdline = ' '.join((cmdline, 'systemd.volatile=true',
                             'rootfstype=squashfs'))
 
-        export_volume \
-            = Context.current_export_directory_from_work_directory(
-               system_context.ctx.work_directory())
+        export_volume = os.path.join(system_context.ctx.work_directory(), 'export')
         create_subvolume(export_volume, command=system_context.binary(Binaries.BTRFS))
 
         squashfs_file = self._create_squashfs(system_context, export_volume)

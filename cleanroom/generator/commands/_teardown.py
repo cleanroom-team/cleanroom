@@ -7,7 +7,7 @@
 from cleanroom.generator.command import Command
 from cleanroom.generator.context import Binaries
 
-from cleanroom.helper.btrfs import delete_subvolume
+from cleanroom.helper.btrfs import delete_subvolume_recursive
 from cleanroom.printer import debug
 
 
@@ -30,9 +30,6 @@ class _TeardownCommand(Command):
 
         system_context.pickle()
 
-        delete_subvolume(system_context.cache_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
-
         self._store(location, system_context)
         self._clean_temporary_data(system_context)
 
@@ -43,14 +40,5 @@ class _TeardownCommand(Command):
         """Clean up temporary data."""
         debug('Removing {}.'.format(system_context.current_system_directory()))
 
-        delete_subvolume(system_context.fs_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
-        delete_subvolume(system_context.boot_data_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
-        delete_subvolume(system_context.meta_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
-        delete_subvolume(system_context.cache_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
-
-        delete_subvolume(system_context.current_system_directory(),
-                         command=system_context.binary(Binaries.BTRFS))
+        delete_subvolume_recursive(system_context.current_system_directory(),
+                                   command=system_context.ctx.binary(Binaries.BTRFS))
