@@ -10,6 +10,7 @@ from cleanroom.generator.helper.generic.file import (chmod, chown, exists, isdir
 from cleanroom.generator.helper.generic.user import user_data
 
 from cleanroom.exceptions import GenerateError
+from cleanroom.printer import info, trace
 
 import os.path
 
@@ -20,7 +21,7 @@ class SshAllowLoginCommand(Command):
     def __init__(self):
         """Constructor."""
         super().__init__('ssh_allow_login', syntax='<USER> <PUBLIC_KEYFILE> '
-                         'optins=<OPTIONS>',
+                         'options=<OPTIONS>',
                          help='Authorize <PUBLIC_KEYFILE> to log in '
                          'as <USER>.', file=__file__)
 
@@ -45,19 +46,22 @@ class SshAllowLoginCommand(Command):
         user = args[0]
         keyfile = args[1]
 
-        location
-
-        user = user_data(system_context, user)
-        if user is None:
+        info('Adding ssh key to {}\'s authorized_keys file.'.format(user))
+        data = user_data(system_context, user)
+        if data is None:
             raise GenerateError('"{}" could not find user "{}".'
                                 .format(self.name(), user),
                                 location=location)
 
-        self._check_or_create_directory(location, system_context, user.home,
-                                        mode=0o750, user=user.uid, group=user.gid)
-        ssh_directory = os.path.join(user.home, '.ssh')
+        trace('{} mapping: UID {}, GID {}, home: {}.'
+              .format(user, data.uid, data.gid, data.home))
+        self._check_or_create_directory(location, system_context, data.home,
+                                        mode=0o750, user=data.uid,
+                                        group=data.gid)
+        ssh_directory = os.path.join(data.home, '.ssh')
         self._check_or_create_directory(location, system_context, ssh_directory,
-                                        mode=0o600, user=user.uid, group=user.gid)
+                                        mode=0o600, user=data.uid,
+                                        group=data.gid)
 
         key = read_file(system_context, keyfile, outside=True).decode('utf-8')
 
@@ -73,5 +77,5 @@ class SshAllowLoginCommand(Command):
 
         system_context.execute(location.next_line(), 'append', authorized_file, line,
                                force=True)
-        chown(system_context, user.uid, user.gid, authorized_file)
+        chown(system_context, data.uid, data.gid, authorized_file)
         chmod(system_context, 0o644, authorized_file)
