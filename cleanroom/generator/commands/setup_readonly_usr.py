@@ -78,7 +78,14 @@ class SetupReadonlyUsrCommand(Command):
                                '/usr/lib/systemd/system/'
                                'systemd-hwdb-update.service',
                                '/usr/lib/systemd/system/*/systemd-sysusers.service',
-                               '/usr/lib/systemd/system/systemd-sysusers.service')
+                               '/usr/lib/systemd/system/systemd-sysusers.service',
+                               '/usr/lib/systemd/system/systemd-update-done.service',
+                               '/usr/lib/systemd/system/'
+                               'system-update-cleanup.service',
+                               '/usr/lib/systemd/system/system-update*.target',
+                               '/usr/lib/systemd/system-generators/'
+                               'systemd-system-update-generator',
+                               '/usr/lib/systemd/systemd-update-done',)
 
         # Things to update/clean on export:
         location.set_description('Remove kernel-install and systemd-sysusers')
