@@ -6,7 +6,7 @@
 
 
 from cleanroom.exceptions import GenerateError
-from cleanroom.printer import (trace, verbose,)
+from cleanroom.printer import debug, info, trace, verbose
 
 from .group import group_data
 from .user import user_data
@@ -45,12 +45,15 @@ def expand_files(system_context, *files):
     Prepend system directory to files iff the system_context is given.
     Expand glob patterns.
     """
-    to_iterate = map(lambda f: os.path.join(os.getcwd(), f), files) \
-        if system_context is None \
-        else map(lambda f: file_name(system_context, f), files)
+    if system_context:
+        to_iterate = map(lambda f: file_name(system_context, f), files)
+    else:
+        to_iterate = map(lambda f: os.path.join(os.getcwd(), f), files)
 
     for pattern in to_iterate:
+        debug('expand_files: Matching pattern: {}.'.format(pattern))
         for match in glob.iglob(pattern):
+            debug('expand_files: --- match {}.'.format(match))
             yield match
 
 
@@ -114,6 +117,8 @@ def symlink(system_context, source, destination, base_directory=None):
 def makedirs(system_context, *dirs, user=0, group=0, mode=None, force=False):
     """Make directories in the system filesystem."""
     for d in dirs:
+        info('Creating "{}" with mode={}, uid={}, gid={} ({}).'
+             .format(d, mode, user, group, force))
         full_path = file_name(system_context, d)
         os.makedirs(full_path, exist_ok=force)
         _chmod(system_context, mode, full_path)
@@ -147,24 +152,42 @@ def _chown(system_context, uid, gid, *files):
 
 
 def _get_uid(system_context, user):
+    trace('Getting UID of {} ({}).'.format(user, type(user)))
     if user is None:
+        info('UID: Mapped None to 0.')
         return 0
-    if user is int:
+    if isinstance(user, int):
+        info('UID: Mapped numeric user to {}.'.format(user))
         return user
+    if isinstance(user, str) and user.isdigit():
+        uid = int(user)
+        info('UID: Mapped numeric string to {}.'.format(uid))
+        return uid
     data = user_data(system_context, user)
     if data is None:  # No user file was found!
+        info('UID: User file not found, mapped to 0.')
         return 0
+    info('UID: User name {} mapped to {}.'.format(user, data.gid))
     return data.uid
 
 
 def _get_gid(system_context, group):
-    if not group:
+    trace('Getting GID of {} ({}).'.format(group, type(group)))
+    if group is None:
+        info('GID: Mapped None to 0.')
         return 0
-    if group is int:
+    if isinstance(group, int):
+        info('GID: Mapped numeric group to {}.'.format(group))
         return group
+    if isinstance(group, str) and group.isdigit():
+        gid = int(group)
+        info('GID: Mapped numeric string to {}.'.format(gid))
+        return gid
     data = group_data(system_context, group)
     if data is None:  # No group file was found!
+        info('GID: Group file not found, mapped to 0.')
         return 0
+    info('GID: Group name {} mapped to {}.'.format(group, data.gid))
     return data.gid
 
 
@@ -234,15 +257,24 @@ def _file_op(system_context, op, description, *args,
     sources = args[:-1]
     destination = args[-1]
 
-    sources = tuple(expand_files(None if from_outside else system_context,
-                                 *sources))
+    desc = description.format(sources, destination)
+    debug('File_op(raw): {}'.format(desc))
+    sources = tuple(expand_files(None if from_outside else system_context, *sources))
     destination = file_name(None if to_outside else system_context,
                             destination)
+    desc = description.format(sources, destination)
+    debug('File_op(mapped): {}.'.format(desc))
 
     assert sources or ignore_missing_sources
 
     trace(description.format('", "'.join(sources), destination))
     for source in sources:
+        if not source:
+            if ignore_missing_sources:
+                continue
+            else:
+                raise OSError('Source failed to map.')
+
         s = os.path.normpath(source)
         if not os.path.exists(s):
             if ignore_missing_sources:
@@ -259,6 +291,8 @@ def _file_op(system_context, op, description, *args,
             d = os.path.join(d, os.path.basename(s))
 
         assert s != d
+        desc = description.format(s, d)
+        debug('File_op(running once): {}.'.format(desc))
         op(s, d, **kwargs)
 
 
