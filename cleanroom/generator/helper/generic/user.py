@@ -101,6 +101,7 @@ def usermod(system_context, user_name, *, comment='', home='', gid=-1, uid=-1,
 
 
 def _user_data(passwd_file, name):
+    assert isinstance(name, str)
     if not os.path.isfile(passwd_file):
         return None
     if name == 'root':
