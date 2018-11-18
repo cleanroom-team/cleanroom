@@ -39,9 +39,9 @@ class SshdSetHostkeysCommand(Command):
 
         keyfiles = glob.glob(self._key_files(key_directory))
         if not keyfiles:
-            raise ex.ParseError('"{}": No ssh_host_*_key files found in {}.'
-                                .format(self.name(), key_directory),
-                                location=location)
+            raise ParseError('"{}": No ssh_host_*_key files found in {}.'
+                             .format(self.name(), key_directory),
+                             location=location)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
