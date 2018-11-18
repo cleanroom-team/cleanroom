@@ -17,3 +17,7 @@ option infrastructure:
   should delete that in _teardown hook
 
 * Remove jack [test]
+
+* export_rootfs:
+   * create_export_directory -- should work
+   * tarball creation and storage

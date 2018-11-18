@@ -19,7 +19,7 @@ class RegisterContainerCommand(Command):
                          'description=<DESC> extra_args=<ARG>(,<ARG>)* '
                          'timeout=3m after=<SYSTEM>(,<SYSTEM>)* '
                          'requires=<SYSTEM>(,<SYSTEM>)*'
-                         'enable=False',
+                         'enable=False [machine=<directory>]',
                          help='Register a container with a system.',
                          file=__file__)
 
@@ -28,7 +28,7 @@ class RegisterContainerCommand(Command):
         self._validate_args_exact(location, 1, '"{}" needs a system to '
                                   'install as a container.', *args)
         self._validate_kwargs(location, ('description', 'extra_args', 'after',
-                                         'requires', 'timeout', 'enable'),
+                                         'requires', 'timeout', 'enable', 'machine'),
                               **kwargs)
         self._require_kwargs(location, ('description',), **kwargs)
 
@@ -47,6 +47,7 @@ class RegisterContainerCommand(Command):
         requires_input = kwargs.get('requires', '')
         timeout = kwargs.get('timeout', '3m')
         enable = kwargs.get('enable', False)
+        machine = kwargs.get('machine', system)
 
         bin_directory = '/usr/bin'
         systemd_directory = '/usr/lib/systemd/system'
@@ -80,7 +81,7 @@ Description=Container {system}: {description}{after}{requires}
 TimeoutStartSec={timeout}
 ExecStart=
 ExecStart=/usr/bin/systemd-nspawn --quiet --keep-unit --boot --ephemeral \\
-    --machine={system}{extra_args}
+    --machine={machine}{extra_args}
 '''.format(system=system, description=description, after=after,
            requires=requires, extra_args=extra_args, timeout=timeout))
 

@@ -65,6 +65,7 @@ class Parser:
     def parse(self, input_file: str) -> typing.List[ExecObject]:
         """Parse a file."""
         with open(input_file, 'r') as f:
+            debug('Parsing file {}...'.format(input_file))
             return self._parse_string(f.read(), input_file)
 
     def _parse_string(self, data, input_file):
