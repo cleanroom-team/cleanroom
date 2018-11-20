@@ -83,7 +83,8 @@ ExecStart=
 ExecStart=/usr/bin/systemd-nspawn --quiet --keep-unit --boot --ephemeral \\
     --machine={machine}{extra_args}
 '''.format(system=system, description=description, after=after,
-           requires=requires, extra_args=extra_args, timeout=timeout))
+           requires=requires, extra_args=extra_args, timeout=timeout,
+           machine=machine))
 
         if enable:
             location.set_description('Enabling container')

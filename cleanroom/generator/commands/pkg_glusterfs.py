@@ -35,6 +35,10 @@ d /mnt/gluster/4 0755 root root - -''',
                                mode=0o644)
 
         system_context.execute(location.next_line(),
+                               'mkdir',
+                               '/usr/lib/systemd/system/glusterd.service.d',
+                               mode=0o755)
+        system_context.execute(location.next_line(),
                                'create',
                                '/usr/lib/systemd/system/glusterd.service.d/override.conf',
                                '''[Service]
@@ -56,6 +60,8 @@ ProtectKernelTuneables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
 SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictRealtime=yes
 PrivateTmp=true
 ReadWritePaths=/mnt/glusterfs
 RuntimeDirectory=gluster
