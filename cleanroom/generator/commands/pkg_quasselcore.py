@@ -22,7 +22,6 @@ class PkgQuasselcoreCommand(Command):
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        password=kwargs.get('password', '')
         system_context.execute(location.next_line(),
                                'pacman', 'quassel-core', 'postgresql-libs')
 
