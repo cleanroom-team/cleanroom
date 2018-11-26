@@ -34,10 +34,10 @@ class SetTimezoneCommand(Command):
 
         timezone = args[0]
         full_timezone = '../usr/share/zoneinfo/' + timezone
-        if not exists(system_context, full_timezone, base_directory=etc):
+        if not exists(system_context, full_timezone, work_directory=etc):
             raise GenerateError('Timezone "{}" not found when trying to set timezone.'
                                 .format(timezone), location=location)
 
         system_context.execute(location, 'remove', etc_localtime)
         system_context.execute(location.next_line(), 'symlink', full_timezone, localtime,
-                               base_directory='/etc')
+                               work_directory='/etc')

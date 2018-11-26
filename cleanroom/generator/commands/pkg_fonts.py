@@ -34,9 +34,9 @@ class PkgFontsCommand(Command):
         file.symlink(system_context,
                      '../conf.avail.d/11-lcdfilter-default.conf',
                      '11-lcdfilter-default.conf',
-                     base_directory='/etc/fonts/conf.d')
+                     work_directory='/etc/fonts/conf.d')
         file.symlink(system_context,
                      '../conf.avail.d/10-subpixel-rgb.conf',
                      '10-subpixel-rgb.conf',
-                     base_directory='/etc/fonts/conf.d')
+                     work_directory='/etc/fonts/conf.d')
 

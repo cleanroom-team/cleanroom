@@ -26,6 +26,7 @@ class Binaries(Enum):
     OBJCOPY = auto()
     MKSQUASHFS = auto()
     VERITYSETUP = auto()
+    TAR = auto()
 
 
 class Context:

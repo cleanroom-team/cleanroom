@@ -14,17 +14,19 @@ class ChownCommand(Command):
 
     def __init__(self):
         """Constructor."""
-        super().__init__('chown', syntax='<FILE>+ [user=<USER>] [group=<GROUP>]',
+        super().__init__('chown', syntax='<FILE>+ [user=<USER>] [group=<GROUP>] '
+                         '[recursive=False]',
                          help='Chmod a file or files.', file=__file__)
 
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         self._validate_args_at_least(location, 1,
                                      '"{}" takes one or more files.', *args)
-        self._validate_kwargs(location, ('user', 'group',), **kwargs)
+        self._validate_kwargs(location, ('user', 'group', 'recursive',), **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
         user = kwargs.get('user', 'root')
         group = kwargs.get('group', 'root')
-        chown(system_context, user, group, *args)
+        chown(system_context, user, group, *args,
+              recursive=kwargs.get('recursive', False))

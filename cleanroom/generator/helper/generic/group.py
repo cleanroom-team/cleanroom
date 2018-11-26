@@ -50,3 +50,23 @@ def _group_data(group_file, name):
 def group_data(system_context, name):
     """Get user data from passwd file."""
     return _group_data(system_context.file_name('/etc/group'), name)
+
+def groupmod(system_context, group_name, *, gid=-1,
+             password='', rename='', root_directory=''):
+    """Modify an existing user."""
+    command = ['/usr/bin/groupmod', group_name]
+
+    if gid >= 0:
+        command += ['--gid', str(gid)]
+
+    if rename:
+        command += ['--new-name', rename]
+
+    if password:
+        command += ['--password', password]
+
+    if root_directory:
+        command += ['--root', root_directory]
+
+    system_context.run(*command)
+

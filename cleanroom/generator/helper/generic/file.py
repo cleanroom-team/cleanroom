@@ -39,7 +39,7 @@ def file_name(system_context, f):
     return full_path
 
 
-def expand_files(system_context, *files):
+def expand_files(system_context, *files, recursive=False):
     """Prepend the system directory and expand glob patterns.
 
     Prepend system directory to files iff the system_context is given.
@@ -52,17 +52,17 @@ def expand_files(system_context, *files):
 
     for pattern in to_iterate:
         debug('expand_files: Matching pattern: {}.'.format(pattern))
-        for match in glob.iglob(pattern):
+        for match in glob.iglob(pattern, recursive=recursive):
             debug('expand_files: --- match {}.'.format(match))
             yield match
 
 
-def _check_file(system_context, f, op, description, base_directory=None):
+def _check_file(system_context, f, op, description, work_directory=None):
     """Run op on a file f."""
-    old_base_directory = os.getcwd()
-    if base_directory is not None:
-        base_directory = file_name(system_context, base_directory)
-        os.chdir(base_directory)
+    old_work_directory = os.getcwd()
+    if work_directory is not None:
+        work_directory = file_name(system_context, work_directory)
+        os.chdir(work_directory)
 
     to_test = f
     if os.path.isabs(f):
@@ -71,38 +71,38 @@ def _check_file(system_context, f, op, description, base_directory=None):
     result = op(to_test)
 
     # Report result:
-    if base_directory is None:
+    if work_directory is None:
         trace('{}: {} = {}'.format(description, to_test, result))
     else:
         trace('{}: {} (relative to {}) = {}'
-              .format(description, to_test, base_directory, result))
+              .format(description, to_test, work_directory, result))
 
-    os.chdir(old_base_directory)
+    os.chdir(old_work_directory)
     return result
 
 
-def exists(system_context, f, base_directory=None):
+def exists(system_context, f, work_directory=None):
     """Check whether a file exists."""
     return _check_file(system_context, f, os.path.exists, 'file exists:',
-                       base_directory=base_directory)
+                       work_directory=work_directory)
 
 
-def isfile(system_context, f, base_directory=None):
+def isfile(system_context, f, work_directory=None):
     """Check whether a file exists and is a file."""
     return _check_file(system_context, f, os.path.isfile, 'isfile:',
-                       base_directory=base_directory)
+                       work_directory=work_directory)
 
 
-def isdir(system_context, f, base_directory=None):
+def isdir(system_context, f, work_directory=None):
     """Check whether a file exists and is a directory."""
     return _check_file(system_context, f, os.path.isdir, 'isdir:',
-                       base_directory=base_directory)
+                       work_directory=work_directory)
 
 
-def symlink(system_context, source, destination, base_directory=None):
+def symlink(system_context, source, destination, work_directory=None):
     """Create a symbolic link."""
-    if base_directory is not None:
-        os.chdir(file_name(system_context, base_directory))
+    if work_directory is not None:
+        os.chdir(file_name(system_context, work_directory))
 
     if os.path.isabs(destination):
         destination = file_name(system_context, destination)
@@ -136,9 +136,10 @@ def _chmod(system_context, mode, *files):
         os.chmod(f, mode)
 
 
-def chmod(system_context, mode, *files):
+def chmod(system_context, mode, *files, recursive=False):
     """Chmod in the system filesystem."""
-    return _chmod(system_context, mode, *expand_files(system_context, *files))
+    return _chmod(system_context, mode,
+                  *expand_files(system_context, *files, recursive=recursive))
 
 
 def _chown(system_context, uid, gid, *files):
@@ -191,12 +192,12 @@ def _get_gid(system_context, group):
     return data.gid
 
 
-def chown(system_context, user, group, *files):
+def chown(system_context, user, group, *files, recursive=False):
     """Change ownership of a file in the system filesystem."""
     return _chown(system_context,
                   _get_uid(system_context, user),
                   _get_gid(system_context, group),
-                  *expand_files(system_context, *files))
+                  *expand_files(system_context, *files, recursive=recursive))
 
 
 def read_file(system_context, file, outside=False):
@@ -259,7 +260,8 @@ def _file_op(system_context, op, description, *args,
 
     desc = description.format(sources, destination)
     debug('File_op(raw): {}'.format(desc))
-    sources = tuple(expand_files(None if from_outside else system_context, *sources))
+    sources = tuple(expand_files(None if from_outside else system_context,
+                                 *sources, recursive=True))
     destination = file_name(None if to_outside else system_context,
                             destination)
     desc = description.format(sources, destination)
@@ -328,7 +330,7 @@ def move(system_context, *args, **kwargs):
 def remove(system_context, *files, recursive=False, force=False, outside=False):
     """Delete a file inside of a system."""
     sc = None if outside else system_context
-    for file in expand_files(sc, *files):
+    for file in expand_files(sc, *files, recursive=True):
         trace('Removing "{}".'.format(file))
 
         if not os.path.exists(file):

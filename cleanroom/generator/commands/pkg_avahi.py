@@ -30,7 +30,7 @@ class PkgAvahiCommand(Command):
         system_context.execute(location.next_line(), 'symlink',
                                'avahi-daemon.service',
                                'dbus-org.freedesktop.Avahi.service',
-                               base_directory='/usr/lib/systemd/system')
+                               work_directory='/usr/lib/systemd/system')
 
         # enable the daemon (actually set up socket activation)
         system_context.execute(location.next_line(), 'systemd_enable',

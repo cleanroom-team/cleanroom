@@ -72,7 +72,7 @@ class PacstrapCommand(Command):
         location.set_description('Moving /opt into /usr')
         system_context.add_hook(location.next_line(), 'export', 'move', '/opt', '/usr')
         system_context.add_hook(location, 'export', 'symlink',
-                                'usr/opt', 'opt', base_directory='/')
+                                'usr/opt', 'opt', work_directory='/')
 
         location.set_description('Writing package information to FS.')
         system_context.add_hook(location.next_line(), 'export',

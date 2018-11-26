@@ -28,6 +28,7 @@ def _find_binaries(ctx: Context) -> None:
         Binaries.OBJCOPY: _check_for_binary('/usr/bin/objcopy'),
         Binaries.MKSQUASHFS: _check_for_binary('/usr/bin/mksquashfs'),
         Binaries.VERITYSETUP: _check_for_binary('/usr/bin/veritysetup'),
+        Binaries.TAR: _check_for_binary('/usr/bin/tar'),
         })
 
 

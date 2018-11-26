@@ -91,5 +91,5 @@ ExecStart=/usr/bin/systemd-nspawn --quiet --keep-unit --boot --ephemeral \\
             system_context.execute(location.next_line(), 'symlink',
                                    '../systemd-nspawn@.service',
                                    'systemd-nspawn@{}.service'.format(system),
-                                   base_directory='{}/machines.target.wants'
+                                   work_directory='{}/machines.target.wants'
                                    .format(systemd_directory))
