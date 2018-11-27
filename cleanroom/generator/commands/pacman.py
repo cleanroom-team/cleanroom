@@ -15,7 +15,7 @@ class PacmanCommand(Command):
     def __init__(self):
         """Constructor."""
         super().__init__('pacman', syntax='<PACKAGES> [remove=False] '
-                         '[overwrite=GLOB]',
+                         '[overwrite=GLOB] [assume_installed=PKG]',
                          help='Run pacman to install <PACKAGES>.',
                          file=__file__)
 
@@ -23,7 +23,8 @@ class PacmanCommand(Command):
         """Validate the arguments."""
         self._validate_args_at_least(location, 1, '"{}"" needs at least '
                                      'one package or group to install.', *args)
-        self._validate_kwargs(location, ('remove', 'overwrite'), **kwargs)
+        self._validate_kwargs(location, ('remove', 'overwrite',
+                                         'assume_installed',), **kwargs)
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""

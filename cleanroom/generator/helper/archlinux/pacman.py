@@ -216,7 +216,7 @@ def _move_pacman_data(system_context: SystemContext, internal_pacman: bool) -> N
 
 
 def pacman(system_context: SystemContext, *packages: str,
-           remove: bool=False, overwrite: str='') -> None:
+           remove: bool=False, assume_installed: str='', overwrite: str='') -> None:
     """Use pacman to install packages."""
     assert _package_type(system_context) == 'pacman'
 
@@ -230,6 +230,8 @@ def pacman(system_context: SystemContext, *packages: str,
         action = ['-S', '--needed']
         if overwrite:
             action += ['--overwrite', overwrite]
+        if assume_installed:
+            action += ['--assume-installed', assume_installed]
 
     _run_pacman(system_context, *action, *packages)
 
