@@ -27,7 +27,7 @@ class PkgFontsCommand(Command):
         """Execute command."""
 
         system_context.execute(location.next_line(), 'pacman',
-             'ttf-adobe-fonts', 'ttf-adobe-source-code-pro',
+             'adobe-source-code-pro-fonts',
              'ttf-bitstream-vera', 'ttf-dejavu', 'ttf-freefont',
              'ttf-gentium', 'ttf-inconsolata', 'ttf-ms-fonts')
 
