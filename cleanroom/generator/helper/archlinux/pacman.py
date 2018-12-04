@@ -39,13 +39,13 @@ def _fs_directory(system_context: SystemContext) -> str:
 
 def _pacman_directory(system_context: SystemContext, internal: bool=False) -> str:
     if internal:
-        return os.path.join(system_context.fs_directory(), 'usr/lib/pacman')
+        return system_context.file_name('/usr/lib/pacman')
     return os.path.join(system_context.meta_directory(), 'pacman')
 
 
 def _config_file(system_context: SystemContext, internal: bool=False) -> str:
     if internal:
-        return os.path.join(system_context.fs_directory(), 'etc/pacman.conf')
+        return system_context.file_name('/etc/pacman.conf')
     return os.path.join(_pacman_directory(system_context, internal), 'pacman.conf')
 
 
@@ -102,22 +102,14 @@ def _sanity_check(system_context: SystemContext) -> None:
 
 def _pacman_args(system_context: SystemContext, installed_pacman: bool=False) \
         -> typing.List[str]:
-    if installed_pacman:
-        return ['--config', '/etc/pacman.conf',
-                '--dbpath', '/usr/lib/pacman/db',
-                '--hookdir', '/usr/lib/pacman/hooks',
-                '--logfile', '/lib/usr/pacman/pacman.log',
-                '--gpgdir', '/usr/lib/pacman/gpg',
-                '--noconfirm']
-    else:
-        return ['--config', _config_file(system_context, False),
-                '--root', _fs_directory(system_context),
-                '--cachedir', _cache_directory(system_context),
-                '--dbpath', _db_directory(system_context),
-                '--hookdir', _hooks_directory(system_context),
-                '--logfile', _log(system_context),
-                '--gpgdir', _gpg_directory(system_context),
-                '--noconfirm']
+    return ['--config', _config_file(system_context, internal=installed_pacman),
+            '--root', _fs_directory(system_context),
+            '--cachedir', _cache_directory(system_context, internal=installed_pacman),
+            '--dbpath', _db_directory(system_context, internal=installed_pacman),
+            '--hookdir', _hooks_directory(system_context, internal=installed_pacman),
+            '--logfile', _log(system_context, internal=installed_pacman),
+            '--gpgdir', _gpg_directory(system_context, internal=installed_pacman),
+            '--noconfirm']
 
 
 def _pacman_keyinit(system_context: SystemContext) -> None:
@@ -140,18 +132,10 @@ def _run_pacman(system_context: SystemContext, *args: str, **kwargs) -> None:
 
     internal_pacman = (_pacman_state(system_context) == 'True')
     all_args = _pacman_args(system_context, internal_pacman) + list(args)
-    if internal_pacman:
-        # Installed pacman:
-        system_context.run(
-            system_context.binary(Binaries.PACMAN), *all_args,
-            work_directory='/',
-            outside=False, timeout=600, **kwargs)
-    else:
-        # Outside pacman:
-        system_context.run(
-            system_context.binary(Binaries.PACMAN), *all_args,
-            work_directory=system_context.ctx.systems_directory(),
-            outside=True, timeout=600, **kwargs)
+    system_context.run(
+        system_context.binary(Binaries.PACMAN), *all_args,
+        work_directory=system_context.ctx.systems_directory(),
+        outside=True, timeout=600, **kwargs)
 
 
 def pacstrap(system_context: SystemContext, *packages: str, config: str='') -> None:
