@@ -6,6 +6,8 @@
 
 from cleanroom.generator.command import Command
 
+import os.path
+
 
 class StripDevelopmentFilesCommand(Command):
     """The strip_development_files Command."""
@@ -28,3 +30,13 @@ class StripDevelopmentFilesCommand(Command):
                                 '/usr/share/aclocal/*', '/usr/lib/cmake/*',
                                 '/usr/share/gir-1.0/*',
                                 recursive=True, force=True)
+
+        # Remove .so symlinks:
+        directory = system_context.file_name('/usr/lib')
+        for f in os.listdir(directory):
+            fullname = os.path.join(directory, f)
+            if fullname.endswith('/libnss_files.so'):
+                continue
+            if fullname.endswith('.a') \
+              or (fullname.endswith('.so') and os.path.islink(fullname)):
+                os.unlink(fullname)
