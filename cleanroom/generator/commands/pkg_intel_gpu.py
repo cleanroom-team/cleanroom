@@ -44,3 +44,6 @@ class PkgIntelGpuCommand(Command):
         system_context.execute(location, 'create', '/etc/modprobe.d/i915-guc.conf',
                                'options i915 enable_guc=3')
 
+        system_context.execute(location, 'remove', '/usr/lib/firmware/amdgpu/*',
+                               '/usr/lib/firmware/nvidia/*', '/usr/lib/firmware/radeon/*',
+                               force=True, recursive=True)

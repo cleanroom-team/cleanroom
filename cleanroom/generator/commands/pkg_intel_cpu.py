@@ -46,3 +46,7 @@ class PkgIntelCpuCommand(Command):
         system_context.execute(location, 'sed',
                                's/^MODULES=(/MODULES=(crc32c-intel /',
                                '/etc/mkinitcpio.conf')
+
+        # Clean out firmware:
+        system_context.execute(location, 'remove', '/usr/lib/firmware/amd-ucode/*',
+                               force=True)
