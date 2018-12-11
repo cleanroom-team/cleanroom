@@ -17,7 +17,7 @@ def useradd(system_context, user_name, *,
             comment='', home='', gid=-1, uid=-1, shell='',
             groups='', password='', expire=None):
     """Add a new user to the system."""
-    command = ['/usr/bin/useradd', user_name]
+    command = ['/usr/bin/useradd', '--root', system_context.fs_directory(), user_name]
 
     if comment:
         command += ['--comment', comment]
@@ -46,14 +46,14 @@ def useradd(system_context, user_name, *,
         else:
             command += ['--expiredate', expire]
 
-    system_context.run(*command)
+    system_context.run(*command, outside=True)
 
 
 def usermod(system_context, user_name, *, comment='', home='', gid=-1, uid=-1,
             lock=None, rename='', shell='', append=False, groups='',
             password='', expire=None):
     """Modify an existing user."""
-    command = ['/usr/bin/usermod', user_name]
+    command = ['/usr/bin/usermod', '--root', system_context.fs_directory(), user_name]
 
     if comment:
         command += ['--comment', comment]
@@ -97,7 +97,7 @@ def usermod(system_context, user_name, *, comment='', home='', gid=-1, uid=-1,
     if expire is not None:
         command += ['--expiredate', expire]
 
-    system_context.run(*command)
+    system_context.run(*command, outside=True)
 
 
 def _user_data(passwd_file, name):

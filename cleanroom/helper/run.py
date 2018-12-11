@@ -30,7 +30,7 @@ def run(*args, returncode=0, work_directory=None,
 
     if trace_output is not None:
         if work_directory:
-            trace_output('Running:', args, 'in', work_directory)
+            trace_output('Running', args, 'in', work_directory)
         else:
             trace_output('Running', args)
 
