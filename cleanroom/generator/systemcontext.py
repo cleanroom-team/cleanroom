@@ -87,6 +87,8 @@ class SystemContext:
             self.set_substitution('BASE_SYSTEM', '')
 
         self.set_substitution('ROOT', self.fs_directory())
+        self.set_substitution('META', self.meta_directory())
+        self.set_substitution('CACHE', self.cache_directory())
         self.set_substitution('SYSTEM', self.system)
         ts = 'unknown' if self.timestamp is None else self.timestamp
         self.set_substitution('TIMESTAMP', ts)
