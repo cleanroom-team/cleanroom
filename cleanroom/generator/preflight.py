@@ -7,7 +7,7 @@
 
 from .context import Binaries, Context
 from ..exceptions import PreflightError
-from ..printer import (debug, info, h2, warn,)
+from ..printer import (debug, error, info, h2, warn,)
 
 import os
 
@@ -17,19 +17,44 @@ def _check_for_binary(binary: str) -> str:
     return binary if os.access(binary, os.X_OK) else ''
 
 
+def _get_distribution():
+    with open("/usr/lib/os-release") as os:
+        for line in os.readlines():
+            line = line.strip()
+            if line.startswith('ID_LIKE='):
+                return line[8:].strip('"')
+    return "<UNSUPPORTED>"
+
+
 def _find_binaries(ctx: Context) -> None:
-    ctx.set_binaries({
+    binaries = {
         Binaries.BORG: _check_for_binary('/usr/bin/borg'),
         Binaries.BTRFS: _check_for_binary('/usr/bin/btrfs'),
-        Binaries.PACMAN: _check_for_binary('/usr/bin/pacman'),
-        Binaries.PACMAN_KEY: _check_for_binary('/usr/bin/pacman-key'),
-        Binaries.PACSTRAP: _check_for_binary('/usr/bin/pacstrap'),
         Binaries.SBSIGN: _check_for_binary('/usr/bin/sbsign'),
         Binaries.OBJCOPY: _check_for_binary('/usr/bin/objcopy'),
         Binaries.MKSQUASHFS: _check_for_binary('/usr/bin/mksquashfs'),
-        Binaries.VERITYSETUP: _check_for_binary('/usr/bin/veritysetup'),
         Binaries.TAR: _check_for_binary('/usr/bin/tar'),
-        })
+    }
+    os_binaries = {}
+    distribution = _get_distribution()
+    if (distribution == "debian"):
+        os_binaries = {
+            Binaries.APT_GET: _check_for_binary('/usr/bin/apt-get'),
+            Binaries.DPKG: _check_for_binary('/usr/bin/dpkg'),
+            Binaries.DEBOOTSTRAP: _check_for_binary('/usr/sbin/debootstrap'),
+            Binaries.VERITYSETUP: _check_for_binary('/usr/sbin/veritysetup'),
+        }
+    elif (distribution == "archlinux"):
+        os_binaries = {
+            Binaries.PACMAN: _check_for_binary('/usr/bin/pacman'),
+            Binaries.PACMAN_KEY: _check_for_binary('/usr/bin/pacman-key'),
+            Binaries.PACSTRAP: _check_for_binary('/usr/bin/pacstrap'),
+            Binaries.VERITYSETUP: _check_for_binary('/usr/bin/veritysetup'),
+        }
+    else:
+        error("Unsupported Linux flavor.")
+
+    ctx.set_binaries({**binaries, **os_binaries})
 
 
 def preflight_check(ctx: Context) -> None:
