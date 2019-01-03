@@ -191,16 +191,16 @@ WantedBy=images.mount
         location.set_description('Fix up mkinitcpio presets')
         system_context.execute(location.next_line(), 'sed',
                                "/^PRESETS=/ cPRESETS=('default')",
-                               '/etc/mkinitcpio.d/linux.preset')
+                               '/etc/mkinitcpio.d/cleanroom.preset')
         system_context.execute(location.next_line(), 'sed',
                                "/'fallback'/ d",
-                               '/etc/mkinitcpio.d/linux.preset')
+                               '/etc/mkinitcpio.d/cleanroom.preset')
         system_context.execute(location.next_line(), 'sed',
                                's%/vmlinuz-linux.*"%/vmlinuz"%',
-                               '/etc/mkinitcpio.d/linux.preset')
+                               '/etc/mkinitcpio.d/cleanroom.preset')
         system_context.execute(location.next_line(), 'sed',
                                's%/initramfs-linux.*.img%/initrd%',
-                               '/etc/mkinitcpio.d/linux.preset')
+                               '/etc/mkinitcpio.d/cleanroom.preset')
         return to_clean_up
 
     def _create_install_hook(self, location, system_context, name, contents):
@@ -367,7 +367,7 @@ HELPEOF
 
     def _run_mkinitcpio(self, location, system_context):
         location.set_description('Run mkinitcpio')
-        system_context.run('/usr/bin/mkinitcpio', '-p', 'linux')
+        system_context.run('/usr/bin/mkinitcpio', '-p', 'cleanroom')
 
     def _cleanup_extra_files(self, location, system_context, *files):
         location.set_description('Remove extra mkinitcpio files')
