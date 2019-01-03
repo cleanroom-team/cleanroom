@@ -36,6 +36,7 @@ class EnsureHwdbCommand(Command):
         system_context.add_hook(location, 'export', 'remove',
                                 '/usr/lib/systemd/system/*/'
                                 'systemd-hwdb-update.service',
-                                '/usr/lib/systemd/system/', force=True)
+                                '/usr/lib/systemd/system/'
+                                'systemd-hwdb-update.service', force=True)
 
 
