@@ -30,7 +30,7 @@ class CreateInitrdCommand(Command):
                                   '"{}" takes an initrd to create.',
                                   *args, **kwargs)
 
-    def _escape_device(self, device):
+    def _deviceify(self, device):
         if device.startswith('PARTLABEL='):
             device = '/dev/disk/by-partlabel/' + device[10:]
         elif device.startswith('LABEL='):
@@ -43,8 +43,12 @@ class CreateInitrdCommand(Command):
             device = '/dev/disk/by-id/' + device[3:]
         elif device.startswith('PATH='):
             device = '/dev/disk/by-path/' + device[5:]
-
         assert device.startswith('/dev/')
+        return device
+
+    def _escape_device(self, device):
+        device = self._deviceify(device)
+
         device = device.replace('-', '\\x2d')
         device = device.replace('=', '\\x3d')
         device = device.replace(';', '\\x3b')
@@ -138,8 +142,6 @@ WantedBy={0}.device
                                '''[Unit]
 Description=Mount /images in initrd
 DefaultDependencies=no
-Conflicts=umount.target
-Before=local-fs.target unmount.target
 
 [Mount]
 What={}
@@ -385,7 +387,8 @@ HELPEOF
             self._vg = None
 
         self._image_fs = system_context.substitution('IMAGE_FS', 'ext2')
-        self._image_device = system_context.substitution('IMAGE_DEVICE', '')
+        self._image_device = \
+            self._deviceify(system_context.substitution('IMAGE_DEVICE', ''))
         self._image_options = system_context.substitution('IMAGE_OPTIONS', 'rw')
 
         name_prefix = system_context.substitution('DISTRO_ID', 'clrm')
