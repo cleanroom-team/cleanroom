@@ -240,7 +240,9 @@ class SystemContext:
         if not outside:
             kwargs['chroot'] = self.fs_directory()
 
-        return run(*mapped_args, trace_output=debug, **kwargs)
+        return run(*mapped_args, trace_output=debug,
+                   chroot_helper=self.binary(Binaries.CHROOT_HELPER),
+                   **kwargs)
 
     # execute cleanroom commands:
     def execute(self, location: Location, command: str, *args: typing.Any,

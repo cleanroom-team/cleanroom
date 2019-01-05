@@ -5,6 +5,8 @@
 """
 
 
+from cleanroom.generator.context import Binaries
+
 import collections
 import os.path
 
@@ -14,7 +16,8 @@ Group = collections.namedtuple('Group', ['name', 'password', 'gid', 'members'])
 
 def groupadd(system_context, group_name, *, gid=-1, force=False, system=False):
     """Execute command."""
-    command = ['/usr/bin/groupadd', group_name]
+    command = [system_context.binary(Binaries.GROUPADD),
+               group_name]
 
     if gid >= 0:
         command += ['--gid', str(gid)]
@@ -54,7 +57,8 @@ def group_data(system_context, name):
 def groupmod(system_context, group_name, *, gid=-1,
              password='', rename='', root_directory=''):
     """Modify an existing user."""
-    command = ['/usr/bin/groupmod', group_name]
+    command = [system_context.binary(Binaries.GROUPMOD),
+               group_name]
 
     if gid >= 0:
         command += ['--gid', str(gid)]

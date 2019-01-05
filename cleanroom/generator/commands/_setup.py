@@ -9,8 +9,6 @@ from cleanroom.generator.command import Command
 from cleanroom.generator.context import Binaries
 from cleanroom.generator.workdir import create_work_directory
 
-from cleanroom.helper.run import run
-
 import os
 import stat
 
@@ -42,11 +40,13 @@ class _SetupCommand(Command):
         # Make sure there is /dev/null in the filesystem:
         os.makedirs(system_context.file_name('/dev'))
         
-        run('/usr/bin/mknod', '--mode=666',
-            system_context.file_name('/dev/null'), 'c', '1', '3')
-        run('/usr/bin/mknod', '--mode=666',
-            system_context.file_name('/dev/zero'), 'c', '1', '5')
-        run('/usr/bin/mknod', '--mode=666',
-            system_context.file_name('/dev/random'), 'c', '1', '8')
-
+        system_context.run('/usr/bin/mknod', '--mode=666',
+                           system_context.file_name('/dev/null'), 'c', '1', '3',
+                           outside=True)
+        system_context.run('/usr/bin/mknod', '--mode=666',
+                           system_context.file_name('/dev/zero'), 'c', '1', '5',
+                           outside=True)
+        system_context.run('/usr/bin/mknod', '--mode=666',
+                           system_context.file_name('/dev/random'), 'c', '1', '8',
+                           outside=True)
 

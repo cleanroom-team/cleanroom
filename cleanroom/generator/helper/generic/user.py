@@ -4,6 +4,7 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
+from cleanroom.generator.context import Binaries
 
 import collections
 import os.path
@@ -17,7 +18,8 @@ def useradd(system_context, user_name, *,
             comment='', home='', gid=-1, uid=-1, shell='',
             groups='', password='', expire=None):
     """Add a new user to the system."""
-    command = ['/usr/bin/useradd', '--root', system_context.fs_directory(), user_name]
+    command = [system_context.binary(Binaries.USERADD),
+               '--root', system_context.fs_directory(), user_name]
 
     if comment:
         command += ['--comment', comment]
@@ -53,7 +55,8 @@ def usermod(system_context, user_name, *, comment='', home='', gid=-1, uid=-1,
             lock=None, rename='', shell='', append=False, groups='',
             password='', expire=None):
     """Modify an existing user."""
-    command = ['/usr/bin/usermod', '--root', system_context.fs_directory(), user_name]
+    command = [system_context.binary(Binaries.USERMOD),
+               '--root', system_context.fs_directory(), user_name]
 
     if comment:
         command += ['--comment', comment]

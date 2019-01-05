@@ -18,7 +18,8 @@ def _quote_args(*args):
 
 def run(*args, returncode=0, work_directory=None,
         trace_output=None, chroot=None, shell=False,
-        stdout=None, stderr=None, **kwargs):
+        stdout=None, stderr=None, chroot_helper=None,
+        **kwargs):
     """Run command and trace the external command result and output."""
     if work_directory is not None:
         os.chdir(work_directory)
@@ -26,7 +27,8 @@ def run(*args, returncode=0, work_directory=None,
     if shell:
         args = ('/usr/bin/bash', '-c', _quote_args(*args))
     if chroot is not None:
-        args = ('/usr/bin/arch-chroot', chroot, *args)
+        assert chroot_helper
+        args = (chroot_helper, chroot, *args)
 
     if trace_output is not None:
         if work_directory:

@@ -34,6 +34,10 @@ def _find_binaries(ctx: Context) -> None:
         Binaries.OBJCOPY: _check_for_binary('/usr/bin/objcopy'),
         Binaries.MKSQUASHFS: _check_for_binary('/usr/bin/mksquashfs'),
         Binaries.TAR: _check_for_binary('/usr/bin/tar'),
+        Binaries.USERMOD: _check_for_binary('/usr/sbin/usermod'),
+        Binaries.USERADD: _check_for_binary('/usr/sbin/useradd'),
+        Binaries.GROUPMOD: _check_for_binary('/usr/sbin/groupmod'),
+        Binaries.GROUPADD: _check_for_binary('/usr/sbin/groupadd'),
     }
     os_binaries = {}
     distribution = _get_distribution()
@@ -43,6 +47,7 @@ def _find_binaries(ctx: Context) -> None:
             Binaries.DPKG: _check_for_binary('/usr/bin/dpkg'),
             Binaries.DEBOOTSTRAP: _check_for_binary('/usr/sbin/debootstrap'),
             Binaries.VERITYSETUP: _check_for_binary('/usr/sbin/veritysetup'),
+            Binaries.CHROOT_HELPER: _check_for_binary('/bin/false'),  # FIXME
         }
     elif (distribution == "archlinux"):
         os_binaries = {
@@ -50,6 +55,7 @@ def _find_binaries(ctx: Context) -> None:
             Binaries.PACMAN_KEY: _check_for_binary('/usr/bin/pacman-key'),
             Binaries.PACSTRAP: _check_for_binary('/usr/bin/pacstrap'),
             Binaries.VERITYSETUP: _check_for_binary('/usr/bin/veritysetup'),
+            Binaries.CHROOT_HELPER: _check_for_binary('/usr/bin/arch-chroot'),
         }
     else:
         error("Unsupported Linux flavor.")

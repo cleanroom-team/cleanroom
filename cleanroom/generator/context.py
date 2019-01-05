@@ -30,6 +30,11 @@ class Binaries(Enum):
     MKSQUASHFS = auto()
     VERITYSETUP = auto()
     TAR = auto()
+    USERMOD = auto()
+    USERADD = auto()
+    GROUPADD = auto()
+    GROUPMOD = auto()
+    CHROOT_HELPER = auto()
 
 
 class Context:
