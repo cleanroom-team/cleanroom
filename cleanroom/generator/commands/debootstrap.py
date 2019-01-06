@@ -46,5 +46,9 @@ class DebootstrapCommand(Command):
                     variant=kwargs.get('variant', None),
                     include=kwargs.get('include', None),
                     exclude=kwargs.get('exclude', None))
+
+        location.set_description('Move systemd files into /usr')
+        system_context.add_hook(location, '_teardown', 'systemd_cleanup')
+
         return True
 
