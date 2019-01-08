@@ -34,10 +34,12 @@ class ExportRootFsCommand(ExportCommand):
 
     def _create_tarballs(self, location, system_context, directory, tarball):
         system_context.run('tar', '-cf',
-                           os.path.join(self._export_volume, tarball), '.',
-                           work_directory=system_context.file_name(directory),
+                           os.path.join(self._export_volume, tarball) + '.tar', '.',
                            outside=True)
-        system_context.execute(location, 'remove', directory + '/*',
+        to_remove = directory
+        if not os.path.isabs(to_remove):
+            to_remove = system_context.file_name('/' + to_remove) + '/*'
+        system_context.execute(location, 'remove', to_remove,
                                recursive=True, force=True)
 
     def create_export_directory(self, location, system_context):

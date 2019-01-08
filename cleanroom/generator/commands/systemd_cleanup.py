@@ -113,6 +113,9 @@ class SystemdCleanupCommand(Command):
         """Move a symlink."""
         root_directory = system_context.fs_directory() + '/'
         link_target = os.readlink(link)
+        # normalize to /usr/lib...
+        if link_target.startswith('/lib/'):
+            link_target = '/usr{}'.format(link_target)
         (output_link, output_link_target) \
             = self._map_host_link(root_directory,
                                   old_base, new_base, link, link_target)
