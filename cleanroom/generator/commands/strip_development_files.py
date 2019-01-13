@@ -27,6 +27,7 @@ class StripDevelopmentFilesCommand(Command):
         system_context.add_hook(location, 'export',
                                 'remove',  '/usr/include/*', '/usr/src/*',
                                 '/usr/share/pkgconfig/*',
+                                '/usr/lib/pkgconfig/*',
                                 '/usr/share/aclocal/*', '/usr/lib/cmake/*',
                                 '/usr/share/gir-1.0/*',
                                 recursive=True, force=True)

@@ -6,6 +6,10 @@
 
 from cleanroom.generator.command import Command
 
+from cleanroom.printer import debug
+
+import os.path
+
 
 class StripDocumentationCommand(Command):
     """The strip_documentation Command."""
@@ -21,9 +25,4 @@ class StripDocumentationCommand(Command):
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        location.set_description('Strip development files')
-        system_context.add_hook(location, 'export',
-                                'remove',  '/usr/share/man/*', '/usr/share/doc/*',
-                                '/usr/share/info/*', '/usr/share/gtk-doc/html',
-                                '/usr/share/help/*',
-                                recursive=True, force=True)
+        system_context.add_hook(location, 'export', '_strip_documentation_hook')
