@@ -114,7 +114,7 @@ class ExportSquashfsCommand(ExportCommand):
         system_context.run(mksquashfs, 'usr', squash_file, '-comp',
                            self._compression, '-noappend', '-no-exports',
                            '-keep-as-directory',
-                           '-noI', '-noD', '-noF', '-noX',
+                           '-noI', '-noD', '-noF', '-noX', '-processors', '1',
                            outside=True,
                            work_directory=system_context.fs_directory())
         self._size_extend(squash_file)
