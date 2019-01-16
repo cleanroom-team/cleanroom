@@ -133,6 +133,9 @@ def _chmod(system_context, mode, *files):
         return
     for f in files:
         trace('Chmod of "{}" to {}.'.format(f, mode))
+        if os.path.islink(f):
+            debug(' -> {} is a symlink, skipping for chmod.'.format(f))
+            continue
         os.chmod(f, mode)
 
 
@@ -149,7 +152,7 @@ def _chown(system_context, uid, gid, *files):
 
     for f in files:
         trace('Chown of "{}" to {}:{}.'.format(f, uid, gid))
-        os.chown(f, uid, gid)
+        os.chown(f, uid, gid, follow_symlinks=False)
 
 
 def _get_uid(system_context, user):
