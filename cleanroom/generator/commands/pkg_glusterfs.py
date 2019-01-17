@@ -43,6 +43,7 @@ d /mnt/gluster/4 0755 root root - -''',
                                '/usr/lib/systemd/system/glusterd.service.d/override.conf',
                                '''[Service]
 Type=simple
+ExecStart=
 ExecStart=/usr/bin/glusterd -N --log-file=- --log-level INFO
 KillMode=
 Environment=
@@ -56,7 +57,7 @@ EnvironmentFile=
                                '''[Service]
 ProtectSystem=strict
 ProtectHome=tmpfs
-ProtectKernelTuneables=true
+ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
 SystemCallArchitectures=native
@@ -66,7 +67,6 @@ PrivateTmp=true
 ReadWritePaths=/mnt/glusterfs
 RuntimeDirectory=gluster
 StateDirectory=glusterd
-LogsDirectory=glusterfs
 ConfigurationDirectory=glusterfs
 ''',
                                mode=0o644)

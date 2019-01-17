@@ -142,6 +142,7 @@ WantedBy={0}.device
                                '''[Unit]
 Description=Mount /images in initrd
 DefaultDependencies=no
+After=systemd-cryptsetup@main.service
 
 [Mount]
 What={}
