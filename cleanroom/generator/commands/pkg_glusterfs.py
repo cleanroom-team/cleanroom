@@ -27,11 +27,11 @@ class PkgGlusterfsCommand(Command):
 
         system_context.execute(location.next_line(),
                                'create', '/usr/lib/tmpfiles.d/mnt-gluster.conf',
-                               '''d /mnt/gluster   0700 root root - -
-d /mnt/gluster/0 0755 root root - -
-d /mnt/gluster/1 0755 root root - -
-d /mnt/gluster/2 0755 root root - -
-d /mnt/gluster/4 0755 root root - -''',
+                               '''d /mnt/glusterfs   0700 root root - -
+d /mnt/glusterfs/0 0755 root root - -
+d /mnt/glusterfs/1 0755 root root - -
+d /mnt/glusterfs/2 0755 root root - -
+d /mnt/glusterfs/4 0755 root root - -''',
                                mode=0o644)
 
         system_context.execute(location.next_line(),
@@ -67,6 +67,7 @@ PrivateTmp=true
 ReadWritePaths=/mnt/glusterfs
 RuntimeDirectory=gluster
 StateDirectory=glusterd
+LogDirectory=glusterfs
 ConfigurationDirectory=glusterfs
 ''',
                                mode=0o644)
