@@ -85,22 +85,8 @@ http {
 
         system_context.execute(location.next_line(), 'mkdir',
                                '/usr/lib/systemd/system/nginx.service.d')
-        system_context.execute(location.next_line(), 'create',
-                               '/usr/lib/systemd/system/nginx.service.d/security.conf',
-                               '''[Service]
-PrivateTmp=true
-PrivateDevices=true
-ProtectSystem=full
-ProtectHome=tmpfs
-ProtectKernelTuneables=true
-ProtectKernelModules=true
-ProtectControlGroups=true
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
-RestrictRealtime=yes
-NoNewPrivileges=true
-RuntimeDirectory=nginx
-RuntimeDirectoryMode=700''',
-                               mode=0o644)
+        system_context.execute(location.next_line(), 'systemd_harden_unit',
+                               'nginx.service')
 
         system_context.execute(location.next_line(), 'mkdir', '/etc/nginx/sites-available')
         system_context.execute(location.next_line(), 'mkdir', '/etc/nginx/sites-enabled')

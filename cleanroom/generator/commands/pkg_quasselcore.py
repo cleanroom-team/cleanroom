@@ -22,28 +22,6 @@ class PkgQuasselcoreCommand(Command):
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        system_context.execute(location.next_line(),
-                               'pacman', 'quassel-core', 'postgresql-libs')
-
-        system_context.execute(location.next_line(),
-                               'mkdir', '/usr/lib/systemd/system/quasselcore.service.d',
-                               mode=0o755)
-        system_context.execute(location.next_line(),
-                               'create', '/usr/lib/systemd/system/quasselcore.service.d/harden.conf',
-                               '''[Service]
-PrivateTmp=true
-ProtectSystem=full
-ProtectHome=tmpfs
-ProtectKernelTuneables=true
-ProtectKernelModules=true
-ProtectControlGroups=true
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
-RestrictRealtime=yes
-NoNewPrivileges=true
-PIDFile=/run/quassel/pid
-RuntimeDirectory=quassel
-RuntimeDirectoryMode=700
-EnvironmentFile=
-''',
-                               mode=0o644)
-
+        system_context.execute(location.next_line(), 'pacman', 'quassel-core', 'postgresql-libs')
+        system_context.execute(location.next_line(), 'systemd_harden_unit', 'quassel.service')
+        system_context.execute(location.next_line(), 'systemd_enable', 'quassel.service')

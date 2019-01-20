@@ -32,18 +32,7 @@ class PkgPostgresqlCommand(Command):
                                '/usr/lib/systemd/system/postgresql.service.d/',
                                mode=0o755)
         system_context.execute(location.next_line(),
-                               'create', '/usr/lib/systemd/system/postgresql.service.d/harden.conf',
-                               '''[Service]
-PrivateTmp=true
-ProtectSystem=full
-ProtectHome=tmpfs
-ProtectKernelTuneables=true
-ProtectKernelModules=true
-ProtectControlGroups=true
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
-RestrictRealtime=yes
-NoNewPrivileges=true''',
-                               mode=0o644)
+                               'systemd_harden_unit', 'postgresql.service')
         system_context.execute(location.next_line(),
                                'create', '/usr/local/bin/setup-postgresql.sh',
                                '''#!/usr/bin/bash

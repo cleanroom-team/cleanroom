@@ -52,22 +52,4 @@ EnvironmentFile=
                                mode=0o644)
 
         system_context.execute(location.next_line(),
-                               'create',
-                               '/usr/lib/systemd/system/glusterd.service.d/security.conf',
-                               '''[Service]
-ProtectSystem=strict
-ProtectHome=tmpfs
-ProtectKernelTunables=true
-ProtectKernelModules=true
-ProtectControlGroups=true
-SystemCallArchitectures=native
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
-RestrictRealtime=yes
-PrivateTmp=true
-ReadWritePaths=/mnt/glusterfs
-RuntimeDirectory=gluster
-StateDirectory=glusterd
-LogDirectory=glusterfs
-ConfigurationDirectory=glusterfs
-''',
-                               mode=0o644)
+                               'systemd_harden_unit', 'glusterd.service')
