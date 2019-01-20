@@ -223,9 +223,12 @@ def create_file(system_context, file, contents, force=False, mode=0o644,
     with open(full_path, 'wb') as f:
         f.write(contents)
 
+    trace('Changing permissions of {} to {}.'.format(full_path, mode))
     os.chmod(full_path, mode)
-    _chown(_get_uid(system_context, user), _get_gid(system_context, group),
-           full_path)
+    uid = _get_uid(system_context, user)
+    gid = _get_gid(system_context, group)
+    trace('Changing ownership of {} to {}:{}.'.format(full_path, uid, gid))
+    _chown(system_context, uid, gid, full_path)
 
 
 def append_file(system_context, file, contents, *, force=False):

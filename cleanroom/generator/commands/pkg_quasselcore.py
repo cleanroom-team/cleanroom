@@ -25,3 +25,6 @@ class PkgQuasselcoreCommand(Command):
         system_context.execute(location.next_line(), 'pacman', 'quassel-core', 'postgresql-libs')
         system_context.execute(location.next_line(), 'systemd_harden_unit', 'quassel.service')
         system_context.execute(location.next_line(), 'systemd_enable', 'quassel.service')
+
+        system_context.execute(location.next_line(), 'net_firewall_open_port', 4242,
+                               protocol='tcp', comment='Quassel')

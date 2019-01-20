@@ -79,5 +79,5 @@ fi
             system_context.execute(location.next_line(),
                                    'create', '/home/postgres/.pgpass',
                                    '*:*:*:*:{}'.format(password),
-                                   mode=0o755, user='postgres', group='postgres')
+                                   mode=0o600, user='postgres', group='postgres')
 

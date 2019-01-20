@@ -60,7 +60,7 @@ class SshAllowLoginCommand(Command):
                                         group=data.gid)
         ssh_directory = os.path.join(data.home, '.ssh')
         self._check_or_create_directory(location, system_context, ssh_directory,
-                                        mode=0o600, user=data.uid,
+                                        mode=0o700, user=data.uid,
                                         group=data.gid)
 
         key = read_file(system_context, keyfile, outside=True).decode('utf-8')
@@ -78,4 +78,4 @@ class SshAllowLoginCommand(Command):
         system_context.execute(location.next_line(), 'append', authorized_file, line,
                                force=True)
         chown(system_context, data.uid, data.gid, authorized_file)
-        chmod(system_context, 0o644, authorized_file)
+        chmod(system_context, 0o600, authorized_file)

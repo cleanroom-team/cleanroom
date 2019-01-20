@@ -6,7 +6,6 @@
 
 
 from cleanroom.generator.command import Command
-from cleanroom.generator.helper.generic.systemd import systemd_harden_unit
 
 
 class SystemdHardenUnitCommand(Command):
@@ -29,24 +28,20 @@ class SystemdHardenUnitCommand(Command):
     def validate_arguments(self, location, *args, **kwargs):
         """Validate the arguments."""
         self._validate_args_at_least(location, 1,
-                                     '"{}" needs at least one '
-                                     'unit to harden.', *args)
+                                     '"{}" needs at least one unit to harden.', *args)
         self._validate_kwargs(location, ('CapabilityBoundingSet', 'NoNewPriviledges',
                                          'PrivateDevices', 'PrivateTmp',
                                          'ProtoctControlGroups', 'ProtectHome',
                                          'ProtectKernelModules', 'ProtectKernelTunables',
-                                         'RemoveIPC', 'RestrictAddressFamilies',
+                                         'ProtectSystem', 'RemoveIPC', 'RestrictAddressFamilies',
                                          'SystemCallArchitecture',), **kwargs)
 
     def _trueify(self, value):
-        if value:
-            return 'true'
-        else:
-            return 'false'
+        return 'true' if value else 'false'
 
     def _harden_unit(self, location, system_context, unit, **kwargs):
         if '.' not in unit:
-            unit.append('.service')
+            unit += '.service'
 
         system_context.execute(location, 'mkdir',
                                '/usr/lib/systemd/system/{}.d'.format(unit),
@@ -74,5 +69,5 @@ class SystemdHardenUnitCommand(Command):
 
     def __call__(self, location, system_context, *args, **kwargs):
         """Execute command."""
-        for unit in *args:
-            _harden_unit(location, system_context, unit, **kwargs)
+        for unit in args:
+            self._harden_unit(location, system_context, unit, **kwargs)
