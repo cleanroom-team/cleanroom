@@ -6,68 +6,69 @@
 
 
 from io import StringIO
+from os import getenv
 import sys
 import typing
 
 
 def h1(*args: str, **kwargs: typing.Any) -> None:
     """Print main headline."""
-    Printer.Instance().h1(*args, **kwargs)
+    Printer.instance().h1(*args, **kwargs)
 
 
 def h2(*args: str, **kwargs: typing.Any) -> None:
     """Print sub headline."""
-    Printer.Instance().h2(*args, **kwargs)
+    Printer.instance().h2(*args, **kwargs)
 
 
 def h3(*args: str, **kwargs: typing.Any) -> None:
     """Print sub-sub headline."""
-    Printer.Instance().h3(*args, **kwargs)
+    Printer.instance().h3(*args, **kwargs)
 
 
 def error(*args: str, **kwargs: typing.Any) -> None:
     """Print error message."""
-    Printer.Instance().error(*args, **kwargs)
+    Printer.instance().error(*args, **kwargs)
 
 
 def warn(*args: str, **kwargs: typing.Any) -> None:
     """Print warning message."""
-    Printer.Instance().warn(*args, **kwargs)
+    Printer.instance().warn(*args, **kwargs)
 
 
 def success(*args: str, **kwargs: typing.Any) -> None:
     """Print success message."""
-    Printer.Instance().success(*args, **kwargs)
+    Printer.instance().success(*args, **kwargs)
 
 
 def fail(*args: str, **kwargs: typing.Any) -> None:
     """Print fail message."""
-    Printer.Instance().fail(*args, **kwargs)
+    Printer.instance().fail(*args, **kwargs)
 
 
-def msg(*args: str, **kwargs: typing.Any) -> None:
+def msg(*args: str) -> None:
     """Print arguments."""
-    Printer.Instance().msg(*args, **kwargs)
+    Printer.instance().msg(*args)
 
 
-def verbose(*args: str, **kwargs: typing.Any) -> None:
+def verbose(*args: str) -> None:
     """Print if verbose is set."""
-    Printer.Instance().verbose(*args, **kwargs)
+    Printer.instance().verbose(*args)
 
 
-def info(*args: str, **kwargs: typing.Any) -> None:
+def info(*args: str) -> None:
     """Print even more verbose."""
-    Printer.Instance().info(*args, **kwargs)
+    Printer.instance().info(*args)
 
 
-def debug(*args: str, **kwargs: typing.Any) -> None:
+def debug(*args: str) -> None:
     """Print if debug is set."""
-    Printer.Instance().debug(*args, **kwargs)
+    Printer.instance().debug(*args)
 
 
-def trace(*args: str, **kwargs: typing.Any) -> None:
+def trace(*args: str) -> None:
     """Print trace messsages."""
-    Printer.Instance().trace(*args, **kwargs)
+    Printer.instance().trace(*args)
 
 
 def _ansify(seq: str) -> str:
@@ -93,15 +94,18 @@ class Printer:
     _instance = None
 
     @staticmethod
-    def Instance() -> 'Printer':
+    def instance() -> 'Printer':
         """Get the main printer instance."""
         if Printer._instance is None:
             Printer._instance = Printer(verbosity=0)
         return Printer._instance
 
-    def __init__(self, verbosity: int=0) -> None:
+    def __init__(self, verbosity: int = 0) -> None:
         """Constructor."""
-        self.set_verbosity(verbosity)
+        self._verbose = 0
+        self._prefix = ''
+
+        self.set_verbosity(int(getenv('CLRM_VERBOSITY', verbosity)))
 
         self._ansi_reset = _ansify('\033[0m')
         self._h_prefix = _ansify('\033[1;31m')
@@ -138,31 +142,32 @@ class Printer:
         self._verbose = verbosity
         self._prefix = '      ' if verbosity > 0 else ''
 
-    def show_verbosity_level(self) -> None:
-        if Printer.Instance()._print_at_verbosity_level(3):
+    @staticmethod
+    def show_verbosity_level() -> None:
+        if Printer.instance()._print_at_verbosity_level(3):
             verbose('Verbose output enabled.')
             info('Info output enabled.')
             debug('Debug output enabled.')
             trace('Trace output enabled.')
 
-    def _printToBuffer(self, *args: str) -> None:
+    def _print_to_buffer(self, *args: str) -> None:
         buf = StringIO()
         print(*args, file=buf)
         self._buffer += buf.getvalue()
 
-    def _printImpl(self, *args: str, **kwargs: typing.Any) -> None:
+    def _print_impl(self, *args: str, **kwargs: typing.Any) -> None:
         print(*args, **kwargs)
 
-    def _print(self, *args: str, verbosity: int=0) -> None:
-        self._printToBuffer(*args)
+    def _print(self, *args: str, verbosity: int = 0) -> None:
+        self._print_to_buffer(*args)
 
         if self._print_at_verbosity_level(verbosity):
-            self._printImpl(*args)
+            self._print_impl(*args)
 
     def _print_at_verbosity_level(self, verbosity: int) -> bool:
         return verbosity <= self._verbose
 
-    def h1(self, *args, verbosity: int=0) -> None:
+    def h1(self, *args, verbosity: int = 0) -> None:
         """Print big headline."""
         intro = '\n\n{}============================================{}'\
                 .format(self._h1_suffix, self._ansi_reset)
@@ -175,34 +180,34 @@ class Printer:
         self._print(verbosity=verbosity)
         self._buffer = ''
 
-    def h2(self, *args: str, verbosity: int=0) -> None:
+    def h2(self, *args: str, verbosity: int = 0) -> None:
         """Print a headline."""
         intro = '\n{}******{}'.format(self._h_prefix, self._h1_suffix)
         self._print(intro, *args, self._ansi_reset, verbosity=verbosity)
 
-    def h3(self, *args: str, verbosity: int=0) -> None:
+    def h3(self, *args: str, verbosity: int = 0) -> None:
         """Print a subheading."""
         intro = '\n{}******{}'.format(self._h_prefix, self._ansi_reset)
         self._print(intro, *args, verbosity=verbosity)
 
-    def error(self, *args: str, verbosity: int=0) -> None:
+    def error(self, *args: str, verbosity: int = 0) -> None:
         """Print error message."""
         intro = '{}ERROR:'.format(self._error_prefix)
         self._print(intro, *args, self._ansi_reset, verbosity=verbosity)
 
-    def warn(self, *args: str, verbosity: int=0) -> None:
+    def warn(self, *args: str, verbosity: int = 0) -> None:
         """Print warning message."""
         intro = '{}warn: '.format(self._warn_prefix)
         self._print(intro, *args, self._ansi_reset, verbosity=verbosity)
 
-    def success(self, *args: str, verbosity: int=0) -> None:
+    def success(self, *args: str, verbosity: int = 0) -> None:
         """Print success message."""
         intro = '{}  OK  {}'.format(self._ok_prefix, self._ok_suffix)
         self._print(intro, *args, self._ansi_reset, verbosity=verbosity)
         self._buffer = ''
 
-    def fail(self, *args: str, verbosity: int=0,
-             force_exit: bool=True, ignore: bool=False) -> None:
+    def fail(self, *args: str, verbosity: int = 0,
+             force_exit: bool = True, ignore: bool = False) -> None:
         """Print fail message."""
         if ignore:
             intro = '{} fail {}'.format(self._ig_fail_prefix,

@@ -46,18 +46,6 @@ def test_preflight():
     assert str(e) == 'Error: Something went wrong'
 
 
-def test_context():
-    """Test context exception."""
-    e = ex.ContextError('Something went wrong')
-    assert str(e) == 'Error: Something went wrong'
-
-
-def test_prepare():
-    """Test prepare exception."""
-    e = ex.PrepareError('Something went wrong')
-    assert str(e) == 'Error: Something went wrong'
-
-
 def test_generate():
     """Test prepare exception."""
     e = ex.GenerateError('Something went wrong')

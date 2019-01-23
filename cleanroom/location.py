@@ -5,17 +5,19 @@
 """
 
 
+from __future__ import annotations
+
 import typing
 
 
 class Location:
-    """Context data for the execution os commands."""
+    """Context data for the execution os print_commands."""
 
     def __init__(self, *,
-                 file_name: typing.Optional[str]=None,
-                 line_number: typing.Optional[int]=None,
-                 description: typing.Optional[str]=None,
-                 parent: "Location"=None) -> None:
+                 file_name: typing.Optional[str] = None,
+                 line_number: typing.Optional[int] = None,
+                 description: typing.Optional[str] = None,
+                 parent: Location = None) -> None:
         """Constructor."""
         if line_number is not None:
             assert line_number > 0
@@ -35,9 +37,9 @@ class Location:
         """Set location description."""
         self.description = message
 
-    def create_child(self, *, file_name: typing.Optional[str]=None,
-                     line_number: typing.Optional[int]=None,
-                     description: typing.Optional[str]=None) -> 'Location':
+    def create_child(self, *, file_name: typing.Optional[str] = None,
+                     line_number: typing.Optional[int] = None,
+                     description: typing.Optional[str] = None) -> 'Location':
         return Location(file_name=file_name,
                         line_number=line_number,
                         description=description,

@@ -7,30 +7,11 @@ FIXME: Allow for different distro ids
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-from ..helper import disc
-from ..helper.run import run as helper_run
-from ..printer import (debug, fail, Printer, success, trace, verbose,)
-from ..export import (Exporter, ExportContents)
+from ..printer import Printer
+from .imager import *
 
 from argparse import ArgumentParser
-import collections
-import json
-import os
-import re
-import shutil
 import sys
-import tempfile
-import typing
-
-
-mib = 1024 * 1024
-
-
-ExtraPartition = collections.namedtuple('ExtraPartition',
-                                        ['size', 'filesystem', 'label', 'contents'])
-ImageConfig = collections.namedtuple('ImageConfig',
-                                     ['path', 'disk_format', 'force', 'repartition', 'efi_size',
-                                      'swap_size', 'extra_partitions'])
 
 
 def _parse_commandline(*arguments: str):
@@ -60,7 +41,7 @@ def _parse_commandline(*arguments: str):
 
     parser.add_argument('--image-format', dest='disk_format', action='store',
                         default='qcow2', nargs='?',
-                        help='The format of the image file to generate.')
+                        help='The format of the image file to generate_systems.')
 
     parser.add_argument('--timestamp', dest='timestamp', action='store',
                         nargs='?', default=None,
@@ -82,18 +63,6 @@ def run() -> None:
     main(*sys.argv)
 
 
-def _parse_extra_partition_value(value: str) -> typing.Optional[ExtraPartition]:
-    parts = value.split(':')
-    while len(parts) < 4:
-        parts.append('')
-
-    size = disc.mib_ify(disc.normalize_size(parts[0]))
-    assert size
-
-    return ExtraPartition(size=size, filesystem=parts[1], label=parts[2],
-                          contents=parts[3])
-
-
 def main(*args: str):
     """Run image installer with arguments."""
     args = _parse_commandline(*args)
@@ -107,27 +76,27 @@ def main(*args: str):
         sys.exit(2)
 
     # Set up printing:
-    pr = Printer.Instance()
+    pr = Printer.instance()
     pr.set_verbosity(args.verbose)
     pr.show_verbosity_level()
 
     success('Setup done.', verbosity=4)
 
-    extra_partitions = tuple(map(_parse_extra_partition_value, args.extra_partitions))
+    extra_partitions = parse_extra_partitions(args.extra_partitions)
 
     system = args.system
     image_config = ImageConfig(args.image, args.disk_format, args.force, args.repartition,
-                               disc.mib_ify(disc.normalize_size(args.efi_size)),
-                               disc.mib_ify(disc.normalize_size(args.swap_size)),
+                               disk.mib_ify(disk.normalize_size(args.efi_size)),
+                               disk.mib_ify(disk.normalize_size(args.swap_size)),
                                extra_partitions)
 
     trace('Validating inputs.')
-    _validate_image_config_path(image_config.path, image_config.force)
+    validate_image_config_path(image_config.path, image_config.force)
 
     path = image_config.path
 
     try:
-        path = _root_only_part(image_config, system, args.timestamp, args.repository)
+        root_only_part(image_config, system, args.timestamp, args.repository)
     except Exception as e:
         fail('Failed to create image: {}'.format(str(e)))
         raise e
@@ -135,308 +104,3 @@ def main(*args: str):
         pr.flush()
 
     success('Image file {} created.'.format(path), verbosity=0)
-
-
-def _root_only_part(image_config: ImageConfig, system: str, timestamp: str, repository: str) -> None:
-    if os.geteuid() != 0:
-        fail('Not running as root.')
-
-    trace('Running as root.')
-
-    exporter = Exporter(repository)
-    if timestamp is None:
-        system_timestamps = exporter.timestamps(system)
-        if len(system_timestamps) == 0:
-            fail('Could not find system "{}" in repository "{}".'
-                 .format(system, repository))
-        else:
-            timestamp = system_timestamps[-1].timestamp
-    else:
-        if not exporter.has_system_with_timestamp(system, timestamp):
-            fail('Could not find system "{}" with timestamp "{}" in repository "{}".'
-                 .format(system, timestamp, repository))
-
-    debug('Using timestamp "{}".'.format(timestamp))
-
-    path = image_config.path.replace('XXXXXX', timestamp)
-
-    full_system_name = '{}-{}'.format(system, timestamp)
-
-    debug('Creating image "{}" from "{}".'.format(path, full_system_name))
-
-    contents = exporter.export(system, timestamp)
-    _validate_contents(contents)
-
-    kernel_size = contents.file(contents.kernel_name()).size
-    assert kernel_size
-    root_size = contents.file(contents.root_name()).size
-    assert root_size
-    verity_size = contents.file(contents.verity_name()).size
-    assert verity_size
-
-    trace('Got sizes from repository: kernel: {}b, root: {}b, verity: {}b'
-          .format(kernel_size, root_size, verity_size))
-
-    extra_total = 0
-    for ep in image_config.extra_partitions:
-        extra_total += ep.size
-    trace('Calculated total extra partition size: {}b'.format(extra_total))
-
-    efi_size = _calculate_efi_size(kernel_size, image_config.efi_size)
-    trace('EFI size: {}b, Swap size: {}b, extra partitions: {}'
-          .format(efi_size, image_config.swap_size, extra_total))
-
-    min_device_size = _calculate_minimum_size(kernel_size, root_size, verity_size,
-                                              efi_size, image_config.swap_size,
-                                              image_config.extra_partitions)
-
-    verbose('Sizes: kernel: {}b, root: {}b, verity: {}b => min device size: {}b'
-            .format(kernel_size, root_size, verity_size, min_device_size))
-
-    with _find_or_create_device_node(path, image_config.disk_format,
-                                     min_device_size) as device:
-
-        partition_devices = _repartition(device, image_config.repartition, timestamp,
-                                         efi_size=efi_size, root_size=root_size,
-                                         verity_size=verity_size, swap_size=image_config.swap_size,
-                                         extra_partitions=image_config.extra_partitions)
-        for name, dev in partition_devices.items():
-            trace('Created partition "{}": {}.'.format(name, dev))
-
-        success('Partitions created.', verbosity=2)
-
-        if 'swap' in partition_devices:
-            helper_run('/usr/bin/mkswap', '-L', 'main', partition_devices['swap'])
-        assert 'root' in partition_devices
-        _write_to_partition(partition_devices['root'], contents.root_name(), contents)
-        success('Root partition installed.', verbosity=2)
-
-        assert 'verity' in partition_devices
-        _write_to_partition(partition_devices['verity'], contents.verity_name(), contents)
-        success('Verity partition installed.', verbosity=2)
-        assert 'efi' in partition_devices
-        _prepare_efi_partition(partition_devices['efi'], partition_devices['root'],
-                               contents)
-        success('EFI partition installed.', verbosity=2)
-        for i in range(len(image_config.extra_partitions)):
-            ep = image_config.extra_partitions[i]
-            _prepare_extra_partition(partition_devices['extra{}'.format(i+1)],
-                                     filesystem=ep.filesystem, label=ep.label,
-                                     contents=ep.contents)
-        success('Extra partitions installed.', verbosity=2)
-
-    return path
-
-
-def _backup_name(repository: str, full_system_name: str) -> str:
-    return '{}::{}'.format(repository, full_system_name)
-
-
-def _kernel_name(timestamp: str) -> str:
-    return 'linux-{}.efi'.format(timestamp)
-
-
-def _root_name(timestamp: str) -> str:
-    return 'root_{}'.format(timestamp)
-
-
-def _verity_name(timestamp: str) -> str:
-    return 'vrty_{}'.format(timestamp)
-
-
-def _minimum_efi_size(kernel_size: int) -> int:
-    bootloader_size = 1 * mib  # size of systemd-boot (+ some spare)
-    return int((kernel_size + 2 * bootloader_size) * 1.05)
-
-
-def _calculate_efi_size(kernel_size: int, efi_size: int) -> int:
-    if efi_size > 0:
-        return efi_size
-    return _minimum_efi_size(kernel_size)
-
-
-def _calculate_minimum_size(kernel_size: int, root_size: int, verity_size: int,
-                            efi_size: int, swap_size: int,
-                            extra_partitions: typing.List[ExtraPartition]) -> int:
-    if efi_size < _minimum_efi_size(kernel_size):
-        fail('EFI partition is too small to hold the kernel.')
-
-    total_extra_size = 0
-    for ep in extra_partitions:
-        total_extra_size += ep.size
-
-    return (2 * mib +      # Blank space in front
-            efi_size +     # EFI partition
-            swap_size +    # Swap partition
-            root_size +    # Squashfs root partition
-            verity_size +  # Verity root partition
-            total_extra_size +
-            2 * mib)       # Blank space in back
-
-
-def _validate_contents(contents: ExportContents) -> None:
-    type = contents.extract('export_type', '--stdout')
-    if type != 'export_squashfs':
-        fail('Failed with invalid export_type in archive (was "{}")'.format(type))
-    trace('export_type contents was export_squashfs, as expected.')
-
-def _validate_image_config_path(path: str, force: bool) -> bool:
-    if disc.is_block_device(path):
-        return _validate_device(path, force)
-    return _validate_image_file(path, force)
-
-
-def _validate_device(path: str, force: bool) -> None:
-    if not force:
-        fail('You need to --force to work with block device "{}".'
-             .format(path))
-
-
-def _validate_image_file(path: str, force: bool) -> None:
-    if os.path.exists(path):
-        if not force:
-            fail('You need to --force override of existing image file "{}".'
-                 .format(path))
-
-
-def _find_or_create_device_node(path: str, disk_format: str, min_device_size: int) -> None:
-    if disc.is_block_device(path):
-        _validate_size_of_block_device(path, min_device_size)
-        return disc.Device(path)
-    return _create_nbd_device(path, disk_format, min_device_size)
-
-
-def _validate_size_of_block_device(path: str, min_device_size: int) -> None:
-    result = helper_run('/usr/bin/blockdev', '--getsize64', path, trace_output=trace)
-    if int(result.stdout) < min_device_size:
-        fail('"{}" is too small for image data. Minimum size is {}b.'
-             .format(path, min_device_size))
-
-
-def _create_nbd_device(path: str, disk_format: str, min_device_size: int) -> None:
-    return disc.NbdDevice.NewImageFile(path, min_device_size, disk_format=disk_format)
-
-
-def _repartition(device: str, repartition: bool, timestamp: str, *,
-                 efi_size: int, root_size: int, verity_size: int, swap_size: int=0,
-                 extra_partitions: typing.List[ExtraPartition]=[]) -> typing.List[str]:
-    partitioner = disc.Partitioner(device)
-
-    if partitioner.is_partitioned() and not repartition:
-        fail('"{}" is already partitioned, use --repartition to force repartitioning.'
-             .format(device.device()))
-
-    trace('Setting basic partitions')
-    partitions = [partitioner.efi_partition(start='2m', size=efi_size),
-                  partitioner.data_partition(size=root_size,
-                                             name='clrm_{}'.format(timestamp)),
-                  partitioner.data_partition(size=verity_size,
-                                             name='vrty_{}'.format(timestamp))]
-    devices = {'efi': device.device(1), 'root': device.device(2),
-               'verity': device.device(3)}
-
-    trace('Adding swap (if necessary)')
-    if swap_size > 0:
-        partitions.append(partitioner.swap_partition(size=swap_size))
-        devices['swap'] = device.device(4)
-
-    extra_counter = 0
-    debug('Adding extra partitions: {}.'.format(extra_partitions))
-    for ep in extra_partitions:
-        extra_counter += 1
-
-        name = 'extra{}'.format(extra_counter)
-
-        label = name if ep.label is None else ep.label
-        partitions.append(partitioner.data_partition(size=ep.size, name=label))
-        devices[name] = device.device(4 + extra_counter)
-
-    trace('*** REPARTITION NOW ***')
-    partitioner.repartition(partitions)
-
-    return devices
-
-
-def _copy_efi_file(source: str, destination: str) -> None:
-    shutil.copyfile(source, destination)
-    os.chmod(destination, 0o755)
-
-
-def _prepare_efi_partition(device: str, root_dev: str, contents: str) -> None:
-    trace('Preparing EFI partition.')
-    _prepare_extra_partition(device, filesystem='vfat', label='EFI')
-
-    trace('... Partition created.')
-    cwd = os.getcwd()
-    with tempfile.TemporaryDirectory() as mnt_point:
-        boot_mnt = os.path.join(mnt_point, 'boot')
-        root_mnt = os.path.join(mnt_point, 'root')
-        try:
-            os.makedirs(boot_mnt)
-            helper_run('/usr/bin/mount', '-t', 'vfat', device, boot_mnt, trace_output=trace)
-            os.makedirs(root_mnt)
-            helper_run('/usr/bin/mount', '-t', 'squashfs', root_dev, root_mnt, trace_output=trace)
-
-            trace('... boot and root are mounted.')
-
-            loader = os.path.join(root_mnt, 'usr/lib/systemd/boot/efi/systemd-bootx64.efi')
-            os.makedirs(os.path.join(boot_mnt, 'EFI/Boot'))
-            trace('... "EFI/boot" directory created.')
-            _copy_efi_file(loader, os.path.join(boot_mnt, 'EFI/Boot/BOOTX64.EFI'))
-            trace('... default boot loader installed')
-            os.makedirs(os.path.join(boot_mnt, 'EFI/systemd'))
-            trace('... "EFI/systemd" directory created.')
-            _copy_efi_file(loader, os.path.join(boot_mnt, 'EFI/systemd/systemd-bootx64.efi'))
-            trace('... systemd boot loader installed.')
-            os.makedirs(os.path.join(boot_mnt, 'loader/entries'))
-            with open(os.path.join(boot_mnt, 'loader/loader.conf'), 'w') as lc:
-                lc.write('#timeout 3\n')
-                lc.write('default linux-*\n')
-
-            trace('... loader.conf written.')
-
-            linux_dir = os.path.join(boot_mnt, 'EFI/Linux')
-            os.makedirs(linux_dir)
-            trace('... "EFI/Linux" created.')
-            contents.extract(contents.kernel_name(), work_directory=linux_dir)
-            trace('... kernel extracted')
-
-        finally:
-            trace('... cleaning up.')
-            os.chdir(cwd)
-            helper_run('/usr/bin/umount', boot_mnt, trace_output=trace, returncode=None)
-            helper_run('/usr/bin/umount', root_mnt, trace_output=trace, returncode=None)
-
-
-def _write_to_partition(device: str, file_name: str, contents: str) -> None:
-    contents.extract(file_name, '--stdout', stdout=device)
-
-
-def _format_partition(device: str, filesystem: str, *label_args: str) -> None:
-    helper_run('/usr/bin/mkfs.{}'.format(filesystem), *label_args, device)
-
-
-def _prepare_extra_partition(device: str, *,
-                             filesystem: typing.Optional[str]=None,
-                             label: typing.Optional[str]=None,
-                             contents: typing.Optional[str]=None) -> None:
-    if filesystem is None:
-        assert contents is None
-        return
-
-    verbose('Preparing extra partition on {} using {}.'.format(device, filesystem))
-
-    label_args = ()
-    if label is not None:
-        debug('... setting label to "{}".'.format(label))
-        if filesystem == 'fat' or filesystem == 'vfat':
-            label_args = ('-n', label)
-        if filesystem.startswith('ext') or filesystem == 'btrfs' or filesystem == 'xfs':
-            label_args = ('-L', label)
-
-    _format_partition(device, filesystem, *label_args)
-
-    if contents is not None:
-        # FIXME: Implement this!
-        assert contents is None
-        return

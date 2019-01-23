@@ -99,7 +99,7 @@ extent that it includes a convenient and prominently visible feature that **(1)*
 displays an appropriate copyright notice, and **(2)** tells the user that there is no
 warranty for the work (except to the extent that warranties are provided), that
 licensees may convey the work under this License, and how to view a copy of this
-License. If the interface presents a list of user commands or options, such as a
+License. If the interface presents a list of user print_commands or options, such as a
 menu, a prominent item in the list meets this criterion.
 
 ### 1. Source Code
@@ -124,7 +124,7 @@ the executable work runs, or a compiler used to produce the work, or an object c
 interpreter used to run it.
 
 The “Corresponding Source” for a work in object code form means all the
-source code needed to generate, install, and (for an executable work) run the object
+source code needed to generate_systems, install, and (for an executable work) run the object
 code and to modify the work, including scripts to control those activities. However,
 it does not include the work's System Libraries, or general-purpose tools or
 generally available free programs which are used unmodified in performing those
@@ -578,8 +578,8 @@ when it starts in an interactive mode:
     This is free software, and you are welcome to redistribute it
     under certain conditions; type 'show c' for details.
 
-The hypothetical commands `show w` and `show c` should show the appropriate parts of
-the General Public License. Of course, your program's commands might be different;
+The hypothetical print_commands `show w` and `show c` should show the appropriate parts of
+the General Public License. Of course, your program's print_commands might be different;
 for a GUI interface, you would use an “about box”.
 
 You should also get your employer (if you work as a programmer) or school, if any, to

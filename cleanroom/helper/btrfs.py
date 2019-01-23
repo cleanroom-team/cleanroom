@@ -5,68 +5,59 @@
 """
 
 
-from .run import run
 from ..printer import trace
+from .run import run
 
 import os.path
-from subprocess import CompletedProcess
 import typing
 
 
-def run_btrfs(command: typing.Optional[str],
-              *args: typing.Any, **kwargs: typing.Any) -> CompletedProcess:
-    if command is None:
-        command = '/usr/bin/btrfs'
-    return run(command, *args, **kwargs)
+class BtrfsHelper:
+    def __init__(self, btrfs_command):
+        assert btrfs_command
+        self._command = btrfs_command
 
+    def create_subvolume(self, directory: str) -> None:
+        """Create a new subvolume."""
+        trace('BTRFS: Create subvolume {}.'.format(directory))
+        run(self._command, 'subvolume', 'create', directory, trace_output=trace)
 
-def create_subvolume(directory: str, *, command: typing.Optional[str]=None):
-    """Create a new subvolume."""
-    trace('BTRFS: Create subvolume {}.'.format(directory))
-    return run_btrfs(command, 'subvolume', 'create', directory,
-                     trace_output=trace)
+    def create_snapshot(self, source: str, destination: str, *,
+                        read_only: bool = False) -> None:
+        """Create a new snapshot."""
+        extra_args: typing.Tuple[str, ...] = ()
+        if read_only:
+            extra_args = (*extra_args, '-r')
 
+        trace('BTRFS: Create snapshot of {} into {} ({}).'
+              .format(source, destination, 'ro' if read_only else 'rw'))
+        run(self._command, 'subvolume', 'snapshot', *extra_args, source, destination,
+            trace_output=trace)
 
-def create_snapshot(source: str, dest: str, *,
-                    read_only: bool=False, command: typing.Optional[str]=None) \
-        -> CompletedProcess:
-    """Create a new snapshot."""
-    extra_args: typing.Tuple[str, ...] = ()
-    if read_only:
-        extra_args = (*extra_args, '-r')
+    def delete_subvolume(self, directory: str) -> None:
+        """Delete a subvolume."""
+        trace('BTRFS: Delete subvolume {}.'.format(directory))
+        run(self._command, 'subvolume', 'delete', directory, trace_output=trace)
 
-    trace('BTRFS: Create snapshot of {} into {}.'.format(source, dest))
-    return run_btrfs(command, 'subvolume', 'snapshot', *extra_args, source, dest,
-                     trace_output=trace)
-
-
-def delete_subvolume(directory: str, *, command: typing.Optional[str]=None) \
-        -> CompletedProcess:
-    """Delete a subvolume."""
-    trace('BTRFS: Delete subvolume {}.'.format(directory))
-    result = run_btrfs(command, 'subvolume', 'delete', directory, trace_output=trace)
-
-
-def delete_subvolume_recursive(directory: str, *, command: typing.Optional[str]=None) \
-        -> CompletedProcess:
-    """Delete all subvolumes in a subvolume or directory."""
-    result = None
-
-    if not directory.endswith('/fs'):
+    def delete_subvolume_recursive(self, directory: str) -> None:
+        """Delete all subvolumes in a subvolume or directory."""
         for f in os.listdir(directory):
             child = os.path.join(directory, f)
             if os.path.isdir(child):
-                result = delete_subvolume_recursive(child, command=command)
+                self.delete_subvolume_recursive(child)
 
-    if has_subvolume(directory, command=command):
-        result = delete_subvolume(directory, command=command)
-    return result
+        if self.has_subvolume(directory):
+            self.delete_subvolume(directory)
 
+    def has_subvolume(self, directory: str) -> bool:
+        """Check whether a subdirectory is a subvolume or snapshot."""
+        if not os.path.isdir(directory):
+            return False
+        return run(self._command, 'subvolume', 'show', directory,
+                   return_code=None, trace_output=trace).returncode == 0
 
-def has_subvolume(directory: str, *, command: typing.Optional[str]=None) -> bool:
-    """Check whether a subdirectory is a subvolume or snapshot."""
-    if not os.path.isdir(directory):
-        return False
-    result = run(command, 'subvolume', 'show', directory,
-                 returncode=None, trace_output=trace)
-    return result.returncode == 0
+    def is_btrfs_filesystem(self, directory: str) -> bool:
+        if not os.path.isdir(directory):
+            return False
+        return run(self._command, 'subvolume', 'list', directory,
+                   return_code=None, trace_output=trace).returncode == 0

@@ -8,9 +8,10 @@ from .run import run
 
 import re
 import os.path
+import typing
 
 
-def _map_into_chroot(directory, chroot):
+def _map_into_chroot(directory: str, chroot: typing.Optional[str]):
     assert os.path.isabs(directory)
     directory = os.path.normpath(directory)
 
@@ -25,19 +26,20 @@ def _map_into_chroot(directory, chroot):
     return directory
 
 
-def mount_points(directory, chroot=None):
+def mount_points(directory: str, chroot: typing.Optional[str] = None) \
+        -> typing.List[str]:
     """Return a list of mount points at or below the given directory."""
     assert (not directory.endswith('/'))
     directory = _map_into_chroot(directory, chroot)
 
     pattern = re.compile('^(.*) on (.*) type (.*)$')
     result = run('/usr/bin/mount')
-    sub_mounts = []
+    sub_mounts: typing.List[str] = []
     for line in result.stdout.split('\n'):
         if not line:
             continue
         match = re.match(pattern, line)
-        assert (match)
+        assert match
         mount_point = match.group(2)
 
         if mount_point == directory or \
@@ -47,12 +49,12 @@ def mount_points(directory, chroot=None):
     return sorted(sub_mounts, key=len, reverse=True)
 
 
-def umount(directory, chroot=None):
+def umount(directory: str, chroot: typing.Optional[str] = None) -> None:
     """Unmount a directory."""
     run('/usr/bin/umount', _map_into_chroot(directory, chroot))
 
 
-def umount_all(directory, chroot=None):
+def umount_all(directory: str, chroot: typing.Optional[str] = None) -> bool:
     """Unmount all mount points below a directory."""
     sub_mounts = mount_points(directory, chroot=chroot)
 
@@ -65,10 +67,13 @@ def umount_all(directory, chroot=None):
     return len(sub_mounts) == 0
 
 
-def mount(volume, directory, *, options=None, type=None, chroot=None):
-    args = []
-    if type is not None:
-        args += ['-t', type]
+def mount(volume: str, directory: str, *,
+          options: typing.Optional[str] = None,
+          fs_type: typing.Optional[str] = None,
+          chroot: typing.Optional[str] = None) -> None:
+    args: typing.List[str] = []
+    if fs_type is not None:
+        args += ['-t', fs_type]
     if options is not None:
         args += ['-o', options]
 

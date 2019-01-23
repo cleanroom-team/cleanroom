@@ -13,8 +13,8 @@ import typing
 class CleanRoomError(Exception):
     """Base class for all cleanroom Exceptions."""
 
-    def __init__(self, *args: typing.Any, location: Location=None,
-                 original_exception: typing.Optional[Exception]=None) -> None:
+    def __init__(self, *args: typing.Any, location: Location = None,
+                 original_exception: typing.Optional[Exception] = None) -> None:
         """Constructor."""
         super().__init__(*args)
         self.location = location
@@ -45,14 +45,8 @@ class PreflightError(CleanRoomError):
     pass
 
 
-class ContextError(CleanRoomError):
-    """Error raised when setting up the Context to work in."""
-
-    pass
-
-
-class PrepareError(CleanRoomError):
-    """Error raised while Preparing for generation."""
+class ParseError(CleanRoomError):
+    """Error raised while parsing system descriptions."""
 
     pass
 
@@ -65,11 +59,5 @@ class GenerateError(CleanRoomError):
 
 class SystemNotFoundError(CleanRoomError):
     """Error raised when a system could not be found."""
-
-    pass
-
-
-class ParseError(CleanRoomError):
-    """Error raised while parsing system descriptions."""
 
     pass
