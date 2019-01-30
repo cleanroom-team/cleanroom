@@ -4,10 +4,10 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
+from cleanroom.command import Command
 from cleanroom.location import Location
-from cleanroom.generator.command import Command
-from cleanroom.generator.systemcontext import SystemContext
 from cleanroom.printer import debug
+from cleanroom.systemcontext import SystemContext
 
 import os.path
 import typing
@@ -16,17 +16,16 @@ import typing
 class StripDocumentationHookCommand(Command):
     """The strip_documentation Command."""
 
-    def __init__(self) -> None:
+    def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
         super().__init__('_strip_documentation_hook',
-                         help_string='Strip away documentation files (hook).', file=__file__)
+                         help_string='Strip away documentation files (hook).',
+                         file=__file__, **services)
 
-    def validate_arguments(self, location: Location, *args: typing.Any, **kwargs: typing.Any) \
-            -> typing.Optional[str]:
+    def validate(self, location: Location,
+                 *args: typing.Any, **kwargs: typing.Any) -> None:
         """Validate arguments."""
         self._validate_no_arguments(location, *args, **kwargs)
-
-        return None
 
     def __call__(self, location: Location, system_context: SystemContext,
                  *args: typing.Any, **kwargs: typing.Any) -> None:

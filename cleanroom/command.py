@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Base class for print_commands usable in the system definition files.
+"""Base class for commands usable in the system definition files.
 
-The Command class will be used to derive all system definition file print_commands
+The Command class will be used to derive all system definition file commands
 from.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
@@ -10,9 +10,10 @@ from.
 
 from __future__ import annotations
 
+from .binarymanager import Binaries
 from .exceptions import GenerateError, ParseError
 from .location import Location
-from .printer import trace, fail, success
+from .printer import fail, h3, success
 from .systemcontext import SystemContext
 
 import os
@@ -20,10 +21,8 @@ import os.path
 import typing
 
 
-ServicesType = typing.Mapping[str, typing.Any]
-
-
-def _stringify(command: str, *args, **kwargs):
+def stringify(command: str, args: typing.Tuple[typing.Any, ...],
+              kwargs: typing.Mapping[str, typing.Any]):
     args_str = ' "' + '" "'.join(args) + '"' if args else ''
     kwargs_str = ' '.join(map(lambda kv: kv[0] + '="' + str(kv[1]) + '"',
                               kwargs.items())) if kwargs else ''
@@ -35,7 +34,7 @@ class Command:
 
     def __init__(self, name: str, *, file: str,
                  syntax: str = '', help_string: str,
-                 services: ServicesType) \
+                 **services: typing.Any) \
             -> None:
         """Constructor."""
         self._name = name
@@ -68,8 +67,7 @@ class Command:
 
         Validate all arguments.
         """
-        fail('Command "{}"" called validate_arguments illegally!'
-             .format(self.name))
+        fail('Command "{}"" called validate illegally!'.format(self.name))
         return None
 
     def dependency(self, *args: typing.Any, **kwargs: typing.Any) \
@@ -77,30 +75,36 @@ class Command:
         """Maybe implement this, but this default implementation should be ok."""
         return None
 
-    def execute(self, location: Location, system_context: SystemContext,
-                *args: typing.Any, **kwargs: typing.Any) -> None:
-        command_str = _stringify(self.name, *args, **kwargs)
-        trace('{}: Execute {}.'.format(location, self.name, command_str))
-        self(location, system_context, *args, **kwargs)
-        success('{}: Executed {}{}'.format(location, self.name, command_str))
-
     def __call__(self, location: Location, system_context: SystemContext,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
         """Implement this!"""
+        fail('Command "{}"() triggered illegally!'
+             .format(self.name))
 
     def _execute(self, location: Location, system_context: SystemContext,
                  command: str, *args: typing.Any, **kwargs: typing.Any) -> None:
-        command_str = _stringify(command, *args, **kwargs)
-        trace('{}: Execute {}.'.format(location, self.name, command_str))
-
-        command_info = self.service('command_manager').command(command)
+        command_info = self._service('command_manager').command(command)
         if not command_info:
             raise GenerateError('Command "{}" not found.'.format(command))
         command_info.validate_func(location, *args, **kwargs)
         command_info.execute_func(location, system_context, *args, **kwargs)
-        success('{}: Executed {}{}'.format(location, self.name, command_str))
 
-    def service(self, service_name: str) -> typing.Any:
+    def _run_hooks(self, system_context: SystemContext, hook_name: str) \
+            -> None:
+        h3('Running "{}" hooks.'.format(hook_name))
+
+        for hook in system_context.hooks(hook_name):
+            command_info = self._service('command_manager').command(hook.command)
+            if not command_info:
+                raise GenerateError('Command "{}" not found.'.format(hook.command))
+            command_info.execute_func(hook.location, system_context, *hook.args, **hook.kwargs)
+
+        success('Hooks "{}" were run successfully.'.format(hook_name), verbosity=1)
+
+    def _binary(self, binary: Binaries) -> str:
+        return self._service('binary_manager').binary(binary)
+
+    def _service(self, service_name: str) -> typing.Any:
         return self._services.get(service_name, None)
 
     @property
@@ -108,6 +112,7 @@ class Command:
         """Return the helper directory."""
         return self.__helper_directory
 
+    # Validation of args and kwargs:
     def _validate_no_arguments(self, location: Location,
                                *args: typing.Any, **kwargs: typing.Any) -> None:
         self._validate_no_args(location, *args)
@@ -124,42 +129,27 @@ class Command:
         self._validate_kwargs(location, (), **kwargs)
 
     def _validate_no_args(self, location: Location, *args: typing.Any) -> None:
-        if args is list:
-            trace('Validating arguments: "{}".'.format('", "'.join(str(args))))
-        else:
-            trace('Validating argument: "{}".'.format(args))
         self._validate_args_exact(location, 0,
                                   '"{}" does not take arguments.', *args)
 
     def _validate_args_exact(self, location: Location, arg_count: int,
                              message: str, *args: typing.Any) -> None:
-        if args is list:
-            trace('Validating arguments: "{}".'.format('", "'.join(str(args))))
-        else:
-            trace('Validating argument: "{}".'.format(args))
         if len(args) != arg_count:
             raise ParseError(message.format(self.name), location=location)
 
     def _validate_args_at_least(self, location: Location, arg_count: int,
                                 message: str, *args: typing.Any) -> None:
-        if args is list:
-            trace('Validating arguments: "{}".'.format('", "'.join(str(args))))
-        else:
-            trace('Validating argument: "{}".'.format(args))
         if len(args) < arg_count:
             raise ParseError(message.format(self.name), location=location)
 
     def _validate_kwargs(self, location: Location, known_kwargs: typing.Tuple[str, ...],
                          **kwargs: typing.Any) -> None:
-        trace('Validating keyword arguments: "{}"'
-              .format('", "'.join(['{}={}'.format(k, str(kwargs[k]))
-                                   for k in kwargs.keys()])))
         if not known_kwargs:
             if kwargs:
                 raise ParseError('"{}" does not accept keyword arguments.'
                                  .format(self.name), location=location)
         else:
-            for key, value in kwargs.items():
+            for key in kwargs.keys():
                 if key not in known_kwargs:
                     raise ParseError('"{}" does not accept the keyword '
                                      'arguments "{}".'

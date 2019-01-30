@@ -11,7 +11,7 @@ import typing
 
 
 class Location:
-    """Context data for the execution os print_commands."""
+    """Context data for the execution os commands."""
 
     def __init__(self, *,
                  file_name: typing.Optional[str] = None,

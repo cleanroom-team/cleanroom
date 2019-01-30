@@ -5,7 +5,7 @@
 """
 
 
-from .printer import fail, info, trace, warn
+from .printer import debug, fail, trace, warn
 
 from enum import Enum, auto, unique
 import os
@@ -18,6 +18,7 @@ class Binaries(Enum):
 
     BORG = auto()
     BTRFS = auto()
+    MKNOD = auto()
     PACMAN = auto()
     PACMAN_KEY = auto()
     PACSTRAP = auto()
@@ -56,13 +57,13 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.BTRFS: _check_for_binary('/usr/bin/btrfs'),
         Binaries.SBSIGN: _check_for_binary('/usr/bin/sbsign'),
         Binaries.OBJCOPY: _check_for_binary('/usr/bin/objcopy'),
+        Binaries.MKNOD: _check_for_binary('/usr/bin/mknod'),
         Binaries.MKSQUASHFS: _check_for_binary('/usr/bin/mksquashfs'),
         Binaries.TAR: _check_for_binary('/usr/bin/tar'),
         Binaries.USERMOD: _check_for_binary('/usr/sbin/usermod'),
         Binaries.USERADD: _check_for_binary('/usr/sbin/useradd'),
         Binaries.GROUPMOD: _check_for_binary('/usr/sbin/groupmod'),
         Binaries.GROUPADD: _check_for_binary('/usr/sbin/groupadd'),
-        # in arch-install-scripts in ubuntu:-)
         Binaries.CHROOT_HELPER: _check_for_binary('/usr/bin/arch-chroot'),
     }
     os_binaries: typing.Dict[Binaries, str] = {}
@@ -99,7 +100,7 @@ class BinaryManager:
         passed = True
         for b in self._binaries.items():
             if b[1]:
-                info('{} found: {}...'.format(b[0], b[1]))
+                debug('{} found: {}...'.format(b[0], b[1]))
             else:
                 warn('{} not found.'.format(b[0]))
                 passed = False

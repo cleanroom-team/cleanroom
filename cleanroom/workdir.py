@@ -82,9 +82,8 @@ class WorkDir:
     def __enter__(self) -> typing.Any:
         """Enter a Context."""
         if self._temp_directory:
-            return self._temp_directory.__enter__()
-        else:
-            return self._work_directory
+            self._temp_directory.__enter__()
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
         """Exit a context."""

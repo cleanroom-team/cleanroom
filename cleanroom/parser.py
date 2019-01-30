@@ -65,28 +65,27 @@ class Parser:
         self._grammar = _generate_grammar(debug_parser=debug_parser)
 
     def parse(self, input_file: str) \
-            -> typing.Optional[typing.Tuple[str, typing.List[ExecObject]]]:
+            -> typing.Tuple[str, typing.List[ExecObject]]:
         """Parse a file."""
         with open(input_file, 'r') as f:
             debug('Parsing file {}...'.format(input_file))
             return self._parse_string(f.read(), input_file)
 
-    def _parse_string(self, data, input_file) \
-            -> typing.Optional[typing.Tuple[str, typing.List[ExecObject]]]:
-        result: typing.List[ExecObject] = []
-        base_system = ''
+    def _parse_string(self, data, input_file_name) \
+            -> typing.Tuple[str, typing.List[ExecObject]]:
+        base_system_name = ''
+        exec_obj_list: typing.List[ExecObject] = []
 
-        current_location = Location(file_name=input_file)
+        current_location = Location(file_name=input_file_name)
 
         try:
             parse_result = self._grammar.parseString(data, parseAll=True)
 
             for c in parse_result:
-                if len(c) == 0:  # empty line
+                if not c:
                     continue
 
                 child_dict = c.asDict()
-                    
                 arguments = child_dict.get('args', [])
                 if isinstance(arguments, dict):
                     arguments = [arguments]
@@ -98,7 +97,7 @@ class Parser:
                 command_pos = command.get('loc_start', -1)
                 command_name = command.get('value', '')
 
-                current_location = Location(file_name=input_file,
+                current_location = Location(file_name=input_file_name,
                                             line_number=pp.lineno(command_pos, data),
                                             description=command_name)
                 command_info = self._command_manager.command(command_name)
@@ -110,33 +109,33 @@ class Parser:
                 (args, kwargs) = _process_arguments(arguments)
 
                 command_info.validate_func(current_location, *args, **kwargs)
-
-                command_dependency = command_info.dependency_func(current_location,
-                                                                  *args, **kwargs)
+                command_dependency = command_info.dependency_func(*args, **kwargs)
                 if command_dependency:
-                    if base_system:
+                    if base_system_name:
                         raise ParseError('More than one base system was provided in "{}".'
-                                         .format(input_file))
-                    base_system = command_dependency
+                                         .format(input_file_name))
+                    base_system_name = command_dependency
 
-                result.append(ExecObject(location=current_location,
-                                         command=command_name,
-                                         args=args,
-                                         kwargs=kwargs))
+                exec_obj_list.append(ExecObject(location=current_location,
+                                                command=command_name,
+                                                args=args,
+                                                kwargs=kwargs))
 
-            if not base_system:
+            if not base_system_name:
                 raise ParseError('No base system was provided in "{}".'
-                                 .format(input_file))
+                                 .format(input_file_name))
+            if base_system_name == 'scratch':
+                base_system_name = ''
         except pp.ParseException as pe:
             raise ParseError(str(pe), location=current_location)
 
-        return base_system, result
+        return base_system_name, exec_obj_list
 
 
 def _process_arguments(arguments: typing.List[typing.Dict[str, str]]) \
         -> typing.Tuple[typing.List[typing.Any], typing.Dict[str, typing.Any]]:
     args: typing.List[typing.Any] = []
-    kwargs: typing.Dict[str, typing.Any] = {}
+    kwargs: typing.Mapping[str, typing.Any] = {}
     
     for a in arguments:
         key = a.get('key', None)

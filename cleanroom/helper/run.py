@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Run external print_commands.
+"""Run external commands.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """

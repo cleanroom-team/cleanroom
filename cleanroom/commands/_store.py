@@ -6,24 +6,23 @@
 
 
 from cleanroom.location import Location
-from cleanroom.command import Command, ServicesType
+from cleanroom.command import Command
 from cleanroom.systemcontext import SystemContext
-from cleanroom.printer import debug
 
+import os
 import typing
 
 
 class _StoreCommand(Command):
     """The _store command."""
 
-    def __init__(self, *, services: ServicesType) -> None:
+    def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__(help_string='Store a system.',
-                         file=__file__,
-                         services=services)
+        super().__init__('_store', help_string='Store a system.',
+                         file=__file__, **services)
 
-    def validate_arguments(self, location: Location, *args: typing.Any, **kwargs: typing.Any) \
-            -> typing.Optional[str]:
+    def validate(self, location: Location,
+                 *args: typing.Any, **kwargs: typing.Any) -> None:
         """Validate the arguments."""
         self._validate_no_arguments(location, *args, **kwargs)
 
@@ -32,9 +31,17 @@ class _StoreCommand(Command):
     def __call__(self, location: Location, system_context: SystemContext,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
         """Execute command."""
-        assert system_context.ctx
-        debug('Storing {} into {}.'.format(system_context.current_system_directory,
-                                           system_context.storage_directory))
-        store_work_directory(system_context.ctx,
-                             system_context.current_system_directory,
-                             system_context.storage_directory)
+
+        btrfs_helper = self._service('btrfs_helper')
+
+        btrfs_helper.create_subvolume(system_context.system_storage_directory)
+
+        btrfs_helper.create_snapshot(system_context.meta_directory,
+                                     os.path.join(system_context.system_storage_directory, 'meta'),
+                                     read_only=True)
+        btrfs_helper.create_snapshot(system_context.boot_directory,
+                                     os.path.join(system_context.system_storage_directory, 'boot'),
+                                     read_only=True)
+        btrfs_helper.create_snapshot(system_context.fs_directory,
+                                     os.path.join(system_context.system_storage_directory, 'fs'),
+                                     read_only=True)

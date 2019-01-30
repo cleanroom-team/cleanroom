@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""The class that runs a list of print_commands on a system.
+"""The class that runs a list of commands on a system.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
@@ -7,6 +7,7 @@
 
 from .commandmanager import CommandManager
 from .execobject import ExecObject
+from .printer import success
 from .systemcontext import SystemContext
 
 import typing
@@ -29,17 +30,19 @@ class Executor:
         self._command_manager = command_manager
         self._timestamp = timestamp
 
-    def run(self, system_name: str, exec_obj_list: typing.List[ExecObject]) -> None:
+    def run(self, system_name: str, base_system_name: str,
+            exec_obj_list: typing.List[ExecObject],
+            storage_directory: str) -> None:
         """Run the command_list for the system the executor was set up for."""
-        with SystemContext(scratch_directory=self._scratch_directory,
+        with SystemContext(system_name=system_name,
+                           base_system_name=base_system_name,
+                           scratch_directory=self._scratch_directory,
                            systems_definition_directory=self._systems_definition_directory,
-                           system_name=system_name,
+                           storage_directory=storage_directory,
                            timestamp=self._timestamp) as system_context:
             for exec_obj in exec_obj_list:
                 command = self._command_manager.command(exec_obj.command)
                 assert command
                 command.execute_func(exec_obj.location, system_context,
-                                     exec_obj.args, exec_obj.kwargs)
-
-
-
+                                     *exec_obj.args, **exec_obj.kwargs)
+        success('System {} created successfully.'.format(system_name))

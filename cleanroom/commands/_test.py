@@ -43,20 +43,18 @@ def _find_tests(system_context: SystemContext) -> typing.Generator[str, None, No
 class _TestCommand(Command):
     """The _test Command."""
 
-    def __init__(self) -> None:
+    def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
         super().__init__('_test',
                          help_string='Implicitly run to test images.\n\n'
                          'Note: Will run all executable files in the '
                          '"test" subdirectory of the systems directory and '
                          'will pass the system name as first argument.',
-                         file=__file__)
+                         file=__file__, **services)
 
-    def validate_arguments(self, location: Location, *args: typing.Any, **kwargs: typing.Any) \
-            -> typing.Optional[str]:
+    def validate(self, location: Location,
+                 *args: typing.Any, **kwargs: typing.Any) -> None:
         self._validate_no_arguments(location, *args, **kwargs)
-
-        return None
 
     def __call__(self, location: Location, system_context: SystemContext,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
@@ -69,7 +67,7 @@ class _TestCommand(Command):
         for test in _find_tests(system_context):
             debug('Running test {}...'.format(test))
             test_result = run(test, system_context.system_name,
-                              env=env, outside=True, returncode=None,
+                              env=env, return_code=None,
                               work_directory=system_context.fs_directory)
             if test_result.returncode == 0:
                 success('Test "{}"'.format(test), verbosity=3)

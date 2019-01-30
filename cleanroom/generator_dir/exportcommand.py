@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Base class for export related print_commands.
+"""Base class for export related commands.
 
-The Command class will be used to derive all export_* print_commands from.
+The Command class will be used to derive all export_* commands from.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """

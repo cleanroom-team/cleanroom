@@ -52,7 +52,8 @@ class Generator:
         if not ignore_errors:
             raise GenerateError('Generation failed.', original_exception=exception)
 
-    def generate_systems(self, *, work_directory: WorkDir,
+    def generate_systems(self, *,
+                         work_directory: WorkDir,
                          command_manager: CommandManager,
                          ignore_errors: bool = False) -> None:
         """Generate all systems in the dependency tree."""
@@ -62,14 +63,27 @@ class Generator:
                        command_manager=command_manager,
                        timestamp=datetime.datetime.now().strftime('%Y%m%d.%H%M'))
 
-        for (system_name, exec_obj_list, _) in self._systems_manager.walk_systems_forest():
+        failed_systems = 0
+        total_systems = 0
+
+        for (system_name, base_system_name, exec_obj_list, _) \
+                in self._systems_manager.walk_systems_forest():
+            total_systems += 1
+
             h1('Generate "{}"'.format(system_name))
             try:
-                if os.path.isdir(work_directory.storage_directory):
+                if os.path.isdir(os.path.join(work_directory.storage_directory,
+                                              system_name)):
                     verbose('Already in storage, skipping.')
                 else:
-                    exe.run(system_name, exec_obj_list)
+                    exe.run(system_name, base_system_name, exec_obj_list,
+                            storage_directory=work_directory.storage_directory)
             except Exception as e:
                 self._report_error(system_name, e, ignore_errors=ignore_errors)
-            else:
-                success('Generation of "{}" complete.'.format(system_name))
+                failed_systems += 1
+
+        if failed_systems == 0:
+            success('All systems generated successfully.')
+        else:
+            fail('{} of {} systems failed during generation phase.'
+                 .format(failed_systems, total_systems))
