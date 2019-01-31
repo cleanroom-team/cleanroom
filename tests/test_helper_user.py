@@ -3,59 +3,77 @@
 #
 # @author: Tobias Hunger <tobias.hunger@gmail.com>
 # """
-#
-#
-# import pytest
-#
-# import os
-# import os.path
-# import sys
-# sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
-#                                                 '..')))
-#
-# import cleanroom.generator.helper.generic.user as user
-#
-#
-# @pytest.fixture()
-# def passwd_file(tmpdir):
-#     """Generate a simple passwd file."""
-#     path = os.path.join(tmpdir, 'passwd')
-#     with open(path, 'w') as passwd:
-#         passwd.write('root:x:0:0::/root:/bin/bash\n'
-#                      'bin:x:1:1::/:/sbin/nologin\n'
-#                      'test:x:10001:10001:Test user:/home/test:/bin/false\n')
-#     return path
-#
-#
-# @pytest.mark.parametrize(('user_name', 'expected_data'), [
-#     pytest.param('root', {'name': 'root', 'password': 'x', 'uid': 0, 'gid': 0,
-#                           'comment': 'root', 'home': '/root',
-#                           'shell': '/usr/bin/bash'},
-#                  id='root'),
-#     pytest.param('bin', {'name': 'bin', 'password': 'x', 'uid': 1, 'gid': 1,
-#                          'comment': '', 'home': '/', 'shell': '/sbin/nologin'},
-#                  id='bin'),
-#     pytest.param('test', {'name': 'test', 'password': 'x',
-#                           'uid': 10001, 'gid': 10001, 'comment': 'Test user',
-#                           'home': '/home/test', 'shell': '/bin/false'},
-#                  id='test'),
-# ])
-# def test_user_data(passwd_file, user_name, expected_data):
-#     """Test reading of valid data from /etc/passwd-like file."""
-#     result = user._user_data(passwd_file, user_name)
-#     assert result._asdict() == expected_data
-#
-#
-# def test_missing_user_data_file(passwd_file):
-#     """Test reading a unknown user name from /etc/passwd-like file."""
-#     result = user._user_data(passwd_file + 'FOO', 'root')
-#     assert result is None
-#
-#
-# def test_missing_user_data(passwd_file):
-#     """Test reading a unknown user name from /etc/passwd-like file."""
-#     result = user._user_data(passwd_file, 'unknownUser')
-#     assert result._asdict() == {'name': 'nobody', 'password': 'x',
-#                                 'uid': 65534, 'gid': 65534,
-#                                 'comment': 'Nobody', 'home': '/',
-#                                 'shell': '/sbin/nologin'}
+
+
+import pytest
+
+import os
+import os.path
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                '..')))
+
+from cleanroom.binarymanager import BinaryManager, Binaries
+from cleanroom.helper.user import UserHelper
+
+
+@pytest.mark.parametrize(('user_name', 'expected_data'), [
+    pytest.param('root', {'name': 'root', 'password': 'x', 'uid': 0, 'gid': 0,
+                          'comment': 'root user', 'home': '/root',
+                          'shell': '/bin/bash'},
+                 id='root'),
+    pytest.param('bin', {'name': 'bin', 'password': 'x', 'uid': 1, 'gid': 1,
+                         'comment': '', 'home': '/', 'shell': '/sbin/nologin'},
+                 id='bin'),
+    pytest.param('test', {'name': 'test', 'password': 'x',
+                          'uid': 10001, 'gid': 10001, 'comment': 'Test user',
+                          'home': '/home/test', 'shell': '/bin/false'},
+                 id='test'),
+])
+def test_user_data(user_setup, user_name, expected_data):
+    """Test reading of valid data from /etc/passwd-like file."""
+    result = UserHelper.user_data(user_name, root_directory=user_setup)
+    assert result._asdict() == expected_data
+
+
+def test_missing_user_data_file(user_setup):
+    """Test reading a unknown user name from /etc/passwd-like file."""
+    result = UserHelper.user_data('root',
+                                  root_directory=os.path.join(user_setup, 'etc'))
+    assert result is None
+
+
+def test_missing_user_data(user_setup):
+    """Test reading a unknown user name from /etc/passwd-like file."""
+    result = UserHelper.user_data('unknownUser', root_directory=user_setup)
+    assert result._asdict() == {'name': 'nobody', 'password': 'x',
+                                'uid': 65534, 'gid': 65534,
+                                'comment': 'Nobody', 'home': '/',
+                                'shell': '/sbin/nologin'}
+
+
+def test_add_user(user_setup):
+    binary_manager = BinaryManager()
+    user_helper = UserHelper(binary_manager.binary(Binaries.USERADD),
+                             binary_manager.binary(Binaries.USERMOD))
+    user_helper.useradd('addeduser', comment='freshly added user',
+                        uid=1200, gid=33, home='/var/lib/addeduser',
+                        shell='/usr/bin/nologin', root_directory=user_setup)
+
+    result = UserHelper.user_data('addeduser', root_directory=user_setup)
+    assert result._asdict() == {'name': 'addeduser', 'password': 'x',
+                                'uid': 1200, 'gid': 33, 'comment': 'freshly added user',
+                                'home': '/var/lib/addeduser', 'shell': '/usr/bin/nologin'}
+
+
+def test_mod_user(user_setup):
+    binary_manager = BinaryManager()
+    user_helper = UserHelper(binary_manager.binary(Binaries.USERADD),
+                             binary_manager.binary(Binaries.USERMOD))
+    user_helper.usermod('test', comment='freshly added user',
+                        shell='/usr/bin/nologin', root_directory=user_setup)
+
+    result = UserHelper.user_data('test', root_directory=user_setup)
+    assert result._asdict() == {'name': 'test', 'password': 'x',
+                                'uid': 10001, 'gid': 10001, 'comment': 'freshly added user',
+                                'home': '/home/test', 'shell': '/usr/bin/nologin'}

@@ -6,6 +6,7 @@
 
 
 from cleanroom.exceptions import GenerateError
+from cleanroom.printer import trace
 
 import os
 import subprocess
@@ -41,7 +42,7 @@ def report_completed_process(channel: typing.Optional[typing.Callable],
 def run(*args: str,
         return_code: typing.Optional[int] = 0,
         work_directory: typing.Optional[str] = None,
-        trace_output: typing.Optional[typing.Callable] = None,
+        trace_output: typing.Optional[typing.Callable] = trace,
         chroot: typing.Optional[str] = None, shell: bool = False,
         stdout: typing.Optional[str] = None,
         stderr: typing.Optional[str] = None,

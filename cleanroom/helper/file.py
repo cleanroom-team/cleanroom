@@ -5,11 +5,11 @@
 """
 
 
-from ....exceptions import GenerateError
-from ....printer import debug, info, trace, verbose
-from ...systemcontext import SystemContext
-from .group import group_data
-from .user import user_data
+from ..exceptions import GenerateError
+from ..printer import debug, info, trace, verbose
+from ..systemcontext import SystemContext
+from .group import GroupHelper
+from .user import UserHelper
 
 from distutils.dir_util import copy_tree
 
@@ -27,7 +27,7 @@ def file_name(system_context: typing.Optional[SystemContext], f: str) -> str:
 
     full_path = os.path.normpath(f)
     if system_context:
-        root_path = os.path.realpath(system_context.fs_directory())
+        root_path = os.path.realpath(system_context.fs_directory)
         full_path = os.path.normpath(os.path.join(root_path, f[1:]))
 
         if full_path != root_path and not full_path.startswith(root_path + '/'):
@@ -178,7 +178,7 @@ def _get_uid(system_context: SystemContext, user: typing.Any) -> int:
         uid = int(user)
         info('UID: Mapped numeric string to {}.'.format(uid))
         return uid
-    data = user_data(system_context, user)
+    data = UserHelper.user_data(root_directory=system_context.fs_directory)
     if data is None:  # No user file was found!
         info('UID: User file not found, mapped to 0.')
         return 0
@@ -198,7 +198,8 @@ def _get_gid(system_context: SystemContext, group: typing.Any) -> int:
         gid = int(group)
         info('GID: Mapped numeric string to {}.'.format(gid))
         return gid
-    data = group_data(system_context, group)
+    data = GroupHelper.group_data(group,
+                                  root_directory=system_context.fs_directory)
     if data is None:  # No group file was found!
         info('GID: Group file not found, mapped to 0.')
         return 0

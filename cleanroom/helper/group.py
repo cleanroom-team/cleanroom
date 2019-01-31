@@ -5,8 +5,7 @@
 """
 
 
-from cleanroom.generator.context import Binaries
-from cleanroom.generator.systemcontext import SystemContext
+from .run import run
 
 import collections
 import os.path
@@ -14,24 +13,6 @@ import typing
 
 
 Group = collections.namedtuple('Group', ['name', 'password', 'gid', 'members'])
-
-
-def groupadd(system_context: SystemContext, group_name: str, *,
-             gid: int = -1, force: bool = False, system: bool = False) -> bool:
-    """Execute command."""
-    command = [system_context.binary(Binaries.GROUPADD),
-               group_name]
-
-    if gid >= 0:
-        command += ['--gid', str(gid)]
-
-    if force:
-        command += ['--force']
-
-    if system:
-        command += ['--system']
-
-    return system_context.run(*command).returncode == 0
 
 
 def _group_data(group_file: str, name: str) -> typing.Optional[Group]:
@@ -53,28 +34,48 @@ def _group_data(group_file: str, name: str) -> typing.Optional[Group]:
     return Group('nobody', 'x', 65534, [])
 
 
-def group_data(system_context: SystemContext, name: str) -> typing.Optional[Group]:
-    """Get user data from passwd file."""
-    return _group_data(system_context.file_name('/etc/group'), name)
+class GroupHelper:
+    def __init__(self, add_command: str, mod_command: str) -> None:
+        self._add_command = add_command
+        self._mod_command = mod_command
 
+    def groupadd(self, group_name: str, *, gid: int = -1, force: bool = False,
+                 system: bool = False, root_directory: str) \
+            -> bool:
+        """Execute command."""
+        command_line = [self._add_command, '--prefix', root_directory,
+                        group_name]
 
-def groupmod(system_context: SystemContext, group_name: str, *, gid: int = -1,
-             password: str = '', rename: str = '', root_directory: str = '') \
-        -> bool:
-    """Modify an existing user."""
-    command = [system_context.binary(Binaries.GROUPMOD),
-               group_name]
+        if gid >= 0:
+            command_line += ['--gid', str(gid)]
 
-    if gid >= 0:
-        command += ['--gid', str(gid)]
+        if force:
+            command_line += ['--force']
 
-    if rename:
-        command += ['--new-name', rename]
+        if system:
+            command_line += ['--system']
 
-    if password:
-        command += ['--password', password]
+        return run(*command_line).returncode == 0
 
-    if root_directory:
-        command += ['--root', root_directory]
+    @staticmethod
+    def group_data(name: str, *, root_directory: str) \
+            -> typing.Optional[Group]:
+        """Get group data from group file."""
+        return _group_data(os.path.join(root_directory, 'etc/group'), name)
 
-    return system_context.run(*command).returncode == 0
+    def groupmod(self, group_name: str, *, gid: int = -1,
+                 password: str = '', rename: str = '',
+                 root_directory: str = '') -> bool:
+        """Modify an existing group."""
+        command_line = [self._mod_command, '--prefix', root_directory, group_name]
+
+        if gid >= 0:
+            command_line += ['--gid', str(gid)]
+
+        if rename:
+            command_line += ['--new-name', rename]
+
+        if password:
+            command_line += ['--password', password]
+
+        return run(*command_line).returncode == 0

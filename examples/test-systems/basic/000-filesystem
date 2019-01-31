@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+
+function fail {
+    echo "$1"
+    exit $2
+}
+
+test -d "dev"  || fail "dev directory missing, fail" 9
+
+echo "Filesystem looks sane, ok"
+

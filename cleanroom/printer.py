@@ -97,7 +97,8 @@ class Printer:
     def instance() -> 'Printer':
         """Get the main printer instance."""
         if Printer._instance is None:
-            Printer._instance = Printer(verbosity=0)
+            verbosity = int(getenv('CLRM_LOG_VERBOSITY', 0))
+            Printer._instance = Printer(verbosity=verbosity)
         return Printer._instance
 
     def __init__(self, verbosity: int = 0) -> None:
@@ -105,7 +106,8 @@ class Printer:
         self._verbose = 0
         self._prefix = ''
 
-        self.set_verbosity(int(getenv('CLRM_VERBOSITY', verbosity)))
+        print('XXXXX setting log verbosity to: {}.'.format(verbosity))
+        self.set_verbosity(verbosity)
 
         self._ansi_reset = _ansify('\033[0m')
         self._h_prefix = _ansify('\033[1;31m')

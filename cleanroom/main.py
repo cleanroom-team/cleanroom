@@ -9,6 +9,8 @@ from .binarymanager import Binaries, BinaryManager
 from .commandmanager import CommandManager
 from .generator import Generator
 from .helper.btrfs import BtrfsHelper
+from .helper.group import GroupHelper
+from .helper.user import UserHelper
 from .preflight import preflight_check, users_check
 from .printer import Printer
 from .workdir import WorkDir
@@ -84,8 +86,11 @@ def main(*command_arguments: str) -> None:
     # Find binaries:
     binary_manager = BinaryManager()
 
-    # Run pre-flight checks:
     btrfs_helper = BtrfsHelper(binary_manager.binary(Binaries.BTRFS))
+    user_helper = UserHelper(binary_manager.binary(Binaries.USERADD),
+                             binary_manager.binary(Binaries.USERMOD))
+    group_helper = GroupHelper(binary_manager.binary(Binaries.USERADD),
+                               binary_manager.binary(Binaries.USERMOD))
 
     preflight_check('users', users_check,
                     ignore_errors=args.ignore_errors)
@@ -98,8 +103,10 @@ def main(*command_arguments: str) -> None:
     command_manager \
         = CommandManager(os.path.join(os.path.dirname(__file__), 'commands'),
                          os.path.join(systems_directory, 'cleanroom/commands'),
+                         binary_manager=binary_manager,
                          btrfs_helper=btrfs_helper,
-                         binary_manager=binary_manager)
+                         group_helper=group_helper,
+                         user_helper=user_helper)
 
     preflight_check('command', command_manager.preflight_check,
                     ignore_errors=args.ignore_errors)
