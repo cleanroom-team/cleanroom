@@ -18,8 +18,6 @@ from cleanroom.commandmanager import CommandManager
 from cleanroom.parser import Parser
 from cleanroom.systemcontext import SystemContext
 
-import cleanroom.printer
-
 
 @pytest.fixture()
 def system_context(tmpdir):
@@ -47,23 +45,23 @@ def _create_file(fs, file_name, contents=None):
 @pytest.fixture()
 def populated_system_context(system_context):
     """Generate a fs tree in a system_context fs_directory."""
-    fs = system_context.fs_directory
-    sys = system_context._systems_definition_directory
+    fs_directory = system_context.fs_directory
+    systems_definition_directory = system_context.systems_definition_directory
 
-    os.makedirs(os.path.join(fs, 'usr/bin'))
-    os.makedirs(os.path.join(fs, 'usr/lib'))
-    os.makedirs(os.path.join(fs, 'etc'))
-    os.makedirs(os.path.join(fs, 'home/test'))
+    os.makedirs(os.path.join(fs_directory, 'usr/bin'))
+    os.makedirs(os.path.join(fs_directory, 'usr/lib'))
+    os.makedirs(os.path.join(fs_directory, 'etc'))
+    os.makedirs(os.path.join(fs_directory, 'home/test'))
 
-    _create_file(fs, '/usr/bin/ls')
-    _create_file(fs, '/usr/bin/grep')
-    _create_file(fs, '/usr/lib/libz')
-    _create_file(fs, '/etc/passwd')
-    _create_file(fs, '/home/test/example.txt')
+    _create_file(fs_directory, '/usr/bin/ls')
+    _create_file(fs_directory, '/usr/bin/grep')
+    _create_file(fs_directory, '/usr/lib/libz')
+    _create_file(fs_directory, '/etc/passwd')
+    _create_file(fs_directory, '/home/test/example.txt')
 
-    os.makedirs(os.path.join(sys, 'data/subdata'))
-    _create_file(sys, '/data/test.txt')
-    _create_file(sys, '/data/subdata/subtest.txt')
+    os.makedirs(os.path.join(systems_definition_directory, 'data/subdata'))
+    _create_file(systems_definition_directory, '/data/test.txt')
+    _create_file(systems_definition_directory, '/data/subdata/subtest.txt')
 
     return system_context
 
@@ -77,26 +75,26 @@ class DummyCommand(Command):
 _Parser_Instance = None
 
 
+@pytest.fixture
+def command_manager():
+    return CommandManager(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                          '../cleanroom/commands')))
+
+
 # Injected into parser:
-def _parse_and_verify_lines(parser, data, expected):
+def _parse_and_verify_lines(parser, data, expected_base_system, expected):
     """Verify one line of input to the Parser."""
-    result = list(map(lambda x: (x.command(), x.arguments(),
-                                  x.kwargs(), x.location().line_number),
-                       parser._parse_string(''.join(data), '<TEST_DATA>')))
+    (base_system, exec_obj_list) = parser._parse_string(''.join(data), '<TEST_DATA>')
+    result = list(map(lambda x: (x.command, x.args,
+                                 x.kwargs, x.location.line_number), exec_obj_list))
 
-    assert len(result) >= 2
-    assert result[0] == ('_setup', (), {}, 1)
-    assert result[-1] == ('_teardown', (), {}, 1)
-    assert result[1:-1] == expected
+    assert base_system == expected_base_system
+    assert result == expected
 
 
-def _create_and_setup_parser(system_context: SystemContext):
+def _create_and_setup_parser(command_manager: CommandManager):
     """Set up method."""
-    cleanroom.printer.Printer.instance()
-    command_manager = CommandManager(system_context.systems_definition_directory)
-    command_manager._add_command('_setup', DummyCommand('_setup', help='placeholder', file=__file__), '<placeholder>')
-    command_manager._add_command('_teardown', DummyCommand('_teardown', help='placeholder', file=__file__), '<placeholder>')
-    result = Parser(command_manager, debug=True)
+    result = Parser(command_manager, debug_parser=True)
 
     # inject for easier testing:
     result.parse_and_verify_lines \
@@ -106,11 +104,11 @@ def _create_and_setup_parser(system_context: SystemContext):
 
 
 @pytest.fixture()
-def parser(global_context):
+def parser(command_manager):
     """Return a parser."""
     global _Parser_Instance
     if _Parser_Instance is None:
-        _Parser_Instance = _create_and_setup_parser(global_context)
+        _Parser_Instance = _create_and_setup_parser(command_manager)
     return _Parser_Instance
 
 

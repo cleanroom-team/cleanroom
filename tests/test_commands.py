@@ -17,8 +17,8 @@ import cleanroom.exceptions as ex
 
 def test_based_on_command(parser):
     """Test based with a name."""
-    parser.parse_and_verify_lines(('   based_on foo\n',),
-                                  [('based_on', ('foo',), {}, 1)])
+    parser.parse_and_verify_lines(('   based_on foo\n',), 'foo',
+                                  [('based_on', ['foo',], {}, 1)])
 
 
 # Error cases:
@@ -29,4 +29,4 @@ def test_based_on_command(parser):
 def test_based_on_errors(parser, test_input):
     """Test an image without name."""
     with pytest.raises(ex.ParseError):
-        parser.parse_and_verify_lines((test_input,), [])
+        parser.parse_and_verify_lines((test_input,), '<invalid>', [])

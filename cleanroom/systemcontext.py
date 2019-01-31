@@ -18,6 +18,15 @@ import string
 import typing
 
 
+def _unpickle(pickle_jar: str) -> SystemContext:
+    """Create a new system_context by unpickling a file."""
+    with open(pickle_jar, 'rb') as pj:
+        base_context = pickle.load(pj)
+    trace('Base context was unpickled.')
+
+    return base_context
+
+
 class SystemContext:
     """Context data for the execution os commands."""
 
@@ -48,7 +57,7 @@ class SystemContext:
         if base_system_name:
             self._base_storage_directory \
                 = os.path.join(storage_directory, base_system_name)
-            self._install_base_context(base_system_name)
+            self._install_base_context()
 
         self._setup_core_substitutions()
 
@@ -66,6 +75,10 @@ class SystemContext:
     @property
     def system_name(self) -> str:
         return self._system_name
+
+    @property
+    def systems_definition_directory(self) -> str:
+        return self._systems_definition_directory
 
     @property
     def system_helper_directory(self) -> str:
@@ -183,31 +196,25 @@ class SystemContext:
         return string.Template(text).substitute(**self.substitutions)
 
     def file_name(self, path: str) -> str:
-        return os.path.join(self.fs_directory, path)
+        result = os.path.join(self.fs_directory,
+                              os.path.relpath(path, '/') if os.path.isabs(path) else path)
+        trace('Mapped system path "{}" to "{}".'.format(path, result))
+        return result
 
     @property
     def base_context(self) -> typing.Optional[SystemContext]:
         return self._base_context
 
     # Store/Restore a system:
-    def _install_base_context(self, base_system_name: str) -> None:
+    def _install_base_context(self) -> None:
         """Set up base context."""
-        base_context = self._unpickle(os.path.join(self.base_storage_directory,
-                                                   'meta', 'pickle_jar.bin'))
+        base_context = _unpickle(os.path.join(self.base_storage_directory,
+                                              'meta', 'pickle_jar.bin'))
 
         self._base_context = base_context
         self._timestamp = base_context._timestamp
         self._hooks = base_context._hooks
         self._substitutions = base_context._substitutions
-
-    def _unpickle(self, pickle_jar: str) -> SystemContext:
-        """Create a new system_context by unpickling a file."""
-        with open(pickle_jar, 'rb') as pj:
-            base_context = pickle.load(pj)
-        trace('Base context was unpickled.')
-
-        return base_context
-
 
     def pickle(self) -> None:
         """Pickle this system_context."""

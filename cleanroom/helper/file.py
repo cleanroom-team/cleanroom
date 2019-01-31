@@ -48,10 +48,7 @@ def expand_files(system_context: typing.Optional[SystemContext],
     Expand glob patterns.
     """
     def func(f: str):
-        if system_context:
-            file_name(system_context, f)
-        else:
-            os.path.join(os.getcwd(), f)
+        return file_name(system_context, f) if system_context else os.path.join(os.getcwd(), f)
 
     to_iterate = map(func, files)
 

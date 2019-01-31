@@ -38,7 +38,7 @@ class BasedOnCommand(Command):
         system_pattern = re.compile('^[A-Za-z][A-Za-z0-9_-]*$')
         if not system_pattern.match(base):
             raise ParseError('"{}" got invalid base system name "{}".'
-                             .format(self.name(), base), location=location)
+                             .format(self.name, base), location=location)
 
     def dependency(self, *args: typing.Any, **kwargs: typing.Any) -> str:
         return args[0]
