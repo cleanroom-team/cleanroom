@@ -7,11 +7,10 @@
 
 from .binarymanager import Binaries, BinaryManager
 from .commandmanager import CommandManager
-from .exceptions import PreflightError
 from .generator import Generator
 from .helper.btrfs import BtrfsHelper
-from .preflight import preflight_check
-from .printer import fail, Printer, success
+from .preflight import preflight_check, users_check
+from .printer import Printer
 from .workdir import WorkDir
 from .systemsmanager import SystemsManager
 
@@ -59,18 +58,6 @@ def _parse_commandline(*arguments: str) -> typing.Any:
     return parse_result
 
 
-def _preflight_check(func: typing.Callable[[], None], *,
-                     ignore_errors=False) -> None:
-    try:
-        func()
-    except PreflightError:
-        fail('Preflight Check failed', ignore=ignore_errors)
-        if not ignore_errors:
-            raise
-    else:
-        success('Preflight Check passed', verbosity=2)
-
-
 def run() -> None:
     """Run cleanroom with command line arguments."""
     current_directory = os.getcwd()
@@ -100,8 +87,10 @@ def main(*command_arguments: str) -> None:
     # Run pre-flight checks:
     btrfs_helper = BtrfsHelper(binary_manager.binary(Binaries.BTRFS))
 
-    _preflight_check(lambda: preflight_check(binary_manager),
-                     ignore_errors=args.ignore_errors)
+    preflight_check('users', users_check,
+                    ignore_errors=args.ignore_errors)
+    preflight_check('binaries', binary_manager.preflight_check,
+                    ignore_errors=args.ignore_errors)
 
     systems_directory = args.systems_directory \
         if args.systems_directory else os.getcwd()
@@ -112,8 +101,8 @@ def main(*command_arguments: str) -> None:
                          btrfs_helper=btrfs_helper,
                          binary_manager=binary_manager)
 
-    _preflight_check(lambda: command_manager.preflight_check(),
-                     ignore_errors=args.ignore_errors)
+    preflight_check('command', command_manager.preflight_check,
+                    ignore_errors=args.ignore_errors)
 
     if args.list_commands:
         command_manager.print_commands()

@@ -5,6 +5,7 @@
 """
 
 
+from .exceptions import PreflightError
 from .printer import debug, fail, trace, warn
 
 from enum import Enum, auto, unique
@@ -96,7 +97,7 @@ class BinaryManager:
         """Constructor."""
         self._binaries = _find_binaries()
 
-    def preflight_check(self) -> bool:
+    def preflight_check(self) -> None:
         passed = True
         for b in self._binaries.items():
             if b[1]:
@@ -104,7 +105,8 @@ class BinaryManager:
             else:
                 warn('{} not found.'.format(b[0]))
                 passed = False
-        return passed
+        if not passed:
+            raise PreflightError('Required binaries are not available.')
 
     def binary(self, selector: Binaries) -> typing.Optional[str]:
         """Get a binary from the context."""
