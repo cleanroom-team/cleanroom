@@ -94,7 +94,7 @@ class Parser:
                 command = child_dict.get('command', {})
                 assert len(command) == 3
 
-                command_pos = command.get('loc_start', -1)
+                command_pos = command.get('locn_start', -1)
                 command_name = command.get('value', '')
 
                 current_location = Location(file_name=input_file_name,
@@ -121,11 +121,6 @@ class Parser:
                                                 args=args,
                                                 kwargs=kwargs))
 
-            if not base_system_name:
-                raise ParseError('No base system was provided in "{}".'
-                                 .format(input_file_name))
-            if base_system_name == 'scratch':
-                base_system_name = ''
         except pp.ParseException as pe:
             raise ParseError(str(pe), location=current_location)
 
@@ -134,7 +129,7 @@ class Parser:
 
 def _process_arguments(arguments: typing.List[typing.Dict[str, str]]) \
         -> typing.Tuple[typing.List[typing.Any], typing.Dict[str, typing.Any]]:
-    args: typing.List[typing.Any] = []
+    args: typing.Tuple[typing.Any, ...] = ()
     kwargs: typing.Mapping[str, typing.Any] = {}
     
     for a in arguments:
@@ -143,7 +138,7 @@ def _process_arguments(arguments: typing.List[typing.Dict[str, str]]) \
         if key:
             kwargs[key] = _map_value(value)
         else:
-            args.append(_map_value(value))
+            args = (*args, _map_value(value))
         
     return args, kwargs
 

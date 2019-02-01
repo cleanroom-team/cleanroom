@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from .commandmanager import CommandManager
 from .exceptions import SystemNotFoundError
-from .execobject import ExecObject
+from .execobject import ExecObject, ParseError
 from .location import Location
 from .parser import Parser
 from .printer import debug, info, trace, verbose
@@ -142,7 +142,14 @@ class SystemsManager(object):
             -> typing.Tuple[str, typing.List[ExecObject]]:
         debug('Parsing "{}".'.format(system_file))
         system_parser = Parser(self._command_manager)
-        return system_parser.parse(system_file)
+        (base_system_name, exec_obj_list) = system_parser.parse(system_file)
+        if not base_system_name:
+            raise ParseError('No base system was provided in "{}".'
+                             .format(input_file_name))
+        if base_system_name == 'scratch':
+            base_system_name = ''
+
+        return base_system_name, exec_obj_list
 
     def _find_system_definition_file(self, system: str) -> str:
         """Make sure a system definition file can be found."""

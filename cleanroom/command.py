@@ -23,7 +23,7 @@ import typing
 
 def stringify(command: str, args: typing.Tuple[typing.Any, ...],
               kwargs: typing.Mapping[str, typing.Any]):
-    args_str = ' "' + '" "'.join(args) + '"' if args else ''
+    args_str = ' "' + '" "'.join(map(lambda a: str(a), args)) + '"' if args else ''
     kwargs_str = ' '.join(map(lambda kv: kv[0] + '="' + str(kv[1]) + '"',
                               kwargs.items())) if kwargs else ''
     return '"{}"'.format(command) + args_str + kwargs_str

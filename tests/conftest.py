@@ -82,9 +82,9 @@ def command_manager():
 
 
 # Injected into parser:
-def _parse_and_verify_lines(parser, data, expected_base_system, expected):
+def _parse_and_verify_string(parser, data, expected_base_system, expected):
     """Verify one line of input to the Parser."""
-    (base_system, exec_obj_list) = parser._parse_string(''.join(data), '<TEST_DATA>')
+    (base_system, exec_obj_list) = parser._parse_string(data, '<TEST_DATA>')
     result = list(map(lambda x: (x.command, x.args,
                                  x.kwargs, x.location.line_number), exec_obj_list))
 
@@ -97,8 +97,8 @@ def _create_and_setup_parser(command_manager: CommandManager):
     result = Parser(command_manager, debug_parser=True)
 
     # inject for easier testing:
-    result.parse_and_verify_lines \
-        = types.MethodType(_parse_and_verify_lines, result)
+    result.parse_and_verify_string \
+        = types.MethodType(_parse_and_verify_string, result)
 
     return result
 
