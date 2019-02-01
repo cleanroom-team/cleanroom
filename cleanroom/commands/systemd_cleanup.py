@@ -5,10 +5,10 @@
 """
 
 
+from cleanroom.command import Command
 from cleanroom.exceptions import GenerateError
 from cleanroom.location import Location
-from cleanroom.generator.command import Command
-from cleanroom.generator.systemcontext import SystemContext
+from cleanroom.systemcontext import SystemContext
 from cleanroom.printer import trace
 
 import os.path
@@ -146,19 +146,17 @@ def _move_file(location, old_base, new_base, path):
 class SystemdCleanupCommand(Command):
     """The systemd_cleanup command."""
 
-    def __init__(self) -> None:
+    def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
         super().__init__('systemd_cleanup',
                          help_string='Make sure /etc/systemd/system is empty by '
                          'moving files and links to the appropriate /usr '
-                         'directory.', file=__file__)
+                         'directory.', file=__file__, **services)
 
-    def validate_arguments(self, location: Location, *args: typing.Any, **kwargs: typing.Any) \
-            -> typing.Optional[str]:
+    def validate(self, location: Location,
+                 *args: typing.Any, **kwargs: typing.Any) -> None:
         """Validate the arguments."""
         self._validate_no_arguments(location, *args, **kwargs)
-
-        return None
 
     def __call__(self, location: Location, system_context: SystemContext,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
@@ -180,6 +178,6 @@ class SystemdCleanupCommand(Command):
                     trace('Moving file', full_path)
                     _move_file(location, old_base, new_base, full_path)
 
-        system_context.execute(location.next_line(),
-                               'remove', '/etc/systemd/system/*',
-                               recursive=True, force=True)
+        self._execute(location.next_line(),
+                      'remove', '/etc/systemd/system/*',
+                      recursive=True, force=True)
