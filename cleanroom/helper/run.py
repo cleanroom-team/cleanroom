@@ -19,7 +19,8 @@ def _quote_args(*args: str) -> str:
 
 
 def report_completed_process(channel: typing.Optional[typing.Callable],
-                             completed_process: subprocess.CompletedProcess) -> None:
+                             completed_process: subprocess.CompletedProcess) \
+        -> None:
     """Report the completion state of an external command."""
     if channel is None:
         return
@@ -40,7 +41,7 @@ def report_completed_process(channel: typing.Optional[typing.Callable],
 
 
 def run(*args: str,
-        return_code: typing.Optional[int] = 0,
+        returncode: typing.Optional[int] = 0,
         work_directory: typing.Optional[str] = None,
         trace_output: typing.Optional[typing.Callable] = trace,
         chroot: typing.Optional[str] = None, shell: bool = False,
@@ -82,7 +83,8 @@ def run(*args: str,
                                            stderr=stdout_fd or subprocess.PIPE,
                                            **kwargs)
     except subprocess.TimeoutExpired as to:
-        print('Timeout: STDOUT so far: {}\nSTDERR so far:{}\n.'.format(to.stdout, to.stderr))
+        print('Timeout: STDOUT so far: {}\nSTDERR so far:{}\n.'
+              .format(to.stdout, to.stderr))
         raise
 
     finally:
@@ -100,9 +102,9 @@ def run(*args: str,
 
     report_completed_process(trace_output, completed_process)
 
-    if return_code is not None and completed_process.returncode != return_code:
+    if returncode is not None and completed_process.returncode != returncode:
         raise GenerateError('Unexpected return value {} (expected {}).'
-                            .format(completed_process.returncode, return_code))
+                            .format(completed_process.returncode, returncode))
 
     return completed_process
 

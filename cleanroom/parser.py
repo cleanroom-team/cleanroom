@@ -16,8 +16,8 @@ import pyparsing as pp  # type: ignore
 import typing
 
 
-_octal_pattern = re.compile('^0o?([0-7]+)$')
-_hex_pattern = re.compile('^0x([0-9a-fA-F]+)$')
+__octal_pattern = re.compile('^0o?([0-7]+)$')
+__hex_pattern = re.compile('^0x([0-9a-fA-F]+)$')
 
 
 def _generate_grammar(*, debug_parser: bool = False):
@@ -28,10 +28,12 @@ def _generate_grammar(*, debug_parser: bool = False):
 
     Identifier = pp.Word(initChars=pp.alphas, bodyChars=pp.alphanums + '_-')
     
-    MultilineArgument = pp.QuotedString(quoteChar = '<<<<', endQuoteChar = '>>>>', multiline=True)
+    MultilineArgument = pp.QuotedString(quoteChar = '<<<<',
+                                        endQuoteChar = '>>>>', multiline=True)
     SingleQuotedArgument = pp.QuotedString(quoteChar = '\'', escChar = '\\')
     DoubleQuotedArgument = pp.QuotedString(quoteChar = '"', escChar = '\\')
-    QuotedArgument = (SingleQuotedArgument | DoubleQuotedArgument | MultilineArgument)('quoted')
+    QuotedArgument = (SingleQuotedArgument | DoubleQuotedArgument |
+                      MultilineArgument)('quoted')
     SimpleArgument = pp.Word(pp.alphanums + '_-+*!$%&/()[]{}.,;:')('simple')
     Argument = (QuotedArgument | SimpleArgument) + pp.Optional(LC)
 
@@ -39,7 +41,8 @@ def _generate_grammar(*, debug_parser: bool = False):
 
     ArgumentList = pp.Group(pp.ZeroOrMore(pp.Group(KwArgument | Argument)))
 
-    Command = pp.locatedExpr(Identifier)('command') + pp.Optional(LC) + ArgumentList('args')
+    Command = pp.locatedExpr(Identifier)('command') + pp.Optional(LC) \
+              + ArgumentList('args')
 
     Grammar = pp.ZeroOrMore(pp.Group(pp.Optional(Command) + pp.Suppress(EOL)))
 
@@ -54,6 +57,46 @@ def _generate_grammar(*, debug_parser: bool = False):
 
     Grammar.parseWithTabs()  # Keep tabs unexpanded!
     return Grammar
+
+
+def __map_value(value: typing.Dict[str, str]) -> typing.Any:
+    if 'simple' in value:
+        v = value['simple']
+        assert v is not None
+
+        if v == 'None':
+            return None
+        if v == 'True':
+            return True
+        if v == 'False':
+            return False
+        octal_match = __octal_pattern.match(v)
+        if octal_match:
+            return int(octal_match.group(1), 8)
+        hex_match = __hex_pattern.match(v)
+        if hex_match:
+            return int(hex_match.group(1), 16)
+        if v.isdigit():
+            return int(v)
+        return v
+    else:
+        return value['quoted']
+
+
+def _process_arguments(arguments: typing.List[typing.Dict[str, str]]) \
+        -> typing.Tuple[typing.Tuple[typing.Any, ...],
+                        typing.Dict[str, typing.Any]]:
+    args: typing.Tuple[typing.Any, ...] = ()
+    kwargs: typing.Dict[str, typing.Any] = {}
+
+    for a in arguments:
+        key = a.get('key', '')
+        if key:
+            kwargs[key] = __map_value(a)
+        else:
+            args = (*args, __map_value(a))
+
+    return args, kwargs
 
 
 class Parser:
@@ -97,9 +140,10 @@ class Parser:
                 command_pos = command.get('locn_start', -1)
                 command_name = command.get('value', '')
 
-                current_location = Location(file_name=input_file_name,
-                                            line_number=pp.lineno(command_pos, data),
-                                            description=command_name)
+                current_location \
+                    = Location(file_name=input_file_name,
+                               line_number=pp.lineno(command_pos, data),
+                               description=command_name)
                 command_info = self._command_manager.command(command_name)
 
                 if not command_info:
@@ -112,7 +156,8 @@ class Parser:
                 command_dependency = command_info.dependency_func(*args, **kwargs)
                 if command_dependency:
                     if base_system_name:
-                        raise ParseError('More than one base system was provided in "{}".'
+                        raise ParseError('More than one base system was '
+                                         'provided in "{}".'
                                          .format(input_file_name))
                     base_system_name = command_dependency
 
@@ -125,43 +170,3 @@ class Parser:
             raise ParseError(str(pe), location=current_location)
 
         return base_system_name, exec_obj_list
-
-
-def _process_arguments(arguments: typing.List[typing.Dict[str, str]]) \
-        -> typing.Tuple[typing.List[typing.Any], typing.Dict[str, typing.Any]]:
-    args: typing.Tuple[typing.Any, ...] = ()
-    kwargs: typing.Mapping[str, typing.Any] = {}
-    
-    for a in arguments:
-        key = a.get('key', None)
-        value = a
-        if key:
-            kwargs[key] = _map_value(value)
-        else:
-            args = (*args, _map_value(value))
-        
-    return args, kwargs
-
-
-def _map_value(value: typing.Dict[str, str]) -> typing.Any:
-    if 'simple' in value:
-        v = value['simple']
-        assert v is not None
-
-        if v == 'None':
-            return None
-        if v == 'True':
-            return True
-        if v == 'False':
-            return False
-        octal_match = _octal_pattern.match(v)
-        if octal_match:
-            return int(octal_match.group(1), 8)
-        hex_match = _hex_pattern.match(v)
-        if hex_match:
-            return int(hex_match.group(1), 16)
-        if v.isdigit():
-            return int(v)
-        return v
-    else:
-        return value['quoted']

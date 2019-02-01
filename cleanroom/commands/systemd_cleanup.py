@@ -8,8 +8,8 @@
 from cleanroom.command import Command
 from cleanroom.exceptions import GenerateError
 from cleanroom.location import Location
-from cleanroom.systemcontext import SystemContext
 from cleanroom.printer import trace
+from cleanroom.systemcontext import SystemContext
 
 import os.path
 import shutil
@@ -81,7 +81,7 @@ def _map_host_link(root_directory, old_base, new_base,
 def _move_symlink(location, system_context,
                   old_base, new_base, link):
     """Move a symlink."""
-    root_directory = system_context.fs_directory() + '/'
+    root_directory = system_context.fs_directory + '/'
     link_target = os.readlink(link)
     # normalize to /usr/lib...
     if link_target.startswith('/lib/'):
@@ -178,6 +178,6 @@ class SystemdCleanupCommand(Command):
                     trace('Moving file', full_path)
                     _move_file(location, old_base, new_base, full_path)
 
-        self._execute(location.next_line(),
+        self._execute(location.next_line(), system_context,
                       'remove', '/etc/systemd/system/*',
                       recursive=True, force=True)

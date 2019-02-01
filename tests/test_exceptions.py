@@ -14,51 +14,51 @@ import cleanroom.exceptions as ex
 import cleanroom.location as location
 
 
-def test_base_exceptions():
+def test_base_exceptions() -> None:
     """Test the base exception class."""
     e = ex.CleanRoomError('message')
     assert str(e) == 'Error: message'
 
 
-def test_base_exceptions_multi_args():
+def test_base_exceptions_multi_args() -> None:
     """Test the base exception class."""
     e = ex.CleanRoomError('message', 'something')
     assert str(e) == 'Error: (\'message\', \'something\')'
 
 
-def test_base_exceptions_with_location():
+def test_base_exceptions_with_location() -> None:
     """Test the base exception class with file."""
     loc = location.Location(file_name='/foo/bar')
     e = ex.CleanRoomError('message', location=loc)
     assert str(e) == 'Error in /foo/bar: message'
 
 
-def test_base_exceptions_with_file_and_line():
+def test_base_exceptions_with_file_and_line() -> None:
     """Test the base exception class with file and line."""
     loc = location.Location(file_name='/foo/bar', line_number=42)
     e = ex.CleanRoomError('message', location=loc)
     assert str(e) == 'Error in /foo/bar:42: message'
 
 
-def test_preflight():
+def test_preflight() -> None:
     """Test preflight exception."""
     e = ex.PreflightError('Something went wrong')
     assert str(e) == 'Error: Something went wrong'
 
 
-def test_generate():
+def test_generate() -> None:
     """Test prepare exception."""
     e = ex.GenerateError('Something went wrong')
     assert str(e) == 'Error: Something went wrong'
 
 
-def test_system_not_found():
+def test_system_not_found() -> None:
     """Test system not found exception."""
     e = ex.SystemNotFoundError('Something went wrong')
     assert str(e) == 'Error: Something went wrong'
 
 
-def test_parse():
+def test_parse() -> None:
     """Test parse exception."""
     e = ex.ParseError('Something went wrong')
     assert str(e) == 'Error: Something went wrong'

@@ -8,8 +8,8 @@
 from __future__ import annotations
 
 from .commandmanager import CommandManager
-from .exceptions import SystemNotFoundError
-from .execobject import ExecObject, ParseError
+from .exceptions import ParseError, SystemNotFoundError
+from .execobject import ExecObject
 from .location import Location
 from .parser import Parser
 from .printer import debug, info, trace, verbose
@@ -82,9 +82,10 @@ class SystemsManager(object):
 
         self._print_systems_forest()
 
-    def walk_systems_forest(self) -> typing.Generator[typing.Tuple[str,
-                                                                   typing.List[ExecObject], int],
-                                                      None, None]:
+    def walk_systems_forest(self) \
+            -> typing.Generator[typing.Tuple[str, typing.Optional[str],
+                                             typing.List[ExecObject], int],
+                                None, None]:
         for root_node in self._systems_forest:
             for node in root_node.walk():
                 base_system = node.parent.system if node.parent else None
@@ -98,9 +99,11 @@ class SystemsManager(object):
         """Print the systems forest."""
         base_indent = "  "
         debug('Systems forest ({} trees):'.format(len(self._systems_forest)))
-        for (system_name, _, exec_obj_list, depth) in self.walk_systems_forest():
+        for (system_name, _, exec_obj_list, depth) \
+                in self.walk_systems_forest():
             debug('  {}{} ({} commands)'.format(base_indent * depth,
-                                                system_name, len(exec_obj_list)))
+                                                system_name,
+                                                len(exec_obj_list)))
 
     def _add_system(self, system_name: str) -> typing.Optional[_DependencyNode]:
         """Add a system to the dependency tree."""
@@ -111,7 +114,8 @@ class SystemsManager(object):
 
         node = self._find(system_name)
         if node:
-            trace('Found system "{}" in system_forest (skipping addition).'.format(system_name))
+            trace('Found system "{}" in system_forest (skipping addition).'
+                  .format(system_name))
             return node
 
         system_file = self._find_system_definition_file(system_name)
@@ -128,7 +132,8 @@ class SystemsManager(object):
 
         debug('"{}" depends on "{}"'.format(system_name, base_system_name))
 
-        parent_node = self._add_system(base_system_name) if base_system_name else None
+        parent_node = self._add_system(base_system_name) \
+            if base_system_name else None
         node = _DependencyNode(system_name, parent_node, exec_obj_list)
 
         if parent_node:
@@ -145,7 +150,7 @@ class SystemsManager(object):
         (base_system_name, exec_obj_list) = system_parser.parse(system_file)
         if not base_system_name:
             raise ParseError('No base system was provided in "{}".'
-                             .format(input_file_name))
+                             .format(system_file))
         if base_system_name == 'scratch':
             base_system_name = ''
 
@@ -156,8 +161,9 @@ class SystemsManager(object):
         system_file = os.path.join(self._systems_definition_directory,
                                    system + '.def')
         if not os.path.exists(system_file):
-            raise SystemNotFoundError('Could not find systems file for {}, checked in {}.'
-                                      .format(system, system_file))
+            raise SystemNotFoundError('Could not find systems file for {}, '
+                                      'checked in {}.'.format(system,
+                                                              system_file))
 
         return system_file
 

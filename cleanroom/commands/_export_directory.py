@@ -41,11 +41,11 @@ class ExportDirectoryCommand(Command):
         export_directory = args[0]
         export_repository = kwargs.get('repository', '')
 
-        borg = self.service('binary_manager').binary(Binaries.BORG)
         backup_name = system_context.system_name + '-' + system_context.timestamp
 
-        run(borg, 'create', '--compression',
+        run(self._service('binary_manager').binary(Binaries.BORG),
+            'create', '--compression',
             'zstd,{}'.format(kwargs.get('compression_level', 4)),
             '--numeric-owner', '--noatime',
             '{}::{}'.format(export_repository, backup_name),
-            '.', outside=True, work_directory=export_directory)
+            '.', work_directory=export_directory)

@@ -10,6 +10,7 @@ from .execobject import ExecObject
 from .printer import success
 from .systemcontext import SystemContext
 
+import os
 import typing
 
 
@@ -30,17 +31,18 @@ class Executor:
         self._command_manager = command_manager
         self._timestamp = timestamp
 
-    def run(self, system_name: str, base_system_name: str,
+    def run(self, system_name: str, base_system_name: typing.Optional[str],
             exec_obj_list: typing.List[ExecObject],
             storage_directory: str) -> None:
         """Run the command_list for the system the executor was set up for."""
         with SystemContext(system_name=system_name,
-                           base_system_name=base_system_name,
+                           base_system_name=base_system_name or '',
                            scratch_directory=self._scratch_directory,
                            systems_definition_directory=self._systems_definition_directory,
                            storage_directory=storage_directory,
                            timestamp=self._timestamp) as system_context:
             for exec_obj in exec_obj_list:
+                os.chdir(system_context.systems_definition_directory)
                 command = self._command_manager.command(exec_obj.command)
                 assert command
                 command.execute_func(exec_obj.location, system_context,

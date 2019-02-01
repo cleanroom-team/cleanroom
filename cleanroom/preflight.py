@@ -31,5 +31,5 @@ def users_check() -> None:
     """Check tha the script is running as root."""
     if os.geteuid() == 0:
         debug('Running as root.')
-        return True
-    raise PreflightError('Not running as user "root".')
+    else:
+        raise PreflightError('Not running as user "root".')

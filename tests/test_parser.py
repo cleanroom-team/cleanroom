@@ -5,7 +5,7 @@
 """
 
 
-import pytest
+import pytest  # type: ignore
 import typing
 
 import os
@@ -21,7 +21,7 @@ from cleanroom.location import Location
 class DummyCommand(Command):
     """Dummy command implementation."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         """Constructor."""
         super().__init__(name, help_string='test', file=__file__)
 

@@ -5,7 +5,8 @@
 # """
 
 
-import pytest
+import pytest  # type: ignore
+import typing
 
 import os
 import os.path
@@ -30,29 +31,32 @@ from cleanroom.helper.user import UserHelper
                           'home': '/home/test', 'shell': '/bin/false'},
                  id='test'),
 ])
-def test_user_data(user_setup, user_name, expected_data):
+def test_user_data(user_setup, user_name: str,
+                   expected_data: typing.Dict[str, typing.Any]) -> None:
     """Test reading of valid data from /etc/passwd-like file."""
     result = UserHelper.user_data(user_name, root_directory=user_setup)
+    assert result
     assert result._asdict() == expected_data
 
 
-def test_missing_user_data_file(user_setup):
+def test_missing_user_data_file(user_setup) -> None:
     """Test reading a unknown user name from /etc/passwd-like file."""
     result = UserHelper.user_data('root',
                                   root_directory=os.path.join(user_setup, 'etc'))
     assert result is None
 
 
-def test_missing_user_data(user_setup):
+def test_missing_user_data(user_setup) -> None:
     """Test reading a unknown user name from /etc/passwd-like file."""
     result = UserHelper.user_data('unknownUser', root_directory=user_setup)
+    assert result
     assert result._asdict() == {'name': 'nobody', 'password': 'x',
                                 'uid': 65534, 'gid': 65534,
                                 'comment': 'Nobody', 'home': '/',
                                 'shell': '/sbin/nologin'}
 
 
-def test_add_user(user_setup):
+def test_add_user(user_setup) -> None:
     binary_manager = BinaryManager()
     user_helper = UserHelper(binary_manager.binary(Binaries.USERADD),
                              binary_manager.binary(Binaries.USERMOD))
@@ -61,12 +65,13 @@ def test_add_user(user_setup):
                         shell='/usr/bin/nologin', root_directory=user_setup)
 
     result = UserHelper.user_data('addeduser', root_directory=user_setup)
+    assert result
     assert result._asdict() == {'name': 'addeduser', 'password': 'x',
                                 'uid': 1200, 'gid': 33, 'comment': 'freshly added user',
                                 'home': '/var/lib/addeduser', 'shell': '/usr/bin/nologin'}
 
 
-def test_mod_user(user_setup):
+def test_mod_user(user_setup) -> None:
     binary_manager = BinaryManager()
     user_helper = UserHelper(binary_manager.binary(Binaries.USERADD),
                              binary_manager.binary(Binaries.USERMOD))
@@ -74,6 +79,7 @@ def test_mod_user(user_setup):
                         shell='/usr/bin/nologin', root_directory=user_setup)
 
     result = UserHelper.user_data('test', root_directory=user_setup)
+    assert result
     assert result._asdict() == {'name': 'test', 'password': 'x',
                                 'uid': 10001, 'gid': 10001, 'comment': 'freshly added user',
                                 'home': '/home/test', 'shell': '/usr/bin/nologin'}

@@ -67,7 +67,7 @@ class _TestCommand(Command):
         for test in _find_tests(system_context):
             debug('Running test {}...'.format(test))
             test_result = run(test, system_context.system_name,
-                              env=env, return_code=None,
+                              env=env, returncode=None,
                               work_directory=system_context.fs_directory)
             if test_result.returncode == 0:
                 success('Test "{}"'.format(test), verbosity=3)

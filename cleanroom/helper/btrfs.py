@@ -26,18 +26,17 @@ class BtrfsHelper:
                         read_only: bool = False) -> None:
         """Create a new snapshot."""
         extra_args: typing.Tuple[str, ...] = ()
-        if read_only:
-            extra_args = (*extra_args, '-r')
+        extra_args = (*extra_args, '-r') if read_only else extra_args
 
         trace('BTRFS: Create snapshot of {} into {} ({}).'
               .format(source, destination, 'ro' if read_only else 'rw'))
-        run(self._command, 'subvolume', 'snapshot', *extra_args, source, destination,
-            trace_output=trace)
+        run(self._command, 'subvolume', 'snapshot', *extra_args,
+            source, destination, trace_output=trace)
 
     def delete_subvolume(self, directory: str) -> None:
         """Delete a subvolume."""
         trace('BTRFS: Delete subvolume {}.'.format(directory))
-        run(self._command, 'subvolume', 'delete', directory, trace_output=trace)
+        run(self._command, 'subvolume', 'delete', directory, trace_output=None)
 
     def delete_subvolume_recursive(self, directory: str) -> None:
         """Delete all subvolumes in a subvolume or directory."""
@@ -46,18 +45,18 @@ class BtrfsHelper:
             if os.path.isdir(child):
                 self.delete_subvolume_recursive(child)
 
-        if self.has_subvolume(directory):
+        if self.is_subvolume(directory):
             self.delete_subvolume(directory)
 
-    def has_subvolume(self, directory: str) -> bool:
+    def is_subvolume(self, directory: str) -> bool:
         """Check whether a subdirectory is a subvolume or snapshot."""
         if not os.path.isdir(directory):
             return False
         return run(self._command, 'subvolume', 'show', directory,
-                   return_code=None, trace_output=trace).returncode == 0
+                   returncode=None, trace_output=None).returncode == 0
 
     def is_btrfs_filesystem(self, directory: str) -> bool:
         if not os.path.isdir(directory):
             return False
         return run(self._command, 'subvolume', 'list', directory,
-                   return_code=None, trace_output=trace).returncode == 0
+                   returncode=None, trace_output=None).returncode == 0

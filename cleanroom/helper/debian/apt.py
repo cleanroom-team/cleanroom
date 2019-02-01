@@ -5,8 +5,9 @@
 """
 
 
-from ...context import Binaries
+from ...binarymanager import Binaries
 from ...systemcontext import SystemContext
+from ..run import run
 
 import os
 import os.path
@@ -32,7 +33,7 @@ def _set_apt_state(system_context: SystemContext, internal: bool = False) -> Non
 
 
 def _fs_directory(system_context: SystemContext) -> str:
-    return system_context.fs_directory()
+    return system_context.fs_directory
 
 
 def _dpkg_state_directory(system_context: SystemContext, internal: bool = False) -> str:
@@ -75,7 +76,8 @@ def _sanity_check(system_context: SystemContext) -> None:
 
 def debootstrap(system_context: SystemContext, *, suite: str, variant: str = '',
                 target: str, mirror: str, include: str = None,
-                exclude: str = None) -> None:
+                exclude: str = None,
+                debootstrap_command: str) -> None:
     """Run debootstrap on host."""
     assert not _package_type(system_context)
     _sanity_check(system_context)
@@ -95,11 +97,10 @@ def debootstrap(system_context: SystemContext, *, suite: str, variant: str = '',
         args.append(mirror)
 
     # Debootstrap:
-    system_context.run(system_context.binary(Binaries.DEBOOTSTRAP),
-                       *args, outside=True)
+    run(debootstrap_command, *args)
 
     # De-dpkg-ize:
-    root = system_context.fs_directory()
+    root = system_context.fs_directory
 
     dpkg_state = _dpkg_state_directory(system_context, internal=False)
     apt_state = _apt_state_directory(system_context, internal=False)

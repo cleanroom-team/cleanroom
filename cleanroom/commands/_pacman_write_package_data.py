@@ -5,6 +5,7 @@
 """
 
 
+from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.helper.archlinux.pacman import pacman_report
 from cleanroom.location import Location
@@ -21,7 +22,7 @@ class PacmanWritePackageDataCommand(Command):
         super().__init__('_pacman_write_package_data',
                          help_string='Write pacman package data into the filesystem.',
                          file=__file__,
-                         services=services)
+                         **services)
 
     def validate(self, location: Location,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
@@ -31,4 +32,5 @@ class PacmanWritePackageDataCommand(Command):
     def __call__(self, location: Location, system_context: SystemContext,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
         """Execute command."""
-        pacman_report(system_context, system_context.file_name('/usr/lib/pacman'))
+        pacman_report(system_context, system_context.file_name('/usr/lib/pacman'),
+                      pacman_command=self._binary(Binaries.PACMAN))

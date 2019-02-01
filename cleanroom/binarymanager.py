@@ -22,7 +22,6 @@ class Binaries(Enum):
     MKNOD = auto()
     PACMAN = auto()
     PACMAN_KEY = auto()
-    PACSTRAP = auto()
     APT_GET = auto()
     DPKG = auto()
     DEBOOTSTRAP = auto()
@@ -36,6 +35,7 @@ class Binaries(Enum):
     GROUPADD = auto()
     GROUPMOD = auto()
     CHROOT_HELPER = auto()
+    SYSTEMCTL = auto()
 
 
 def _check_for_binary(binary: str) -> str:
@@ -66,6 +66,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.GROUPMOD: _check_for_binary('/usr/sbin/groupmod'),
         Binaries.GROUPADD: _check_for_binary('/usr/sbin/groupadd'),
         Binaries.CHROOT_HELPER: _check_for_binary('/usr/bin/arch-chroot'),
+        Binaries.SYSTEMCTL: _check_for_binary('/usr/bin/systemctl'),
     }
     os_binaries: typing.Dict[Binaries, str] = {}
     distribution = _get_distribution()
@@ -80,7 +81,6 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         os_binaries = {
             Binaries.PACMAN: _check_for_binary('/usr/bin/pacman'),
             Binaries.PACMAN_KEY: _check_for_binary('/usr/bin/pacman-key'),
-            Binaries.PACSTRAP: _check_for_binary('/usr/bin/pacstrap'),
             Binaries.VERITYSETUP: _check_for_binary('/usr/bin/veritysetup'),
         }
     else:
@@ -108,10 +108,8 @@ class BinaryManager:
         if not passed:
             raise PreflightError('Required binaries are not available.')
 
-    def binary(self, selector: Binaries) -> typing.Optional[str]:
+    def binary(self, selector: Binaries) -> str:
         """Get a binary from the context."""
-        assert self._binaries
-
         binary = self._binaries[selector]
         trace('Binary for {}: {}.'.format(selector, binary))
         return binary

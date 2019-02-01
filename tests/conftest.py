@@ -5,7 +5,7 @@
 """
 
 
-import pytest
+import pytest  # type: ignore
 import types
 
 import os

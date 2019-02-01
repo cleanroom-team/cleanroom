@@ -5,7 +5,7 @@
 """
 
 
-import pytest
+import pytest  # type: ignore
 
 import os
 import sys
@@ -31,7 +31,7 @@ import cleanroom.helper.disk as disk
     pytest.param('9t', 9895604649984, id='9t'),
     pytest.param('9T', 9895604649984, id='9T'),
 ])
-def test_disk_normalize_size(input_size, output_size):
+def test_disk_normalize_size(input_size, output_size) -> None:
     """Test absolute input file name."""
     result = disk.normalize_size(input_size)
 
@@ -46,7 +46,7 @@ def test_disk_normalize_size(input_size, output_size):
     pytest.param('test', id='test'),
     pytest.param('12z', id='wrong unit')
 ])
-def test_disk_normalize_size_errors(input_size):
+def test_disk_normalize_size_errors(input_size) -> None:
     """Test absolute input file name."""
     with pytest.raises(ValueError):
         disk.normalize_size(input_size)
@@ -59,7 +59,7 @@ def test_disk_normalize_size_errors(input_size):
     pytest.param(9 * 1024),
     pytest.param(1 * 1024 * 1024)
 ])
-def test_create_image_file(tmpdir, input_size):
+def test_create_image_file(tmpdir, input_size: int) -> None:
     if os.geteuid() != 0:
         pytest.skip('This test needs root to run.')
 
@@ -71,7 +71,7 @@ def test_create_image_file(tmpdir, input_size):
     assert input_size + 1024 > os.path.getsize(file)
 
 
-def test_partitioner(tmpdir):
+def test_partitioner(tmpdir) -> None:
     if os.geteuid() != 0:
         pytest.skip('This test needs root to run.')
 

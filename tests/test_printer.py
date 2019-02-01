@@ -5,8 +5,9 @@
 """
 
 
-import pytest
+import pytest  # type: ignore
 import random
+import typing
 
 import os
 import sys
@@ -19,23 +20,25 @@ import cleanroom.printer
 class DummyPrinter(cleanroom.printer.Printer):
     """Printer class for unit testing."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Constructor."""
         super().__init__(*args, **kwargs)
         self.buffer = ''
 
-    def _print_impl(self, *args):
+    def _print_impl(self, *args: str, **kwargs: typing.Any) -> None:
         self.buffer += ' '.join(args) + '\n'
 
 
 @pytest.fixture()
-def printer():
+def printer() -> DummyPrinter:
     """Return a printer."""
     return DummyPrinter(verbosity=0)
 
 
-def _test_message(printer, printer_verbosity, op,
-                  has_output, extras=(), **kwargs):
+def _test_message(printer: DummyPrinter, printer_verbosity: int,
+                  op: typing.Callable, has_output: bool,
+                  extras: typing.Tuple[str, ...] = (),
+                  **kwargs: typing.Any) -> None:
     printer.set_verbosity(printer_verbosity)
     message = "Message " + str(random.randint(0, 1000000))
     op(message, **kwargs)
@@ -49,7 +52,8 @@ def _test_message(printer, printer_verbosity, op,
 
 @pytest.mark.parametrize('printer_verbosity', [0, 1, 2, 3, 4, 5])
 @pytest.mark.parametrize('message_verbosity', [0, 1, 2, 3, 4, 5])
-def test_printing_h1(printer, printer_verbosity, message_verbosity):
+def test_printing_h1(printer: DummyPrinter, printer_verbosity: int,
+                     message_verbosity: int) -> None:
     """Test printing."""
     _test_message(printer, printer_verbosity, printer.h1,
                   printer_verbosity >= message_verbosity,
@@ -59,7 +63,8 @@ def test_printing_h1(printer, printer_verbosity, message_verbosity):
 
 @pytest.mark.parametrize('printer_verbosity', [0, 1, 2, 3, 4, 5])
 @pytest.mark.parametrize('message_verbosity', [0, 1, 2, 3, 4, 5])
-def test_printing_h2(printer, printer_verbosity, message_verbosity):
+def test_printing_h2(printer: DummyPrinter, printer_verbosity: int,
+                     message_verbosity: int) -> None:
     """Test printing."""
     _test_message(printer, printer_verbosity, printer.h2,
                   printer_verbosity >= message_verbosity, ('*****',),
@@ -68,7 +73,8 @@ def test_printing_h2(printer, printer_verbosity, message_verbosity):
 
 @pytest.mark.parametrize('printer_verbosity', [0, 1, 2, 3, 4, 5])
 @pytest.mark.parametrize('message_verbosity', [0, 1, 2, 3, 4, 5])
-def test_printing_h3(printer, printer_verbosity, message_verbosity):
+def test_printing_h3(printer: DummyPrinter, printer_verbosity: int,
+                     message_verbosity: int) -> None:
     """Test printing."""
     _test_message(printer, printer_verbosity, printer.h3,
                   printer_verbosity >= message_verbosity, ('*****',),
@@ -77,7 +83,8 @@ def test_printing_h3(printer, printer_verbosity, message_verbosity):
 
 @pytest.mark.parametrize('printer_verbosity', [0, 1, 2, 3, 4, 5])
 @pytest.mark.parametrize('message_verbosity', [0, 1, 2, 3, 4, 5])
-def test_printing_error(printer, printer_verbosity, message_verbosity):
+def test_printing_error(printer: DummyPrinter, printer_verbosity: int,
+                        message_verbosity: int) -> None:
     """Test printing."""
     _test_message(printer, printer_verbosity, printer.error,
                   printer_verbosity >= message_verbosity, ('ERROR',),
@@ -86,7 +93,8 @@ def test_printing_error(printer, printer_verbosity, message_verbosity):
 
 @pytest.mark.parametrize('printer_verbosity', [0, 1, 2, 3, 4, 5])
 @pytest.mark.parametrize('message_verbosity', [0, 1, 2, 3, 4, 5])
-def test_printing_warn(printer, printer_verbosity, message_verbosity):
+def test_printing_warn(printer: DummyPrinter, printer_verbosity: int,
+                       message_verbosity: int) -> None:
     """Test printing."""
     _test_message(printer, printer_verbosity, printer.warn,
                   printer_verbosity >= message_verbosity, ('warn',),
@@ -95,7 +103,8 @@ def test_printing_warn(printer, printer_verbosity, message_verbosity):
 
 @pytest.mark.parametrize('printer_verbosity', [0, 1, 2, 3, 4, 5])
 @pytest.mark.parametrize('message_verbosity', [0, 1, 2, 3, 4, 5])
-def test_printing_success(printer, printer_verbosity, message_verbosity):
+def test_printing_success(printer: DummyPrinter, printer_verbosity: int,
+                          message_verbosity: int) -> None:
     """Test printing."""
     _test_message(printer, printer_verbosity, printer.success,
                   printer_verbosity >= message_verbosity, ('OK',),
@@ -104,7 +113,8 @@ def test_printing_success(printer, printer_verbosity, message_verbosity):
 
 @pytest.mark.parametrize('printer_verbosity', [0, 1, 2, 3, 4, 5])
 @pytest.mark.parametrize('message_verbosity', [0, 1, 2, 3, 4, 5])
-def test_printing_fail_ignore(printer, printer_verbosity, message_verbosity):
+def test_printing_fail_ignore(printer: DummyPrinter, printer_verbosity: int,
+                              message_verbosity: int) -> None:
     """Test printing."""
     _test_message(printer, printer_verbosity, printer.fail,
                   printer_verbosity >= message_verbosity, ('fail',),
@@ -113,7 +123,8 @@ def test_printing_fail_ignore(printer, printer_verbosity, message_verbosity):
 
 @pytest.mark.parametrize('printer_verbosity', [0, 1, 2, 3, 4, 5])
 @pytest.mark.parametrize('message_verbosity', [0, 1, 2, 3, 4, 5])
-def test_printing_fail(printer, printer_verbosity, message_verbosity):
+def test_printing_fail(printer: DummyPrinter, printer_verbosity: int,
+                       message_verbosity: int) -> None:
     """Test printing."""
     _test_message(printer, printer_verbosity, printer.fail,
                   printer_verbosity >= message_verbosity, ('FAIL',),
@@ -121,34 +132,34 @@ def test_printing_fail(printer, printer_verbosity, message_verbosity):
 
 
 @pytest.mark.parametrize('printer_verbosity', [0, 1, 2, 3, 4, 5])
-def test_printing_msg(printer, printer_verbosity):
+def test_printing_msg(printer: DummyPrinter, printer_verbosity: int) -> None:
     """Test printing."""
     _test_message(printer, printer_verbosity, printer.msg, True)
 
 
 @pytest.mark.parametrize('printer_verbosity', [0, 1, 2, 3, 4, 5])
-def test_printing_verbose(printer, printer_verbosity):
+def test_printing_verbose(printer: DummyPrinter, printer_verbosity: int) -> None:
     """Test printing."""
     _test_message(printer, printer_verbosity, printer.verbose,
                   printer_verbosity >= 1)
 
 
 @pytest.mark.parametrize('printer_verbosity', [0, 1, 2, 3, 4, 5])
-def test_printing_info(printer, printer_verbosity):
+def test_printing_info(printer: DummyPrinter, printer_verbosity: int) -> None:
     """Test printing."""
     _test_message(printer, printer_verbosity, printer.info,
                   printer_verbosity >= 2, ('.....',))
 
 
 @pytest.mark.parametrize('printer_verbosity', [0, 1, 2, 3, 4, 5])
-def test_printing_debug(printer, printer_verbosity):
+def test_printing_debug(printer: DummyPrinter, printer_verbosity: int) -> None:
     """Test printing."""
     _test_message(printer, printer_verbosity, printer.debug,
                   printer_verbosity >= 3, ('-----',))
 
 
 @pytest.mark.parametrize('printer_verbosity', [0, 1, 2, 3, 4, 5])
-def test_printing_trace(printer, printer_verbosity):
+def test_printing_trace(printer: DummyPrinter, printer_verbosity: int) -> None:
     """Test printing."""
     _test_message(printer, printer_verbosity, printer.trace,
                   printer_verbosity >= 4, ('+++++',))

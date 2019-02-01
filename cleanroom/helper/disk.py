@@ -20,10 +20,12 @@ import typing
 from time import sleep
 
 
-Disk = collections.namedtuple('Disk', ['label', 'id', 'device', 'unit',
-                                       'firstlba', 'lastlba', 'partitions'])
-Partition = collections.namedtuple('Partition', ['node', 'start', 'size',
-                                                 'partition_type', 'uuid', 'name'])
+Disk \
+    = collections.namedtuple('Disk', ['label', 'id', 'device', 'unit',
+                                      'firstlba', 'lastlba', 'partitions'])
+Partition \
+    = collections.namedtuple('Partition', ['node', 'start', 'size',
+                                           'partition_type', 'uuid', 'name'])
 
 
 def _is_root() -> bool:
@@ -53,7 +55,7 @@ def mib_ify(size: int) -> int:
     return quantify(size, 1024 * 1024)
 
 
-def normalize_size(size: typing.Any) -> int:
+def byte_size(size: typing.Any) -> int:
     if isinstance(size, int):
         return size
 
@@ -93,7 +95,7 @@ def create_image_file(file_name: str, size: int, *, disk_format: str = 'qcow2',
                       qemu_img_command: typing.Optional[str] = None) -> None:
     assert _is_root()
     run(qemu_img_command or '/usr/bin/qemu-img', 'create',
-        '-q', '-f', disk_format, file_name, str(normalize_size(size)))
+        '-q', '-f', disk_format, file_name, str(byte_size(size)))
 
 
 class Device:
@@ -149,13 +151,16 @@ class NbdDevice(Device):
         self._file_name = file_name
         self._disk_format = disk_format
 
-        device = self._create_nbd_block_device(file_name, disk_format=disk_format,
-                                               qemu_nbd_command=qemu_nbd_command)
+        device \
+            = self._create_nbd_block_device(file_name,
+                                            disk_format=disk_format,
+                                            qemu_nbd_command=qemu_nbd_command)
         assert device
 
         super().__init__(device)
 
-        debug('Block device "{}" created for file {}.'.format(self._device, self._file_name))
+        debug('Block device "{}" created for file {}.'
+              .format(self._device, self._file_name))
 
     def __enter__(self) -> typing.Any:
         return self
@@ -187,7 +192,7 @@ class NbdDevice(Device):
     @staticmethod
     def _create_nbd_block_device(file_name: str, *,
                                  disk_format: str = 'qcow2',
-                                 qemu_nbd_command: typing.Optional[str] = None) \
+                                 qemu_nbd_command: typing.Optional[str]) \
             -> typing.Optional[str]:
         assert _is_root()
         assert os.path.isfile(file_name)
@@ -205,9 +210,10 @@ class NbdDevice(Device):
             result = run(qemu_nbd_command or '/usr/bin/qemu-nbd',
                          '--connect={}'.format(device),
                          '--format={}'.format(disk_format), file_name,
-                         return_code=None)
+                         returncode=None)
             if result.returncode == 0:
-                trace('Device {} connected to file {}.'.format(device, file_name))
+                trace('Device {} connected to file {}.'
+                      .format(device, file_name))
                 return device
 
             counter += 1
@@ -217,7 +223,7 @@ class NbdDevice(Device):
 
     @staticmethod
     def _delete_nbd_block_device(device: str,
-                                 qemu_nbd_command: typing.Optional[str] = None) \
+                                 qemu_nbd_command: typing.Optional[str]) \
             -> None:
         assert _is_root()
         assert is_block_device(device)
@@ -265,7 +271,8 @@ class Partitioner:
     @staticmethod
     def data_partition(*, start: typing.Optional[str] = None,
                        size: typing.Any = None,
-                       partition_type: str = '2d212206-b0ee-482e-9fec-e7c208bef27a',
+                       partition_type: str
+                       = '2d212206-b0ee-482e-9fec-e7c208bef27a',
                        name: str) -> Partition:
         return Partition(node=None,
                          start=start,
@@ -306,10 +313,11 @@ class Partitioner:
                 prefix = '{}: '.format(p.node)
             if p.start is not None:
                 partition_data.append('start={}'
-                                      .format(_sfdisk_size(normalize_size(p.start))))
+                                      .format(_sfdisk_size(byte_size(
+                    p.start))))
             if p.size is not None:
                 partition_data.append('size={}'
-                                      .format(_sfdisk_size(normalize_size(p.size))))
+                                      .format(_sfdisk_size(byte_size(p.size))))
             if p.partition_type is not None:
                 partition_data.append('type="{}"'.format(p.partition_type))
             if p.uuid is not None:
@@ -319,7 +327,8 @@ class Partitioner:
 
             instructions += prefix + ', '.join(partition_data) + '\nprint\n'
 
-        trace('SFDISK partition instructions:\n{}---EOF---'.format(instructions))
+        trace('SFDISK partition instructions:\n{}---EOF---'
+              .format(instructions))
 
         run(self._flock_command, self._device.device(),
             self._sfdisk_command, '--color=never', self._device.device(),
@@ -339,7 +348,7 @@ class Partitioner:
         #        no longer seems safe with 4K sector drives...
         result = run(self._flock_command, self._device.device(),
                      self._sfdisk_command, '--color=never',
-                     '--json', self._device.device(), return_code=None)
+                     '--json', self._device.device(), returncode=None)
         if result.returncode != 0:
             self._data = None
         else:

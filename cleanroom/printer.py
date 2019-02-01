@@ -106,7 +106,6 @@ class Printer:
         self._verbose = 0
         self._prefix = ''
 
-        print('XXXXX setting log verbosity to: {}.'.format(verbosity))
         self.set_verbosity(verbosity)
 
         self._ansi_reset = _ansify('\033[0m')
@@ -214,7 +213,8 @@ class Printer:
         if ignore:
             intro = '{} fail {}'.format(self._ig_fail_prefix,
                                         self._ig_fail_suffix)
-            self._print(intro, *args, '(ignored)', self._ansi_reset, verbosity=verbosity)
+            self._print(intro, *args, '(ignored)', self._ansi_reset,
+                        verbosity=verbosity)
         else:
             intro = '{} FAIL {}'.format(self._fail_prefix,
                                         self._fail_suffix)

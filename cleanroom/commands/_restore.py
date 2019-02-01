@@ -35,6 +35,9 @@ class RestoreCommand(Command):
 
         btrfs_helper = self._service('btrfs_helper')
 
+        if not os.path.isdir(system_context.scratch_directory):
+            btrfs_helper.create_subvolume(system_context.scratch_directory)
+
         btrfs_helper.create_snapshot(os.path.join(system_context.base_storage_directory, 'meta'),
                                      system_context.meta_directory)
         btrfs_helper.create_snapshot(os.path.join(system_context.base_storage_directory, 'boot'),

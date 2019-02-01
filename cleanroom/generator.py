@@ -31,17 +31,22 @@ class Generator:
     def _report_error(self, system: str, exception: Exception,
                       ignore_errors: bool = False) -> None:
         if isinstance(exception, AssertionError):
-            fail('Generation of "{}" asserted.'.format(system), force_exit=False)
+            fail('Generation of "{}" asserted.'.format(system),
+                 force_exit=False)
         else:
-            fail('Generation of "{}" failed: {}'.format(system, str(exception)),
+            fail('Generation of "{}" failed: {}'.format(system,
+                                                        str(exception)),
                  force_exit=False)
 
-        self._report_error_details(system, exception, ignore_errors=ignore_errors)
+        self._report_error_details(system, exception,
+                                   ignore_errors=ignore_errors)
 
     def _report_error_details(self, system: str, exception: Exception,
                               ignore_errors: bool = False) -> None:
-        if isinstance(exception, CleanRoomError) and exception.original_exception is not None:
-            self._report_error_details(system, exception.original_exception, ignore_errors=ignore_errors)
+        if isinstance(exception, CleanRoomError) \
+                and exception.original_exception is not None:
+            self._report_error_details(system, exception.original_exception,
+                                       ignore_errors=ignore_errors)
             return
 
         print('\nError report:')
@@ -50,7 +55,8 @@ class Generator:
         traceback.print_tb(exception.__traceback__)
         print('\n\n>>>>>> END OF ERROR REPORT <<<<<<')
         if not ignore_errors:
-            raise GenerateError('Generation failed.', original_exception=exception)
+            raise GenerateError('Generation failed.',
+                                original_exception=exception)
 
     def generate_systems(self, *,
                          work_directory: WorkDir,

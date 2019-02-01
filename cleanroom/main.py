@@ -42,7 +42,8 @@ def _parse_commandline(*arguments: str) -> typing.Any:
     parser.add_argument('--work-directory', dest='work_directory',
                         action='store', help='Work area to create files in')
 
-    parser.add_argument('--clear-scratch-directory', dest='clear_scratch_directory',
+    parser.add_argument('--clear-scratch-directory',
+                        dest='clear_scratch_directory',
                         action='store_true',
                         help='Clear the scratch directory before proceeding.')
     parser.add_argument('--clear-storage', dest='clear_storage',
@@ -89,8 +90,8 @@ def main(*command_arguments: str) -> None:
     btrfs_helper = BtrfsHelper(binary_manager.binary(Binaries.BTRFS))
     user_helper = UserHelper(binary_manager.binary(Binaries.USERADD),
                              binary_manager.binary(Binaries.USERMOD))
-    group_helper = GroupHelper(binary_manager.binary(Binaries.USERADD),
-                               binary_manager.binary(Binaries.USERMOD))
+    group_helper = GroupHelper(binary_manager.binary(Binaries.GROUPADD),
+                               binary_manager.binary(Binaries.GROUPMOD))
 
     preflight_check('users', users_check,
                     ignore_errors=args.ignore_errors)

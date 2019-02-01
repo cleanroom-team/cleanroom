@@ -39,4 +39,5 @@ class StripDocumentationHookCommand(Command):
         if not os.path.exists(system_context.file_name('/usr/bin/info')):
             debug('No /usr/bin/info: Removing info pages.')
             to_remove += ['/usr/share/info/*']
-        system_context.execute(location, 'remove', *to_remove, recursive=True, force=True)
+        self._execute(location, system_context, 'remove',
+                      *to_remove, recursive=True, force=True)

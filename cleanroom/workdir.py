@@ -16,12 +16,12 @@ import tempfile
 import typing
 
 
-def _ensure_directory(directory: str):
+def _ensure_directory(directory: str, btrfs_helper: BtrfsHelper):
     if not os.path.isdir(directory):
-        os.makedirs(directory)
+        btrfs_helper.create_subvolume(directory)
         if not os.path.isdir(directory):
-            raise PreflightError('Failed to set up work directory: {} not created.'
-                                 .format(directory))
+            raise PreflightError('Failed to set up work directory: '
+                                 '{} not created.'.format(directory))
 
 
 def _clear_directory(directory: str, btrfs_helper: BtrfsHelper):
@@ -30,7 +30,8 @@ def _clear_directory(directory: str, btrfs_helper: BtrfsHelper):
 
     if os.path.isdir(directory):
         btrfs_helper.delete_subvolume_recursive(directory)
-        os.rmdir(directory)
+        if os.path.isdir(directory):
+            os.rmdir(directory)
 
 
 class WorkDir:
@@ -129,11 +130,15 @@ class WorkDir:
         return self._work_directory
 
     def _setup_work_directory(self) -> None:
-        _ensure_directory(self.storage_directory)
-        _ensure_directory(self.scratch_directory)
-        _ensure_directory(self.export_directory)
+        _ensure_directory(self.storage_directory, self._btrfs_helper)
+        _ensure_directory(self.scratch_directory, self._btrfs_helper)
+        _ensure_directory(self.export_directory, self._btrfs_helper)
 
-        info('WorkDir: work directory     = "{}".'.format(self.work_directory))
-        debug('WorkDir: scratch directory  = "{}".'.format(self.scratch_directory))
-        debug('WorkDir: storage directory  = "{}".'.format(self.storage_directory))
-        debug('WorkDir: export directory   = "{}".'.format(self.export_directory))
+        info('WorkDir: work directory     = "{}".'
+             .format(self.work_directory))
+        debug('WorkDir: scratch directory  = "{}".'
+              .format(self.scratch_directory))
+        debug('WorkDir: storage directory  = "{}".'
+              .format(self.storage_directory))
+        debug('WorkDir: export directory   = "{}".'
+              .format(self.export_directory))

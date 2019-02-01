@@ -5,8 +5,10 @@
 """
 
 
-from ...systemcontext import SystemContext
+from ...binarymanager import Binaries
 from ...printer import debug, info, verbose
+from ...systemcontext import SystemContext
+from ..btrfs import BtrfsHelper
 from ..run import run
 
 import os
@@ -24,28 +26,18 @@ def _set_package_type(system_context: SystemContext) -> None:
     system_context.set_substitution('CLRM_PACKAGE_TYPE', 'pacman')
 
 
-def _pacman_state(system_context: SystemContext) -> bool:
-    return system_context.substitution('PACMAN_INSTALL_STATE', str(False))
-
-
-def _set_pacman_state(system_context: SystemContext, internal: bool = False) -> None:
-    system_context.set_substitution('PACMAN_INSTALL_STATE', str(internal))
-
-
 def _fs_directory(system_context: SystemContext) -> str:
     return system_context.fs_directory
 
 
 def _pacman_directory(system_context: SystemContext, internal: bool = False) -> str:
-    if internal:
-        return system_context.file_name('/usr/lib/pacman')
-    return os.path.join(system_context.meta_directory, 'pacman')
+    return system_context.file_name('/usr/lib/pacman') \
+        if internal else os.path.join(system_context.meta_directory, 'pacman')
 
 
 def _config_file(system_context: SystemContext, internal: bool = False) -> str:
-    if internal:
-        return system_context.file_name('/etc/pacman.conf')
-    return os.path.join(_pacman_directory(system_context, internal), 'pacman.conf')
+    return system_context.file_name('/etc/pacman.conf') \
+        if internal else os.path.join(_pacman_directory(system_context, internal), 'pacman.conf')
 
 
 def _db_directory(system_context: SystemContext, internal: bool = False) -> str:
@@ -62,9 +54,8 @@ def _gpg_directory(system_context: SystemContext, internal: bool = False) -> str
 
 
 def _base_cache_directory(system_context: SystemContext, internal: bool = False) -> str:
-    if internal:
-        return os.path.join(system_context.fs_directory, 'var/cache')
-    return system_context.cache_directory
+    return os.path.join(system_context.fs_directory, 'var/cache') \
+        if internal else system_context.cache_directory
 
 
 def _cache_directory(system_context: SystemContext, internal: bool = False) -> str:
@@ -77,7 +68,10 @@ def _log(system_context: SystemContext, internal: bool = False) -> str:
 
 
 def _setup_directories(system_context: SystemContext, internal: bool) -> None:
-    info('Setting up directories.')
+    info('Setting up pacman directories.')
+    if not os.path.isdir(_pacman_directory(system_context, internal)):
+        os.makedirs(_pacman_directory(system_context, internal))
+        debug('Main pacman directory created.')
     os.makedirs(_db_directory(system_context, internal))
     debug('DB directory created.')
     os.makedirs(_gpg_directory(system_context, internal))
@@ -86,8 +80,8 @@ def _setup_directories(system_context: SystemContext, internal: bool) -> None:
     debug('Hook directory created.')
 
     cache = _cache_directory(system_context, internal)
-    if (not os.path.isdir(cache)):
-        os.makedirs(cache)
+    if not os.path.isdir(cache):
+            os.makedirs(cache)
     debug('Cache directory created.')
 
 
@@ -111,51 +105,49 @@ def _pacman_args(system_context: SystemContext, installed_pacman: bool = False) 
             '--noconfirm']
 
 
-def _pacman_keyinit(system_context: SystemContext) -> None:
-    run(
-        system_context.binary(Binaries.PACMAN_KEY),
+def _pacman_keyinit(system_context: SystemContext,
+                    pacman_key_command: str) -> None:
+    run(pacman_key_command,
         '--init', '--gpgdir', _gpg_directory(system_context),
-        work_directory=system_context.ctx.systems_directory(),
-        outside=True)
-    run(
-        system_context.binary(Binaries.PACMAN_KEY),
+        work_directory=system_context.systems_definition_directory)
+    run(pacman_key_command,
         '--populate', 'archlinux', '--gpgdir', _gpg_directory(system_context),
-        work_directory=system_context.ctx.systems_directory(),
-        outside=True)
+        work_directory=system_context.systems_definition_directory)
 
 
-def _run_pacman(system_context: SystemContext, *args: str, **kwargs) -> None:
-    assert system_context.ctx
+def _run_pacman(system_context: SystemContext, *args: str,
+                pacman_command: str, pacman_in_filesystem: bool,
+                **kwargs) -> None:
     _sanity_check(system_context)
 
-    internal_pacman = (_pacman_state(system_context) == 'True')
-    all_args = _pacman_args(system_context, internal_pacman) + list(args)
-    run(
-        system_context.binary(Binaries.PACMAN), *all_args,
-        work_directory=system_context.ctx.systems_directory(),
-        outside=True, timeout=600, **kwargs)
+    all_args = _pacman_args(system_context, pacman_in_filesystem) + list(args)
+    run(pacman_command, *all_args,
+        work_directory=system_context.systems_definition_directory,
+        timeout=600, **kwargs)
 
 
-def pacstrap(system_context: SystemContext, *packages: str, config: str='') -> None:
+def pacstrap(system_context: SystemContext, *packages: str, config: str,
+             pacman_command: str, pacman_key_command: str,
+             chroot_helper: str) -> None:
     """Run pacstrap on host."""
     assert not _package_type(system_context)
+    _set_package_type(system_context)
 
     info('Setting up directories for pacman.')
     _setup_directories(system_context, False)
-
     shutil.copyfile(config, _config_file(system_context, False))
 
     info('Setting up pacman\'s keyring.')
-    _pacman_keyinit(system_context)
-
-    _set_pacman_state(system_context, False)
-    _set_package_type(system_context)
+    _pacman_keyinit(system_context, pacman_key_command)
 
     # Make sure pacman DB is up-to-date:
-    _run_pacman(system_context, '-Sy')
-    _run_pacman(system_context, '-Fy')
+    _run_pacman(system_context, '-Sy',
+                pacman_command=pacman_command, pacman_in_filesystem=False)
+    _run_pacman(system_context, '-Fy',
+                pacman_command=pacman_command, pacman_in_filesystem=False)
 
-    pacman(system_context, *packages)
+    pacman(system_context, *packages, pacman_command=pacman_command,
+           chroot_helper=chroot_helper)
 
 
 def _copy_state(system_context: SystemContext, internal_pacman: bool) -> None:
@@ -164,9 +156,11 @@ def _copy_state(system_context: SystemContext, internal_pacman: bool) -> None:
     debug('Copying configuration file.')
     shutil.copyfile(_config_file(system_context, not internal_pacman),
                     _config_file(system_context, internal_pacman))
-    
+
+    print('XXXXX Copied config into {}.'.format(_config_file(system_context, internal_pacman)))
     debug('Inside: {}, outside: {}'.format(inside, outside))
     if internal_pacman:
+        print('XXXXX Copy pacman DB into filesystem.')
         shutil.rmtree(inside)
         info('Copy pacman DB into the filesystem.')
         shutil.copytree(outside, inside)
@@ -183,31 +177,29 @@ def _copy_state(system_context: SystemContext, internal_pacman: bool) -> None:
         shutil.rmtree(inside)
 
 
-def _move_pacman_data(system_context: SystemContext, internal_pacman: bool) -> None:
-    verbose('Pacman was installed, moving pacman data into filesystem.')
-    _set_pacman_state(system_context, internal_pacman)
-    _setup_directories(system_context, internal_pacman)
+def _move_pacman_data(system_context: SystemContext, *,
+                      move_into_fs: bool) -> None:
+    verbose('Moving pacman data for system "{}".'
+            .format(system_context.system_name))
+
+    _setup_directories(system_context, move_into_fs)
 
     info('Copying pacman state.')
-    _copy_state(system_context, internal_pacman)
-
-    # Update DB:
-    if internal_pacman:
-        info('Upgrading pacman DB.')
-        run('/usr/bin/pacman-db-upgrade')
+    _copy_state(system_context, move_into_fs)
 
 
 def pacman(system_context: SystemContext, *packages: str,
            remove: bool = False, assume_installed: str = '',
-           overwrite: str = '') -> None:
+           overwrite: str = '', pacman_command: str,
+           chroot_helper: str) -> None:
     """Use pacman to install packages."""
-    assert _package_type(system_context) == 'pacman'
+    previous_pacstate = os.path.isfile(system_context.file_name('/usr/bin/pacman'))
 
-    action: typing.List[str] = []
+    assert _package_type(system_context) == 'pacman'
 
     if remove:
         info('Removing {}'.format(', '.join(packages)))
-        action = ['-Rs',]
+        action = ['-Rs']
     else:
         info('Installing {}'.format(', '.join(packages)))
         action = ['-S', '--needed']
@@ -216,39 +208,60 @@ def pacman(system_context: SystemContext, *packages: str,
         if assume_installed:
             action += ['--assume-installed', assume_installed]
 
-    _run_pacman(system_context, *action, *packages)
+    _run_pacman(system_context, *action, *packages,
+                pacman_command=pacman_command,
+                pacman_in_filesystem=previous_pacstate)
 
     var_lib_pacman = system_context.file_name('/var/lib/pacman')
     if os.path.isdir(var_lib_pacman):
         shutil.rmtree(var_lib_pacman)
 
-    if (_pacman_state(system_context) == 'False'
-            and os.path.isfile(system_context.file_name('/usr/bin/pacman'))):
-        _set_pacman_state(system_context, True)
-        _move_pacman_data(system_context, not remove)
+    pacstate = os.path.isfile(system_context.file_name('/usr/bin/pacman'))
+    if previous_pacstate != pacstate:
+        if pacstate:
+            info('Pacman got installed, '
+                 'moving pacman data into system "{}".'
+                 .format(system_context.system_name))
+        else:
+            info('Pacman got deinstalled, '
+                 'moving pacman data out of system "{}".'
+                 .format(system_context.system_name))
+
+        _move_pacman_data(system_context, move_into_fs=pacstate)
+
+        # Update DB:
+        if pacstate:
+            info('Upgrading pacman DB.')
+            run('/usr/bin/pacman-db-upgrade', chroot_helper=chroot_helper,
+                chroot=system_context.fs_directory)
 
 
-def pacman_report(system_context: SystemContext, directory: str) -> None:
+def pacman_report(system_context: SystemContext, directory: str, *,
+                  pacman_command: str) -> None:
     """Print pacman information into FS."""
-    if _pacman_state(system_context) == 'True':
+    if os.path.isfile(system_context.file_name('/usr/bin/pacman')):
         return
-        
+
     os.makedirs(directory)
 
     qi = os.path.join(directory, 'pacman-Qi.txt')
-    action = ['-Qi',]
-    _run_pacman(system_context, *action, stdout=qi)
-    
+    action = ['-Qi']
+    _run_pacman(system_context, *action, stdout=qi,
+                pacman_command=pacman_command,
+                pacman_in_filesystem=False)
+
     # Generate file list:
     qlin = os.path.join(directory, 'pacman-Ql.txt.in')
-    action = ['-Ql',]
-    _run_pacman(system_context, *action, stdout=qlin)
-    
+    action = ['-Ql']
+    _run_pacman(system_context, *action, stdout=qlin,
+                pacman_command=pacman_command,
+                pacman_in_filesystem=False)
+
     # Filter prefix from file list:
-    with open(qlin, 'r') as input:
-        with open(os.path.join(directory, 'pacman-Ql.txt'), 'w') as output:
-            for line in input:
-                output.write(line.replace(system_context.fs_directory, ''))
+    with open(qlin, 'r') as input_fd:
+        with open(os.path.join(directory, 'pacman-Ql.txt'), 'w') as output_fd:
+            for line in input_fd:
+                output_fd.write(line.replace(system_context.fs_directory, ''))
 
     # Remove prefix-ed version:
     os.remove(qlin)

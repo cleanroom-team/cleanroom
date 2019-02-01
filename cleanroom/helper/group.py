@@ -67,7 +67,8 @@ class GroupHelper:
                  password: str = '', rename: str = '',
                  root_directory: str = '') -> bool:
         """Modify an existing group."""
-        command_line = [self._mod_command, '--prefix', root_directory, group_name]
+        command_line = [self._mod_command, '--prefix', root_directory,
+                        group_name]
 
         if gid >= 0:
             command_line += ['--gid', str(gid)]

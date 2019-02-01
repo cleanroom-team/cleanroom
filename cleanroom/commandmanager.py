@@ -51,7 +51,8 @@ class CommandManager:
 
     def preflight_check(self) -> None:
         if not self._search_directories:
-            raise PreflightError('No directories to search for commands were given.')
+            raise PreflightError('No directories to search for commands '
+                                 'were given.')
         if not self._commands:
             raise PreflightError('No commands were found in "{}".'
                                  .format('", "'.join(self._search_directories)))
@@ -60,7 +61,8 @@ class CommandManager:
             -> typing.Optional[CommandInfo]:
         return self._commands.get(name, None)
 
-    def _add_command(self, name: str, file_name: str, command: typing.Any) -> None:
+    def _add_command(self, name: str, file_name: str, command: typing.Any) \
+            -> None:
         def __validate_func(cmd: Command, location: Location,
                             *args: typing.Any, **kwargs: typing.Any) -> None:
             cmd_str = stringify(cmd.name, args, kwargs)

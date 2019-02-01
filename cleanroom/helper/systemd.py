@@ -5,17 +5,17 @@
 """
 
 
-from ...systemcontext import (SystemContext,)
+from ..systemcontext import SystemContext
+from .run import run
 
 import typing
 
 
 def systemd_enable(system_context: SystemContext, *services: str,
-                   **kwargs: typing.Any) -> None:
+                   systemctl_command: str, **kwargs: typing.Any) -> None:
     """Enable systemd service."""
-    all_args = ['--root={}'.format(system_context.fs_directory())]
+    all_args = ['--root={}'.format(system_context.fs_directory)]
     if kwargs.get('user', False):
         all_args.append('--global')
     all_args.append('enable')
-    system_context.run('/usr/bin/systemctl',
-                       *all_args, *services, outside=True)
+    run(systemctl_command, *all_args, *services)

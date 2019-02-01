@@ -48,7 +48,8 @@ def expand_files(system_context: typing.Optional[SystemContext],
     Expand glob patterns.
     """
     def func(f: str):
-        return file_name(system_context, f) if system_context else os.path.join(os.getcwd(), f)
+        return file_name(system_context, f) if system_context \
+            else os.path.join(os.getcwd(), f)
 
     to_iterate = map(func, files)
 
@@ -60,7 +61,8 @@ def expand_files(system_context: typing.Optional[SystemContext],
 
 
 def _check_file(system_context: SystemContext, f: str, op: typing.Callable,
-                description: str, work_directory: typing.Optional[str] = None) -> bool:
+                description: str, work_directory: typing.Optional[str] = None) \
+        -> bool:
     """Run op on a file f."""
     old_work_directory = os.getcwd()
     if work_directory is not None:
@@ -84,22 +86,22 @@ def _check_file(system_context: SystemContext, f: str, op: typing.Callable,
     return result
 
 
-def exists(system_context: SystemContext, f: str, work_directory: typing.Optional[str] = None) \
-        -> bool:
+def exists(system_context: SystemContext, f: str,
+           work_directory: typing.Optional[str] = None) -> bool:
     """Check whether a file exists."""
     return _check_file(system_context, f, os.path.exists, 'file exists:',
                        work_directory=work_directory)
 
 
-def isfile(system_context: SystemContext, f: str, work_directory: typing.Optional[str] = None) \
-        -> bool:
+def isfile(system_context: SystemContext, f: str,
+           work_directory: typing.Optional[str] = None) -> bool:
     """Check whether a file exists and is a file."""
     return _check_file(system_context, f, os.path.isfile, 'isfile:',
                        work_directory=work_directory)
 
 
-def isdir(system_context: SystemContext, f: str, work_directory: typing.Optional[str] = None) \
-        -> bool:
+def isdir(system_context: SystemContext, f: str,
+          work_directory: typing.Optional[str] = None) -> bool:
     """Check whether a file exists and is a directory."""
     return _check_file(system_context, f, os.path.isdir, 'isdir:',
                        work_directory=work_directory)
@@ -121,8 +123,9 @@ def symlink(system_context: SystemContext, source: str, destination: str,
     os.symlink(source, destination)
 
 
-def makedirs(system_context: SystemContext, *dirs: str, user: int = 0, group: int = 0,
-             mode: typing.Optional[int] = None, force: bool = False) -> None:
+def makedirs(system_context: SystemContext, *dirs: str,
+             user: int = 0, group: int = 0, mode: typing.Optional[int] = None,
+             force: bool = False) -> None:
     """Make directories in the system filesystem."""
     for d in dirs:
         info('Creating "{}" with mode={}, uid={}, gid={} ({}).'
@@ -175,7 +178,8 @@ def _get_uid(system_context: SystemContext, user: typing.Any) -> int:
         uid = int(user)
         info('UID: Mapped numeric string to {}.'.format(uid))
         return uid
-    data = UserHelper.user_data(root_directory=system_context.fs_directory)
+    data = UserHelper.user_data(user,
+                                root_directory=system_context.fs_directory)
     if data is None:  # No user file was found!
         info('UID: User file not found, mapped to 0.')
         return 0

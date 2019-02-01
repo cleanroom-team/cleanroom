@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-from .location import Location
 from .printer import debug, h2, trace
 from .execobject import ExecObject
 
@@ -82,7 +81,8 @@ class SystemContext:
 
     @property
     def system_helper_directory(self) -> str:
-        return os.path.join(self._systems_definition_directory, self.system_name)
+        return os.path.join(self._systems_definition_directory,
+                            self.system_name)
 
     @property
     def system_tests_directory(self) -> str:
@@ -154,19 +154,11 @@ class SystemContext:
         self.set_substitution('IMAGE_DEVICE', '/dev/disk/by-partlabel/fs_btrfs')
 
     # Handle Hooks:
-    def _add_hook(self, hook: str, exec_obj: ExecObject) -> None:
+    def add_hook(self, hook: str, exec_obj: ExecObject) -> None:
         """Add a hook."""
         self._hooks.setdefault(hook, []).append(exec_obj)
-        trace('Added hook "{}": It now has {} entries.'.format(hook, len(self._hooks[hook])))
-
-    def add_hook(self, location: Location, hook: str,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
-        """Add a hook."""
-        assert len(args) > 0
-        self._add_hook(hook, ExecObject(location=location,
-                                        command=args[0],
-                                        args=args[1:],
-                                        kwargs=kwargs))
+        trace('Added hook "{}": It now has {} entries.'
+              .format(hook, len(self._hooks[hook])))
 
     def hooks(self, hook_name: str) -> typing.Sequence[ExecObject]:
         """Run all the registered hooks."""
@@ -197,7 +189,8 @@ class SystemContext:
 
     def file_name(self, path: str) -> str:
         result = os.path.join(self.fs_directory,
-                              os.path.relpath(path, '/') if os.path.isabs(path) else path)
+                              os.path.relpath(path, '/') \
+                                  if os.path.isabs(path) else path)
         trace('Mapped system path "{}" to "{}".'.format(path, result))
         return result
 

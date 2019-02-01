@@ -50,7 +50,7 @@ class BasedOnCommand(Command):
         base_system = args[0]
         if base_system == 'scratch':
             verbose('Building from scratch!')
-            system_context.add_hook(location, 'testing', '_test')
+            self._add_hook(location, system_context, 'testing', '_test')
             self._execute(location, system_context, '_setup')
         else:
             verbose('Building on top of {}.'.format(base_system))

@@ -25,7 +25,7 @@ def _setup_scratch_directory(system_context: SystemContext,
 
 
 def _setup_fs_directory(system_context: SystemContext,
-                        binary_manager: BinaryManager) -> None:
+                        mknod_command: str) -> None:
     # Make sure systemd does not create /var/lib/* for us!
     os.makedirs(system_context.file_name('var/lib/machines'))
     os.makedirs(system_context.file_name('var/lib/portables'))
@@ -33,11 +33,11 @@ def _setup_fs_directory(system_context: SystemContext,
     # Make sure there is /dev/null in the filesystem:
     os.makedirs(system_context.file_name('dev'))
 
-    run(binary_manager.binary(Binaries.MKNOD), '--mode=666',
+    run(mknod_command, '--mode=666',
         system_context.file_name('dev/null'), 'c', '1', '3')
-    run(binary_manager.binary(Binaries.MKNOD), '--mode=666',
+    run(mknod_command, '--mode=666',
         system_context.file_name('dev/zero'), 'c', '1', '5')
-    run(binary_manager.binary(Binaries.MKNOD), '--mode=666',
+    run(mknod_command, '--mode=666',
         system_context.file_name('dev/random'), 'c', '1', '8')
 
 
@@ -60,5 +60,4 @@ class _SetupCommand(Command):
         """Execute command."""
         _setup_scratch_directory(system_context,
                                  self._service('btrfs_helper'))
-        _setup_fs_directory(system_context,
-                            self._service('binary_manager'))
+        _setup_fs_directory(system_context, self._binary(Binaries.MKNOD))

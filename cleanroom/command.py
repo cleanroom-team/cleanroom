@@ -12,21 +12,25 @@ from __future__ import annotations
 
 from .binarymanager import Binaries
 from .exceptions import GenerateError, ParseError
+from .execobject import ExecObject
 from .location import Location
 from .printer import fail, h3, success
 from .systemcontext import SystemContext
 
 import os
 import os.path
+from string import Template
 import typing
 
 
 def stringify(command: str, args: typing.Tuple[typing.Any, ...],
               kwargs: typing.Mapping[str, typing.Any]):
-    args_str = ' "' + '" "'.join(map(lambda a: str(a), args)) + '"' if args else ''
+    args_str = ' "' + '" "'.join(map(lambda a: str(a), args)) + '"' \
+        if args else ''
     kwargs_str = ' '.join(map(lambda kv: kv[0] + '="' + str(kv[1]) + '"',
                               kwargs.items())) if kwargs else ''
-    return '"{}"'.format(command) + args_str + kwargs_str
+    separator = ' ' if args_str and kwargs_str else ''
+    return '"{}"'.format(command) + args_str + separator + kwargs_str
 
 
 class Command:
@@ -42,8 +46,10 @@ class Command:
         self._help_string = help_string
         helper_directory = os.path.join(os.path.dirname(os.path.realpath(file)),
                                         'helper', self._name)
-        self.__helper_directory = helper_directory if os.path.isdir(helper_directory) else None
+        self.__helper_directory = helper_directory \
+            if os.path.isdir(helper_directory) else None
         self._services = services
+        assert 'binary_manager' in self._services
 
     @property
     def syntax_string(self) -> str:
@@ -72,7 +78,7 @@ class Command:
 
     def dependency(self, *args: typing.Any, **kwargs: typing.Any) \
             -> typing.Optional[str]:
-        """Maybe implement this, but this default implementation should be ok."""
+        """Maybe implement this, but this default should be ok."""
         return None
 
     def __call__(self, location: Location, system_context: SystemContext,
@@ -89,20 +95,37 @@ class Command:
         command_info.validate_func(location, *args, **kwargs)
         command_info.execute_func(location, system_context, *args, **kwargs)
 
+    def _add_hook(self, location: Location, system_context: SystemContext,
+                  hook_name: str, command: str,
+                  *args: typing.Any, **kwargs: typing.Any) \
+            -> None:
+        """Add a hook."""
+        command_info = self._service('command_manager').command(command)
+        if not command_info:
+            raise ParseError('Command "{}" not found.'.format(command))
+        command_info.validate_func(location, *args, **kwargs)
+
+        system_context.add_hook(hook_name,
+                                ExecObject(location=location,
+                                           command=command,
+                                           args=args,
+                                           kwargs=kwargs))
+
     def _run_hooks(self, system_context: SystemContext, hook_name: str) \
             -> None:
         h3('Running "{}" hooks.'.format(hook_name))
 
         for hook in system_context.hooks(hook_name):
-            command_info = self._service('command_manager').command(hook.command)
+            command_info \
+                = self._service('command_manager').command(hook.command)
             if not command_info:
-                raise GenerateError('Command "{}" not found.'.format(hook.command))
-            command_info.execute_func(hook.location, system_context, *hook.args, **hook.kwargs)
+                raise GenerateError('Command "{}" not found.'
+                                    .format(hook.command))
+            command_info.execute_func(hook.location, system_context,
+                                      *hook.args, **hook.kwargs)
 
-        success('Hooks "{}" were run successfully.'.format(hook_name), verbosity=1)
-
-    def _binary(self, binary: Binaries) -> str:
-        return self._service('binary_manager').binary(binary)
+        success('Hooks "{}" were run successfully.'.format(hook_name),
+                verbosity=1)
 
     def _service(self, service_name: str) -> typing.Any:
         return self._services.get(service_name, None)
@@ -112,19 +135,25 @@ class Command:
         """Return the helper directory."""
         return self.__helper_directory
 
+    def _config_directory(self, system_context) -> str:
+        return os.path.join(system_context.systems_definition_directory,
+                            'config', self.name)
+
     # Validation of args and kwargs:
     def _validate_no_arguments(self, location: Location,
                                *args: typing.Any, **kwargs: typing.Any) -> None:
         self._validate_no_args(location, *args)
         self._validate_kwargs(location, (), **kwargs)
 
-    def _validate_arguments_exact(self, location: Location, arg_count: int, message: str,
-                                  *args: typing.Any, **kwargs: typing.Any) -> None:
+    def _validate_arguments_exact(self, location: Location, arg_count: int,
+                                  message: str, *args: typing.Any,
+                                  **kwargs: typing.Any) -> None:
         self._validate_args_exact(location, arg_count, message, *args)
         self._validate_kwargs(location, (), **kwargs)
 
-    def _validate_arguments_at_least(self, location: Location, arg_count: int, message: str,
-                                     *args: typing.Any, **kwargs: typing.Any) -> None:
+    def _validate_arguments_at_least(self, location: Location, arg_count: int,
+                                     message: str, *args: typing.Any,
+                                     **kwargs: typing.Any) -> None:
         self._validate_args_at_least(location, arg_count, message, *args)
         self._validate_kwargs(location, (), **kwargs)
 
@@ -142,7 +171,8 @@ class Command:
         if len(args) < arg_count:
             raise ParseError(message.format(self.name), location=location)
 
-    def _validate_kwargs(self, location: Location, known_kwargs: typing.Tuple[str, ...],
+    def _validate_kwargs(self, location: Location,
+                         known_kwargs: typing.Tuple[str, ...],
                          **kwargs: typing.Any) -> None:
         if not known_kwargs:
             if kwargs:
@@ -156,7 +186,8 @@ class Command:
                                      .format(self.name, key),
                                      location=location)
 
-    def _require_kwargs(self, location: Location, required_kwargs: typing.Tuple[str, ...],
+    def _require_kwargs(self, location: Location,
+                        required_kwargs: typing.Tuple[str, ...],
                         **kwargs: typing.Any) -> None:
         for key in required_kwargs:
             if key not in kwargs:
@@ -164,3 +195,16 @@ class Command:
                                  'arguments "{}" to be passed.'
                                  .format(self.name, key),
                                  location=location)
+
+    def _binary(self, binary: Binaries):
+        return self._service('binary_manager').binary(binary)
+
+    @staticmethod
+    def _stringify_arg(system_context: SystemContext, arg: typing.Any) -> str:
+        return arg if not isinstance(arg, str) else \
+            Template(str(arg)).substitute(system_context.substitutions)
+
+    @staticmethod
+    def _stringify_args(system_context: SystemContext, *args: typing.Any) \
+            -> typing.Iterator[str]:
+        return map(lambda a: Command._stringify_arg(system_context, a), args)
