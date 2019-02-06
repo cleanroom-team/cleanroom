@@ -6,16 +6,17 @@
 
 
 from cleanroom.binarymanager import Binaries
+from cleanroom.command import Command
 from cleanroom.exceptions import GenerateError, ParseError
 from cleanroom.location import Location
-from cleanroom.exportcommandbase import ExportCommandBase
 from cleanroom.helper.file import exists
 from cleanroom.helper.run import run
 from cleanroom.systemcontext import SystemContext
 import cleanroom.helper.disk as disk
 from cleanroom.imager import ExtraPartition, create_image, \
                              parse_extra_partitions
-from cleanroom.printer import debug
+from cleanroom.printer import debug, h2, info, verbose
+
 
 import os.path
 import shutil
@@ -74,65 +75,132 @@ def _setup_kernel_commandline(base_cmdline: str,
     return cmdline
 
 
-class ExportCommand(ExportCommandBase):
+class ExportCommand(Command):
     """The export_squashfs Command."""
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        self._key = None  # type: typing.Optional[str]
-        self._cert = None  # type: typing.Optional[str]
-        self._volume_group = None  # type: typing.Optional[str]
+        self._repository = ''
+        self._repository_compression = 'zstd'
+        self._repository_compression_level = 16
+
+        self._key = ''
+        self._cert = ''
 
         self._image_format = 'raw'
-        self._image_compression = 'zstd'
+
         self._extra_partitions = []  # type: typing.List[ExtraPartition]
         self._efi_size = 0
         self._swap_size = 0
 
-        self._kernel_file = None  # type: typing.Optional[str]
-        self._root_partition = None  # type: typing.Optional[str]
-        self._verity_partition = None  # type: typing.Optional[str]
+        self._kernel_file = ''
+        self._root_partition = ''
+        self._verity_partition = ''
+
+        self._root_hash = ''
+
+        self._skip_validation = False
 
         super().__init__('export',
-                         syntax='[efi_key=<KEY>] [efi_cert=<CERT>] '
-                         '[efi_size=0M] [swap_size=0M] '
-                         '[extra_partitions=p1,p2,...] '
-                         '[image_format=(raw|qcow2)] '
-                         'repository=REPO_LOCATION',
+                         syntax='REPOSITORY '
+                                '[efi_key=<KEY>] [efi_cert=<CERT>] '
+                                '[efi_size=0M] [swap_size=0M] '
+                                '[extra_partitions=p1,p2,...] '
+                                '[image_format=(raw|qcow2)] '
+                                '[repository_compression=zstd] '
+                                '[repository_compression_level=5] '
+                                '[skip_validation=False]',
                          help_string='Export a filesystem image.',
                          file=__file__, **services)
 
     def validate(self, location: Location,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
         """Validate arguments."""
-        self._validate_no_args(location, *args)
-        self._validate_no_args(location, *args)
+        self._validate_args_exact(location, 1,
+                                  '{} needs a repository to export into.',
+                                  *args)
         self._validate_kwargs(location, ('efi_key', 'efi_cert', 'efi_size',
                                          'swap_size', 'extra_partitions',
-                                         'image_format', 'repository'),
+                                         'image_format',
+                                         'repository_compression',
+                                         'repository_compression_level',
+                                         'skip_validation'),
                               **kwargs)
-        self._require_kwargs(location, ('repository',), **kwargs)
 
         if 'key' in kwargs:
             if 'cert' not in kwargs:
-                raise ParseError('"{}": cert keyword is required when key keyword is given.',
+                raise ParseError('"{}": cert keyword is required when '
+                                 'key keyword is given.',
                                  location=location)
         else:
             if 'cert' in kwargs:
-                raise ParseError('"{}": key keyword is required when cert keyword is given.',
+                raise ParseError('"{}": key keyword is required when '
+                                 'cert keyword is given.',
                                  location=location)
+
+        image_format = kwargs.get('image_format', 'raw')
+        if image_format not in ('raw', 'qcow2', ):
+            raise ParseError('"{}" is not a supported image format.'
+                             .format(image_format),
+                             location=location)
+
+        repo_compression = kwargs.get('repository_compression', 'zstd')
+        if repo_compression not in ('none', 'lz4', 'zstd', 'zlib', 'lzma',):
+            raise ParseError('"{}" is not a supported '
+                             'repository compression format.'
+                             .format(repo_compression),
+                             location=location)
+
+    def __call__(self, location: Location, system_context: SystemContext,
+                 *args: typing.Any, **kwargs: typing.Any) -> None:
+        """Execute command."""
+        self.set_args_and_kwargs(*args, **kwargs)
+
+        h2('Exporting system "{}".'.format(system_context.system_name))
+        debug('Running Hooks.')
+        self._run_all_exportcommand_hooks(system_context)
+
+        verbose('Preparing system for export.')
+        self.prepare_for_export(location, system_context)
+
+        info('Validating installation for export.')
+        if not self._skip_validation:
+            self._validate_installation(location.next_line(), system_context)
+
+        export_directory \
+            = self.create_export_directory(system_context)
+        assert export_directory
+
+        system_context.set_substitution('EXPORT_DIRECTORY', export_directory)
+
+        verbose('Exporting all data in {}.'.format(export_directory))
+        self._execute(location.next_line(), system_context,
+                      '_export_directory', export_directory,
+                      compression=self._repository_compression,
+                      compression_level=self._repository_compression_level,
+                      repository=self._repository)
+
+        info('Cleaning up export location.')
+        self.delete_export_directory(export_directory)
 
     def set_args_and_kwargs(self, *args, **kwargs) -> None:
         """Execute command."""
-        self._key = kwargs.get('efi_key')
-        self._cert = kwargs.get('efi_cert')
+        self._key = kwargs.get('efi_key', '')
+        self._cert = kwargs.get('efi_cert', '')
         self._image_format = kwargs.get('image_format', 'raw')
         self._extra_partitions = \
-            parse_extra_partitions(kwargs.get('extra_partitions', '').split(','))
+            parse_extra_partitions(kwargs.get('extra_partitions', '')
+                                   .split(','))
 
         self._efi_size = disk.mib_ify(kwargs.get('efi_size', 0))
         self._swap_size = disk.mib_ify(kwargs.get('swap_size', 0))
-        assert self._image_format in ('raw', 'qcow2',)
+        self._repository_compression = kwargs.get('repository_compression',
+                                                  'zstd')
+        self._repository_compression_level \
+            = kwargs.get('repository_compression_level', 5)
+        self._repository = args[0]
+
+        self._skip_validation = kwargs.get('skip_validation', False)
 
     def _create_root_tarball(self, location: Location,
                              system_context: SystemContext) -> None:
@@ -150,8 +218,11 @@ class ExportCommand(ExportCommandBase):
         self._create_root_tarball(location, system_context)
         has_kernel = self._create_initramfs(location, system_context)
 
-        (self._kernel_file, self._root_partition, self._verity_partition,) = \
-            self._create_cache_data(location, system_context, has_kernel=has_kernel)
+        (self._kernel_file,
+         self._root_partition, self._verity_partition,
+         self._root_hash) = \
+            self._create_cache_data(location, system_context,
+                                    has_kernel=has_kernel)
 
     def _create_complete_kernel(self, location: Location,
                                 system_context: SystemContext,
@@ -165,7 +236,7 @@ class ExportCommand(ExportCommandBase):
         self._create_efi_kernel(location, system_context, kernel_name,
                                 full_cmdline)
 
-        if self._key is not None and self._cert is not None:
+        if self._key and self._cert:
             debug('Signing EFI kernel.')
             self._sign_efi_kernel(location, system_context, kernel_name,
                                   self._key, self._cert)
@@ -179,36 +250,40 @@ class ExportCommand(ExportCommandBase):
     def _create_cache_data(self, location: Location,
                            system_context: SystemContext, *,
                            has_kernel: bool) \
-            -> typing.Tuple[typing.Optional[str], str, str]:
+            -> typing.Tuple[str, str, str, str]:
         squashfs_file = self._create_squashfs(system_context,
                                               system_context.cache_directory)
         (verity_file, verity_uuid, root_hash) \
             = _create_dmverity(system_context.cache_directory, squashfs_file,
                                timestamp=system_context.timestamp,
-                               veritysetup_command=self._binary(Binaries.VERITYSETUP))
+                               veritysetup_command=self._binary(
+                                   Binaries.VERITYSETUP))
 
         verity_device = 'UUID={}'.format(verity_uuid)
         partlabel = system_context.substitution('ROOTFS_PARTLABEL', '')
         if not partlabel:
-            partlabel = '{}_{}'.format(system_context.substitution('DISTRO_ID', 'clrm'),
-                                       system_context.substitution('DISTRO_VERSION_ID',
-                                       system_context.timestamp))
+            partlabel = '{}_{}'.format(system_context.substitution(
+                                           'DISTRO_ID', 'clrm'),
+                                       system_context.substitution(
+                                           'DISTRO_VERSION_ID',
+                                           system_context.timestamp))
         squashfs_device = 'PARTLABEL={}'.format(partlabel)
 
         cmdline = system_context.substitution('KERNEL_CMDLINE', '')
-        cmdline = ' '.join((cmdline, 'systemd.volatile=true', 'rootfstype=squashfs')).strip()
+        cmdline = ' '.join((cmdline, 'systemd.volatile=true',
+                            'rootfstype=squashfs')).strip()
 
-        kernel_file = None
+        kernel_file = ''
         if has_kernel:
             kernel_file = \
-                self._create_complete_kernel(location, system_context,  cmdline,
-                                             squashfs_device, verity_device, root_hash,
+                self._create_complete_kernel(location, system_context,
+                                             cmdline, squashfs_device,
+                                             verity_device, root_hash,
                                              system_context.cache_directory)
 
-        return kernel_file, squashfs_file, verity_file
+        return kernel_file, squashfs_file, verity_file, root_hash
 
-    def create_export_directory(self, location: Location,
-                                system_context: SystemContext) -> str:
+    def create_export_directory(self, system_context: SystemContext) -> str:
         """Return the root directory."""
         export_volume = os.path.join(system_context.scratch_directory,
                                      'export')
@@ -220,20 +295,23 @@ class ExportCommand(ExportCommandBase):
         os_name = system_context.substitution('DISTRO_ID', 'clrm')
         timestamp = system_context.substitution('TIMESTAMP', 'unknown')
 
-        image_filename = os.path.join(export_volume,
-                                      '{}-{}.{}'.format(os_name, timestamp,
-                                                        self._image_format))
+        image_filename \
+            = os.path.join(export_volume,
+                           '{}_{}{}'.format(os_name, timestamp,
+                                            '.' + self._image_format
+                                            if self._image_format != 'raw'
+                                            else ''))
         create_image(image_filename, self._image_format,
                      self._extra_partitions,
                      self._efi_size, self._swap_size,
                      kernel_file=self._kernel_file,
                      root_partition=self._root_partition,
-                     verity_partition=self._verity_partition)
+                     verity_partition=self._verity_partition,
+                     root_hash=self._root_hash)
 
         return export_volume
 
-    def delete_export_directory(self, system_context: SystemContext,
-                                export_directory: str) -> None:
+    def delete_export_directory(self, export_directory: str) -> None:
         """Nothing to see, move on."""
         self._service('btrfs_helper').delete_subvolume(export_directory)
 
@@ -279,3 +357,24 @@ class ExportCommand(ExportCommandBase):
             work_directory=system_context.fs_directory)
         _size_extend(squash_file)
         return squash_file
+
+    def _validate_installation(self, location: Location,
+                               system_context: SystemContext) -> None:
+        hostname = system_context.substitution('HOSTNAME')
+        if hostname is None:
+            raise GenerateError('Trying to export a system without a hostname.',
+                                location=location)
+
+        machine_id = system_context.substitution('MACHINE_ID')
+        if machine_id is None:
+            raise GenerateError('Trying to export a system without '
+                                'a machine_id.',
+                                location=location)
+
+    def _run_all_exportcommand_hooks(self, system_context: SystemContext) \
+            -> None:
+        self._run_hooks(system_context, '_teardown')
+        self._run_hooks(system_context, 'export')
+
+        # Now do tests!
+        self._run_hooks(system_context, 'testing')

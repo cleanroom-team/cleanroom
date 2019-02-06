@@ -12,7 +12,7 @@ from .helper.btrfs import BtrfsHelper
 from .helper.group import GroupHelper
 from .helper.user import UserHelper
 from .preflight import preflight_check, users_check
-from .printer import Printer
+from .printer import Printer, h2
 from .workdir import WorkDir
 from .systemsmanager import SystemsManager
 
@@ -79,6 +79,8 @@ def main(*command_arguments: str) -> None:
         print('No systems to process.')
         sys.exit(1)
 
+    h2('Setup phase')
+
     # Set up printing:
     pr = Printer.instance()
     pr.set_verbosity(args.verbose)
@@ -116,10 +118,14 @@ def main(*command_arguments: str) -> None:
         command_manager.print_commands()
         exit(0)
 
+    h2('Starting preparation phase')
+
     with WorkDir(btrfs_helper,
                  work_directory=args.work_directory,
                  clear_scratch_directory=args.clear_scratch_directory,
                  clear_storage=args.clear_storage) as work_directory:
+
+        h2('Starting generation phase')
 
         systems_manager \
             = SystemsManager(command_manager, systems_directory,

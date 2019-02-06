@@ -33,10 +33,11 @@ class BtrfsHelper:
         run(self._command, 'subvolume', 'snapshot', *extra_args,
             source, destination, trace_output=trace)
 
-    def delete_subvolume(self, directory: str) -> None:
+    def delete_subvolume(self, directory: str) -> bool:
         """Delete a subvolume."""
         trace('BTRFS: Delete subvolume {}.'.format(directory))
-        run(self._command, 'subvolume', 'delete', directory, trace_output=None)
+        return run(self._command, 'subvolume', 'delete', directory,
+                   returncode=None, trace_output=None).returncode == 0
 
     def delete_subvolume_recursive(self, directory: str) -> None:
         """Delete all subvolumes in a subvolume or directory."""

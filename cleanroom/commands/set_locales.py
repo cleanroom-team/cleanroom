@@ -54,7 +54,7 @@ class SetLocalesCommand(Command):
         if not system_context.has_substitution('CLRM_LOCALES'):
             location.set_description('run locale-gen')
             self._add_hook(location, system_context, 'export',
-                           'run', '/usr/bin/locale-gen')
+                           'run', '/usr/bin/locale-gen', inside=True)
             location.set_description('Remove locale related data.')
             self._add_hook(location, system_context, 'export',
                            'remove', '/usr/share/locale/*',

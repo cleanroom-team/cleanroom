@@ -18,7 +18,6 @@ import datetime
 import os
 import os.path
 import traceback
-import typing
 
 
 class Generator:
@@ -65,9 +64,11 @@ class Generator:
         """Generate all systems in the dependency tree."""
 
         exe = Executor(scratch_directory=work_directory.scratch_directory,
-                       systems_definition_directory=self._systems_manager.systems_definition_directory,
+                       systems_definition_directory=self._systems_manager
+                       .systems_definition_directory,
                        command_manager=command_manager,
-                       timestamp=datetime.datetime.now().strftime('%Y%m%d.%H%M'))
+                       timestamp=datetime.datetime.now()
+                       .strftime('%Y%m%d.%H%M'))
 
         failed_systems = 0
         total_systems = 0
@@ -82,6 +83,8 @@ class Generator:
                                               system_name)):
                     verbose('Already in storage, skipping.')
                 else:
+                    work_directory.clear_scratch_directory()
+
                     exe.run(system_name, base_system_name, exec_obj_list,
                             storage_directory=work_directory.storage_directory)
             except Exception as e:

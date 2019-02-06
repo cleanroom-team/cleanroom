@@ -157,10 +157,8 @@ def _copy_state(system_context: SystemContext, internal_pacman: bool) -> None:
     shutil.copyfile(_config_file(system_context, not internal_pacman),
                     _config_file(system_context, internal_pacman))
 
-    print('XXXXX Copied config into {}.'.format(_config_file(system_context, internal_pacman)))
     debug('Inside: {}, outside: {}'.format(inside, outside))
     if internal_pacman:
-        print('XXXXX Copy pacman DB into filesystem.')
         shutil.rmtree(inside)
         info('Copy pacman DB into the filesystem.')
         shutil.copytree(outside, inside)

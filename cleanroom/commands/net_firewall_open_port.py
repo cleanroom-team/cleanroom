@@ -41,4 +41,4 @@ class NetFirewallOpenPortCommand(Command):
         """Execute command."""
         protocol = kwargs.get('protocol', 'tcp')
         comment = kwargs.get('comment', None)
-        open_port(args[0], protocol=protocol, comment=comment)
+        open_port(system_context, args[0], protocol=protocol, comment=comment)

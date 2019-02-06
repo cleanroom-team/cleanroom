@@ -31,9 +31,9 @@ import cleanroom.helper.disk as disk
     pytest.param('9t', 9895604649984, id='9t'),
     pytest.param('9T', 9895604649984, id='9T'),
 ])
-def test_disk_normalize_size(input_size, output_size) -> None:
+def test_disk_byte_size(input_size, output_size) -> None:
     """Test absolute input file name."""
-    result = disk.normalize_size(input_size)
+    result = disk.byte_size(input_size)
 
     assert result == output_size
 
@@ -46,10 +46,10 @@ def test_disk_normalize_size(input_size, output_size) -> None:
     pytest.param('test', id='test'),
     pytest.param('12z', id='wrong unit')
 ])
-def test_disk_normalize_size_errors(input_size) -> None:
+def test_disk_byte_size_errors(input_size) -> None:
     """Test absolute input file name."""
     with pytest.raises(ValueError):
-        disk.normalize_size(input_size)
+        disk.byte_size(input_size)
 
 
 @pytest.mark.parametrize('input_size', [
@@ -76,7 +76,7 @@ def test_partitioner(tmpdir) -> None:
         pytest.skip('This test needs root to run.')
 
     with disk.NbdDevice.new_image_file(os.path.join(tmpdir, 'testdisk'),
-                                       disk.normalize_size('512m')) as device:
+                                       disk.byte_size('512m')) as device:
         partitioner = disk.Partitioner(device)
         assert not partitioner.is_partitioned()
         assert partitioner.label() is None

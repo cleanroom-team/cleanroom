@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from .helper import disk
 from .helper.run import run as helper_run
-from .printer import debug, fail, success, trace, verbose
+from .printer import info, debug, fail, success, trace, verbose
 
 import collections
 import os
@@ -38,26 +38,6 @@ class DataProvider:
         assert False
 
 
-class BorgDataProvider(DataProvider):
-    def __init__(self, contents):
-        self._contents = contents 
-
-    def write_root_partition(self, target_device: str):
-        self._contents.extract(self._contents.root_name(), '--stdout',
-                               stdout=target_device)
-
-    def write_verity_partition(self, target_device: str):
-        self._contents.extract(self._contents.verity_name(), '--stdout',
-                               stdout=target_device)
-
-    def has_linux_kernel(self):
-        return True
-
-    def write_linux_kernel(self, target_directory: str):
-        self._contents.extract(self._contents.kernel_name(),
-                               work_directory=target_directory)
-
-
 class FileDataProvider(DataProvider):
     def __init__(self, root_partition, verity_partition, kernel_file):
         self._root_partition = root_partition
@@ -74,7 +54,9 @@ class FileDataProvider(DataProvider):
         return self._kernel_file
 
     def write_linux_kernel(self, target_directory: str):
-        shutil.copyfile(self._kernel_file, target_directory)
+        shutil.copyfile(self._kernel_file,
+                        os.path.join(target_directory,
+                                     os.path.basename(self._kernel_file)))
 
 
 ExtraPartition \
@@ -88,9 +70,41 @@ RawImageConfig \
     = collections.namedtuple('RawImageConfig',
                              ['path', 'disk_format', 'force', 'repartition',
                               'min_device_size', 'efi_size', 'root_size',
-                              'verity_size', 'swap_size',
+                              'verity_size', 'swap_size', 'root_hash',
                               'efi_label', 'root_label', 'verity_label',
                               'swap_label', 'extra_partitions', 'writer'])
+
+
+def _minimum_efi_size(kernel_size: int) -> int:
+    bootloader_size = 1 * mib  # size of systemd-boot (+ some spare)
+    return disk.mib_ify(int((kernel_size * 1.05) + (2 * bootloader_size))) * mib
+
+
+def _calculate_efi_size(kernel_size: int, efi_size: int) -> int:
+    if efi_size > 0:
+        assert kernel_size < efi_size
+        return disk.mib_ify(efi_size) * mib  # rounded to full MiB
+    return _minimum_efi_size(kernel_size)
+
+
+def _calculate_minimum_size(kernel_size: int, root_size: int, verity_size: int,
+                            efi_size: int, swap_size: int,
+                            extra_partitions: typing.List[ExtraPartition]) \
+        -> int:
+    if efi_size < _minimum_efi_size(kernel_size):
+        fail('EFI partition is too small to hold the kernel.')
+
+    total_extra_size = 0
+    for ep in extra_partitions:
+        total_extra_size += ep.size
+
+    return (2 * mib +      # Blank space in front
+            efi_size +     # EFI partition
+            swap_size +    # Swap partition
+            root_size +    # Squashfs root partition
+            verity_size +  # Verity root partition
+            total_extra_size +
+            2 * mib)       # Blank space in back
 
 
 def _parse_extra_partition_value(value: str) -> typing.Optional[ExtraPartition]:
@@ -115,19 +129,22 @@ def parse_extra_partitions(extra_partition_data: typing.List[str]) \
     return result
 
 
-def _file_size(file_name):
+def _file_size(file_name: str) -> int:
     if file_name:
         statinfo = os.stat(file_name)
         return statinfo.st_size
     return 0
 
 
-def create_image(image_filename, image_format, extra_partitions,
-                 efi_size, swap_size, *,
-                 kernel_file, root_partition, verity_partition):
+def create_image(image_filename: str, image_format: str,
+                 extra_partitions: typing.List[ExtraPartition],
+                 efi_size: int, swap_size: int, *,
+                 kernel_file: typing.Optional[str],
+                 root_partition: str, verity_partition: str,
+                 root_hash: str) -> None:
     debug('Creating image "{}".'.format(image_filename))
-    
-    kernel_size = _file_size(kernel_file) if kernel_file else 1024*1204
+
+    kernel_size = _file_size(kernel_file) if kernel_file else 0
     root_size = _file_size(root_partition)
     verity_size = _file_size(verity_partition)
 
@@ -152,30 +169,35 @@ def create_image(image_filename, image_format, extra_partitions,
             .format(kernel_size, root_size, verity_size, min_device_size))
 
     writer = FileDataProvider(root_partition, verity_partition, kernel_file)
-    _work_on_device_node(RawImageConfig(path=image_filename,
-                                        disk_format=image_format,
-                                        force=True, repartition=True,
-                                        min_device_size=min_device_size,
-                                        efi_size=efi_size, root_size=root_size,
-                                        verity_size=verity_size,
-                                        swap_size=swap_size,
-                                        efi_label=None,
-                                        root_label=root_partition,
-                                        verity_label=verity_partition,
-                                        swap_label=None,
-                                        extra_partitions=extra_partitions,
-                                        writer=writer))
+    _work_on_device_node(
+        RawImageConfig(path=image_filename,
+                       disk_format=image_format,
+                       force=True, repartition=True,
+                       min_device_size=min_device_size,
+                       efi_size=efi_size, root_size=root_size,
+                       verity_size=verity_size,
+                       swap_size=swap_size,
+                       efi_label=None,
+                       root_label=os.path.basename(root_partition),
+                       verity_label=os.path.basename(verity_partition),
+                       root_hash=root_hash,
+                       swap_label=None,
+                       extra_partitions=extra_partitions,
+                       writer=writer))
 
 
 def _work_on_device_node(ic: RawImageConfig):
     with _find_or_create_device_node(ic.path, ic.disk_format,
                                      ic.min_device_size) as device:
 
+        info('Working on device {}.'.format(ic.path))
+
         partition_devices = _repartition(device, ic.repartition,
                                          ic.root_label, ic.verity_label,
                                          efi_size=ic.efi_size,
                                          root_size=ic.root_size,
                                          verity_size=ic.verity_size,
+                                         root_hash=ic.root_hash,
                                          swap_size=ic.swap_size,
                                          extra_partitions=ic.extra_partitions)
         for name, dev in partition_devices.items():
@@ -191,14 +213,14 @@ def _work_on_device_node(ic: RawImageConfig):
         success('Root partition installed.', verbosity=2)
 
         assert 'verity' in partition_devices
-        ic.writer.write_verity_partition(partition_devices['root'])
+        ic.writer.write_verity_partition(partition_devices['verity'])
         success('Verity partition installed.', verbosity=2)
 
         if ic.writer.has_linux_kernel():
             assert 'efi' in partition_devices
             _prepare_efi_partition(partition_devices['efi'],
                                    partition_devices['root'],
-                                   ic.writer.write_kernel_file)
+                                   ic.writer.write_linux_kernel)
             success('EFI partition installed.', verbosity=2)
         else:
             success('EFI partition SKIPPED (no kernel)', verbosity=2)
@@ -209,79 +231,6 @@ def _work_on_device_node(ic: RawImageConfig):
                                      filesystem=ep.filesystem, label=ep.label,
                                      contents=ep.contents)
         success('Extra partitions installed.', verbosity=2)
-
-
-def _size_from_contents(contents, filename):
-    file = contents.file(filename)
-    return file.size if file else 0
-
-
-def _backup_name(repository: str, full_system_name: str) -> str:
-    return '{}::{}'.format(repository, full_system_name)
-
-
-def _kernel_name(timestamp: str) -> str:
-    return 'linux-{}.efi'.format(timestamp)
-
-
-def _root_name(timestamp: str) -> str:
-    return 'root_{}'.format(timestamp)
-
-
-def _verity_name(timestamp: str) -> str:
-    return 'vrty_{}'.format(timestamp)
-
-
-def _minimum_efi_size(kernel_size: int) -> int:
-    bootloader_size = 1 * mib  # size of systemd-boot (+ some spare)
-    return int((kernel_size + 2 * bootloader_size) * 1.05)
-
-
-def _calculate_efi_size(kernel_size: int, efi_size: int) -> int:
-    if efi_size > 0:
-        return efi_size
-    return _minimum_efi_size(kernel_size)
-
-
-def _calculate_minimum_size(kernel_size: int, root_size: int, verity_size: int,
-                            efi_size: int, swap_size: int,
-                            extra_partitions: typing.List[ExtraPartition]) \
-        -> int:
-    if efi_size < _minimum_efi_size(kernel_size):
-        fail('EFI partition is too small to hold the kernel.')
-
-    total_extra_size = 0
-    for ep in extra_partitions:
-        total_extra_size += ep.size
-
-    return (2 * mib +      # Blank space in front
-            efi_size +     # EFI partition
-            swap_size +    # Swap partition
-            root_size +    # Squashfs root partition
-            verity_size +  # Verity root partition
-            total_extra_size +
-            2 * mib)       # Blank space in back
-
-
-def validate_image_config_path(path: str, force: bool) -> bool:
-    if disk.is_block_device(path):
-        _validate_device(path, force)
-    else:
-        _validate_image_file(path, force)
-    return True
-
-
-def _validate_device(path: str, force: bool) -> None:
-    if not force:
-        fail('You need to --force to work with block device "{}".'
-             .format(path))
-
-
-def _validate_image_file(path: str, force: bool) -> None:
-    if os.path.exists(path):
-        if not force:
-            fail('You need to --force override of existing image file "{}".'
-                 .format(path))
 
 
 def _find_or_create_device_node(path: str, disk_format: str,
@@ -306,8 +255,17 @@ def _create_nbd_device(path: str, disk_format: str, min_device_size: int) \
                                          disk_format=disk_format)
 
 
+def _uuidify(data: str) -> str:
+    assert len(data) == 32
+    return '{}-{}-{}-{}-{}'.format(data[0:8],
+                                   data[8:12], data[12:16], data[16:20],
+                                   data[20:])
+
+
 def _repartition(device: disk.Device, repartition: bool, root_label: str,
-                 verity_label: str, *, efi_size: int, root_size: int,
+                 verity_label: str, *,
+                 root_hash: str,
+                 efi_size: int, root_size: int,
                  verity_size: int, swap_size: int = 0,
                  extra_partitions: typing.Tuple[ExtraPartition, ...] = ()) \
         -> typing.Mapping[str, str]:
@@ -317,12 +275,28 @@ def _repartition(device: disk.Device, repartition: bool, root_label: str,
         fail('"{}" is already partitioned, use --repartition to force '
              'repartitioning.'.format(device.device()))
 
+    root_uuid = _uuidify(root_hash[:32]) if root_hash else ''
+    vrty_uuid = _uuidify(root_hash[32:]) if root_hash else ''
+
+    if root_hash:
+        debug('Root hash: {}.'.format(root_hash))
+        debug('Root partition UUID: {}.'.format(root_uuid))
+        debug('Vrty partition UUID: {}.'.format(vrty_uuid))
+
     trace('Setting basic partitions')
     partitions = [partitioner.efi_partition(start='2m', size=efi_size),
                   partitioner.data_partition(size=root_size,
-                                             name=root_label),
+                                             name=root_label,
+                                             partition_type='4f68bce3-e8cd-'
+                                                            '4db1-96e7-'
+                                                            'fbcaf984b709',
+                                             partition_uuid=root_uuid),
                   partitioner.data_partition(size=verity_size,
-                                             name=verity_label)]
+                                             name=verity_label,
+                                             partition_type='2c7357ed-ebd2-'
+                                                            '46d9-aec1-'
+                                                            '23d437ec2bf5',
+                                             partition_uuid=vrty_uuid)]
     devices = {'efi': device.device(1), 'root': device.device(2),
                'verity': device.device(3)}
 
@@ -353,10 +327,10 @@ def _copy_efi_file(source: str, destination: str) -> None:
     os.chmod(destination, 0o755)
 
 
-def _prepare_efi_partition(device: str, root_dev: str, kernel_file_writer) \
+def _prepare_efi_partition(efi_dev: str, root_dev: str, kernel_file_writer) \
         -> None:
     trace('Preparing EFI partition.')
-    _prepare_extra_partition(device, filesystem='vfat', label='EFI')
+    _prepare_extra_partition(efi_dev, filesystem='vfat', label='EFI')
 
     trace('... Partition created.')
     cwd = os.getcwd()
@@ -365,7 +339,7 @@ def _prepare_efi_partition(device: str, root_dev: str, kernel_file_writer) \
         root_mnt = os.path.join(mnt_point, 'root')
         try:
             os.makedirs(boot_mnt)
-            helper_run('/usr/bin/mount', '-t', 'vfat', device, boot_mnt,
+            helper_run('/usr/bin/mount', '-t', 'vfat', efi_dev, boot_mnt,
                        trace_output=trace)
             os.makedirs(root_mnt)
             helper_run('/usr/bin/mount', '-t', 'squashfs', root_dev, root_mnt,

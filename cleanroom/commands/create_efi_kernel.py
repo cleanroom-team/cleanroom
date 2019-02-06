@@ -11,7 +11,7 @@ from cleanroom.exceptions import GenerateError
 from cleanroom.helper.run import run
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
-from cleanroom.printer import info
+from cleanroom.printer import debug
 
 from glob import glob
 import os.path
@@ -37,7 +37,7 @@ def _create_cmdline_file(directory: str, cmdline: str) -> str:
 
 
 def _get_initrd_parts(location: Location, path: str) -> typing.Sequence[str]:
-    if path is None:
+    if not path:
         raise GenerateError('No initrd-parts directory.', location=location)
 
     initrd_parts = []  # type: typing.List[str]
@@ -90,17 +90,20 @@ class CreateEfiKernelCommand(Command):
 
         output = args[0]
         kernel = kwargs.get('kernel', '')
-        initrd_files = _get_initrd_parts(location, kwargs.get('initrd', ''))
+        initrd_files \
+            = _get_initrd_parts(location,
+                                kwargs.get('initrd',
+                                           system_context.boot_directory))
         cmdline_input = kwargs.get('commandline', '')
         osrelease_file = system_context.file_name('/usr/lib/os-release')
         efistub = system_context.file_name('/usr/lib/systemd/boot/efi/'
                                            'linuxx64.efi.stub')
 
-        info('{}: Kernel   : {}.'.format(self.name, kernel))
-        info('{}: Initrd   : {}.'.format(self.name, ', '.join(initrd_files)))
-        info('{}: cmdline  : {}.'.format(self.name, cmdline_input))
-        info('{}: osrelease: {}.'.format(self.name, osrelease_file))
-        info('{}: efistub  : {}.'.format(self.name, efistub))
+        debug('{}: Kernel   : {}.'.format(self.name, kernel))
+        debug('{}: Initrd   : {}.'.format(self.name, ', '.join(initrd_files)))
+        debug('{}: cmdline  : {}.'.format(self.name, cmdline_input))
+        debug('{}: osrelease: {}.'.format(self.name, osrelease_file))
+        debug('{}: efistub  : {}.'.format(self.name, efistub))
 
         self._validate_files(kernel, *initrd_files, osrelease_file, efistub)
         with tempfile.TemporaryDirectory() as tmp:

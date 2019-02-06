@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+from ..exceptions import GenerateError
 from ..printer import debug, trace, warn
 from .run import run
 
@@ -15,6 +16,7 @@ import json
 import math
 import os
 import os.path
+from re import findall
 import stat
 import typing
 from time import sleep
@@ -150,6 +152,7 @@ class NbdDevice(Device):
 
         self._file_name = file_name
         self._disk_format = disk_format
+        self._qemu_nbd_command = qemu_nbd_command
 
         device \
             = self._create_nbd_block_device(file_name,
@@ -170,7 +173,7 @@ class NbdDevice(Device):
 
     def close(self) -> None:
         if self._device:
-            self._delete_nbd_block_device(self._device)
+            self._delete_nbd_block_device(self._device, self._qemu_nbd_command)
             self._device = ''
 
     def device(self, partition: typing.Optional[int] = None) -> str:
@@ -233,6 +236,16 @@ class NbdDevice(Device):
         trace('"{}" disconnected.'.format(device))
 
 
+def _assert_uuid(data: str):
+    if len(data) == 32 + 4 \
+            and data[8] == '-' and data[13] == '-' \
+            and data[18] == '-' and data[23] == '-' \
+            and len(findall(r'[a-fA-F0-9]', data)) == 32:
+        return
+
+    raise GenerateError('"{}" is not a valid UUID.'.format(data))
+
+
 class Partitioner:
     def __init__(self, device: Device, *,
                  flock_command: typing.Optional[str] = None,
@@ -254,7 +267,7 @@ class Partitioner:
         return Partition(node=None,
                          start=start,
                          size=size,
-                         uuid=None,
+                         uuid='',
                          partition_type='0657fd6d-a4ab-43c4-84e5-0933c84b4f4f',
                          name=name)
 
@@ -264,7 +277,7 @@ class Partitioner:
         return Partition(node=None,
                          start=start,
                          size=size,
-                         uuid=None,
+                         uuid='',
                          partition_type='c12a7328-f81f-11d2-ba4b-00a0c93ec93b',
                          name='EFI System Partition')
 
@@ -273,11 +286,13 @@ class Partitioner:
                        size: typing.Any = None,
                        partition_type: str
                        = '2d212206-b0ee-482e-9fec-e7c208bef27a',
+                       partition_uuid: str
+                       = '',
                        name: str) -> Partition:
         return Partition(node=None,
                          start=start,
                          size=size,
-                         uuid=None,
+                         uuid=partition_uuid,
                          partition_type=partition_type,
                          name=name)
 
@@ -318,11 +333,13 @@ class Partitioner:
             if p.size is not None:
                 partition_data.append('size={}'
                                       .format(_sfdisk_size(byte_size(p.size))))
-            if p.partition_type is not None:
+            if p.partition_type:
+                _assert_uuid(p.partition_type)
                 partition_data.append('type="{}"'.format(p.partition_type))
-            if p.uuid is not None:
+            if p.uuid:
+                _assert_uuid(p.uuid)
                 partition_data.append('uuid="{}"'.format(p.uuid))
-            if p.name is not None:
+            if p.name:
                 partition_data.append('name="{}"'.format(p.name))
 
             instructions += prefix + ', '.join(partition_data) + '\nprint\n'

@@ -21,7 +21,8 @@ class ExportDirectoryCommand(Command):
         """Constructor."""
         super().__init__('_export_directory',
                          syntax='<DIRECTORY> '
-                                'compression_level=<X> '
+                                'compression=<zstd> '
+                                'compression_level=<5> '
                                 'repository=<REPOSITORY_PATH>',
                          help_string='Export a directory from cleanroom.',
                          file=__file__,
@@ -32,7 +33,8 @@ class ExportDirectoryCommand(Command):
         """Validate the arguments."""
         self._validate_args_exact(location, 1, '"{}" needs a directory '
                                   'to export.', *args)
-        self._validate_kwargs(location, ('compression_level', 'repository'), **kwargs)
+        self._validate_kwargs(location, ('compression', 'compression_level',
+                                         'repository'), **kwargs)
         self._require_kwargs(location, ('repository',), **kwargs)
 
     def __call__(self, location: Location, system_context: SystemContext,
@@ -45,7 +47,8 @@ class ExportDirectoryCommand(Command):
 
         run(self._service('binary_manager').binary(Binaries.BORG),
             'create', '--compression',
-            'zstd,{}'.format(kwargs.get('compression_level', 4)),
+            '{},{}'.format(kwargs.get('compression', 'zstd'),
+                           kwargs.get('compression_level', 5)),
             '--numeric-owner', '--noatime',
             '{}::{}'.format(export_repository, backup_name),
             '.', work_directory=export_directory)

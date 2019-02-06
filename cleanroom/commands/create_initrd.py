@@ -60,27 +60,6 @@ def _cleanup_extra_files(location: Location, system_context: SystemContext,
     remove(system_context, *files, force=True, recursive=True)
 
 
-def _copy_extra_file(location: Location, system_context: SystemContext,
-                     extra_file: str) -> str:
-    location.set_description('Installing extra mkinitcpio file {}'
-                             .format(extra_file))
-    helper_directory = system_context.system_helper_directory
-    source_path = os.path.join(helper_directory, extra_file)
-    dest_path = os.path.join('/usr/bin', extra_file)
-    copy(system_context, source_path, dest_path, from_outside=True)
-    chmod(system_context, 0o755, dest_path)
-    return dest_path
-
-
-def _install_extra_binaries(location: Location, system_context: SystemContext) \
-        -> typing.Sequence[str]:
-    to_clean_up: typing.List[str] = [_copy_extra_file(location, system_context,
-                                                      'initrd-check-bios.sh'),
-                                     _copy_extra_file(location, system_context,
-                                                      'initrd-mnencode')]
-    return to_clean_up
-
-
 class CreateInitrdCommand(Command):
     """The create_initrd command."""
 
@@ -217,10 +196,9 @@ class CreateInitrdCommand(Command):
         build() {
         ''')
         if self._vg is not None:
-            hook += textwrap.dedent('''
-            # partprobe LV:
-            add_systemd_unit "initrd-find-root-lv-partitions.service"
-            ''')
+            hook += '''    # partprobe LV:
+    add_systemd_unit "initrd-find-root-lv-partitions.service"
+    '''
             hook += "    add_symlink \"/usr/lib/systemd/system/dev-{0}-{1}'" \
                     ".device.wants/initrd-find-root-lv-partitions.service\" \\" \
                 .format(self._vg, self._full_name)
@@ -274,13 +252,13 @@ class CreateInitrdCommand(Command):
                                  }
                                  
                                  help() {
-                                 cat <<HELPEOF
+                                     cat <<HELPEOF
                                  This hook will enable printing a passphrase with TPM registers
                                  HELPEOF
                                  }
                                  
-                                # vim: set ft=sh ts=4 sw=4 et:
-                                ''')),
+                                 # vim: set ft=sh ts=4 sw=4 et:
+                                 ''')),
             _create_install_hook(location, system_context,
                                  'sd-stateless', textwrap.dedent('''\
                                  #!/usr/bin/bash
@@ -313,13 +291,13 @@ class CreateInitrdCommand(Command):
                                  }
                                  
                                  help() {
-                                 cat <<HELPEOF
+                                     cat <<HELPEOF
                                  This hook allows for setting up the rootfs from /usr/lib/boot/root-fs.tar.
                                  HELPEOF
                                  }
                                 
-                                # vim: set ft=sh ts=4 sw=4 et:
-                                ''')),
+                                 # vim: set ft=sh ts=4 sw=4 et:
+                                 ''')),
             _create_install_hook(location, system_context,
                                  'sd-boot-image',
                                  self._sd_boot_image_hook()),
@@ -353,14 +331,14 @@ class CreateInitrdCommand(Command):
                                      add_binary "/usr/lib/systemd/systemd-volatile-root"
                                  }
                                 
-                                help() {
-                                    cat <<HELPEOF
-                                This hook installs the necessary infrastructure for systemd.volatile to work.
-                                HELPEOF
-                                }
+                                 help() {
+                                     cat <<HELPEOF
+                                 This hook installs the necessary infrastructure for systemd.volatile to work.
+                                 HELPEOF
+                                 }
                                 
-                                # vim: set ft=sh ts=4 sw=4 et:
-                                '''))]
+                                 # vim: set ft=sh ts=4 sw=4 et:
+                                 '''))]
 
         return to_clean_up
 
@@ -434,7 +412,7 @@ class CreateInitrdCommand(Command):
         initrd = args[0]
 
         to_clean_up = []  # type: typing.List[str]
-        to_clean_up += _install_extra_binaries(location, system_context)
+        to_clean_up += self._install_extra_binaries(location, system_context)
         to_clean_up += self._create_systemd_units(location, system_context)
         to_clean_up += self._install_mkinitcpio(location, system_context)
         to_clean_up += self._install_mkinitcpio_hooks(location, system_context)
@@ -449,3 +427,26 @@ class CreateInitrdCommand(Command):
 
         _cleanup_extra_files(location, system_context, *to_clean_up)
         self._remove_mkinitcpio(location, system_context)
+
+    def _install_extra_binaries(self, location: Location,
+                                system_context: SystemContext) \
+            -> typing.Sequence[str]:
+        to_clean_up: typing.List[str] \
+            = [self._copy_extra_file(location, system_context,
+                                     'initrd-check-bios.sh'),
+               self._copy_extra_file(location, system_context,
+                                     'initrd-mnencode')]
+        return to_clean_up
+
+    def _copy_extra_file(self, location: Location,
+                         system_context: SystemContext,
+                         extra_file: str) -> str:
+        location.set_description('Installing extra mkinitcpio file {}'
+                                 .format(extra_file))
+        helper_directory = self._helper_directory
+        assert helper_directory
+        source_path = os.path.join(helper_directory, extra_file)
+        dest_path = os.path.join('/usr/bin', extra_file)
+        copy(system_context, source_path, dest_path, from_outside=True)
+        chmod(system_context, 0o755, dest_path)
+        return dest_path

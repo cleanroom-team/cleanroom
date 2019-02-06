@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 from cleanroom.command import Command
 from cleanroom.commandmanager import CommandManager
+from cleanroom.location import Location
 from cleanroom.parser import Parser
 from cleanroom.systemcontext import SystemContext
 
@@ -33,6 +34,12 @@ def system_context(tmpdir):
                                    storage_directory=storage_directory,
                                    timestamp='20190101-010101')
     return system_context
+
+
+@pytest.fixture()
+def location():
+    return Location(file_name='<test>', line_number=1,
+                    description='test location')
 
 
 def _create_file(fs, file_name, contents=None):

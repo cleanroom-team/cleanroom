@@ -34,7 +34,8 @@ class EnsureHwdbCommand(Command):
 
         location.set_description('Update HWDB')
         self._add_hook(location, system_context,
-                       'export', 'run', '/usr/bin/systemd-hwdb', '--usr', 'update')
+                       'export', 'run', '/usr/bin/systemd-hwdb',
+                       '--usr', 'update', inside=True)
         location.set_description('Remove HWDB data')
         self._add_hook(location, system_context,
                        'export', 'remove', '/usr/bin/systemd-hwdb')

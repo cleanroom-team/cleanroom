@@ -6,12 +6,11 @@
 
 
 from cleanroom.binarymanager import Binaries
-from cleanroom.command import Command
+from cleanroom.command import Command, process_args, process_kwargs
 from cleanroom.helper.run import run
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
-from string import Template
 import typing
 
 
@@ -40,8 +39,9 @@ class RunCommand(Command):
     def __call__(self, location: Location, system_context: SystemContext,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
         """Execute command."""
-        if kwargs.pop('inside', 'False'):
+        if kwargs.pop('inside', False):
             kwargs['chroot'] = system_context.fs_directory
             kwargs['chroot_helper'] = self._binary(Binaries.CHROOT_HELPER)
 
-        run(*Command._stringify_args(system_context, args), **kwargs)
+        run(*process_args(system_context, *args),
+            **process_kwargs(system_context, **kwargs))

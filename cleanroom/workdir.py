@@ -16,7 +16,7 @@ import tempfile
 import typing
 
 
-def _ensure_directory(directory: str, btrfs_helper: BtrfsHelper):
+def _ensure_directory(directory: str, btrfs_helper: BtrfsHelper) -> None:
     if not os.path.isdir(directory):
         btrfs_helper.create_subvolume(directory)
         if not os.path.isdir(directory):
@@ -24,11 +24,20 @@ def _ensure_directory(directory: str, btrfs_helper: BtrfsHelper):
                                  '{} not created.'.format(directory))
 
 
-def _clear_directory(directory: str, btrfs_helper: BtrfsHelper):
-    trace('Cleaning work directory: {}.'.format(directory))
+def _clear_directory(directory: str, btrfs_helper: BtrfsHelper) -> None:
+    trace('Cleaning directory: {}.'.format(directory))
     umount_all(directory)
 
     if os.path.isdir(directory):
+        # Fast path:-)
+        btrfs_helper.delete_subvolume(os.path.join(directory, 'fs'))
+        btrfs_helper.delete_subvolume(os.path.join(directory, 'meta'))
+        btrfs_helper.delete_subvolume(os.path.join(directory, 'cache'))
+        btrfs_helper.delete_subvolume(directory)
+
+        # Slow fallback path:
+        if not os.path.isdir(directory):
+            return
         btrfs_helper.delete_subvolume_recursive(directory)
         if os.path.isdir(directory):
             os.rmdir(directory)
@@ -67,7 +76,6 @@ class WorkDir:
                     self.clear_scratch_directory()
                 if clear_storage:
                     self.clear_storage_directory()
-                self._clear_export_directory()
         else:
             trace('Creating temporary work directory.')
             self._temp_directory = tempfile.TemporaryDirectory(prefix='clrm-',
@@ -108,6 +116,8 @@ class WorkDir:
 
     def clear_scratch_directory(self) -> None:
         _clear_directory(self.scratch_directory, self._btrfs_helper)
+        self._btrfs_helper.create_subvolume(self.scratch_directory)
+
 
     @property
     def storage_directory(self) -> str:
@@ -115,14 +125,14 @@ class WorkDir:
         return os.path.join(self._work_directory, 'storage')
 
     def clear_storage_directory(self) -> None:
+        # Trigger fast-path on storage directories:
+        with os.scandir(self.storage_directory) as it:
+            for entry in it:
+                if entry.is_dir():
+                    _clear_directory(entry.path, self._btrfs_helper)
+
+        # slow path:
         _clear_directory(self.storage_directory, self._btrfs_helper)
-
-    @property
-    def export_directory(self) -> str:
-        return os.path.join(self._work_directory, 'export')
-
-    def _clear_export_directory(self) -> None:
-        _clear_directory(self.export_directory, self._btrfs_helper)
 
     @property
     def work_directory(self) -> str:
@@ -132,7 +142,6 @@ class WorkDir:
     def _setup_work_directory(self) -> None:
         _ensure_directory(self.storage_directory, self._btrfs_helper)
         _ensure_directory(self.scratch_directory, self._btrfs_helper)
-        _ensure_directory(self.export_directory, self._btrfs_helper)
 
         info('WorkDir: work directory     = "{}".'
              .format(self.work_directory))
@@ -140,5 +149,3 @@ class WorkDir:
               .format(self.scratch_directory))
         debug('WorkDir: storage directory  = "{}".'
               .format(self.storage_directory))
-        debug('WorkDir: export directory   = "{}".'
-              .format(self.export_directory))

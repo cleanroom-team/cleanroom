@@ -36,12 +36,13 @@ class _StoreCommand(Command):
 
         btrfs_helper.create_subvolume(system_context.system_storage_directory)
 
+        storage = system_context.system_storage_directory
         btrfs_helper.create_snapshot(system_context.meta_directory,
-                                     os.path.join(system_context.system_storage_directory, 'meta'),
+                                     os.path.join(storage, 'meta'),
                                      read_only=True)
         btrfs_helper.create_snapshot(system_context.boot_directory,
-                                     os.path.join(system_context.system_storage_directory, 'boot'),
+                                     os.path.join(storage, 'boot'),
                                      read_only=True)
         btrfs_helper.create_snapshot(system_context.fs_directory,
-                                     os.path.join(system_context.system_storage_directory, 'fs'),
+                                     os.path.join(storage, 'fs'),
                                      read_only=True)

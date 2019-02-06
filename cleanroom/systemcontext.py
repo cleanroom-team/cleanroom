@@ -129,15 +129,18 @@ class SystemContext:
         """Core substitutions that may not get overridden by base system."""
         bases: typing.List[str] = self.__collect_bases()
 
-        self.set_substitution('BASE_SYSTEM',
+        self.set_substitution('BASE_SYSTEM_NAME',
                               bases[0] if bases else '')
         self.set_substitution('BASE_SYSTEM_LIST',
                               ';'.join(bases) if bases else '')
 
-        self.set_substitution('ROOT', self.fs_directory)
-        self.set_substitution('META', self.meta_directory)
-        self.set_substitution('CACHE', self.cache_directory)
-        self.set_substitution('SYSTEM', self.system_name)
+        self.set_substitution('ROOT_DIR', self.fs_directory)
+        self.set_substitution('META_DIR', self.meta_directory)
+        self.set_substitution('CACHE_DIR', self.cache_directory)
+        self.set_substitution('SYSTEMS_DEFINITION_DIR',
+                              self.systems_definition_directory)
+        self.set_substitution('SYSTEM_HELPER_DIR', self.system_helper_directory)
+        self.set_substitution('SYSTEM_NAME', self.system_name)
         ts = 'unknown' if self.timestamp is None else self.timestamp
         self.set_substitution('TIMESTAMP', ts)
 
@@ -162,7 +165,11 @@ class SystemContext:
 
     def hooks(self, hook_name: str) -> typing.Sequence[ExecObject]:
         """Run all the registered hooks."""
+        self._hooks_that_already_ran.append(hook_name)
         return self._hooks.get(hook_name, [])
+
+    def hooks_were_run(self, hook_name: str) -> bool:
+        return hook_name in self._hooks_that_already_ran
 
     # Handle substitutions:
     @property

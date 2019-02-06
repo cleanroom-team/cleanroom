@@ -14,7 +14,7 @@ from .binarymanager import Binaries
 from .exceptions import GenerateError, ParseError
 from .execobject import ExecObject
 from .location import Location
-from .printer import fail, h3, success
+from .printer import fail, h3, success, verbose
 from .systemcontext import SystemContext
 
 import os
@@ -33,6 +33,27 @@ def stringify(command: str, args: typing.Tuple[typing.Any, ...],
     return '"{}"'.format(command) + args_str + separator + kwargs_str
 
 
+def _expand_arg(system_context: SystemContext, arg: typing.Any) -> typing.Any:
+    return Template(arg).substitute(system_context.substitutions) \
+        if isinstance(arg, str) else arg
+
+
+def process_args(system_context: SystemContext, *args: typing.Any) \
+        -> typing.Tuple[str, ...]:
+    result: typing.Tuple[str, ...] = ()
+    for a in args:
+        result = (*result, _expand_arg(system_context, str(a)))
+    return result
+
+
+def process_kwargs(system_context: SystemContext, **kwargs: typing.Any) \
+        -> typing.Dict[str, typing.Any]:
+    result: typing.Dict[str, typing.Any] = {}
+    for k, v in kwargs.items():
+        result[k] = _expand_arg(system_context, v)
+    return result
+
+
 class Command:
     """A command that can be used in to set up a machines."""
 
@@ -49,7 +70,6 @@ class Command:
         self.__helper_directory = helper_directory \
             if os.path.isdir(helper_directory) else None
         self._services = services
-        assert 'binary_manager' in self._services
 
     @property
     def syntax_string(self) -> str:
@@ -73,7 +93,7 @@ class Command:
 
         Validate all arguments.
         """
-        fail('Command "{}"" called validate illegally!'.format(self.name))
+        fail('Command "{}" called validate illegally!'.format(self.name))
         return None
 
     def dependency(self, *args: typing.Any, **kwargs: typing.Any) \
@@ -113,6 +133,10 @@ class Command:
 
     def _run_hooks(self, system_context: SystemContext, hook_name: str) \
             -> None:
+        if system_context.hooks_were_run(hook_name):
+            verbose('Already ran "{}", skipping.'.format(hook_name))
+            return
+
         h3('Running "{}" hooks.'.format(hook_name))
 
         for hook in system_context.hooks(hook_name):
@@ -198,13 +222,3 @@ class Command:
 
     def _binary(self, binary: Binaries):
         return self._service('binary_manager').binary(binary)
-
-    @staticmethod
-    def _stringify_arg(system_context: SystemContext, arg: typing.Any) -> str:
-        return arg if not isinstance(arg, str) else \
-            Template(str(arg)).substitute(system_context.substitutions)
-
-    @staticmethod
-    def _stringify_args(system_context: SystemContext, *args: typing.Any) \
-            -> typing.Iterator[str]:
-        return map(lambda a: Command._stringify_arg(system_context, a), args)

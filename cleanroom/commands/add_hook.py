@@ -5,7 +5,7 @@
 """
 
 
-from cleanroom.command import Command
+from cleanroom.command import Command, process_args, process_kwargs
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
@@ -36,5 +36,4 @@ class AddHookCommand(Command):
         """Execute command."""
         location.set_description(message)
         self._add_hook(location, system_context, args[0], args[1],
-                       *Command._stringify_args(system_context, args[2:]),
-                       **kwargs)
+                       *args[2:], **kwargs)

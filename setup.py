@@ -44,7 +44,7 @@ setup(
 
     # Contents:
     packages=find_packages(exclude=['systems', 'examples', 'docs', 'tests']),
-    package_data={'cleanroom': ['print_commands/*.py']},
+    package_data={'cleanroom': ['commands/*.py']},
     entry_points={
         'console_scripts': [
             'cleanroom=cleanroom.generator.main:run',

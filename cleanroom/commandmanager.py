@@ -129,7 +129,7 @@ class CommandManager:
 
     def _find_commands(self, *directories: str) -> None:
         """Find possible commands in the file system."""
-        h2('Searching for available commands', verbosity=2)
+        debug('Searching for available commands')
         visited_directories: typing.Set[str] = set()
         for directory in directories:
             if directory in visited_directories:
