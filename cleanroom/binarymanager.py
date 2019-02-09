@@ -36,6 +36,8 @@ class Binaries(Enum):
     GROUPMOD = auto()
     CHROOT_HELPER = auto()
     SYSTEMCTL = auto()
+    SFDISK = auto()
+    FLOCK = auto()
 
 
 def _check_for_binary(binary: str) -> str:
@@ -67,6 +69,8 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.GROUPADD: _check_for_binary('/usr/sbin/groupadd'),
         Binaries.CHROOT_HELPER: _check_for_binary('/usr/bin/arch-chroot'),
         Binaries.SYSTEMCTL: _check_for_binary('/usr/bin/systemctl'),
+        Binaries.FLOCK: _check_for_binary('/usr/bin/flock'),
+        Binaries.SFDISK: _check_for_binary('/usr/bin/sfdisk'),
     }
     os_binaries: typing.Dict[Binaries, str] = {}
     distribution = _get_distribution()

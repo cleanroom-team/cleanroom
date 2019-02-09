@@ -248,8 +248,7 @@ def _assert_uuid(data: str):
 
 class Partitioner:
     def __init__(self, device: Device, *,
-                 flock_command: typing.Optional[str] = None,
-                 sfdisk_command: typing.Optional[str] = None) -> None:
+                 flock_command: str = '', sfdisk_command: str = '') -> None:
         assert _is_root()
         assert is_block_device(device.device())
 

@@ -36,7 +36,7 @@ def _create_cmdline_file(directory: str, cmdline: str) -> str:
     return target
 
 
-def _get_initrd_parts(location: Location, path: str) -> typing.Sequence[str]:
+def _get_initrd_parts(location: Location, path: str) -> typing.List[str]:
     if not path:
         raise GenerateError('No initrd-parts directory.', location=location)
 
@@ -47,6 +47,7 @@ def _get_initrd_parts(location: Location, path: str) -> typing.Sequence[str]:
     if not initrd_parts:
         raise GenerateError('No initrd-parts found in directory "{}".'
                             .format(path), location=location)
+    initrd_parts.sort()
     return initrd_parts
 
 
@@ -84,16 +85,17 @@ class CreateEfiKernelCommand(Command):
     def __call__(self, location: Location, system_context: SystemContext,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
         """Execute command."""
+
         if system_context.substitution('ROOT_DEVICE') is None:
             GenerateError('ROOT_DEVICE must be set when creating EFI kernel.',
                           location=location)
 
         output = args[0]
         kernel = kwargs.get('kernel', '')
-        initrd_files \
-            = _get_initrd_parts(location,
-                                kwargs.get('initrd',
-                                           system_context.boot_directory))
+        initrd_directory \
+            = kwargs.get('initrd', os.path.join(system_context.boot_directory,
+                                                'initrd-parts'))
+        initrd_files = _get_initrd_parts(location, initrd_directory)
         cmdline_input = kwargs.get('commandline', '')
         osrelease_file = system_context.file_name('/usr/lib/os-release')
         efistub = system_context.file_name('/usr/lib/systemd/boot/efi/'

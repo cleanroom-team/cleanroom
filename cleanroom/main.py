@@ -26,6 +26,7 @@ def _parse_commandline(*arguments: str) -> typing.Any:
     """Parse the command line options."""
     parser = ArgumentParser(description='Cleanroom OS image script generator',
                             prog=arguments[0])
+
     parser.add_argument('--verbose', action='count', default=0,
                         help='Be verbose')
     parser.add_argument('--list-commands', dest='list_commands',

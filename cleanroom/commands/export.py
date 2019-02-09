@@ -307,7 +307,9 @@ class ExportCommand(Command):
                      kernel_file=self._kernel_file,
                      root_partition=self._root_partition,
                      verity_partition=self._verity_partition,
-                     root_hash=self._root_hash)
+                     root_hash=self._root_hash,
+                     flock_command=self._binary(Binaries.FLOCK),
+                     sfdisk_command=self._binary(Binaries.SFDISK))
 
         return export_volume
 

@@ -167,7 +167,6 @@ def _chown(uid: int, gid: int, *files: str) -> None:
 
 
 def _get_uid(system_context: SystemContext, user: typing.Any) -> int:
-    trace('Getting UID of {} ({}).'.format(user, type(user)))
     if user is None:
         trace('UID: Mapped None to 0.')
         return 0
@@ -188,7 +187,6 @@ def _get_uid(system_context: SystemContext, user: typing.Any) -> int:
 
 
 def _get_gid(system_context: SystemContext, group: typing.Any) -> int:
-    trace('Getting GID of {} ({}).'.format(group, type(group)))
     if group is None:
         trace('GID: Mapped None to 0.')
         return 0

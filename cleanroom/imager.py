@@ -141,7 +141,9 @@ def create_image(image_filename: str, image_format: str,
                  efi_size: int, swap_size: int, *,
                  kernel_file: typing.Optional[str],
                  root_partition: str, verity_partition: str,
-                 root_hash: str) -> None:
+                 root_hash: str,
+                 sfdisk_command: str,
+                 flock_command: str) -> None:
     debug('Creating image "{}".'.format(image_filename))
 
     kernel_size = _file_size(kernel_file) if kernel_file else 0
@@ -183,10 +185,13 @@ def create_image(image_filename: str, image_format: str,
                        root_hash=root_hash,
                        swap_label=None,
                        extra_partitions=extra_partitions,
-                       writer=writer))
+                       writer=writer),
+        sfdisk_command=sfdisk_command,
+        flock_command=flock_command)
 
 
-def _work_on_device_node(ic: RawImageConfig):
+def _work_on_device_node(ic: RawImageConfig, *,
+                         sfdisk_command: str, flock_command: str):
     with _find_or_create_device_node(ic.path, ic.disk_format,
                                      ic.min_device_size) as device:
 
@@ -199,7 +204,9 @@ def _work_on_device_node(ic: RawImageConfig):
                                          verity_size=ic.verity_size,
                                          root_hash=ic.root_hash,
                                          swap_size=ic.swap_size,
-                                         extra_partitions=ic.extra_partitions)
+                                         extra_partitions=ic.extra_partitions,
+                                         sfdisk_command=sfdisk_command,
+                                         flock_command=flock_command)
         for name, dev in partition_devices.items():
             trace('Created partition "{}": {}.'.format(name, dev))
 
@@ -267,9 +274,13 @@ def _repartition(device: disk.Device, repartition: bool, root_label: str,
                  root_hash: str,
                  efi_size: int, root_size: int,
                  verity_size: int, swap_size: int = 0,
-                 extra_partitions: typing.Tuple[ExtraPartition, ...] = ()) \
+                 extra_partitions: typing.Tuple[ExtraPartition, ...] = (),
+                 flock_command: str,
+                 sfdisk_command: str) \
         -> typing.Mapping[str, str]:
-    partitioner = disk.Partitioner(device)
+    partitioner = disk.Partitioner(device,
+                                   flock_command=flock_command,
+                                   sfdisk_command=sfdisk_command)
 
     if partitioner.is_partitioned() and not repartition:
         fail('"{}" is already partitioned, use --repartition to force '
