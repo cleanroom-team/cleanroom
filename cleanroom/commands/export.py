@@ -23,6 +23,14 @@ import shutil
 import typing
 
 
+def _root_part_label(system_context: SystemContext) -> str:
+    label = system_context.substitution('ROOTFS_PARTLABEL', '')
+    return label if label else '{}_{}'.format(
+        system_context.substitution('DISTRO_ID', 'clrm'),
+        system_context.substitution('DISTRO_VERSION_ID',
+                                    system_context.timestamp))
+
+
 def _kernel_name(system_context: SystemContext) -> str:
     boot_data = system_context.boot_directory
     assert boot_data
@@ -260,14 +268,8 @@ class ExportCommand(Command):
                                    Binaries.VERITYSETUP))
 
         verity_device = 'UUID={}'.format(verity_uuid)
-        partlabel = system_context.substitution('ROOTFS_PARTLABEL', '')
-        if not partlabel:
-            partlabel = '{}_{}'.format(system_context.substitution(
-                                           'DISTRO_ID', 'clrm'),
-                                       system_context.substitution(
-                                           'DISTRO_VERSION_ID',
-                                           system_context.timestamp))
-        squashfs_device = 'PARTLABEL={}'.format(partlabel)
+        squashfs_device \
+            = 'PARTLABEL={}'.format(_root_part_label(system_context))
 
         cmdline = system_context.substitution('KERNEL_CMDLINE', '')
         cmdline = ' '.join((cmdline, 'systemd.volatile=true',
@@ -351,8 +353,8 @@ class ExportCommand(Command):
 
     def _create_squashfs(self, system_context: SystemContext,
                          target_directory: str) -> str:
-        squash_file = os.path.join(target_directory, 'root_{}'
-                                   .format(system_context.timestamp))
+        squash_file = os.path.join(target_directory,
+                                   _root_part_label(system_context))
         run(self._binary(Binaries.MKSQUASHFS), 'usr', squash_file,
             '-comp', 'zstd', '-noappend', '-no-exports', '-keep-as-directory',
             '-noI', '-noD', '-noF', '-noX', '-processors', '1',
