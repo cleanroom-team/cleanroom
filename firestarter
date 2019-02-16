@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Export cleanroom builds into various different formats.
+
+@author: Tobias Hunger <tobias.hunger@gmail.com>
+"""
+
+
+from cleanroom.firestarter.main import run
+
+
+if __name__ == '__main__':
+    run()

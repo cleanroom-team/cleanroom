@@ -154,7 +154,7 @@ class SystemContext:
 
         self.set_substitution('IMAGE_FS', 'btrfs')
         self.set_substitution('IMAGE_OPTIONS', 'rw,subvol=/.images')
-        self.set_substitution('IMAGE_DEVICE', '/dev/disk/by-partlabel/fs_btrfs')
+        self.set_substitution('IMAGE_DEVICE', '/dev/disk/by-label/fs_btrfs')
 
     # Handle Hooks:
     def add_hook(self, hook: str, exec_obj: ExecObject) -> None:

@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Main CleanRoom binary.
+
+@author: Tobias Hunger <tobias.hunger@gmail.com>
+"""
+
+
+from cleanroom.printer import trace, verbose
+import cleanroom.helper.disk as disk
+import cleanroom.helper.mount as mount
+
+import os
+from shutil import chown, copyfile
+from distutils.dir_util import copy_tree
+import subprocess
+import sys
+from tempfile import TemporaryDirectory
+import typing
+
+
+# Library:
+
+def run(*args, work_directory: str = '', check: bool = True,
+        env: typing.Dict[str, str] = os.environ) \
+        -> subprocess.CompletedProcess:
+    env['LC_ALL'] = 'en_US.UTF-8'
+
+    cwd = work_directory or None
+    return subprocess.run(args, env=env, capture_output=True, check=check,
+                          cwd=cwd)
+
+
+def run_borg(*args, work_directory: str = '') -> subprocess.CompletedProcess:
+    return run('/usr/bin/borg', *args, work_directory=work_directory)
+
+
+def find_archive(system_name: str, *, repository: str, version: str = '') \
+        -> typing.Tuple[str, str]:
+    borg_list = run_borg('list', repository)
+
+    archive_to_use = ''
+    for line in borg_list.stdout.decode('utf-8').split('\n'):
+        if not line.startswith(system_name):
+            continue
+        trace('Borg list: {}.'.format(line))
+        versioned_system_name = line.split(' ')[0]
+        assert versioned_system_name[len(system_name)] == '-'
+        current_version = versioned_system_name[len(system_name) + 1:]
+        if version:
+            if current_version == version:
+                archive_to_use = versioned_system_name
+                break
+        else:
+            if not archive_to_use or versioned_system_name > archive_to_use:
+                archive_to_use = versioned_system_name
+
+    return archive_to_use, archive_to_use[len(system_name) + 1:]
+
+
+def extract_archive(archive: str, target_directory: str, *,
+                    repository: str) -> None:
+    run_borg('extract', '{}::{}'.format(repository, archive),
+             work_directory=target_directory)
+
+
+def write_image(system_name: str, target_directory: str, *,
+                repository: str, version: str = '') -> str:
+    (archive_to_extract, extracted_version) \
+        = find_archive(system_name, repository=repository, version=version)
+    if not archive_to_extract:
+        if version:
+            print('Could not find version "{}" of system "{}" to extract.'
+                  .format(version, system_name))
+        else:
+            print('Could not find system "{}" to extract'.format(system_name))
+        sys.exit(2)
+
+    extract_archive(archive_to_extract, target_directory,
+                    repository=repository)
+
+    return extracted_version
+
+
+def export_into_directory(system_name: str, target_directory: str, *,
+                          repository: str, version: str = '',
+                          create_directory: bool = False,
+                          owner: str = '', group: str = '',
+                          mode: int = 0) -> str:
+    if not os.path.isdir(target_directory):
+        if create_directory:
+            os.makedirs(target_directory)
+
+    assert os.path.isdir(target_directory)
+
+    with TemporaryDirectory(prefix='clrm_dir_',
+                            dir=target_directory) as tempdir:
+        extracted_version \
+            = write_image(system_name, tempdir,
+                          repository=repository,
+                          version=version)
+
+        exported_file_name = 'clrm_{}'.format(extracted_version)
+        exported_file = os.path.join(tempdir, exported_file_name)
+        assert os.path.isfile(exported_file)
+
+        if group or owner:
+            chown(exported_file, user=owner or 'root', group=group or 'root')
+        if mode:
+            os.chmod(exported_file, mode)
+
+        target_file = os.path.join(target_directory, exported_file_name)
+        os.rename(exported_file, target_file)
+
+        # Create symlink:
+        link_location = os.path.join(target_directory, 'latest.img')
+        if os.path.islink(link_location):
+            os.unlink(link_location)
+        os.symlink('./{}'.format(exported_file_name), link_location)
+        if group or owner:
+            chown(link_location, user=owner or 'root', group=group or 'root')
+
+        return target_file
+
+
+def copy_efi_partition(*,
+                       image_file: str,
+                       efi_device, tempdir: str,
+                       kernel_only: bool = True):
+    verbose('Copying EFI configuration out of image file.')
+    with disk.NbdDevice(image_file, disk_format='raw') \
+            as internal_device:
+        with mount.Mount(internal_device.device(1),
+                         os.path.join(tempdir, '_efi')) \
+                as int_efi:
+            with mount.Mount(efi_device,
+                             os.path.join(tempdir, 'efi'), fs_type='vfat') \
+                    as efi:
+                if kernel_only:
+                    img_dir = os.path.join(int_efi, 'EFI', 'Linux')
+                    efi_dir = os.path.join(efi, 'EFI', 'Linux')
+                    assert os.path.isdir(img_dir)
+                    if not os.path.isdir(efi_dir):
+                        os.makedirs(efi_dir)
+
+                    for f in [f for f in os.listdir(img_dir)
+                              if os.path.isfile(os.path.join(img_dir, f))]:
+                        trace('Copying EFI kernel {}.'.format(f))
+                        copyfile(os.path.join(img_dir, f),
+                                 os.path.join(efi_dir, f))
+                else:
+                    trace('Copying EFI folder into system.')
+                    copy_tree(int_efi, efi)

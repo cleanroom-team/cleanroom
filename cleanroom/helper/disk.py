@@ -94,7 +94,7 @@ def _sfdisk_size(size: int) -> str:
 
 
 def create_image_file(file_name: str, size: int, *, disk_format: str = 'qcow2',
-                      qemu_img_command: typing.Optional[str] = None) -> None:
+                      qemu_img_command: str = '') -> None:
     assert _is_root()
     run(qemu_img_command or '/usr/bin/qemu-img', 'create',
         '-q', '-f', disk_format, file_name, str(byte_size(size)))
@@ -136,8 +136,8 @@ class NbdDevice(Device):
     @staticmethod
     def new_image_file(file_name: str, size: int, *,
                        disk_format: str = 'qcow2',
-                       qemu_img_command: typing.Optional[str] = None,
-                       qemu_nbd_command: typing.Optional[str] = None) \
+                       qemu_img_command: str = '',
+                       qemu_nbd_command: str = '') \
             -> NbdDevice:
         create_image_file(file_name, size, disk_format=disk_format,
                           qemu_img_command=qemu_img_command)
@@ -147,7 +147,7 @@ class NbdDevice(Device):
                          qemu_nbd_command=qemu_nbd_command)
 
     def __init__(self, file_name: str, *, disk_format: str = 'qcow2',
-                 qemu_nbd_command: typing.Optional[str] = None) -> None:
+                 qemu_nbd_command: str = '') -> None:
         assert os.path.isfile(file_name)
 
         self._file_name = file_name
@@ -195,7 +195,7 @@ class NbdDevice(Device):
     @staticmethod
     def _create_nbd_block_device(file_name: str, *,
                                  disk_format: str = 'qcow2',
-                                 qemu_nbd_command: typing.Optional[str]) \
+                                 qemu_nbd_command: str = '') \
             -> typing.Optional[str]:
         assert _is_root()
         assert os.path.isfile(file_name)
@@ -226,7 +226,7 @@ class NbdDevice(Device):
 
     @staticmethod
     def _delete_nbd_block_device(device: str,
-                                 qemu_nbd_command: typing.Optional[str]) \
+                                 qemu_nbd_command: str = '') \
             -> None:
         assert _is_root()
         assert is_block_device(device)

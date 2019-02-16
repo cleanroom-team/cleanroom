@@ -11,11 +11,11 @@ import os.path
 import typing
 
 
-def _map_into_chroot(directory: str, chroot: typing.Optional[str]):
+def _map_into_chroot(directory: str, chroot: str = ''):
     assert os.path.isabs(directory)
     directory = os.path.normpath(directory)
 
-    if chroot is not None:
+    if chroot:
         chroot = os.path.normpath(chroot)
         while chroot.endswith('/') and chroot != '/':
             chroot = chroot[:-1]
@@ -68,16 +68,14 @@ def umount_all(directory: str, chroot: typing.Optional[str] = None) -> bool:
 
 
 def mount(volume: str, directory: str, *,
-          options: typing.Optional[str] = None,
-          fs_type: typing.Optional[str] = None,
-          chroot: typing.Optional[str] = None) -> None:
+          options: str = '', fs_type: str = '', chroot: str = '') -> None:
     args: typing.List[str] = []
-    if fs_type is not None:
+    if fs_type:
         args += ['-t', fs_type]
-    if options is not None:
+    if options:
         args += ['-o', options]
 
-    if chroot is not None \
+    if chroot \
             and not volume.startswith('/dev/') \
             and not volume.startswith('/sys/'):
         volume = _map_into_chroot(volume, chroot)
@@ -85,3 +83,43 @@ def mount(volume: str, directory: str, *,
     args += [volume, _map_into_chroot(directory, chroot)]
 
     run('/usr/bin/mount', *args)
+
+
+class Mount:
+    def __init__(self, volume: str, directory: str, *,
+                 options: str = '', fs_type: str = '', chroot: str = '',
+                 must_exist: bool = False, fallback_cwd: str = '') \
+            -> None:
+        self._volume = volume
+        self._fallback_cwd = fallback_cwd
+        self._must_remove_mount_point = False
+        if chroot \
+                and not volume.startswith('/dev/') \
+                and not volume.startswith('/sys/'):
+            self._volume = _map_into_chroot(volume, chroot)
+
+        self._directory = _map_into_chroot(directory, chroot)
+
+        if os.path.exists(self._directory):
+            if not os.path.isdir(self._directory):
+                raise OSError('Mount point "{}" is not a directory.'
+                              .format(self._directory))
+        else:
+            if must_exist:
+                raise OSError('Mount point "{}" does not exist.'
+                              .format(self._directory))
+            else:
+                self._must_remove_mount_point = True
+                os.makedirs(self._directory)
+
+        mount(self._volume, self._directory, options=options, fs_type=fs_type)
+
+    def __enter__(self) -> typing.Any:
+        return self._directory
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        if self._fallback_cwd:
+            os.chdir(self._fallback_cwd)
+        umount(self._directory)
+        if self._must_remove_mount_point:
+            os.rmdir(self._directory)
