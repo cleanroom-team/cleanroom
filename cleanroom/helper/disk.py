@@ -105,6 +105,8 @@ class Device:
         assert is_block_device(device)
         self._device = device
 
+        self.wait_for_device_node()
+
     def __enter__(self) -> typing.Any:
         return self
 
@@ -188,9 +190,6 @@ class NbdDevice(Device):
         return self._file_name
 
     # Helpers:
-    @staticmethod
-    def _nbd_device(counter: int) -> str:
-        return '/dev/nbd' + str(counter)
 
     @staticmethod
     def _create_nbd_block_device(file_name: str, *,
@@ -200,12 +199,12 @@ class NbdDevice(Device):
         assert _is_root()
         assert os.path.isfile(file_name)
 
-        if not is_block_device(NbdDevice._nbd_device(0)):
+        if not is_block_device(_nbd_device(0)):
             trace('Loading nbd kernel module...')
             run('/usr/bin/modprobe', 'nbd')
 
         for counter in range(257):
-            device = NbdDevice._nbd_device(counter)
+            device = _nbd_device(counter)
             if not is_block_device(device):
                 trace('{} is not a block device, aborting'.format(device))
                 return None
@@ -234,6 +233,10 @@ class NbdDevice(Device):
         run(qemu_nbd_command or '/usr/bin/qemu-nbd',
             '--disconnect', device)
         trace('"{}" disconnected.'.format(device))
+
+
+def _nbd_device(counter: int) -> str:
+    return '/dev/nbd' + str(counter)
 
 
 def _assert_uuid(data: str):

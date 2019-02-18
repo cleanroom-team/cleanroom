@@ -32,7 +32,9 @@ class PkgFontsCommand(Command):
         self._execute(location, system_context, 'pacman',
                       'adobe-source-code-pro-fonts',
                       'ttf-bitstream-vera', 'ttf-dejavu', 'ttf-freefont',
-                      'ttf-gentium', 'ttf-inconsolata', 'ttf-ms-fonts')
+                      'ttf-gentium', 'ttf-inconsolata', 'ttf-ms-fonts',
+                      'noto-fonts', 'noto-fonts-cjk', 'noto-fonts-emoji',
+                      'noto-fonts-extra')
 
         symlink(system_context,
                 '../conf.avail.d/11-lcdfilter-default.conf',

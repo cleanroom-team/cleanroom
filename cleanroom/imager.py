@@ -11,6 +11,7 @@ FIXME: Allow for different distro ids
 from __future__ import annotations
 
 from .helper import disk
+from .helper import mount
 from .helper.run import run as helper_run
 from .printer import info, debug, fail, success, trace, verbose
 
@@ -54,9 +55,10 @@ class FileDataProvider(DataProvider):
         return self._kernel_file
 
     def write_linux_kernel(self, target_directory: str):
-        shutil.copyfile(self._kernel_file,
-                        os.path.join(target_directory,
-                                     os.path.basename(self._kernel_file)))
+        if self._kernel_file:
+            shutil.copyfile(self._kernel_file,
+                            os.path.join(target_directory,
+                                         os.path.basename(self._kernel_file)))
 
 
 ExtraPartition \
@@ -223,14 +225,12 @@ def _work_on_device_node(ic: RawImageConfig, *,
         ic.writer.write_verity_partition(partition_devices['verity'])
         success('Verity partition installed.', verbosity=2)
 
-        if ic.writer.has_linux_kernel():
-            assert 'efi' in partition_devices
-            _prepare_efi_partition(partition_devices['efi'],
-                                   partition_devices['root'],
-                                   ic.writer.write_linux_kernel)
-            success('EFI partition installed.', verbosity=2)
-        else:
-            success('EFI partition SKIPPED (no kernel)', verbosity=2)
+        assert 'efi' in partition_devices
+        _prepare_efi_partition(partition_devices['efi'],
+                               partition_devices['root'],
+                               ic.writer.has_linux_kernel(),
+                               ic.writer.write_linux_kernel)
+        success('EFI partition installed.', verbosity=2)
 
         for i in range(len(ic.extra_partitions)):
             ep = ic.extra_partitions[i]
@@ -338,60 +338,50 @@ def _copy_efi_file(source: str, destination: str) -> None:
     os.chmod(destination, 0o755)
 
 
-def _prepare_efi_partition(efi_dev: str, root_dev: str, kernel_file_writer) \
-        -> None:
+def _prepare_efi_partition(efi_dev: str, root_dev: str,
+                           has_kernel: bool, kernel_file_writer) -> None:
     trace('Preparing EFI partition.')
     _prepare_extra_partition(efi_dev, filesystem='vfat', label='EFI')
 
     trace('... Partition created.')
-    cwd = os.getcwd()
     with tempfile.TemporaryDirectory() as mnt_point:
-        boot_mnt = os.path.join(mnt_point, 'boot')
-        root_mnt = os.path.join(mnt_point, 'root')
-        try:
-            os.makedirs(boot_mnt)
-            helper_run('/usr/bin/mount', '-t', 'vfat', efi_dev, boot_mnt,
-                       trace_output=trace)
-            os.makedirs(root_mnt)
-            helper_run('/usr/bin/mount', '-t', 'squashfs', root_dev, root_mnt,
-                       trace_output=trace)
+        with mount.Mount(efi_dev, os.path.join(mnt_point, 'boot'),
+                         fs_type='vfat') as boot_mnt:
 
-            trace('... boot and root are mounted.')
+            if has_kernel:
+                with mount.Mount(root_dev, os.path.join(mnt_point, 'root'),
+                                 fs_type='squashfs') as root_mnt:
+                    trace('... boot and root are mounted.')
 
-            loader = os.path.join(root_mnt,
-                                  'usr/lib/systemd/boot/efi/'
-                                  'systemd-bootx64.efi')
-            os.makedirs(os.path.join(boot_mnt, 'EFI/Boot'))
-            trace('... "EFI/boot" directory created.')
-            _copy_efi_file(loader, os.path.join(boot_mnt,
-                                                'EFI/Boot/BOOTX64.EFI'))
-            trace('... default boot loader installed')
-            os.makedirs(os.path.join(boot_mnt, 'EFI/systemd'))
-            trace('... "EFI/systemd" directory created.')
-            _copy_efi_file(loader, os.path.join(boot_mnt,
-                                                'EFI/systemd/'
-                                                'systemd-bootx64.efi'))
-            trace('... systemd boot loader installed.')
-            os.makedirs(os.path.join(boot_mnt, 'loader/entries'))
-            with open(os.path.join(boot_mnt, 'loader/loader.conf'), 'w') as lc:
-                lc.write('#timeout 3\n')
-                lc.write('default linux-*\n')
+                    loader = os.path.join(root_mnt,
+                                          'usr/lib/systemd/boot/efi/'
+                                          'systemd-bootx64.efi')
+                    os.makedirs(os.path.join(boot_mnt, 'EFI/Boot'))
+                    trace('... "EFI/boot" directory created.')
+                    _copy_efi_file(loader, os.path.join(boot_mnt,
+                                                        'EFI/Boot/BOOTX64.EFI'))
+                    trace('... default boot loader installed')
+                    os.makedirs(os.path.join(boot_mnt, 'EFI/systemd'))
+                    trace('... "EFI/systemd" directory created.')
+                    _copy_efi_file(loader, os.path.join(boot_mnt,
+                                                        'EFI/systemd/'
+                                                        'systemd-bootx64.efi'))
+                    trace('... systemd boot loader installed.')
+                    os.makedirs(os.path.join(boot_mnt, 'loader/entries'))
+                    with open(os.path.join(boot_mnt, 'loader/loader.conf'),
+                              'w') as lc:
+                        lc.write('#timeout 3\n')
+                        lc.write('default linux-*\n')
+                    trace('... loader.conf written.')
 
-            trace('... loader.conf written.')
-
-            linux_dir = os.path.join(boot_mnt, 'EFI/Linux')
-            os.makedirs(linux_dir)
-            trace('... "EFI/Linux" created.')
-            kernel_file_writer(linux_dir)
-            trace('... kernel installed')
-
-        finally:
-            trace('... cleaning up.')
-            os.chdir(cwd)
-            helper_run('/usr/bin/umount', boot_mnt,
-                       trace_output=trace, returncode=None)
-            helper_run('/usr/bin/umount', root_mnt,
-                       trace_output=trace, returncode=None)
+                    linux_dir = os.path.join(boot_mnt, 'EFI/Linux')
+                    os.makedirs(linux_dir)
+                    trace('... "EFI/Linux" created.')
+                    kernel_file_writer(linux_dir)
+                    trace('... kernel installed')
+            else:
+                with open(os.path.join(boot_mnt, 'no_boot.txt'), 'w') as f:
+                    f.write('No EFI boot support installed\n')
 
 
 def _file_to_partition(device: str, file_name: str) -> None:

@@ -48,13 +48,15 @@ class BasedOnCommand(Command):
         """Execute command."""
 
         base_system = args[0]
+
         if base_system == 'scratch':
+            assert system_context.base_context is None
             verbose('Building from scratch!')
             self._add_hook(location, system_context, 'testing', '_test')
             self._execute(location, system_context, '_setup')
         else:
+            assert system_context.base_context.system_name == base_system
             verbose('Building on top of {}.'.format(base_system))
             self._execute(location, system_context, '_restore', base_system)
 
-        # FIXME:
-        ## run_hooks("_setup")
+        self._run_hooks(system_context, "_setup")

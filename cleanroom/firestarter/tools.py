@@ -151,3 +151,30 @@ def copy_efi_partition(*,
                 else:
                     trace('Copying EFI folder into system.')
                     copy_tree(int_efi, efi)
+
+
+def execute_with_system_mounted(to_execute: typing.Callable[[str, str], None],
+                                *,
+                                repository: str, system_name: str,
+                                system_version: str = '') -> None:
+    with TemporaryDirectory(prefix='clrm_qemu_') as tempdir:
+        verbose('Extracting image')
+        image_path \
+            = export_into_directory(system_name, tempdir,
+                                    repository=repository,
+                                    version=system_version)
+
+        assert os.path.isfile(image_path)
+
+        with disk.NbdDevice(image_path, disk_format='raw') as device:
+            verbose('Mounting EFI...')
+            with mount.Mount(device.device(1), os.path.join(tempdir, 'EFI'),
+                             fs_type='vfat', options='ro') as efi:
+                verbose('Mounting root filesystem...')
+                with mount.Mount(device.device(2),
+                                 os.path.join(tempdir, 'root'),
+                                 fs_type='squashfs', options='ro') as root:
+
+                    verbose('Executing with EFI "{}" and root "{}".'
+                            .format(efi, root))
+                    to_execute(efi, root)

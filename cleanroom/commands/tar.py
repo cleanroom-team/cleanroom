@@ -38,19 +38,15 @@ class TarCommand(Command):
     def __call__(self, location: Location, system_context: SystemContext,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
         """Execute command."""
-        source = system_context.file_name(args[0])
+        work_directory = kwargs.get('work_directory', '/')
+        source = system_context.file_name(os.path.join(work_directory, args[0]))
 
         to_outside = kwargs.get('to_outside', False)
 
-        target = args[1] if to_outside else system_context.file_name(args[1])
+        target = args[1] if to_outside \
+            else system_context.file_name(os.path.join(work_directory, args[1]))
         assert os.path.isabs(target)
 
-        compress = kwargs.get('compress', False)
-        work_directory = system_context.file_name(kwargs.get('work_directory', '/'))
-
-        arguments = ['-c']
-        if compress:
-            arguments += ['-z']
-
+        arguments = ['-cz'] if kwargs.get('compress', False) else ['-c']
         run(self._binary(Binaries.TAR), *arguments, '-f', target, source,
             work_directory=work_directory)

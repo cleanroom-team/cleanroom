@@ -42,8 +42,9 @@ class _DependencyNode(object):
             return self
 
         for cn in self.children:
-            if cn.find(system):
-                return cn
+            result = cn.find(system)
+            if result:
+                return result
 
         return None
 
@@ -89,6 +90,8 @@ class SystemsManager(object):
         for root_node in self._systems_forest:
             for node in root_node.walk():
                 base_system = node.parent.system if node.parent else None
+                debug('yielding ({}, {}, <COMMANDS>)'
+                      .format(node.system, base_system or '<NONE>'))
                 yield node.system, base_system, node.exec_obj_list, node.depth
 
     @property
@@ -134,6 +137,8 @@ class SystemsManager(object):
 
         parent_node = self._add_system(base_system_name) \
             if base_system_name else None
+        assert not base_system_name or parent_node.system == base_system_name
+
         node = _DependencyNode(system_name, parent_node, exec_obj_list)
 
         if parent_node:

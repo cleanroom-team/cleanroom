@@ -83,6 +83,20 @@ def _setup_kernel_commandline(base_cmdline: str,
     return cmdline
 
 
+def _validate_installation(location: Location,
+                           system_context: SystemContext) -> None:
+    hostname = system_context.substitution('HOSTNAME')
+    if hostname is None:
+        raise GenerateError('Trying to export a system without a hostname.',
+                            location=location)
+
+    machine_id = system_context.substitution('MACHINE_ID')
+    if machine_id is None:
+        raise GenerateError('Trying to export a system without '
+                            'a machine_id.',
+                            location=location)
+
+
 class ExportCommand(Command):
     """The export_squashfs Command."""
 
@@ -117,7 +131,8 @@ class ExportCommand(Command):
                                 '[image_format=(raw|qcow2)] '
                                 '[repository_compression=zstd] '
                                 '[repository_compression_level=5] '
-                                '[skip_validation=False]',
+                                '[skip_validation=False] '
+                                '[usr_only=True]',
                          help_string='Export a filesystem image.',
                          file=__file__, **services)
 
@@ -132,7 +147,7 @@ class ExportCommand(Command):
                                          'image_format',
                                          'repository_compression',
                                          'repository_compression_level',
-                                         'skip_validation'),
+                                         'skip_validation', 'usr_only'),
                               **kwargs)
 
         if 'key' in kwargs:
@@ -159,40 +174,7 @@ class ExportCommand(Command):
                              .format(repo_compression),
                              location=location)
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
-        """Execute command."""
-        self.set_args_and_kwargs(*args, **kwargs)
-
-        h2('Exporting system "{}".'.format(system_context.system_name))
-        debug('Running Hooks.')
-        self._run_all_exportcommand_hooks(system_context)
-
-        verbose('Preparing system for export.')
-        self.prepare_for_export(location, system_context)
-
-        info('Validating installation for export.')
-        if not self._skip_validation:
-            self._validate_installation(location.next_line(), system_context)
-
-        export_directory \
-            = self.create_export_directory(system_context)
-        assert export_directory
-
-        system_context.set_substitution('EXPORT_DIRECTORY', export_directory)
-
-        verbose('Exporting all data in {}.'.format(export_directory))
-        self._execute(location.next_line(), system_context,
-                      '_export_directory', export_directory,
-                      compression=self._repository_compression,
-                      compression_level=self._repository_compression_level,
-                      repository=self._repository)
-
-        info('Cleaning up export location.')
-        self.delete_export_directory(export_directory)
-
-    def set_args_and_kwargs(self, *args, **kwargs) -> None:
-        """Execute command."""
+    def _setup(self, *args, **kwargs):
         self._key = kwargs.get('efi_key', '')
         self._cert = kwargs.get('efi_cert', '')
         self._image_format = kwargs.get('image_format', 'raw')
@@ -209,6 +191,40 @@ class ExportCommand(Command):
         self._repository = args[0]
 
         self._skip_validation = kwargs.get('skip_validation', False)
+
+        self._usr_only = kwargs.get('usr_only', True)
+
+    def __call__(self, location: Location, system_context: SystemContext,
+                 *args: typing.Any, **kwargs: typing.Any) -> None:
+        """Execute command."""
+        self._setup(*args, **kwargs)
+
+        h2('Exporting system "{}".'.format(system_context.system_name))
+        debug('Running Hooks.')
+        self._run_all_exportcommand_hooks(system_context)
+
+        verbose('Preparing system for export.')
+        self.prepare_for_export(location, system_context)
+
+        info('Validating installation for export.')
+        if not self._skip_validation:
+            _validate_installation(location.next_line(), system_context)
+
+        export_directory \
+            = self.create_export_directory(system_context)
+        assert export_directory
+
+        system_context.set_substitution('EXPORT_DIRECTORY', export_directory)
+
+        verbose('Exporting all data in {}.'.format(export_directory))
+        self._execute(location.next_line(), system_context,
+                      '_export_directory', export_directory,
+                      compression=self._repository_compression,
+                      compression_level=self._repository_compression_level,
+                      repository=self._repository)
+
+        info('Cleaning up export location.')
+        self.delete_export_directory(export_directory)
 
     def _create_root_tarball(self, location: Location,
                              system_context: SystemContext) -> None:
@@ -355,25 +371,15 @@ class ExportCommand(Command):
                          target_directory: str) -> str:
         squash_file = os.path.join(target_directory,
                                    _root_part_label(system_context))
-        run(self._binary(Binaries.MKSQUASHFS), 'usr', squash_file,
-            '-comp', 'zstd', '-noappend', '-no-exports', '-keep-as-directory',
+        target_directory = 'usr' if self._usr_only else '.'
+        target_args = ['-keep-as-directory'] if self._usr_only else []
+        run(self._binary(Binaries.MKSQUASHFS), target_directory,
+            squash_file, *target_args,
+            '-comp', 'zstd', '-noappend', '-no-exports',
             '-noI', '-noD', '-noF', '-noX', '-processors', '1',
             work_directory=system_context.fs_directory)
         _size_extend(squash_file)
         return squash_file
-
-    def _validate_installation(self, location: Location,
-                               system_context: SystemContext) -> None:
-        hostname = system_context.substitution('HOSTNAME')
-        if hostname is None:
-            raise GenerateError('Trying to export a system without a hostname.',
-                                location=location)
-
-        machine_id = system_context.substitution('MACHINE_ID')
-        if machine_id is None:
-            raise GenerateError('Trying to export a system without '
-                                'a machine_id.',
-                                location=location)
 
     def _run_all_exportcommand_hooks(self, system_context: SystemContext) \
             -> None:

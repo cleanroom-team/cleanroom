@@ -8,6 +8,8 @@ python-language-server = {version = "*",extras = ["all"]}
 pytest = "*"
 pyparsing = "*"
 pipenv = "*"
+pylint = "*"
+mypy = "*"
 
 [dev-packages]
 pytest = "*"
