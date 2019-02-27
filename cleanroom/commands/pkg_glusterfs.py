@@ -35,11 +35,11 @@ class PkgGlusterfsCommand(Command):
         self._execute(location.next_line(),system_context,
                       'create', '/usr/lib/tmpfiles.d/mnt-gluster.conf',
                       textwrap.dedent('''\
-                      d /mnt/glusterfs   0700 root root - -
-                      d /mnt/glusterfs/0 0755 root root - -
-                      d /mnt/glusterfs/1 0755 root root - -
-                      d /mnt/glusterfs/2 0755 root root - -
-                      d /mnt/glusterfs/4 0755 root root - -
+                      d /mnt/gluster   0700 root root - -
+                      d /mnt/gluster/0 0755 root root - -
+                      d /mnt/gluster/1 0755 root root - -
+                      d /mnt/gluster/2 0755 root root - -
+                      d /mnt/gluster/4 0755 root root - -
                       '''), mode=0o644)
 
         self._execute(location.next_line(), system_context,
@@ -55,6 +55,7 @@ class PkgGlusterfsCommand(Command):
                       KillMode=
                       Environment=
                       EnvironmentFile=
+                      LogsDirectory=/var/log/glusterfs
                       '''), mode=0o644)
 
         self._execute(location.next_line(), system_context,
