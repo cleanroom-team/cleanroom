@@ -36,7 +36,7 @@ class DirectoryInstallTarget(InstallTarget):
                                    version=parse_result.system_version,
                                    repository=parse_result.repository,
                                    create_directory=parse_result
-                                                    .create_directory,
+                                   .create_directory,
                                    owner=parse_result.owner,
                                    group=parse_result.group,
                                    mode=parse_result.mode)

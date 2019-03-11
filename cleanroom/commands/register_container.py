@@ -84,6 +84,7 @@ class RegisterContainerCommand(Command):
                       textwrap.dedent('''\
                       [Unit]
                       Description=Container {system}: {description}{after}{requires}
+                      RequiresMountsFor=/mnt/srv
                        
                       [Service]
                       TimeoutStartSec={timeout}
