@@ -130,6 +130,7 @@ def copy_efi_partition(*,
     verbose('Copying EFI configuration out of image file.')
     with disk.NbdDevice(image_file, disk_format='raw') \
             as internal_device:
+        internal_device.wait_for_device_node(partition=1)
         with mount.Mount(internal_device.device(1),
                          os.path.join(tempdir, '_efi')) \
                 as int_efi:
@@ -168,6 +169,7 @@ def execute_with_system_mounted(to_execute: typing.Callable[[str, str], None],
 
         with disk.NbdDevice(image_path, disk_format='raw') as device:
             verbose('Mounting EFI...')
+            device.wait_for_device_node(partition=1)
             with mount.Mount(device.device(1), os.path.join(tempdir, 'EFI'),
                              fs_type='vfat', options='ro') as efi:
                 verbose('Mounting root filesystem...')

@@ -24,7 +24,8 @@ class SignEfiBinaryCommand(Command):
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
         super().__init__('sign_efi_binary',
-                         syntax='<FILE> [key=<KEY>] [cert=<CERT>] [outside=False]',
+                         syntax='<FILE> [key=<KEY>] [cert=<CERT>] [outside=False] '
+                                '[keep_unsigned=False]',
                          help_string='Sign <FILE> using <KEY> and <CERT>.',
                          file=__file__, **services)
 
@@ -33,12 +34,13 @@ class SignEfiBinaryCommand(Command):
         """Validate the arguments."""
         self._validate_args_exact(location, 1, '"{}" needs a file to sign.',
                                   *args)
-        self._validate_kwargs(location, ('key', 'cert', 'outside'), **kwargs)
+        self._validate_kwargs(location, ('key', 'cert', 'outside', 'keep_unsigned'), **kwargs)
 
     def __call__(self, location: Location, system_context: SystemContext,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
         """Execute command."""
         to_sign = args[0]
+        keep_unsigned = kwargs.get('keep_unsigned', False)
         if not kwargs.get('outside', False):
             to_sign = system_context.file_name(to_sign)
         systems_directory = system_context.systems_definition_directory
@@ -56,5 +58,6 @@ class SignEfiBinaryCommand(Command):
         run(self._binary(Binaries.SBSIGN), '--key', key,
             '--cert', cert, '--output', output, to_sign)
 
-        os.remove(to_sign)
-        shutil.move(output, to_sign)
+        if not keep_unsigned:
+            os.remove(to_sign)
+            shutil.move(output, to_sign)
