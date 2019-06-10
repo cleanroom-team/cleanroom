@@ -24,7 +24,7 @@ class SystemdHardenUnitCommand(Command):
         super().__init__('systemd_harden_unit',
                          syntax='<UNIT> [<UNITS>] [CapabilityBoundingSet=""]'
                          '[NoNewPriviledges=True] [PrivateDevices=True] '
-                         '[PrivateTmp=True] [ProtectControlGroups=True] [ProtectHome="tmpfs"] '
+                         '[PrivateTmp=True] [ProtectControlGroups=True] [ProtectHome="true"] '
                          '[ProtectKernelModules=True] [ProtectKernelTunables=True]'
                          '[ProtectSystem="full"] [RemoveIPC=True] '
                          '[RestrictAddressFamilies="AF_UNIX AF_INET AF_INET6"] '
@@ -60,21 +60,21 @@ class SystemdHardenUnitCommand(Command):
                       '/usr/lib/systemd/system/{}.d'.format(unit), force=True,
                       mode=0o755)
 
-        contents = '[Unit]\n'
+        contents = '[Service]\n'
         contents += 'CapabilityBoundingSet={}\n'.format(kwargs.get('CapabilityBoundingSet', ''))
         contents += 'NoNewPrivileges={}\n'.format(_trueify(kwargs.get('NoNewPriviledges', True)))
         contents += 'PrivateDevices={}\n'.format(_trueify(kwargs.get('PrivateDevices', True)))
         contents += 'PrivateTmp={}\n'.format(_trueify(kwargs.get('PrivateTmp', True)))
         contents += 'PrivateUsers={}\n'.format(_trueify(kwargs.get('PrivateUsers', True)))
         contents += 'ProtectControlGroups={}\n'.format(_trueify(kwargs.get('ProtectControlGroups', True)))
-        contents += 'ProtectHome={}\n'.format(kwargs.get('ProtectHome', 'tmpfs'))
+        contents += 'ProtectHome={}\n'.format(kwargs.get('ProtectHome', 'true'))
         contents += 'ProtectKernelModules={}\n'.format(_trueify(kwargs.get('ProtectKernelModules', True)))
         contents += 'ProtectKernelTunables={}\n'.format(_trueify(kwargs.get('ProtectKernelTunables', True)))
         contents += 'ProtectSystem={}\n'.format(kwargs.get('ProtectSystem', 'full'))
         contents += 'RemoveIPC={}\n'.format(_trueify(kwargs.get('RemoveIPC', True)))
         contents += 'RestrictAddressFamilies={}\n'.format(kwargs.get('RestrictAddressFamilies', 'AF_UNIX AF_INET AF_INET6'))
         contents += 'RestrictRealtime={}\n'.format(_trueify(kwargs.get('RestrictRealtime', True)))
-        contents += 'SystemCallArchitecture={}\n'.format(kwargs.get('SystemCallArchitecture', 'native'))
+        contents += 'SystemCallArchitectures={}\n'.format(kwargs.get('SystemCallArchitecture', 'native'))
         contents += 'SystemCallFilter={}\n'.format(kwargs.get('SystemCallFilter', '@system-service'))
 
         self._execute(location, system_context, 'create',
