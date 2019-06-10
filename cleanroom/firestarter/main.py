@@ -15,6 +15,7 @@ from cleanroom.firestarter.directoryinstalltarget import DirectoryInstallTarget
 from cleanroom.firestarter.mountinstalltarget import MountInstallTarget
 from cleanroom.firestarter.qemubootinstalltarget import QemuBootInstallTarget
 from cleanroom.firestarter.qemuinstalltarget import QemuInstallTarget
+from cleanroom.firestarter.tarballinstalltarget import TarballInstallTarget
 from cleanroom.printer import Printer
 
 from argparse import ArgumentParser
@@ -63,7 +64,8 @@ def main(*command_args: str):
                              ImagePartitionInstallTarget(),
                              MountInstallTarget(),
                              QemuBootInstallTarget(),
-                             QemuInstallTarget()]
+                             QemuInstallTarget(),
+                             TarballInstallTarget()]
 
     parse_result = _parse_commandline(*command_args,
                                       install_targets=known_install_targets)

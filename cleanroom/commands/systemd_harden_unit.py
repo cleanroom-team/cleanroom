@@ -22,7 +22,7 @@ class SystemdHardenUnitCommand(Command):
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
         super().__init__('systemd_harden_unit',
-                         syntax='<UNIT> [<UNITS>] [CapabilityBoundingSet=""]'
+                         syntax='<UNIT> [<UNITS>] [CapabilityBoundingSet="IGNORE"]'
                          '[NoNewPriviledges=True] [PrivateDevices=True] '
                          '[PrivateTmp=True] [ProtectControlGroups=True] [ProtectHome="true"] '
                          '[ProtectKernelModules=True] [ProtectKernelTunables=True]'
@@ -61,7 +61,9 @@ class SystemdHardenUnitCommand(Command):
                       mode=0o755)
 
         contents = '[Service]\n'
-        contents += 'CapabilityBoundingSet={}\n'.format(kwargs.get('CapabilityBoundingSet', ''))
+        bounding_set = kwargs.get('CapabilityBoundingSet', 'IGNORE')
+        if boundin_set != 'IGNORE':
+            contents += 'CapabilityBoundingSet={}\n'.format(kwargs.get('CapabilityBoundingSet', ''))
         contents += 'NoNewPrivileges={}\n'.format(_trueify(kwargs.get('NoNewPriviledges', True)))
         contents += 'PrivateDevices={}\n'.format(_trueify(kwargs.get('PrivateDevices', True)))
         contents += 'PrivateTmp={}\n'.format(_trueify(kwargs.get('PrivateTmp', True)))

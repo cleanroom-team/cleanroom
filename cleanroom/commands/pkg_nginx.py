@@ -52,7 +52,7 @@ class PkgNginxCommand(Command):
 
         create_file(system_context, '/etc/nginx/nginx.conf',
                     textwrap.dedent('''\
-                    #user html;
+                    user html;
                     worker_processes  1;
                     
                     #error_log  logs/error.log;
@@ -93,7 +93,10 @@ class PkgNginxCommand(Command):
 
         os.makedirs(system_context.file_name('/usr/lib/systemd/system/nginx.service.d'))
         self._execute(location.next_line(), system_context,
-                      'systemd_harden_unit', 'nginx.service')
+                      'systemd_harden_unit', 'nginx.service',
+                      'CapabilityBoundingSet=IGNORE',
+                      'NoNewPrivileges=False',
+                      'PrivateUsers=False')
 
         os.makedirs(system_context.file_name('/etc/nginx/sites-available'))
         os.makedirs(system_context.file_name('/etc/nginx/sites-enabled'))
