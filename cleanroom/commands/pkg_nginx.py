@@ -94,9 +94,9 @@ class PkgNginxCommand(Command):
         os.makedirs(system_context.file_name('/usr/lib/systemd/system/nginx.service.d'))
         self._execute(location.next_line(), system_context,
                       'systemd_harden_unit', 'nginx.service',
-                      'CapabilityBoundingSet=IGNORE',
-                      'NoNewPrivileges=False',
-                      'PrivateUsers=False')
+                      CapabilityBoundingSet='IGNORE',
+                      NoNewPrivileges=False,
+                      PrivateUsers=False)
 
         os.makedirs(system_context.file_name('/etc/nginx/sites-available'))
         os.makedirs(system_context.file_name('/etc/nginx/sites-enabled'))

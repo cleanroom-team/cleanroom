@@ -23,8 +23,9 @@ class SystemdHardenUnitCommand(Command):
         """Constructor."""
         super().__init__('systemd_harden_unit',
                          syntax='<UNIT> [<UNITS>] [CapabilityBoundingSet="IGNORE"]'
-                         '[NoNewPriviledges=True] [PrivateDevices=True] '
-                         '[PrivateTmp=True] [ProtectControlGroups=True] [ProtectHome="true"] '
+                         '[NoNewPrivileges=True] [PrivateDevices=True] '
+                         '[PrivateTmp=True] [PrivateUsers=True] '
+                         '[ProtectControlGroups=True] [ProtectHome="true"] '
                          '[ProtectKernelModules=True] [ProtectKernelTunables=True]'
                          '[ProtectSystem="full"] [RemoveIPC=True] '
                          '[RestrictAddressFamilies="AF_UNIX AF_INET AF_INET6"] '
@@ -38,8 +39,8 @@ class SystemdHardenUnitCommand(Command):
         """Validate the arguments."""
         self._validate_args_at_least(location, 1,
                                      '"{}" needs at least one unit to harden.', *args)
-        self._validate_kwargs(location, ('CapabilityBoundingSet', 'NoNewPriviledges',
-                                         'PrivateDevices', 'PrivateTmp',
+        self._validate_kwargs(location, ('CapabilityBoundingSet', 'NoNewPrivileges',
+                                         'PrivateDevices', 'PrivateTmp', 'PrivateUsers',
                                          'ProtoctControlGroups', 'ProtectHome',
                                          'ProtectKernelModules', 'ProtectKernelTunables',
                                          'ProtectSystem', 'RemoveIPC', 'RestrictAddressFamilies',
@@ -62,9 +63,9 @@ class SystemdHardenUnitCommand(Command):
 
         contents = '[Service]\n'
         bounding_set = kwargs.get('CapabilityBoundingSet', 'IGNORE')
-        if boundin_set != 'IGNORE':
+        if bounding_set != 'IGNORE':
             contents += 'CapabilityBoundingSet={}\n'.format(kwargs.get('CapabilityBoundingSet', ''))
-        contents += 'NoNewPrivileges={}\n'.format(_trueify(kwargs.get('NoNewPriviledges', True)))
+        contents += 'NoNewPrivileges={}\n'.format(_trueify(kwargs.get('NoNewPrivileges', True)))
         contents += 'PrivateDevices={}\n'.format(_trueify(kwargs.get('PrivateDevices', True)))
         contents += 'PrivateTmp={}\n'.format(_trueify(kwargs.get('PrivateTmp', True)))
         contents += 'PrivateUsers={}\n'.format(_trueify(kwargs.get('PrivateUsers', True)))

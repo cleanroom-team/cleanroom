@@ -21,3 +21,5 @@ option infrastructure:
 * export_rootfs:
    * create_export_directory -- should work
    * tarball creation and storage
+
+* alacritty support on ron is missing:-/
