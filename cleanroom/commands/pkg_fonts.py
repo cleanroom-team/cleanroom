@@ -31,10 +31,10 @@ class PkgFontsCommand(Command):
         """Execute command."""
         self._execute(location, system_context, 'pacman',
                       'adobe-source-code-pro-fonts',
-                      'ttf-bitstream-vera', 'ttf-dejavu', 'ttf-freefont',
+                      'ttf-bitstream-vera', 'ttf-dejavu',
                       'ttf-gentium', 'ttf-inconsolata', 'ttf-ms-fonts',
                       'noto-fonts', 'noto-fonts-cjk', 'noto-fonts-emoji',
-                      'noto-fonts-extra')
+                      'noto-fonts-extra', 'ttf-roboto')
 
         symlink(system_context,
                 '../conf.avail.d/11-lcdfilter-default.conf',
