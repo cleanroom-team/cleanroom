@@ -59,4 +59,4 @@ class PkgGlusterfsCommand(Command):
                       '''), mode=0o644)
 
         self._execute(location.next_line(), system_context,
-                      'systemd_harden_unit', 'glusterd.service')
+                      'systemd_harden_unit', 'glusterd.service', PrivateUsers=False)
