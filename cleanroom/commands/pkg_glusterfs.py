@@ -55,7 +55,8 @@ class PkgGlusterfsCommand(Command):
                       KillMode=
                       Environment=
                       EnvironmentFile=
-                      LogsDirectory=/var/log/glusterfs
+                      StateDirectory=glusterd
+                      RunDirectory=gluster
                       '''), mode=0o644)
 
         self._execute(location.next_line(), system_context,
