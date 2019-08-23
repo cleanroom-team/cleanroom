@@ -34,7 +34,7 @@ class PkgFontsCommand(Command):
                       'ttf-bitstream-vera', 'ttf-dejavu',
                       'ttf-gentium', 'ttf-inconsolata', 'ttf-ms-fonts',
                       'noto-fonts', 'noto-fonts-cjk', 'noto-fonts-emoji',
-                      'noto-fonts-extra', 'ttf-roboto')
+                      'noto-fonts-extra', 'ttf-roboto', 'ttf-fira-code')
 
         symlink(system_context,
                 '../conf.avail.d/11-lcdfilter-default.conf',
