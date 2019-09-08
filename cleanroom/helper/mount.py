@@ -82,7 +82,11 @@ def mount(volume: str, directory: str, *,
     args: typing.List[str] = ['-t', fs_type] if fs_type else []
     args += ['-o', options] if options else []
 
+    is_pseudo = (volume == 'proc' or volume == 'sys' or volume == 'udev'
+        or volume == 'devpts' or volume == 'shm' or volume == 'tmp')
+
     if chroot \
+            and not is_pseudo \
             and not volume.startswith('/dev/') \
             and not volume.startswith('/sys/'):
         volume = _map_into_chroot(volume, chroot)
@@ -90,8 +94,12 @@ def mount(volume: str, directory: str, *,
     target = _map_into_chroot(directory, chroot)
 
     is_loop = 'loop' in options.split(',')
-    is_block = stat.S_ISBLK(os.stat(volume).st_mode)
-    assert (not is_loop and is_block) or (is_loop and os.path.isfile(volume))
+    is_bind = 'bind' in options.split(',')
+    if is_pseudo:
+        is_block = False
+    else:
+        is_block = stat.S_ISBLK(os.stat(volume).st_mode)
+    assert (not is_loop and (is_block or is_pseudo or is_bind)) or (is_loop and os.path.isfile(volume))
     assert os.path.isdir(target)
 
     args += [volume, target]

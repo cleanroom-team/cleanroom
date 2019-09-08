@@ -10,6 +10,7 @@ from ...printer import debug, info, verbose
 from ...systemcontext import SystemContext
 from ..btrfs import BtrfsHelper
 from ..run import run
+from ..mount import umount_all, mount
 
 import os
 import os.path
@@ -114,6 +115,30 @@ def _pacman_keyinit(system_context: SystemContext,
         '--populate', 'archlinux', '--gpgdir', _gpg_directory(system_context),
         work_directory=system_context.systems_definition_directory)
 
+def _mountpoint(root_dir, folder, dev, **kwargs):
+    path = os.path.join(root_dir, folder)
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    mount(dev, path, **kwargs)
+
+def _mount_directories_if_needed(root_dir, *, pacman_in_filesystem=False):
+    if not pacman_in_filesystem:
+        _mountpoint(root_dir, 'proc', 'proc',
+              options='nosuid,noexec,nodev', fs_type='proc')
+        _mountpoint(root_dir, 'sys', 'sys',
+              options='nosuid,noexec,nodev,ro', fs_type='sysfs')
+        _mountpoint(root_dir, 'dev', 'udev',
+              options='mode=0755,nosuid', fs_type='devtmpfs')
+        _mountpoint(root_dir, 'dev/pts', 'devpts',
+              options='mode=0620,gid=5,nosuid,noexec', fs_type='devpts')
+        _mountpoint(root_dir, 'dev/shm', 'shm',
+              options='mode=1777,nosuid,nodev', fs_type='tmpfs')
+        _mountpoint(root_dir, 'run', '/run', options='bind')
+        _mountpoint(root_dir, 'tmp', 'tmp',
+              options='mode=1777,strictatime,nodev,nosuid', fs_type='tmpfs')
+
+def _unmount_directories_if_needed(root_dir, *, pacman_in_filesystem=False):
+    umount_all(root_dir)
 
 def _run_pacman(system_context: SystemContext, *args: str,
                 pacman_command: str, pacman_in_filesystem: bool,
@@ -206,9 +231,11 @@ def pacman(system_context: SystemContext, *packages: str,
         if assume_installed:
             action += ['--assume-installed', assume_installed]
 
+    _mount_directories_if_needed(system_context.fs_directory, pacman_in_filesystem=previous_pacstate)
     _run_pacman(system_context, *action, *packages,
                 pacman_command=pacman_command,
                 pacman_in_filesystem=previous_pacstate)
+    _unmount_directories_if_needed(system_context.fs_directory, pacman_in_filesystem=previous_pacstate)
 
     var_lib_pacman = system_context.file_name('/var/lib/pacman')
     if os.path.isdir(var_lib_pacman):
