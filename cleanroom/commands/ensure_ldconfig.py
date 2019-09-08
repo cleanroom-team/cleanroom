@@ -36,8 +36,8 @@ class EnsureLdconfigCommand(Command):
         self._add_hook(location, system_context,
                        'export', 'run', '/usr/bin/ldconfig', '-X', inside=True)
         location.set_description('Remove ldconfig data')
-        self._add_hook(location, system_context,
-                       'export', 'remove', '/usr/bin/ldconfig')
+        # self._add_hook(location, system_context,
+        #                'export', 'remove', '/usr/bin/ldconfig')
         location.set_description('Remove ldconfig related services')
         self._add_hook(location, system_context,
                        'export', 'remove',

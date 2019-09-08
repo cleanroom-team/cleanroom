@@ -16,6 +16,7 @@ import json
 import math
 import os
 import os.path
+import subprocess
 from re import findall
 import stat
 import typing
@@ -205,20 +206,24 @@ class NbdDevice(Device):
 
         for counter in range(257):
             device = _nbd_device(counter)
+            counter += 1
             if not is_block_device(device):
                 trace('{} is not a block device, aborting'.format(device))
                 return None
 
-            result = run(qemu_nbd_command or '/usr/bin/qemu-nbd',
-                         '--connect={}'.format(device),
-                         '--format={}'.format(disk_format), file_name,
-                         returncode=None)
+            try:
+                result = run(qemu_nbd_command or '/usr/bin/qemu-nbd',
+                             '--connect={}'.format(device),
+                             '--format={}'.format(disk_format), file_name,
+                             returncode=None, timeout=5,
+                             stdout='/dev/null', stderr='/dev/null')
+            except subprocess.TimeoutExpired:
+                continue 
+
             if result.returncode == 0:
                 trace('Device {} connected to file {}.'
                       .format(device, file_name))
                 return device
-
-            counter += 1
 
         trace('Too many nbd devices found, aborting!')
         return None

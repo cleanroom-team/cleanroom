@@ -52,12 +52,20 @@ class PkgGlusterfsCommand(Command):
                       Type=simple
                       ExecStart=
                       ExecStart=/usr/bin/glusterd -N --log-file=- --log-level INFO
-                      KillMode=
+                      PIDFile=
+                      KillMode=control-group
                       Environment=
                       EnvironmentFile=
                       StateDirectory=glusterd
-                      RunDirectory=gluster
+                      RuntimeDirectory=gluster
+                      LogsDirectory=glusterfs
                       '''), mode=0o644)
 
         self._execute(location.next_line(), system_context,
                       'systemd_harden_unit', 'glusterd.service', PrivateUsers=False)
+
+        # Fix rdma usage which is not included in archlinux:
+        self._execute(location.next_line(), system_context,
+                      'sed', '/option transport-type/ coption transport type = socket',
+                      '/etc/glusterfs/glusterd.vol')
+

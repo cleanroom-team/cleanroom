@@ -2,9 +2,6 @@ Pacman:
  * Remove /usr/lib/libalpm with hooks, etc.?
  * Use --hookdir to override default hooks?
 
-create_initrd.py:
-  * Test
-
 option infrastructure:
   * option_cpu_intel
   * option_gpu_intel
@@ -23,3 +20,6 @@ option infrastructure:
    * tarball creation and storage
 
 * alacritty support on ron is missing:-/
+
+* Use erofs over squashfs (once available)
+* Move to dracut for initrd generation
