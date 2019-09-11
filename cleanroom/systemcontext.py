@@ -34,14 +34,17 @@ class SystemContext:
                  base_system_name: str,
                  scratch_directory: str,
                  systems_definition_directory: str,
+                 repository_base_directory: str,
                  storage_directory: str,
                  timestamp: str) -> None:
         """Constructor."""
         assert scratch_directory
         assert systems_definition_directory
+        assert repository_base_directory
 
         self._system_name = system_name
         self._timestamp = timestamp
+        self._repository_base_directory = repository_base_directory
         self._scratch_directory = scratch_directory
         self._systems_definition_directory = systems_definition_directory
         self._system_storage_directory = os.path.join(storage_directory,
@@ -70,6 +73,10 @@ class SystemContext:
     @property
     def timestamp(self) -> str:
         return self._timestamp
+
+    @property
+    def repository_base_directory(self) -> str:
+        return self._repository_base_directory
 
     @property
     def system_name(self) -> str:
@@ -134,6 +141,7 @@ class SystemContext:
         self.set_substitution('BASE_SYSTEM_LIST',
                               ';'.join(bases) if bases else '')
 
+        self.set_substitution('SCRATCH_DIR', self.scratch_directory)
         self.set_substitution('ROOT_DIR', self.fs_directory)
         self.set_substitution('META_DIR', self.meta_directory)
         self.set_substitution('CACHE_DIR', self.cache_directory)

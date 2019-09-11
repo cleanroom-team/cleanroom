@@ -1,0 +1,42 @@
+# Example system
+
+based_on type-desktop
+
+sed '/CHASSIS/ cCHASSIS="laptop"' /etc/machine.info
+set_hostname example pretty=Example
+set_machine_id bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+
+pkg_intel_cpu
+pkg_intel_gpu
+
+# arch-install-scripts so that maurice can set up itself!
+pacman debootstrap modemmanager modem-manager-gui arch-install-scripts
+
+create /usr/lib/systemd/system/sysroot-var.mount <<<<[Unit]
+Description=/var Directory (in sysroot)
+Documentation=man:hier(7)
+Before=initrd-fs.target initrd-parse-etc.service shutdown.target
+After=initrd-root-fs.target
+
+[Mount]
+What=/dev/disk/by-label/fs_btrfs
+Where=/sysroot/var
+Type=btrfs
+Options=compress=zstd,subvol=@var,nodev
+>>>> mode=0o644
+
+append /etc/fstab <<<<LABEL=fs_btrfs  /mnt/btrfs         btrfs compress=zstd,subvol=@btrfs,nofail,noauto 0 0
+LABEL=fs_btrfs  /mnt/images        btrfs compress=zstd:15,subvol=/.images,noauto 0 0
+
+# sd-data:
+/dev/mapper/sd-data /mnt/sd-data ext4  x-systemd.makefs,x-systemd.automount,nofail 0 1
+>>>>
+
+create /etc/modules-load.d/bluetooth.conf <<<<btusb
+>>>> mode=0o644
+
+set_root_device /dev/mapper/root
+
+# Export a image:
+export borg_repository
+

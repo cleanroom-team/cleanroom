@@ -60,6 +60,7 @@ class Generator:
     def generate_systems(self, *,
                          work_directory: WorkDir,
                          command_manager: CommandManager,
+                         repository_base_directory: str = '',
                          ignore_errors: bool = False) -> None:
         """Generate all systems in the dependency tree."""
 
@@ -67,6 +68,7 @@ class Generator:
                        systems_definition_directory=self._systems_manager
                        .systems_definition_directory,
                        command_manager=command_manager,
+                       repository_base_directory=repository_base_directory,
                        timestamp=datetime.datetime.now()
                        .strftime('%Y%m%d.%H%M'))
 

@@ -1,3 +1,7 @@
-# Base for all VMs
+# Very basic setup for VMs
 
-based_on type-base
+based_on type-bootable
+
+remove /usr/lib/firmware/iwlwifi* /usr/lib/firmware/ath10k/*
+    /usr/lib/firmware/intel/*
+    force=True recursive=True

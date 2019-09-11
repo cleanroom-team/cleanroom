@@ -8,7 +8,7 @@
 #
 # The following environment variables will be set:
 #  * TIMESTAMP
-#  * SYSTEM
-#  * BASE_SYSTEM
+#  * SYSTEM_NAME
+#  * BASE_SYSTEM_NAME
 #  * ROOT
 

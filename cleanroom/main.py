@@ -42,6 +42,8 @@ def _parse_commandline(*arguments: str) -> typing.Any:
                         help='Directory containing system definitions')
     parser.add_argument('--work-directory', dest='work_directory',
                         action='store', help='Work area to create files in')
+    parser.add_argument('--repository-base-directory', dest='repository_base_directory',
+                        action='store', help='The directory containing image repositories.')
 
     parser.add_argument('--clear-scratch-directory',
                         dest='clear_scratch_directory',
@@ -135,4 +137,5 @@ def main(*command_arguments: str) -> None:
         generator = Generator(systems_manager)
         generator.generate_systems(work_directory=work_directory,
                                    command_manager=command_manager,
-                                   ignore_errors=args.ignore_errors)
+                                   ignore_errors=args.ignore_errors,
+                                   repository_base_directory=args.repository_base_directory)

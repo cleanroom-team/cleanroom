@@ -1,0 +1,17 @@
+# A simple example server
+
+based_on type-server
+
+set_hostname server pretty=Server
+set_machine_id cccccccccccccccccccccccccccccccc
+
+# pkg_amd_cpu
+
+append /usr/lib/systemd/network/20-extbr0.network <<<<Address=10.42.1.1/8
+Gateway=10.42.0.1
+DNS=10.42.0.1
+>>>>
+
+set_root_device /dev/mapper/root
+
+export borg_repository

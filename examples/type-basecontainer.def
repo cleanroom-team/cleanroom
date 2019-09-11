@@ -1,0 +1,29 @@
+# *Very* basic arch setup for containers
+
+# This is the base for all other containers
+
+based_on type-networkedbase
+
+sed 's/^CHASSIS=.*$$/CHASSIS=container/' /etc/machine.info
+
+append /etc/securetty <<<<
+# Make containers work:
+pts/0
+pts/1
+pts/2
+pts/3
+pts/4
+pts/5
+pts/6
+>>>>
+
+remove /usr/lib/systemd/system/fstrim.timer
+    /usr/lib/systemd/system/fstrim.service
+
+# Do not remove sockets (which might be bind-mounted into the container):
+remove /usr/lib/tmpfiles.d/x11.conf
+
+# Make sure systemd-boot stuff is gone and stays gone:
+add_hook _teardown remove /usr/lib/systemd/boot
+    /usr/share/systemd/bootctl /usr/bin/bootctl
+    recursive=True force=True

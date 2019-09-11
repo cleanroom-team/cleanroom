@@ -1,0 +1,24 @@
+#!/usr/bin/bash
+
+function fail {
+    echo "$1"
+    exit $2
+}
+
+TOP=$(pwd)
+SD="${TOP}/usr/lib/systemd/system"
+
+for D in $(cd "${SD}" ; find . -type d) ; do
+    ( cd "${SD}" ; stat "${D}" ) | grep '^Access: (0755/' > /dev/null \
+        || fail "Systemd directory ${D} with unexpected permissions." 2
+done
+
+echo "Systemd directory permissions ok."
+
+for F in $(cd "${SD}" ; find . -type f) ; do
+    ( cd "${SD}" ; stat "${F}" ) | grep '^Access: (0644/' > /dev/null \
+        || fail "Systemd unit ${F} with unexpected permissions." 3
+done
+
+echo "Systemd unit permissions ok."
+

@@ -1,0 +1,34 @@
+# Generic base for development containers
+
+# This is the base for all development containers
+
+based_on type-devcontainer
+
+pacman
+    autoconf automake
+
+    bison
+
+    clang clang-tools-extra clazy llvm gperf
+
+    flex
+
+    gcc gettext
+
+    libtool
+
+    make
+
+    patch pkg-config
+
+    strace
+
+    texinfo
+
+    ccache
+
+    ninja meson cmake
+
+create /etc/ccache.conf <<<<cache_dir = $$HOME/.cache/ccache
+max_size = 10G
+>>>> mode=0o644

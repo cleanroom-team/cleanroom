@@ -1,0 +1,12 @@
+#!/usr/bin/bash
+
+function fail {
+    echo "$1"
+    exit $2
+}
+
+grep "^LC_MESSAGES=en_US" etc/locale.conf > /dev/null \
+    || fail "LC_MESSAGES not set up in /etc/locale.conf" 2
+
+echo "Locale has been set up, ok"
+

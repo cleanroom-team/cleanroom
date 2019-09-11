@@ -15,6 +15,7 @@ import typing
 
 
 def _map_into_chroot(directory: str, chroot: str = ''):
+    print('Directory: {}, chroot: {}.'.format(directory, chroot))
     assert os.path.isabs(directory)
     directory = os.path.normpath(directory)
 

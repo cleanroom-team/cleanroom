@@ -1,0 +1,18 @@
+# *Very* basic networked base installation
+
+based_on type-base
+
+pacman inetutils
+
+systemd_enable systemd-networkd.service systemd-resolved.service
+remove /etc/resolv.conf
+symlink /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+
+mkdir /etc/systemd/resolved.conf.d mode=0o755
+create /etc/systemd/resolved.conf.d/no_fallback_dns <<<<
+[Resolve]
+FallbackDNS=
+>>>> mode=0o644
+
+# Enable firewalling:
+net_firewall_enable

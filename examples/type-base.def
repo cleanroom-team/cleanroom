@@ -1,5 +1,6 @@
 # Base image
 
+### 'scratch' is a special system that is completely empty
 based_on scratch
 
 ### cleanroom will have added the following substitution patterns:
@@ -11,35 +12,119 @@ based_on scratch
 # Set up some more substitutions:
 set ARCH x86_64
 set VENDOR org.archlinux.cleanroom
-set KERNEL_CMDLINE ''
+set KERNEL_CMDLINE 'quiet'
 
-# sed is needed for locale-gen
+# sed and gzip are needed for locale-gen
+# which is needed by some of the pacman hooks
+# alacritty-terminfo is a small package needed to make
+# the alacritty terminal work well
+# dbus-broker is actually pretty optional, but I prefer
+# it over standard dbus
 pacstrap config=type-base/pacstrap.conf
-    glibc gzip
+    alacritty-terminfo
 
-    pacman
+    ca-certificates
 
-    sed shadow systemd
+    dbus-broker
 
+    systemd gnutls
+
+    gzip zstd
+
+    sed
+
+    which
+
+# Make sure these files are *not* in the image:
+remove /etc/machine-id /usr/bin/init force=True
+
+# Remove some arch-specific files that are not needed:
+remove /usr/lib/tmpfiles.d/arch.conf
+    /usr/share/factory/etc/* recursive=True
+
+# Man-db can not get updated on the running system, so remove that:
+remove /usr/lib/tmpfiles.d/man-db.conf
+
+# Remove firstboot:
+remove /usr/lib/systemd/system/sysinit.target.wants/systemd-firstboot.service
+    /usr/lib/systemd/system/systemd-firstboot.service
+    /usr/bin/systemd-firstboot
+
+# Remove unnecessary timers:
+remove /usr/lib/systemd/system/timers.target.wants/shadow.timer
+
+ensure_no_unused_shell_files
+ensure_hwdb
+ensure_ldconfig
+ensure_no_kernel_install
+ensure_no_update_service
+ensure_no_sysusers
+
+### Use dbus-broker:
+systemd_enable dbus-broker.service
+systemd_enable dbus-broker.service user=True
+
+## Remove dbus-daemon and surrounding infrostructure:
+remove /usr/bin/dbus-daemon /usr/lib/systemd/system/dbus.service
+
+### Fix up permission of dm-event* units.
+chmod 0o644 /usr/lib/systemd/system/dm-event.*
+
+# Systemd drags in iptables, so configure those!
 net_firewall_configure
 
-append /usr/lib/os-release <<<<
-VERSION=${TIMESTAMP}
-VERSION_ID=${TIMESTAMP}
->>>>
+# Create a MOTD file:
+create /etc/motd <<<<For authorized use only...
 
+>>>> force=True mode=0o644
+copy /etc/motd /etc/issue force=True # and copy it to issues
+
+# Generic machine.info:
 create /etc/machine.info <<<<PRETTY_HOSTNAME="Some machine"
 ICON_NAME="computer"
 CHASSIS="server"
->>>>
+>>>> mode=0o644
 
-setup_readonly_usr
+# Locale setup:
+create /etc/locale.conf <<<<LANG=en_US.utf8
+LC_MESSAGES=en_US.utf8
+>>>> force=True mode=0o644
+set_locales en_US
 
+# Remove some more unnecessary file:
+remove /etc/pacman.d/mirrorlist
+
+# Set timezone:
 set_timezone Europe/Berlin
-set_default_target multi-user.target
-set_locales de_DE en_US
 
-## root password is 'root'
-usermod root password='$$6$$7YexNe71gbljWuon$$WkE6mSHd01osomCEMj/6rSX839atK7GTklCmUqy8poME22Oo1GKvDG3VUufdiKcwmR4Eo/A9W92NK8HhVmtxo1'
+# Boot without UI by default:
+systemd_set_default multi-user.target
 
-sed 's/^[ \\t#]*KillUserProcesses=.*$$/KillUserProcesses=yes/' /etc/systemd/logind.conf
+# Remove license files from generated images:
+strip_license_files
+# also strip documentation files:
+strip_documentation
+
+# I like KillUserProcesses, enable that:
+mkdir /etc/systemd/logind.conf.d
+create /etc/systemd/logind.conf.d/10-killuserprocesses.conf <<<<[Login]
+KillUserProcesses=yes
+>>>> mode=0o644
+
+# This directory is used by systemd-nspawn containers later:
+mkdir /etc/systemd/nspawn
+
+# Strip locales from man and help pages:
+add_hook export
+    run /usr/bin/find ${ROOT_DIR}/usr/share/man -mindepth 1 -maxdepth 1 -depth
+        -not ( -name cat* -or -name man* ) -exec rm -rf {} ;
+        returncode=None shell=True
+    message='remove locales from man'
+add_hook export
+    run /usr/bin/find ${ROOT_DIR}/usr/share/help -mindepth 1 -maxdepth 1 -depth
+        -not -name C -exec rm -rf {} ; returncode=None shell=True
+     message='remove locales from help'
+
+# root password is 'root'
+usermod root password='$6$ZfGdz/l9rvmvD8Wy$VP6uUeWRxvfd5OAeKDD/XQ1L9657o3AO3jxGepAvku96XgLq0OUhLCCFvd32lbMIbyYR1MOi59haRU7yT28/N.'
+

@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+
+function fail {
+    echo "$1"
+    exit $2
+}
+
+grep '^systemd-resolve:x:' etc/passwd || fail "No system-resolve user set in /etc/passwd, fail", 1
+
+echo "systemd-resolve user found in /etc/passwd, ok"
+

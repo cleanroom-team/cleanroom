@@ -1,0 +1,47 @@
+# Generic base for development containers
+
+# This is the base for all development containers
+
+based_on type-basecontainer
+
+pacman
+    pacman # Install pacman!
+
+    binutils
+
+    diffutils
+
+    gawk
+
+    strace
+
+    texinfo
+
+    fish
+
+    gdb
+
+    ltrace strace valgrind iputils iproute2 wget
+
+    pngcrush tk
+
+    patch perf
+
+    strace
+
+    tokei
+
+    gedit gedit-plugins git
+
+    xdg-user-dirs
+
+    mesa-libgl opencl-mesa
+
+    xterm
+
+    jq
+
+pkg_vim
+pkg_manpages
+
+create /etc/sudoers.d/90-allow-devel <<<<%devel ALL=(ALL) ALL>>>> mode=0o640

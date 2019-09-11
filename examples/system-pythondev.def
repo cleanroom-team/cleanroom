@@ -1,0 +1,13 @@
+# Configuration for python development container
+
+### Basic python development environment
+
+based_on type-cppdevcontainer
+
+set_hostname pythondev pretty=Python-Dev
+set_machine_id aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+pacman python-pip
+
+# Export a image that can be used as a container:
+export borg_repository usr_only=False

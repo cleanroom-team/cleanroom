@@ -32,7 +32,7 @@ class PkgFontsCommand(Command):
         self._execute(location, system_context, 'pacman',
                       'adobe-source-code-pro-fonts',
                       'ttf-bitstream-vera', 'ttf-dejavu',
-                      'ttf-gentium', 'ttf-inconsolata', 'ttf-ms-fonts',
+                      'ttf-gentium', 'ttf-inconsolata',
                       'noto-fonts', 'noto-fonts-cjk', 'noto-fonts-emoji',
                       'noto-fonts-extra', 'ttf-roboto', 'ttf-fira-code')
 

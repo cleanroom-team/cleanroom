@@ -1,0 +1,45 @@
+# Very basic arch setup for desktop use
+
+# This is the base for all desktop systems
+
+based_on type-baremetal
+
+sed '/^CHASSIS=/ cCHASSIS="desktop"' /etc/machine.info
+
+sed '/^\\s*#*\\s*ProcessSizeMax=/ cProcessSizeMax=10M' /etc/systemd/journald.conf
+sed '/^\\s*#*\\s*SystemUseMax=/ cSystemUseMax=100M' /etc/systemd/coredump.conf
+
+systemd_set_default graphical.target
+
+append /etc/fstab <<<<
+PARTLABEL=swap  swap              swap  defaults 0 0
+
+LABEL=fs_btrfs  /home             btrfs compress=zstd,subvol=@home,nofail 0 0
+>>>>
+
+pkg_desktop
+
+pacman
+    alacritty
+    chromium
+    dmidecode
+    firejail
+    flatpak fuse3
+    git
+    keybase kbfs keybase-gui
+    ntfs-3g
+    ovmf
+    perf
+    qemu qemu-block-gluster
+    smbclient sshfs sudo
+    tcpdump
+    wl-clipboard
+
+### Fixup smbclient:
+mkdir /etc/samba
+create /etc/samba/smb.conf <<<<>>>> mode=0o644
+
+# Allow fuse users:
+sed '/user_allow_other$/ cuser_allow_other' /etc/fuse.conf
+
+firejail_apps chromium

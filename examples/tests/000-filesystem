@@ -5,16 +5,7 @@ function fail {
     exit $2
 }
 
-test -L "opt"  || fail "opt symlink missing, fail" 1
-test -L "bin"  || fail "bin symlink missing, fail" 2
+test -c "dev/null"  || fail "/dev/null is missing or no char device."
 
-test -d "usr"  || fail "usr directory missing, fail" 3
-test -d "etc"  || fail "etc directory missing, fail" 4
-test -d "home" || fail "home directory missing, fail" 5
-test -d "var"  || fail "var directory missing, fail" 6
-test -d "proc" || fail "proc directory missing, fail" 7
-test -d "sys"  || fail "sys dircetory missing, fail" 8
-test -d "dev"  || fail "dev directory missing, fail" 9
-
-echo "Filesystem looks sane, ok"
+echo "Devices look sane, ok"
 

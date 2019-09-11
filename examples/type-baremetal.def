@@ -1,3 +1,33 @@
-# Base for all bare metal machines
+# Very basic setup for bare metal images
 
-based_on type-base
+based_on type-bootable
+
+# BAREMETAL_SETUP
+pacman bridge-utils borg fish gptfdisk hdparm htop
+
+    fwupd fzf
+
+    sbsigntools smartmontools tinyserial wget
+
+    tlp tlp-rdw acpi_call ethtool smartmontools x86_energy_perf_policy
+
+    e2fsprogs xfsprogs
+
+    ripgrep rsync
+
+pkg_tmux
+pkg_glusterfs
+
+create /etc/profile.d/timeout.sh <<<<TMOUT=600
+readonly TMOUT
+export TMOUT
+>>>> mode=0o644
+
+# Make sure we have a vconsole.conf file, mkinitcpio will need that later
+create /etc/vconsole.conf <<<<>>>> mode=0o644
+
+systemd_enable fstrim.timer smartd.service tlp.service tlp-sleep.service
+# This conflicts with tlp:
+remove /usr/lib/systemd/system/systemd-rfkill.service
+    /usr/lib/systemd/system/systemd-rfkill.socket
+

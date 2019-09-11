@@ -6,7 +6,7 @@
 
 
 from ...binarymanager import Binaries
-from ...printer import debug, info, verbose
+from ...printer import debug, info
 from ...systemcontext import SystemContext
 from ..btrfs import BtrfsHelper
 from ..run import run
@@ -116,28 +116,30 @@ def _pacman_keyinit(system_context: SystemContext,
         work_directory=system_context.systems_definition_directory)
 
 def _mountpoint(root_dir, folder, dev, **kwargs):
+    debug('Mounting {} in chroot.'.format(folder))
     path = os.path.join(root_dir, folder)
     if not os.path.isdir(path):
         os.makedirs(path)
     mount(dev, path, **kwargs)
 
 def _mount_directories_if_needed(root_dir, *, pacman_in_filesystem=False):
-    if not pacman_in_filesystem:
-        _mountpoint(root_dir, 'proc', 'proc',
-              options='nosuid,noexec,nodev', fs_type='proc')
-        _mountpoint(root_dir, 'sys', 'sys',
-              options='nosuid,noexec,nodev,ro', fs_type='sysfs')
-        _mountpoint(root_dir, 'dev', 'udev',
-              options='mode=0755,nosuid', fs_type='devtmpfs')
-        _mountpoint(root_dir, 'dev/pts', 'devpts',
-              options='mode=0620,gid=5,nosuid,noexec', fs_type='devpts')
-        _mountpoint(root_dir, 'dev/shm', 'shm',
-              options='mode=1777,nosuid,nodev', fs_type='tmpfs')
-        _mountpoint(root_dir, 'run', '/run', options='bind')
-        _mountpoint(root_dir, 'tmp', 'tmp',
-              options='mode=1777,strictatime,nodev,nosuid', fs_type='tmpfs')
+    debug('Preparing pacman chroot for external pacman run.')
+    _mountpoint(root_dir, 'proc', 'proc',
+                options='nosuid,noexec,nodev', fs_type='proc')
+    _mountpoint(root_dir, 'sys', 'sys',
+                options='nosuid,noexec,nodev,ro', fs_type='sysfs')
+    _mountpoint(root_dir, 'dev', 'udev',
+                options='mode=0755,nosuid', fs_type='devtmpfs')
+    _mountpoint(root_dir, 'dev/pts', 'devpts',
+                options='mode=0620,gid=5,nosuid,noexec', fs_type='devpts')
+    _mountpoint(root_dir, 'dev/shm', 'shm',
+                options='mode=1777,nosuid,nodev', fs_type='tmpfs')
+    _mountpoint(root_dir, 'run', '/run', options='bind')
+    _mountpoint(root_dir, 'tmp', 'tmp',
+                options='mode=1777,strictatime,nodev,nosuid', fs_type='tmpfs')
 
 def _unmount_directories_if_needed(root_dir, *, pacman_in_filesystem=False):
+    debug('Cleaning up pacman chroot.')
     umount_all(root_dir)
 
 def _run_pacman(system_context: SystemContext, *args: str,
@@ -202,8 +204,8 @@ def _copy_state(system_context: SystemContext, internal_pacman: bool) -> None:
 
 def _move_pacman_data(system_context: SystemContext, *,
                       move_into_fs: bool) -> None:
-    verbose('Moving pacman data for system "{}".'
-            .format(system_context.system_name))
+    debug('Moving pacman data for system "{}".'
+          .format(system_context.system_name))
 
     _setup_directories(system_context, move_into_fs)
 

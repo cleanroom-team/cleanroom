@@ -12,6 +12,7 @@ from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
 import typing
+import os.path
 
 
 class ExportDirectoryCommand(Command):
@@ -31,8 +32,8 @@ class ExportDirectoryCommand(Command):
     def validate(self, location: Location,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
         """Validate the arguments."""
-        self._validate_args_exact(location, 1, '"{}" needs a directory '
-                                  'to export.', *args)
+        self._validate_args_exact(location, 1, '"{}" needs a borg repository directory '
+                                  'to export into.', *args)
         self._validate_kwargs(location, ('compression', 'compression_level',
                                          'repository'), **kwargs)
         self._require_kwargs(location, ('repository',), **kwargs)
@@ -41,7 +42,8 @@ class ExportDirectoryCommand(Command):
                  *args: typing.Any, **kwargs: typing.Any) -> None:
         """Execute command."""
         export_directory = args[0]
-        export_repository = kwargs.get('repository', '')
+        export_repository = os.path.join(system_context.repository_base_directory,
+                                         kwargs.get('repository', ''))
 
         backup_name = system_context.system_name + '-' + system_context.timestamp
 

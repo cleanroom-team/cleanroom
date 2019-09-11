@@ -1,0 +1,47 @@
+# Very basic arch setup for server use
+
+based_on type-baremetal
+
+sed '/^CHASSIS=/ cCHASSIS="server"' /etc/machine.info
+
+pacman qemu-headless qemu-block-gluster
+
+systemd_set_default multi-user.target
+
+# Remove temporary IPv6 addresses for servers:
+remove /etc/sysctl.d/ipv6_tempaddr.conf
+
+# Have a bridge:
+create /usr/lib/systemd/network/10-extbr0.netdev <<<<[Match]
+Virtualization=no
+
+[NetDev]
+Name=extbr0
+Kind=bridge
+>>>> mode=0o644
+
+create /usr/lib/systemd/network/20-extbr0.network <<<<[Match]
+Virtualization=no
+Name=extbr0
+
+[Network]
+IPForward=yes
+>>>> mode=0o644
+
+create /usr/lib/systemd/network/80-enstar.link <<<<[Match]
+Virtualization=no
+Name=en*
+
+[Link]
+WakeOnLand=off
+NamePolicy=kernel database onboard slot path
+MACAddressPolicy=persistent
+>>>> mode=0o644
+
+create /usr/lib/systemd/network/85-enstar.network <<<<[Match]
+Virtualization=no
+Name=en*
+
+[Network]
+Bridge=extbr0
+>>>> mode=0o644

@@ -1,0 +1,131 @@
+# Very basic arch setup for bootable images
+
+# This is the base for all bootable images
+
+based_on type-networkedbase
+
+pacman linux
+    linux-firmware ipw2100-fw ipw2200-fw alsa-firmware
+
+    btrfs-progs dosfstools squashfs-tools
+
+    iputils iproute2
+
+    cryptsetup lvm2 mdadm
+
+    efibootmgr
+
+    pciutils sed tar usbutils
+
+    wireguard-arch wireguard-tools
+
+normalize_kernel_install
+
+## Systemd units:
+
+create /usr/lib/systemd/system/mnt.mount <<<<[Unit]
+Description=/mnt Write Preventer
+Documentation=man:hier(7)
+ConditionPathIsSymbolicLink=!/mnt
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+
+[Mount]
+What=tmpfs
+Where=/mnt
+Type=tmpfs
+Options=mode=755,strictatime,size=2m,nodev,nosuid,noexec
+>>>> mode=0o644
+
+symlink ../mnt.mount mnt.mount work_directory=/usr/lib/systemd/system/local-fs.target.wants
+
+## Tmpfiles:
+create /usr/lib/tmpfiles.d/mnt.conf <<<<# Storage partition:
+D /mnt/tmp              0755 root root -
+>>>> mode=0o644
+
+create /usr/lib/tmpfiles.d/boot.conf <<<<# Boot partition:
+D /boot 0700 root root -
+>>>> mode=0o644
+
+create /usr/lib/tmpfiles.d/opt.conf <<<<# Add opt:
+L /opt - - - - /usr/opt
+>>>> mode=0o644
+
+# Initialize various files:
+create /etc/modules-load.d/filesystems.conf vfat mode=0o644
+
+create /etc/modprobe.d/10-net-blacklist.conf <<<<
+# Disable some unusual network protocols:
+blacklist dccp
+blacklist sctp
+blacklist rds
+blacklist tipc
+>>>> mode=0o644
+
+create /etc/modprobe.d/60-fs-blacklist.conf <<<<# Disable some unusual filesystems:
+#
+# The following list only specifies local file systems since those are the
+# only ones that will be detected automatically by mount(8).
+blacklist adfs
+blacklist affs
+blacklist bfs
+blacklist befs
+blacklist cramfs
+blacklist efs
+blacklist erofs
+blacklist exofs
+blacklist freevxfs
+blacklist f2fs
+blacklist hfs
+blacklist hpfs
+blacklist jffs2
+blacklist jfs
+blacklist minix
+blacklist nilfs2
+blacklist qnx4
+blacklist qnx6
+blacklist sysv
+blacklist ubifs
+blacklist ufs
+>>>> mode=0o644
+
+# Set console keymap:
+# create /etc/vconsole.conf <<<<KEYMAP=de-dvorak-II
+# >>>> mode=0o644
+
+# sysctl:
+create /etc/sysctl.d/65-ip-redirection.conf <<<<# Never accept redirects or source routes.
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv6.conf.all.accept_redirects = 0
+net.ipv6.conf.all.accept_source_route = 0
+>>>> mode=0o644
+
+create /etc/sysctl.d/75-ipv6-tempaddr.conf <<<<# Enable IPv6 Privacy Extensions
+net.ipv6.conf.all.use_tempaddr = 2
+net.ipv6.conf.default.use_tempaddr = 2
+>>>> mode=0o644
+
+create /etc/sysctl.d/80-ipv4-syncookies.conf <<<<# Protection from the SYN flood attack.
+net.ipv4.tcp_syncookies = 1
+>>>> mode=0o644
+
+# Set a root password for the initrd:
+create /etc/shadow.initramfs <<<<root:$$6$$vPvxxxxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxx:17670::::::
+>>>> mode=0o600
+
+# Copy some extra files over:
+copy type-bootable/extra-files/* / from_outside=True recursive=True
+
+## Fix up permissions on LVM2 units:
+chmod 0o644 /usr/lib/systemd/system/blk-availability.service
+    /usr/lib/systemd/system/lvm2-*.service
+    /usr/lib/systemd/system/lvm2-*.socket
+
+systemd_enable systemd-networkd systemd-timesyncd
+
+# No need for headers and stuff on baremetal systems.
+# Use containers for your development:-)
+strip_development_files
