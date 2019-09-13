@@ -23,3 +23,5 @@ option infrastructure:
 
 * Use erofs over squashfs (once available)
 * Move to dracut for initrd generation
+
+* Remove C! lines from usr/lib/tmpfiles.d/etc.conf
