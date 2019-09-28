@@ -39,7 +39,7 @@ class FirejailAppsConfigureCommand(Command):
             location.set_description('Processing application {}.'
                                      .format(a))
             desktop_file = '/usr/share/applications/{}.desktop'.format(a)
-            if not os.path.exists(desktop_file):
+            if not os.path.exists(system_context.file_name(desktop_file)):
                 raise GenerateError('Desktop file "{}" not found.'
                                     .format(desktop_file), location=location)
             self._execute(location.next_line(), system_context,
