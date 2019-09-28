@@ -87,16 +87,3 @@ d /var/lib/NetworkManager/system-connections 0750 root root
 
         self._execute(location.next_line(), system_context,
                       'systemd_enable', 'gdm.service')
-
-        # FS#63706: Make sure gdm account is not expired!
-        # self._execute(location.next_line(), system_context,
-        #               'sed', '/account/ caccount required pam_permit.so',
-        #               '/etc/pam.d/gdm-launch-environment')
-        # self._execute(location.next_line(), system_context,
-        #               'sed', 's/#Enable=true/Enable=true/', '/etc/gdm/custom.conf')
-        # self._execute(location.next_line(), system_context,
-        #               'sed', '/account/ caccount required pam_permit.so',
-        #               '/etc/pam.d/systemd-user')
-        self._execute(location.next_line(), system_context,
-                      'run', '/usr/bin/chage', '-E', '-1', 'gdm', inside=True)
-        # END FS#63706
