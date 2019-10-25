@@ -85,7 +85,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
             Binaries.DEBOOTSTRAP: _check_for_binary('/usr/sbin/debootstrap'),
             Binaries.VERITYSETUP: _check_for_binary('/usr/sbin/veritysetup'),
         }
-    elif distribution == "archlinux":
+    elif distribution == "arch" or distribution == "archlinux":
         os_binaries = {
             Binaries.PACMAN: _check_for_binary('/usr/bin/pacman'),
             Binaries.PACMAN_KEY: _check_for_binary('/usr/bin/pacman-key'),

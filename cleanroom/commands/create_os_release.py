@@ -37,7 +37,7 @@ class CreateOsReleaseCommand(Command):
                                                 'Arch Linux'))
         os_release += 'ID=\"{}\"\n'\
             .format(system_context.substitution('DISTRO_ID', 'arch'))
-        os_release += 'ID_LIKE=\"archlinux\"\n'
+        os_release += 'ID_LIKE=\"arch\"\n'
         os_release += 'ANSI_COLOR=\"0;36\"\n'
         os_release += 'HOME_URL=\"{}\"\n'\
             .format(system_context.substitution('DISTRO_HOME_URL',
