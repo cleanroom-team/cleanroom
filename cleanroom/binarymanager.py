@@ -46,12 +46,15 @@ def _check_for_binary(binary: str) -> str:
 
 
 def _get_distribution():
+    fallback = "<UNSUPPORTED>"
     with open("/usr/lib/os-release") as os_release:
         for line in os_release.readlines():
             line = line.strip()
             if line.startswith('ID_LIKE='):
                 return line[8:].strip('"')
-    return "<UNSUPPORTED>"
+            if line.startswith('ID='):
+                fallback=line[3:].strip('"')
+    return fallback
 
 
 def _find_binaries() -> typing.Dict[Binaries, str]:
@@ -74,6 +77,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
     }
     os_binaries: typing.Dict[Binaries, str] = {}
     distribution = _get_distribution()
+    debug("Distribution: {}".format(distribution))
     if distribution == "debian":
         os_binaries = {
             Binaries.APT_GET: _check_for_binary('/usr/bin/apt-get'),
@@ -88,7 +92,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
             Binaries.VERITYSETUP: _check_for_binary('/usr/bin/veritysetup'),
         }
     else:
-        fail("Unsupported Linux flavor.")
+        fail("Unsupported Linux flavor (detected was \"{}\").".format(distribution))
 
     return {**binaries, **os_binaries}
 
