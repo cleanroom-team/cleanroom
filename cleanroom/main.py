@@ -92,6 +92,9 @@ def main(*command_arguments: str) -> None:
     # Find binaries:
     binary_manager = BinaryManager()
 
+    preflight_check('binaries', binary_manager.preflight_check,
+                    ignore_errors=args.ignore_errors)
+
     btrfs_helper = BtrfsHelper(binary_manager.binary(Binaries.BTRFS))
     user_helper = UserHelper(binary_manager.binary(Binaries.USERADD),
                              binary_manager.binary(Binaries.USERMOD))
@@ -99,8 +102,6 @@ def main(*command_arguments: str) -> None:
                                binary_manager.binary(Binaries.GROUPMOD))
 
     preflight_check('users', users_check,
-                    ignore_errors=args.ignore_errors)
-    preflight_check('binaries', binary_manager.preflight_check,
                     ignore_errors=args.ignore_errors)
 
     systems_directory = args.systems_directory \
