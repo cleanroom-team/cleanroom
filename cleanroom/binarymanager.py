@@ -38,6 +38,8 @@ class Binaries(Enum):
     SYSTEMCTL = auto()
     SFDISK = auto()
     FLOCK = auto()
+    QEMU_IMG = auto()
+    QEMU_NBD = auto()
 
 
 def _check_for_binary(binary: str) -> str:
@@ -74,6 +76,8 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.SYSTEMCTL: _check_for_binary('/usr/bin/systemctl'),
         Binaries.FLOCK: _check_for_binary('/usr/bin/flock'),
         Binaries.SFDISK: _check_for_binary('/usr/bin/sfdisk'),
+        Binaries.QEMU_IMG: _check_for_binary('/usr/bin/qemu-img'),
+        Binaries.QEMU_NBD: _check_for_binary('/usr/bin/qemu-nbd'),
     }
     os_binaries: typing.Dict[Binaries, str] = {}
     distribution = _get_distribution()
