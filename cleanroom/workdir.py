@@ -126,6 +126,8 @@ class WorkDir:
 
     def clear_storage_directory(self) -> None:
         # Trigger fast-path on storage directories:
+        if not os.path.isdir(self.storage_directory):
+            return  # no storage directory, nothing to do:-)
         with os.scandir(self.storage_directory) as it:
             for entry in it:
                 if entry.is_dir():
