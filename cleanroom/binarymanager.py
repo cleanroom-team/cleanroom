@@ -40,6 +40,7 @@ class Binaries(Enum):
     FLOCK = auto()
     QEMU_IMG = auto()
     QEMU_NBD = auto()
+    MKFS_VFAT = auto()
 
 
 def _check_for_binary(binary: str) -> str:
@@ -78,6 +79,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.SFDISK: _check_for_binary('/usr/bin/sfdisk'),
         Binaries.QEMU_IMG: _check_for_binary('/usr/bin/qemu-img'),
         Binaries.QEMU_NBD: _check_for_binary('/usr/bin/qemu-nbd'),
+        Binaries.MKFS_VFAT: _check_for_binary('/usr/bin/mkfs.vfat'),
     }
     os_binaries: typing.Dict[Binaries, str] = {}
     distribution = _get_distribution()
