@@ -10,7 +10,7 @@ from cleanroom.firestarter.installtarget import InstallTarget
 import cleanroom.firestarter.tools as tool
 import cleanroom.firestarter.qemutools as qemu_tool
 
-import os.path
+import os
 from tempfile import TemporaryDirectory
 import typing
 
@@ -20,6 +20,10 @@ class QemuBootInstallTarget(InstallTarget):
         super().__init__('qemu_boot', 'Boot image in qemu')
 
     def __call__(self, parse_result: typing.Any) -> None:
+        if not "DISPLAY" in os.environ:
+            print("No DISPLAY variable set: Can not start qemu.")
+            exit(1)
+
         with TemporaryDirectory(prefix='clrm_qemu_') as tempdir:
             extracted_version \
                     = tool.write_image(parse_result.system_name, tempdir,

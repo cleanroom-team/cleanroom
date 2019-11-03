@@ -148,4 +148,9 @@ def run_qemu(parse_result: typing.Any, *,
     if parse_result.verbatim:
         qemu_args += parse_result.verbatim
 
-    tools.run(*qemu_args, work_directory=work_directory)
+    result = tools.run(*qemu_args, work_directory=work_directory, check=False)
+
+    if result.returncode != 0:
+        print("Qemu run Failed with return code {}.".format(result.returncode))
+        print("Qemu stdout: {}".format(result.stdout))
+        print("Qemu stderr: {}".format(result.stderr))
