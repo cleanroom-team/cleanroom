@@ -91,10 +91,6 @@ blacklist ubifs
 blacklist ufs
 >>>> mode=0o644
 
-# Set console keymap:
-# create /etc/vconsole.conf <<<<KEYMAP=de-dvorak-II
-# >>>> mode=0o644
-
 # sysctl:
 create /etc/sysctl.d/65-ip-redirection.conf <<<<# Never accept redirects or source routes.
 net.ipv4.conf.all.accept_redirects = 0
