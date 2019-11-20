@@ -9,9 +9,12 @@ set_machine_id bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 pkg_intel_cpu
 pkg_intel_gpu
 
-# arch-install-scripts so that maurice can set up itself!
 pacman debootstrap modemmanager modem-manager-gui arch-install-scripts
 
+## Mount /var in the sysroot:
+## Adapt the mount unit to point to wherever you want your /var
+## to be stored.
+## Remove if you do not want /var to be persistent across reboots!
 create /usr/lib/systemd/system/sysroot-var.mount <<<<[Unit]
 Description=/var Directory (in sysroot)
 Documentation=man:hier(7)
@@ -25,11 +28,25 @@ Type=btrfs
 Options=compress=zstd,subvol=@var,nodev
 >>>> mode=0o644
 
+## Optionally create a place to store image files.
+##
+## Clrm can loop-mount the root and verity partition straight from a image
+## file in its initrd. This is rather convenient as you do not need to write
+## the image file or the partitions contained therein to your drives, which
+## might require you to create new partitions or override existing ones.
+##
+## This is used via the IMAGE_DEVICE, IMAGE_OPTIONS and IMAGE_FS variables.
+## For this to work you you will need to tell clrm where the image files can
+## be found. For the line below the following commands are needed:
+##   set IMAGE_DEVICE /dev/disk/by-label/fs_btrfs
+##   set IMAGE_OPTIONS compress=zstd,subvol=.images
+##   set IMAGE_FS btrfs
+##
+## The create_image command will take those options and inject code into
+## the initrd to mount the image filesystem, to loop-mount the right image
+## file from there (name must be "DISTRO_ID-DISTRO_VERSION_ID").
 append /etc/fstab <<<<LABEL=fs_btrfs  /mnt/btrfs         btrfs compress=zstd,subvol=@btrfs,nofail,noauto 0 0
 LABEL=fs_btrfs  /mnt/images        btrfs compress=zstd:15,subvol=/.images,noauto 0 0
-
-# sd-data:
-/dev/mapper/sd-data /mnt/sd-data ext4  x-systemd.makefs,x-systemd.automount,nofail 0 1
 >>>>
 
 create /etc/modules-load.d/bluetooth.conf <<<<btusb
@@ -38,5 +55,6 @@ create /etc/modules-load.d/bluetooth.conf <<<<btusb
 set_root_device /dev/mapper/root
 
 # Export a image:
+## This will run create_image and export the result into the provided borg repository:
 export borg_repository
 
