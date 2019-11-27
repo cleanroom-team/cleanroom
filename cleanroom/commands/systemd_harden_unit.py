@@ -26,7 +26,8 @@ class SystemdHardenUnitCommand(Command):
                          '[NoNewPrivileges=True] [PrivateDevices=True] '
                          '[PrivateTmp=True] [PrivateUsers=True] '
                          '[ProtectControlGroups=True] [ProtectHome="true"] '
-                         '[ProtectKernelModules=True] [ProtectKernelTunables=True]'
+                         '[ProtectKernelModules=True] [ProtectKernelTunables=True] '
+                         '[ProtectKernelLogs=True] '
                          '[ProtectSystem="full"] [RemoveIPC=True] '
                          '[RestrictAddressFamilies="AF_UNIX AF_INET AF_INET6"] '
                          '[RestrictRealtime=True] [SystemCallArchitecture="native"] '
@@ -43,6 +44,7 @@ class SystemdHardenUnitCommand(Command):
                                          'PrivateDevices', 'PrivateTmp', 'PrivateUsers',
                                          'ProtoctControlGroups', 'ProtectHome',
                                          'ProtectKernelModules', 'ProtectKernelTunables',
+                                         'ProtectKernelLogs',
                                          'ProtectSystem', 'RemoveIPC', 'RestrictAddressFamilies',
                                          'SystemCallArchitecture',), **kwargs)
 
@@ -73,6 +75,7 @@ class SystemdHardenUnitCommand(Command):
         contents += 'ProtectHome={}\n'.format(kwargs.get('ProtectHome', 'true'))
         contents += 'ProtectKernelModules={}\n'.format(_trueify(kwargs.get('ProtectKernelModules', True)))
         contents += 'ProtectKernelTunables={}\n'.format(_trueify(kwargs.get('ProtectKernelTunables', True)))
+        contents += 'ProtectKernelLogs={}\n'.format(_trueify(kwargs.get('ProtectKernelLogs', True)))
         contents += 'ProtectSystem={}\n'.format(kwargs.get('ProtectSystem', 'full'))
         contents += 'RemoveIPC={}\n'.format(_trueify(kwargs.get('RemoveIPC', True)))
         contents += 'RestrictAddressFamilies={}\n'.format(kwargs.get('RestrictAddressFamilies', 'AF_UNIX AF_INET AF_INET6'))
