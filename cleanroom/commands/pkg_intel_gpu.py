@@ -42,7 +42,7 @@ class PkgIntelGpuCommand(Command):
 
         self._execute(location, system_context, 'pacman',
                       'libva-intel-driver', 'mesa', 'vulkan-intel',
-                      'xf86-video-intel')
+                      'xf86-video-intel', 'intel-media-driver')
 
         self._execute(location.next_line(), system_context,
                       'create', '/etc/modprobe.d/i915-guc.conf',
