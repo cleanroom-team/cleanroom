@@ -25,10 +25,12 @@ from time import sleep
 
 Disk \
     = collections.namedtuple('Disk', ['label', 'id', 'device', 'unit',
-                                      'firstlba', 'lastlba', 'partitions'])
+                                      'firstlba', 'lastlba', 'partitions',
+                                      'sectorsize'])
 Partition \
     = collections.namedtuple('Partition', ['node', 'start', 'size',
-                                           'partition_type', 'uuid', 'name'])
+                                           'partition_type', 'uuid',
+                                           'name', 'sectorsize'])
 
 
 def _is_root() -> bool:
@@ -274,6 +276,7 @@ class Partitioner:
         return Partition(node=None,
                          start=start,
                          size=size,
+                         sectorsize=512,
                          uuid='',
                          partition_type='0657fd6d-a4ab-43c4-84e5-0933c84b4f4f',
                          name=name)
@@ -284,6 +287,7 @@ class Partitioner:
         return Partition(node=None,
                          start=start,
                          size=size,
+                         sectorsize=512,
                          uuid='',
                          partition_type='c12a7328-f81f-11d2-ba4b-00a0c93ec93b',
                          name='EFI System Partition')
@@ -299,6 +303,7 @@ class Partitioner:
         return Partition(node=None,
                          start=start,
                          size=size,
+                         sectorsize=512,
                          uuid=partition_uuid,
                          partition_type=partition_type,
                          name=name)
