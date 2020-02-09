@@ -6,7 +6,7 @@
 
 
 from cleanroom.command import Command
-from cleanroom.helper.file import create_file remove
+from cleanroom.helper.file import create_file, makedirs, remove
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
@@ -59,3 +59,8 @@ class PkgAvahiCommand(Command):
                '/etc/usbguard/IPCAccessControl.d',
                recursive=True)
 
+        # Fix for https://github.com/USBGuard/usbguard/issues/287
+        makedirs(system_context, '/usr/lib/systemd/system/usbguard.service.d')
+        create_file(system_context, '/usr/lib/systemd/system/usbguard.service.d/bugfix.conf',
+                    textwrap.dedent('''\
+                    ''').encode('utf-8'))
