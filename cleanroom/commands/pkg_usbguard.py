@@ -63,4 +63,7 @@ class PkgAvahiCommand(Command):
         makedirs(system_context, '/usr/lib/systemd/system/usbguard.service.d')
         create_file(system_context, '/usr/lib/systemd/system/usbguard.service.d/bugfix.conf',
                     textwrap.dedent('''\
+                    [Service]
+                    CapabilityBoundingSet=CAP_DAC_OVERRIDE
+                    ReadWritePaths=-/var/lib/usbguard/rules.conf
                     ''').encode('utf-8'))
