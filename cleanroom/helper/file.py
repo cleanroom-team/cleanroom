@@ -125,13 +125,13 @@ def symlink(system_context: SystemContext, source: str, destination: str,
 
 def makedirs(system_context: SystemContext, *dirs: str,
              user: int = 0, group: int = 0, mode: typing.Optional[int] = None,
-             force: bool = False) -> None:
+             exist_ok: bool = False) -> None:
     """Make directories in the system filesystem."""
     for d in dirs:
-        info('Creating "{}" with mode={}, uid={}, gid={} ({}).'
-             .format(d, mode, user, group, force))
+        info('Creating "{}" with mode={}, uid={}, gid={} (exist_ok: {}).'
+             .format(d, mode, user, group, exist_ok))
         full_path = file_name(system_context, d)
-        os.makedirs(full_path, exist_ok=force)
+        os.makedirs(full_path, exist_ok=exist_ok)
         if mode:
             _chmod(mode, full_path)
         _chown(_get_uid(system_context, user),

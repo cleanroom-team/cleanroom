@@ -57,7 +57,6 @@ def _create_install_hook(location: Location, system_context: SystemContext,
 def _cleanup_extra_files(location: Location, system_context: SystemContext,
                          *files: str) -> None:
     location.set_description('Remove extra mkinitcpio files')
-    remove(system_context, *files, force=True, recursive=True)
 
 
 class CreateInitrdCommand(Command):
@@ -374,14 +373,18 @@ class CreateInitrdCommand(Command):
         self._execute(location.next_line(), system_context, 'sed',
                       's%/initramfs-linux.*.img%/initrd%',
                       '/etc/mkinitcpio.d/cleanroom.preset')
+        self._execute(location.next_line(), system_context, 'sed',
+                      's/-%PKGBASE%//',
+                      '/etc/mkinitcpio.d/cleanroom.preset')
+
         return to_clean_up
 
     def _remove_mkinitcpio(self, location: Location,
                            system_context: SystemContext) -> None:
         # FIXME: Remove mkinitcpio once linux and ostree no longer depend on it!
-        # pacman(system_context, 'pacman', 'mkinitcpio', remove=True,
-        #        pacman_command=self._binary(Binaries.PACMAN))
-        pass
+        pacman(system_context, 'pacman', 'mkinitcpio', '--assume-installed', 'mkinitcpio',
+               remove=True, pacman_command=self._binary(Binaries.PACMAN))
+        remove(system_context, '/boot/vmlinuz')
 
     def __call__(self, location: Location, system_context: SystemContext,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
@@ -412,10 +415,14 @@ class CreateInitrdCommand(Command):
         initrd = args[0]
 
         to_clean_up = []  # type: typing.List[str]
+        to_clean_up += '/boot/vmlinuz'
         to_clean_up += self._install_extra_binaries(location, system_context)
         to_clean_up += self._create_systemd_units(location, system_context)
         to_clean_up += self._install_mkinitcpio(location, system_context)
         to_clean_up += self._install_mkinitcpio_hooks(location, system_context)
+
+        copy(system_context, os.path.join(system_context.boot_directory, 'vmlinuz'),
+             '/boot/vmlinuz', from_outside=True)
 
         run('/usr/bin/mkinitcpio', '-p', 'cleanroom',
             chroot=system_context.fs_directory,

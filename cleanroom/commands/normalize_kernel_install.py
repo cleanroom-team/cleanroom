@@ -7,6 +7,7 @@
 
 from cleanroom.command import Command
 from cleanroom.location import Location
+from cleanroom.helper.file import makedirs, remove
 from cleanroom.systemcontext import SystemContext
 
 import os.path
@@ -31,18 +32,30 @@ class NormalizeKernelInstallCommand(Command):
                  *args: typing.Any, **kwargs: typing.Any) -> None:
         """Execute command."""
         location.set_description('Handle different kernel flavors')
-        for kernel in ('linux', 'linux-hardened', 'linux-lts', 'linux-zen', 'linux-git',):
-            self._execute(location, system_context,
-                          'move', '/etc/mkinitcpio.d/{}.preset'.format(kernel),
-                          '/etc/mkinitcpio.d/cleanroom.preset',
-                          ignore_missing_sources=True, force=True)
+        vmlinuz = os.path.join(system_context.boot_directory, 'vmlinuz')
+        preset = system_context.file_name('/etc/mkinitcpio.d/cleanroom.preset')
 
-            self._execute(location.next_line(), system_context,
-                          'move', '/boot/vmlinuz-{}'.format(kernel),
-                          '/boot/vmlinuz',
-                          ignore_missing_sources=True, force=True)
+        makedirs(system_context, '/etc/mkinitcpio.d', exist_ok=True)
 
+        # Clean up after the mkinitcpio hook:
+        for kernel in ('', '-hardened', '-lts', '-zen', '-git',):
+            remove('/boot/vmlinuz{}'.format(kernel), force=True)
+
+            kernel_preset = '/etc/mkinitcpio.d/linux'
+            if kernel:
+                kernel_preset += '-{}'
+            kernel_preset += '.preset'
+            remove(kernel_preset, force=True)
+
+        # New style linux packages that put vmlinuz into /usr/lib/modules:
         self._execute(location.next_line(), system_context,
-                      'copy', '/boot/vmlinuz',
-                      os.path.join(system_context.boot_directory, 'vmlinuz'),
-                      to_outside=True)
+                      'move', '/usr/lib/modules/*/vmlinuz', vmlinuz,
+                      to_outside=True, ignore_missing_sources=True)
+
+        if not os.path.isfile(preset):
+            self._execute(location.next_line(), system_context,
+                          'copy', '/usr/share/mkinitcpio/hook.preset',
+                          preset, to_outside=True)
+
+        assert(os.path.isfile(preset))
+        assert(os.path.isfile(vmlinuz))
