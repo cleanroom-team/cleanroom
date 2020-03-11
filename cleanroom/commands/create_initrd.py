@@ -347,8 +347,7 @@ class CreateInitrdCommand(Command):
                        '/boot/vmlinu*']
 
         location.set_description('Install mkinitcpio')
-        self._execute(location, system_context, 'pacman',
-                      'mkinitcpio')
+        self._execute(location, system_context, 'pacman', 'mkinitcpio')
 
         location.set_description('Fix up mkinitcpio.conf')
         self._execute(location.next_line(), system_context, 'sed',
@@ -360,21 +359,23 @@ class CreateInitrdCommand(Command):
                       'sd-shutdown"',
                       '/etc/mkinitcpio.conf')
 
-        location.set_description('Fix up mkinitcpio presets')
-        self._execute(location.next_line(), system_context, 'sed',
-                      "/^PRESETS=/ cPRESETS=('default')",
-                      '/etc/mkinitcpio.d/cleanroom.preset')
-        self._execute(location.next_line(), system_context, 'sed',
-                      "/'fallback'/ d",
-                      '/etc/mkinitcpio.d/cleanroom.preset')
-        self._execute(location.next_line(), system_context, 'sed',
-                      's%/vmlinuz-linux.*"%/vmlinuz"%',
-                      '/etc/mkinitcpio.d/cleanroom.preset')
+        location.set_description('Create mkinitcpio presets')
+        create_file(system_context, '/etc/mkinitcpio.d/cleanroom.preset',
+                    textwrap.dedent('''\
+                    # mkinitcpio preset file for cleanroom
+
+                    ALL_config="/etc/mkinitcpio.conf"
+                    ALL_kver="/boot/vmlinuz"
+
+                    PRESETS=('default')
+
+                    #default_config="/etc/mkinitcpio.conf"
+                    default_image="/boot/initramfs.img"
+                    #default_options=""
+                    ''').encode('utf-8'))
+
         self._execute(location.next_line(), system_context, 'sed',
                       's%/initramfs-linux.*.img%/initrd%',
-                      '/etc/mkinitcpio.d/cleanroom.preset')
-        self._execute(location.next_line(), system_context, 'sed',
-                      's/-%PKGBASE%//',
                       '/etc/mkinitcpio.d/cleanroom.preset')
 
         return to_clean_up
@@ -382,8 +383,9 @@ class CreateInitrdCommand(Command):
     def _remove_mkinitcpio(self, location: Location,
                            system_context: SystemContext) -> None:
         # FIXME: Remove mkinitcpio once linux and ostree no longer depend on it!
-        pacman(system_context, 'pacman', 'mkinitcpio', '--assume-installed', 'mkinitcpio',
-               remove=True, pacman_command=self._binary(Binaries.PACMAN))
+        self._execute(location, system_context, 'pacman', 'mkinitcpio',
+                      '--assume-installed', 'initramfs',
+                      '--assume-installed', 'mkinitcpio', remove=True)
         remove(system_context, '/boot/vmlinuz')
 
     def __call__(self, location: Location, system_context: SystemContext,
@@ -430,10 +432,13 @@ class CreateInitrdCommand(Command):
 
         initrd_directory = os.path.dirname(initrd)
         os.makedirs(initrd_directory, exist_ok=True)
-        move(system_context, '/boot/initrd', initrd, to_outside=True)
+        move(system_context, '/boot/initramfs.img', initrd, to_outside=True)
 
         _cleanup_extra_files(location, system_context, *to_clean_up)
         self._remove_mkinitcpio(location, system_context)
+
+        assert(os.path.isfile(initrd))
+
 
     def _install_extra_binaries(self, location: Location,
                                 system_context: SystemContext) \
