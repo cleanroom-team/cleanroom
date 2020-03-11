@@ -75,7 +75,7 @@ def _setup_directories(system_context: SystemContext, internal: bool) -> None:
         debug('Main pacman directory created.')
     os.makedirs(_db_directory(system_context, internal))
     debug('DB directory created.')
-    os.makedirs(_gpg_directory(system_context, internal))
+    os.makedirs(os.path.join(_gpg_directory(system_context, internal), 'private-keys-v1.d'))
     debug('GPG directory created.')
     os.makedirs(_hooks_directory(system_context, internal))
     debug('Hook directory created.')
