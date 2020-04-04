@@ -30,7 +30,7 @@ pacman
     ntfs-3g
     ovmf
     perf
-    qemu qemu-block-gluster
+    qemu
     smbclient sshfs sudo
     tcpdump
     wl-clipboard

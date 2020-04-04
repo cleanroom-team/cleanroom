@@ -16,7 +16,6 @@ pacman bridge-utils borg fish gptfdisk hdparm htop
     ripgrep rsync
 
 pkg_tmux
-pkg_glusterfs
 
 create /etc/profile.d/timeout.sh <<<<TMOUT=600
 readonly TMOUT

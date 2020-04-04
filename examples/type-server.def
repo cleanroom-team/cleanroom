@@ -4,7 +4,7 @@ based_on type-baremetal
 
 sed '/^CHASSIS=/ cCHASSIS="server"' /etc/machine.info
 
-pacman qemu-headless qemu-block-gluster
+pacman qemu-headless
 
 systemd_set_default multi-user.target
 
