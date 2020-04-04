@@ -16,13 +16,9 @@ set KERNEL_CMDLINE 'quiet'
 
 # sed and gzip are needed for locale-gen
 # which is needed by some of the pacman hooks
-# alacritty-terminfo is a small package needed to make
-# the alacritty terminal work well
 # dbus-broker is actually pretty optional, but I prefer
 # it over standard dbus
 pacstrap config=type-base/pacstrap.conf
-    alacritty-terminfo
-
     ca-certificates
 
     dbus-broker
