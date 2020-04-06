@@ -62,22 +62,22 @@ class PkgSystemdHomedCommand(Command):
                     textwrap.dedent('''\
                     #%PAM-1.0
 
-                    auth      sufficient pam_unix.so
-                    -auth     sufficient pam_systemd_home.so
-                    auth      required   pam_deny.so
+                    auth     [success=1 new_authtok_reqd=1 ignore=ignore user_unknown=ignore default=bad] pam_systemd_home.so
+                    auth     required   pam_unix.so try_first_pass nullok
+                    auth     optional   pam_permit.so
+                    auth     required   pam_env.so
 
-                    account   required   pam_nologin.so
-                    -account  sufficient pam_systemd_home.so
-                    account   sufficient pam_unix.so
-                    account   required   pam_permit.so
+                    account  [success=1 new_authtok_reqd=1 ignore=ignore user_unknown=ignore default=bad] pam_systemd_home.so
+                    account  required   pam_unix.so
+                    account  optional   pam_permit.so
+                    account  required   pam_time.so
 
-                    -password sufficient pam_systemd_home.so
-                    password  sufficient pam_unix.so sha512 shadow try_first_pass try_authtok
-                    password  required   pam_deny.so
+                    password [success=1 new_authtok_reqd=1 ignore=ignore user_unknown=ignore default=bad] pam_systemd_home.so
+                    password required   pam_unix.so try_first_pass nullok sha512 shadow
+                    password optional   pam_permit.so
 
-                    -session  optional   pam_keyinit.so revoke
-                    -session  optional   pam_loginuid.so
-                    -session  optional   pam_systemd_home.so
-                    -session  optional   pam_systemd.so
-                    session   required   pam_unix.so 
+                    session  required   pam_limits.so
+                    session  [success=1 new_authtok_reqd=1 ignore=ignore user_unknown=ignore default=bad] pam_systemd_home.so
+                    session  required   pam_unix.so
+                    session  optional   pam_permit.so
                     ''').encode('utf-8'), mode=0o644, force=True)
