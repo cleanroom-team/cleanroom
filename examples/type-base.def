@@ -85,6 +85,8 @@ CHASSIS="server"
 create /etc/locale.conf <<<<LANG=en_US.utf8
 LC_MESSAGES=en_US.utf8
 >>>> force=True mode=0o644
+
+# Add one or more locales to generate here:
 set_locales en_US
 
 # Remove some more unnecessary file:
