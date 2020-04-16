@@ -12,6 +12,11 @@ of immutable and stateless systems as it becomes feasible to keep
 such machines up-to-date by simply regenerating a fresh image and
 booting into it.
 
+Up-to-date code can be found at:
+
+   https://gitlab.com/cleanroom/cleanroom
+
+
 ## Installation
 
 Use python setuptools as usual.

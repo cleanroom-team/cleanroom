@@ -20,34 +20,48 @@ class PkgSystemdHomedCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('pkg_systemd_homed', help_string='Setup systemd-homed.',
+        super().__init__('pkg_systemd_homed',
+                         syntax="<PRIVATE_KEY_DATA> <PUBLIC_KEY_DATA>",
+                         help_string='Setup systemd-homed.',
                          file=__file__, **services)
 
     def validate(self, location: Location,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
         """Validate the arguments."""
-        self._validate_no_arguments(location, *args, **kwargs)
+        self._validate_args_exact(location, 2,
+                                  '"{}" requires the private key data '
+                                  'and the public key data', *args)
+        self._validate_kwargs(location, (), **kwargs)
 
     def __call__(self, location: Location, system_context: SystemContext,
                  *args: typing.Any, **kwargs: typing.Any) -> None:
         """Execute command."""
+
+        private_key = args[0]
+        public_key = args[1]
+
+        location.set_description('Validate keys')
+        if not "BEGIN PRIVATE KEY" in private_key:
+            raise GenerateError("Private key blob is not a private key.",
+                                location=location)
+
+        if not "BEGIN PUBLIC KEY" in public_key:
+            raise GenerateError("Public key blob is not a public key.",
+                                location=location)
         
         # enable the daemon (actually set up socket activation)
+        location.set_description('Enableing homed service')
         self._execute(location.next_line(), system_context,
                       'systemd_enable', 'systemd-homed.service')
 
         # Install keys into /usr:
+        location.set_description('Setup keys')
         makedirs(system_context, '/usr/share/factory/var/lib/systemd/home',
                  mode=0o700)
-        config = os.path.join(self._config_directory(system_context))
-        copy(system_context,
-             os.path.join(config, 'local.private'),
-             '/usr/share/factory/var/lib/systemd/home',
-             from_outside=True)
-        copy(system_context,
-             os.path.join(config, 'local.public'),
-             '/usr/share/factory/var/lib/systemd/home',
-             from_outside=True)
+        create_file(system_context, '/usr/share/factory/var/lib/systemd/home/local.private',
+                    private_key.encode('utf-8'), mode=0o600)
+        create_file(system_context, '/usr/share/factory/var/lib/systemd/home/local.public',
+                    public_key.encode('utf-8'), mode=0o600)
         chmod(system_context, 0o600, '/usr/share/factory/var/lib/systemd/home/*')
         chown(system_context, 0, 0, '/usr/share/factory/var/lib/systemd/home/*')
 
@@ -58,6 +72,7 @@ class PkgSystemdHomedCommand(Command):
                     ''').encode('utf-8'), mode=0o644)
 
         # Fix up pam:
+        location.set_description('Setting up PAM for homed')
         create_file(system_context, '/etc/pam.d/system-auth',
                     textwrap.dedent('''\
                     #%PAM-1.0
