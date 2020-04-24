@@ -14,7 +14,7 @@ booting into it.
 
 Up-to-date code can be found at:
 
-   https://gitlab.com/cleanroom/cleanroom
+   https://github.com/cleanroom-team/cleanroom
 
 
 ## Installation
