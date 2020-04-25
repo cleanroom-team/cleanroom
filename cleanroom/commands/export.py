@@ -112,6 +112,7 @@ class ExportCommand(Command):
         self._image_format = 'raw'
 
         self._extra_partitions = []  # type: typing.List[ExtraPartition]
+        self._efi_emulator = '',
         self._efi_size = 0
         self._swap_size = 0
 
@@ -127,6 +128,7 @@ class ExportCommand(Command):
                          syntax='REPOSITORY '
                                 '[efi_key=<KEY>] [efi_cert=<CERT>] '
                                 '[efi_size=0M] [swap_size=0M] '
+                                '[efi_emulator=/path/to/Clover] '
                                 '[extra_partitions=p1,p2,...] '
                                 '[image_format=(raw|qcow2)] '
                                 '[repository_compression=zstd] '
@@ -142,7 +144,7 @@ class ExportCommand(Command):
         self._validate_args_exact(location, 1,
                                   '{} needs a repository to export into.',
                                   *args)
-        self._validate_kwargs(location, ('efi_key', 'efi_cert', 'efi_size',
+        self._validate_kwargs(location, ('efi_key', 'efi_cert', 'efi_size', 'efi_emulator',
                                          'swap_size', 'extra_partitions',
                                          'image_format',
                                          'repository_compression',
@@ -174,10 +176,31 @@ class ExportCommand(Command):
                              .format(repo_compression),
                              location=location)
 
+        efi_emulator = kwargs.get('efi_emulator', '')
+        if efi_emulator:
+            if not os.path.isdir(os.path.join(efi_emulator, 'EFI')):
+                raise ParseError('"{}" is not a valide efi emulator. '
+                                 'The folder needs to contain a "EFI" folder.'
+                                 .format(efi_emulator),
+                                 location=location)
+            if not os.path.isdir(os.path.join(efi_emulator, 'Bootloaders')):
+                raise ParseError('"{}" is not a valide efi emulator. '
+                                 'The folder needs to contain a "Bootloaders" folder.'
+                                 .format(efi_emulator),
+                                 location=location)
+            if not os.path.isdir(os.path.join(efi_emulator, 'BootSectors')):
+                raise ParseError('"{}" is not a valide efi emulator. '
+                                 'The folder needs to contain a "BootSectors" folder.'
+                                 .format(efi_emulator),
+                                 location=location)
+
+
     def _setup(self, *args, **kwargs):
         self._key = kwargs.get('efi_key', '')
         self._cert = kwargs.get('efi_cert', '')
         self._image_format = kwargs.get('image_format', 'raw')
+        self._efi_emulator = kwargs.get('efi_emulator', '')
+
         self._extra_partitions = \
             parse_extra_partitions(kwargs.get('extra_partitions', '')
                                    .split(','))
@@ -322,6 +345,7 @@ class ExportCommand(Command):
         create_image(image_filename, self._image_format,
                      self._extra_partitions,
                      self._efi_size, self._swap_size,
+                     efi_emulator=self._efi_emulator,
                      kernel_file=self._kernel_file,
                      root_partition=self._root_partition,
                      verity_partition=self._verity_partition,

@@ -141,6 +141,7 @@ def _file_size(file_name: str) -> int:
 def create_image(image_filename: str, image_format: str,
                  extra_partitions: typing.List[ExtraPartition],
                  efi_size: int, swap_size: int, *,
+                 efi_emulator: typing.Optional[str],
                  kernel_file: typing.Optional[str],
                  root_partition: str, verity_partition: str,
                  root_hash: str,
@@ -161,6 +162,8 @@ def create_image(image_filename: str, image_format: str,
     trace('Calculated total extra partition size: {}b'.format(extra_total))
 
     efi_size = _calculate_efi_size(kernel_size, efi_size)
+    if efi_emulator:
+        efi_size += 10 * mib
     trace('EFI size: {}b, Swap size: {}b, extra partitions: {}'
           .format(efi_size, swap_size, extra_total))
 
@@ -188,15 +191,16 @@ def create_image(image_filename: str, image_format: str,
                        swap_label=None,
                        extra_partitions=extra_partitions,
                        writer=writer),
+        efi_emulator=efi_emulator,
         sfdisk_command=sfdisk_command,
         flock_command=flock_command)
 
 
 def _work_on_device_node(ic: RawImageConfig, *,
+                         efi_emulator: typing.Optional[str],
                          sfdisk_command: str, flock_command: str):
     with _find_or_create_device_node(ic.path, ic.disk_format,
                                      ic.min_device_size) as device:
-
         info('Working on device {}.'.format(ic.path))
 
         partition_devices = _repartition(device, ic.repartition,
@@ -229,7 +233,9 @@ def _work_on_device_node(ic: RawImageConfig, *,
         _prepare_efi_partition(partition_devices['efi'],
                                partition_devices['root'],
                                ic.writer.has_linux_kernel(),
-                               ic.writer.write_linux_kernel)
+                               ic.writer.write_linux_kernel,
+                               efi_emulator=efi_emulator,
+                               mbr_dev=device.device())
         success('EFI partition installed.', verbosity=2)
 
         for i in range(len(ic.extra_partitions)):
@@ -338,29 +344,151 @@ def _copy_efi_file(source: str, destination: str) -> None:
     os.chmod(destination, 0o755)
 
 
+def _install_bios_part_of_efi_emulator(root_dev: str, efi_dev: str,
+                                       efi_emulator: str) -> None:
+    verbose("Installing Clover into MBR")
+    assert (efi_emulator, "Missing EFI emulator path")
+
+    mbr = b''
+    pbr1 = b''
+    pbr2 = b''
+
+    bootsectors = os.path.join(efi_emulator, 'BootSectors')
+
+    with open(root_dev, 'rb') as root_fd:
+        mbr = root_fd.read(512)
+    with open(efi_dev, 'rb') as efi_fd:
+        pbr1 = efi_fd.read(512)
+        efi_fd.seek(6 * 512, 0)
+        pbr2 = efi_fd.read(512)
+
+    assert mbr, 'Failed to read MBR'
+    assert pbr1, 'Failed to read PBR1'
+    assert pbr2, 'Failed to read PBR2'
+
+    boot0 = b''
+    with open(os.path.join(bootsectors, 'boot0af'), 'rb') as boot0_fd:
+        boot0 = boot0_fd.read()
+
+    with open(os.path.join(bootsectors, 'boot1f32'), 'rb') as boot1_fd:
+        boot1 = boot1_fd.read()
+
+    new_mbr = boot0[:440] + mbr[440:]
+    assert len(new_mbr) == 512
+
+    new_pbr1 = boot1[:3] + pbr1[3:90] + boot1[90:512]
+    assert len(new_pbr1) == 512
+
+    new_pbr2 = boot1[:3] + pbr2[3:90] + boot1[90:512]
+    assert len(new_pbr2) == 512
+
+    with open(root_dev, 'r+b') as root_fd:
+        root_fd.seek(0, 0)
+        root_fd.write(bytes(new_mbr))
+    debug('MBR written to "{}"'.format(root_dev))
+
+    with open(efi_dev, 'r+b') as efi_fd:
+        efi_fd.seek(0, 0)
+        efi_fd.write(bytes(new_pbr1))
+        efi_fd.seek(6 * 512, 0)
+        efi_fd.write(bytes(new_pbr2))
+    debug('PBRs written to "{}"'.format(efi_dev))
+
+
+def _install_efi_part_of_efi_emulator(boot_mnt: str, efi_emulator: str) -> None:
+    verbose("Installing Clover binaries into EFI partition")
+    assert (efi_emulator, "Missing EFI emulator path")
+
+    shutil.copy(os.path.join(efi_emulator, 'Bootloaders/x64/boot7'),
+                os.path.join(boot_mnt, 'boot'),
+                follow_symlinks=False)
+    efi_dir = os.path.join(boot_mnt, 'EFI')
+    os.makedirs(efi_dir)
+    shutil.copytree(os.path.join(efi_emulator, 'EFI/CLOVER'), os.path.join(efi_dir, 'CLOVER'))
+
+    config_file = os.path.join(efi_dir, 'CLOVER/config.plist')
+    with open(config_file, "wb") as config:
+        config.write('''\
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Boot</key>
+	<dict>
+		<key>DefaultVolume</key>
+		<string>EFI</string>
+		<key>DefaultLoader</key>
+		<string>\EFI\systemd\systemd-bootx64.efi</string>
+		<key>Fast</key>
+		<true/>
+	</dict>
+	<key>GUI</key>
+	<dict>
+		<key>Custom</key>
+		<dict>
+			<key>Entries</key>
+			<array>
+				<dict>
+					<key>Hidden</key>
+					<false/>
+					<key>Disabled</key>
+					<false/>
+					<key>Image</key>
+					<string>os_arch</string>
+					<key>Volume</key>
+					<string>EFI</string>
+					<key>Path</key>
+					<string>\EFI\systemd\systemd-bootx64.efi</string>
+					<key>Title</key>
+					<string>Cleanroom Linux</string>
+					<key>Type</key>
+					<string>Linux</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
+</dict>
+</plist>
+'''.encode('utf-8'))
+
+
 def _prepare_efi_partition(efi_dev: str, root_dev: str,
-                           has_kernel: bool, kernel_file_writer) -> None:
+                           has_kernel: bool, kernel_file_writer, *,
+                           efi_emulator: str,
+                           mbr_dev: str) -> None:
     trace('Preparing EFI partition.')
     _prepare_extra_partition(efi_dev, filesystem='vfat', label='EFI')
+    trace('... Partition formatted.')
 
-    trace('... Partition created.')
+    if efi_emulator and has_kernel:
+        _install_bios_part_of_efi_emulator(mbr_dev, efi_dev, efi_emulator)
+        trace('... EFI emulation layer has been set up in MBR')
+
     with tempfile.TemporaryDirectory() as mnt_point:
         with mount.Mount(efi_dev, os.path.join(mnt_point, 'boot'),
                          fs_type='vfat') as boot_mnt:
+            trace('... boot partition mounted.')
 
             if has_kernel:
                 with mount.Mount(root_dev, os.path.join(mnt_point, 'root'),
                                  fs_type='squashfs') as root_mnt:
-                    trace('... boot and root are mounted.')
+                    trace('... root partition mounted.')
 
                     loader = os.path.join(root_mnt,
                                           'usr/lib/systemd/boot/efi/'
                                           'systemd-bootx64.efi')
-                    os.makedirs(os.path.join(boot_mnt, 'EFI/Boot'))
+
+                    if efi_emulator:
+                        _install_efi_part_of_efi_emulator(boot_mnt, efi_emulator)
+                        trace('... Clover binaries have been installed.')
+                    
+                    # install systemd as default boot loader:
+                    default_boot_path = os.path.join(boot_mnt, 'EFI/Boot')
+                    os.makedirs(default_boot_path)
                     trace('... "EFI/boot" directory created.')
-                    _copy_efi_file(loader, os.path.join(boot_mnt,
-                                                        'EFI/Boot/BOOTX64.EFI'))
+                    _copy_efi_file(loader, os.path.join(default_boot_path, 'BOOTX64.EFI'))
                     trace('... default boot loader installed')
+
                     os.makedirs(os.path.join(boot_mnt, 'EFI/systemd'))
                     trace('... "EFI/systemd" directory created.')
                     _copy_efi_file(loader, os.path.join(boot_mnt,
@@ -382,6 +510,8 @@ def _prepare_efi_partition(efi_dev: str, root_dev: str,
             else:
                 with open(os.path.join(boot_mnt, 'no_boot.txt'), 'w') as f:
                     f.write('No EFI boot support installed\n')
+
+        helper_run('/usr/bin/sync') # make sure changes are synced to disk!
 
 
 def _file_to_partition(device: str, file_name: str) -> None:
@@ -407,7 +537,7 @@ def _prepare_extra_partition(device: str, *,
     if label is not None:
         debug('... setting label to "{}".'.format(label))
         if filesystem == 'fat' or filesystem == 'vfat':
-            label_args = ('-n', label,)
+            label_args = ('-n', label, '-F', '32')
         if filesystem.startswith('ext') or filesystem == 'btrfs' \
                 or filesystem == 'xfs':
             label_args = ('-L', label,)

@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+black = "*"
 python-language-server = {version = "*",extras = ["all"]}
 pytest = "*"
 pyparsing = "*"

@@ -113,7 +113,7 @@ def run_qemu(parse_result: typing.Any, *,
              work_directory: str) -> typing.List[str]:
     qemu_args = ['/usr/bin/qemu-system-x86_64',
                  '--enable-kvm',
-                 '-cpu', 'host',
+                 '-cpu', 'Penryn', # Needed for clover to boot:-/
                  '-smp', 'cores={}'.format(parse_result.cores),
                  '-machine', 'pc-q35-2.12',
                  '-accel', 'kvm',

@@ -1,0 +1,10 @@
+# A very basic system that should boot
+
+based_on type-baremetal
+
+set_hostname basic pretty=Basic
+set_machine_id bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+
+set_root_device /dev/mapper/root
+
+export borg_repository efi_emulator=/mnt/btrfs/clrm/examples/CloverV2

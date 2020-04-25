@@ -178,6 +178,7 @@ class NbdDevice(Device):
 
     def close(self) -> None:
         if self._device:
+            run('/usr/bin/sync') # make sure changes are synced to disk!
             self._delete_nbd_block_device(self._device, self._qemu_nbd_command)
             self._device = ''
 
