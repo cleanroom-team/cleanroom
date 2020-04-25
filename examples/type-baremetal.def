@@ -25,7 +25,7 @@ export TMOUT
 # Make sure we have a vconsole.conf file, mkinitcpio will need that later
 create /etc/vconsole.conf <<<<>>>> mode=0o644
 
-systemd_enable fstrim.timer smartd.service tlp.service tlp-sleep.service
+systemd_enable fstrim.timer smartd.service tlp.service
 # This conflicts with tlp:
 remove /usr/lib/systemd/system/systemd-rfkill.service
     /usr/lib/systemd/system/systemd-rfkill.socket
