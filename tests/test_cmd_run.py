@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""Test for the systemd_cleanup of cleanroom.
+"""Test for the run of cleanroom.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """

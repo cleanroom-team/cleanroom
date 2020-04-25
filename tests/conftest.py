@@ -26,12 +26,14 @@ def system_context(tmpdir):
     scratch_directory = tmpdir.mkdir('scratch')
     storage_directory = tmpdir.mkdir('storage')
     systems_definition_directory = tmpdir.mkdir('definitions')
+    repo_directory = tmpdir.mkdir('repo')
 
     system_context = SystemContext(system_name='test_system',
                                    base_system_name='',
                                    scratch_directory=scratch_directory,
                                    systems_definition_directory=systems_definition_directory,
                                    storage_directory=storage_directory,
+                                   repository_base_directory=repo_directory,
                                    timestamp='20190101-010101')
     return system_context
 
