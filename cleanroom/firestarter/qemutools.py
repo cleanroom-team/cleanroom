@@ -5,7 +5,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 import cleanroom.firestarter.tools as tools
 import os
 from shutil import copyfile
@@ -153,6 +152,7 @@ def run_qemu(parse_result: typing.Any, *,
     if parse_result.verbatim:
         qemu_args += parse_result.verbatim
 
+    print("Running: \"{}\"".format('" "'.join(qemu_args)))
     result = tools.run(*qemu_args, work_directory=work_directory, check=False)
 
     if result.returncode != 0:
