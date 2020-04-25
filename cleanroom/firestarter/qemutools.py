@@ -66,6 +66,9 @@ def _append_efi(efivars):
 
 
 def setup_parser_for_qemu(parser: typing.Any) -> None:
+    parser.add_argument('--bios', dest='use_bios', action='store_true',
+                        help='Use BIOS over EFI')
+
     parser.add_argument('--no-graphic', dest='no_graphic',
                         action='store_true', help='Use no-graphics mode')
 
@@ -144,7 +147,9 @@ def run_qemu(parse_result: typing.Any, *,
     if parse_result.no_graphic:
         qemu_args.append('-nographic')
 
-    qemu_args += _append_efi(os.path.join(work_directory, 'vars.fd'))
+    if not parse_result.use_bios:
+        qemu_args += _append_efi(os.path.join(work_directory, 'vars.fd'))
+
     if parse_result.verbatim:
         qemu_args += parse_result.verbatim
 
