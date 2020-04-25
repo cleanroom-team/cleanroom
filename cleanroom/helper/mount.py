@@ -5,7 +5,7 @@
 """
 
 
-from ..printer import trace
+from ..printer import trace, none
 from .run import run
 
 import re
@@ -36,7 +36,7 @@ def mount_points(directory: str, chroot: typing.Optional[str] = None) \
     directory = _map_into_chroot(directory, chroot)
 
     pattern = re.compile('^(.*) on (.*) type (.*)$')
-    result = run('/usr/bin/mount')
+    result = run('/usr/bin/mount', trace_output=none)
     sub_mounts: typing.List[str] = []
     for line in result.stdout.split('\n'):
         if not line:

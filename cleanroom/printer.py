@@ -71,6 +71,11 @@ def trace(*args: str) -> None:
     Printer.instance().trace(*args)
 
 
+def none(*args: str) -> None:
+    """Do nothing."""
+    pass
+
+
 def _ansify(seq: str) -> str:
     """Use ANSI color codes if possible.
 
