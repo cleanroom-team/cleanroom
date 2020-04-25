@@ -29,6 +29,9 @@ def _execution(efi: str, rootfs: str, *, command: str) -> None:
     verbose('EFI_MOUNT env var set to : "{}".'.format(efi))
     verbose('ROOT_MOUNT env var set to: "{}".'.format(rootfs))
 
+    print('EFI partition is mounted at "{}".'.format(efi))
+    print('Root partition is mounted at "{}".'.format(rootfs))
+
     if prompt:
         print(prompt)
 
