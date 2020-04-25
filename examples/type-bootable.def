@@ -17,8 +17,6 @@ pacman linux
 
     pciutils sed tar usbutils
 
-    wireguard-arch wireguard-tools
-
 normalize_kernel_install
 
 ## Systemd units:
