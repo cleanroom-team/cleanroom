@@ -7,7 +7,7 @@
 
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
-from cleanroom.helper.archlinux.pacman import pacstrap
+from cleanroom.helper.archlinux.pacman import gpg_directory, pacstrap, pacman_keyinit, pacman_setup
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
@@ -22,6 +22,8 @@ class PacstrapCommand(Command):
         """Constructor."""
         super().__init__('pacstrap', syntax='<PACKAGES> config=<config>',
                          help_string='Run pacstrap to install <PACKAGES>.\n'
+                         'After the pacman keyring is initialized, this will call\n'
+                         'the _pacman_keyring command.\n\n'
                          'Hooks: Will runs _setup hooks after pacstrapping.',
                          file=__file__, **services)
 
@@ -37,8 +39,15 @@ class PacstrapCommand(Command):
     def __call__(self, location: Location, system_context: SystemContext,
                  *args: str, **kwargs: typing.Any) -> None:
         """Execute command."""
+        pacman_setup(system_context, kwargs.get("config"))
+
+        pacman_key_command = self._binary(Binaries.PACMAN_KEY)
+        pacman_keyinit(system_context, pacman_key_command=pacman_key_command)
+        # Allow for customizations of the pacman keyring to happen:
+        self._execute(location.next_line(), system_context, "_pacman_keyinit",
+                      pacman_key=pacman_key_command, gpg_dir=gpg_directory(system_context))
+
         pacstrap(system_context, *args,
-                 pacman_key_command=self._binary(Binaries.PACMAN_KEY),
                  pacman_command=self._binary(Binaries.PACMAN),
                  chroot_helper=self._binary(Binaries.CHROOT_HELPER),
                  **kwargs)

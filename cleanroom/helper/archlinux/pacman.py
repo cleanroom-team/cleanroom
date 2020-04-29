@@ -49,7 +49,7 @@ def _hooks_directory(system_context: SystemContext, internal: bool = False) -> s
     return os.path.join(_pacman_directory(system_context, internal), 'hooks')
 
 
-def _gpg_directory(system_context: SystemContext, internal: bool = False) -> str:
+def gpg_directory(system_context: SystemContext, internal: bool = False) -> str:
     """Return the host location of the pacman GPG configuration."""
     return os.path.join(_pacman_directory(system_context, internal), 'gpg')
 
@@ -75,7 +75,7 @@ def _setup_directories(system_context: SystemContext, internal: bool) -> None:
         debug('Main pacman directory created.')
     os.makedirs(_db_directory(system_context, internal))
     debug('DB directory created.')
-    os.makedirs(os.path.join(_gpg_directory(system_context, internal), 'private-keys-v1.d'))
+    os.makedirs(os.path.join(gpg_directory(system_context, internal), 'private-keys-v1.d'))
     debug('GPG directory created.')
     os.makedirs(_hooks_directory(system_context, internal))
     debug('Hook directory created.')
@@ -102,18 +102,16 @@ def _pacman_args(system_context: SystemContext, installed_pacman: bool = False) 
             '--dbpath', _db_directory(system_context, internal=installed_pacman),
             '--hookdir', _hooks_directory(system_context, internal=installed_pacman),
             '--logfile', _log(system_context, internal=installed_pacman),
-            '--gpgdir', _gpg_directory(system_context, internal=installed_pacman),
+            '--gpgdir', gpg_directory(system_context, internal=installed_pacman),
             '--noconfirm']
 
 
 def _pacman_keyinit(system_context: SystemContext,
                     pacman_key_command: str) -> None:
     run(pacman_key_command,
-        '--init', '--gpgdir', _gpg_directory(system_context),
+        '--init', '--gpgdir', gpg_directory(system_context),
         work_directory=system_context.systems_definition_directory)
-    run(pacman_key_command,
-        '--populate', 'archlinux', '--gpgdir', _gpg_directory(system_context),
-        work_directory=system_context.systems_definition_directory)
+
 
 def _mountpoint(root_dir, folder, dev, **kwargs):
     debug('Mounting {} in chroot.'.format(folder))
@@ -153,10 +151,7 @@ def _run_pacman(system_context: SystemContext, *args: str,
         timeout=600, **kwargs)
 
 
-def pacstrap(system_context: SystemContext, *packages: str, config: str,
-             pacman_command: str, pacman_key_command: str,
-             chroot_helper: str) -> None:
-    """Run pacstrap on host."""
+def pacman_setup(system_context: SystemContext, config: str) -> None:
     assert not _package_type(system_context)
     _set_package_type(system_context)
 
@@ -164,8 +159,19 @@ def pacstrap(system_context: SystemContext, *packages: str, config: str,
     _setup_directories(system_context, False)
     shutil.copyfile(config, _config_file(system_context, False))
 
+
+def pacman_keyinit(system_context: SystemContext,
+                   pacman_key_command: str) -> None:
+    assert _package_type(system_context) == 'pacman'
+
     info('Setting up pacman\'s keyring.')
     _pacman_keyinit(system_context, pacman_key_command)
+
+
+def pacstrap(system_context: SystemContext, *packages: str, config: str,
+             pacman_command: str, chroot_helper: str) -> None:
+    """Run pacstrap on host."""
+    assert _package_type(system_context) == 'pacman'
 
     # Make sure pacman DB is up-to-date:
     _run_pacman(system_context, '-Sy',
@@ -190,9 +196,9 @@ def _copy_state(system_context: SystemContext, internal_pacman: bool) -> None:
         info('Copy pacman DB into the filesystem.')
         shutil.copytree(outside, inside)
         info('Copy pacman GPG data into the filesystem.')
-        shutil.rmtree(_gpg_directory(system_context, True))
-        shutil.copytree(_gpg_directory(system_context, False),
-                        _gpg_directory(system_context, True))
+        shutil.rmtree(gpg_directory(system_context, True))
+        shutil.copytree(gpg_directory(system_context, False),
+                        gpg_directory(system_context, True))
         debug('Removing pacman DB outside the filesystem.')
         shutil.rmtree(outside)
     else:
