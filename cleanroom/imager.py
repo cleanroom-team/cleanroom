@@ -468,7 +468,7 @@ def _install_bios_part_of_efi_emulator(
     root_dev: str, efi_dev: str, efi_emulator: str
 ) -> None:
     verbose("Installing Clover into MBR")
-    assert (efi_emulator, "Missing EFI emulator path")
+    assert efi_emulator, "Missing EFI emulator path"
 
     mbr = b""
     pbr1 = b""
@@ -518,7 +518,7 @@ def _install_bios_part_of_efi_emulator(
 
 def _install_efi_part_of_efi_emulator(boot_mnt: str, efi_emulator: str) -> None:
     verbose("Installing Clover binaries into EFI partition")
-    assert (efi_emulator, "Missing EFI emulator path")
+    assert efi_emulator, "Missing EFI emulator path"
 
     shutil.copy(
         os.path.join(efi_emulator, "Bootloaders/x64/boot7"),
