@@ -81,8 +81,8 @@ class PacstrapCommand(Command):
         self._setup_hooks(location, system_context)
 
     def _setup_hooks(self, location: Location, system_context: SystemContext) -> None:
-        igpgdir = "/usr/lib/pacman/gpg"
-        ipackages = "/var/cache/pacman/pkg/*"
+        i_gpg_dir = "/usr/lib/pacman/gpg"
+        i_packages = "/var/cache/pacman/pkg/*"
 
         location.set_description("cleanup pacman-key files (internal)")
         self._add_hook(
@@ -90,26 +90,26 @@ class PacstrapCommand(Command):
             system_context,
             "_teardown",
             "remove",
-            igpgdir + "/S.*",
-            igpgdir + "/pubring.gpg~",
-            igpgdir + "/secring.gpg*",
+            i_gpg_dir + "/S.*",
+            i_gpg_dir + "/pubring.gpg~",
+            i_gpg_dir + "/secring.gpg*",
             "/var/log/pacman.log",
-            ipackages,
+            i_packages,
             recursive=True,
             force=True,
         )
 
         location.set_description("Cleanup pacman-key files (external)")
-        ogpgdir = os.path.join(system_context.meta_directory, "pacman/gpg")
+        o_gpg_dir = os.path.join(system_context.meta_directory, "pacman/gpg")
 
         self._add_hook(
             location,
             system_context,
             "_teardown",
             "remove",
-            ogpgdir + "/S.*",
-            ogpgdir + "/pubring.gpg~",
-            ogpgdir + "/secring.gpg*",
+            o_gpg_dir + "/S.*",
+            o_gpg_dir + "/pubring.gpg~",
+            o_gpg_dir + "/secring.gpg*",
             recursive=True,
             force=True,
             outside=True,

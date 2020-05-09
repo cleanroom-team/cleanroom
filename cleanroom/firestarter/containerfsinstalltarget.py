@@ -44,7 +44,7 @@ class ContainerFilesystemInstallTarget(InstallTarget):
             btrfs = BtrfsHelper("/usr/bin/btrfs")
             btrfs.create_subvolume(import_dir)
 
-            # Mount filessytems and copy the rootfs into import_dir:
+            # Mount filessystems and copy the rootfs into import_dir:
             tool.execute_with_system_mounted(
                 lambda e, r: _extract_into_snapshot(e, r, import_snapshot=import_dir),
                 repository=parse_result.repository,

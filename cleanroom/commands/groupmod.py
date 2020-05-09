@@ -21,7 +21,7 @@ class GroupModCommand(Command):
         super().__init__(
             "groupmod",
             syntax="<NAME> [gid=<GID>] [rename=<NEW_NAME>] "
-            "[password=<CRYPTED_PASSWORD>] [root_directory=<CHROOT>]",
+            "[password=<ENCRYPTED_PASSWORD>] [root_directory=<CHROOT>]",
             help_string="Modify an existing user.",
             file=__file__,
             **services

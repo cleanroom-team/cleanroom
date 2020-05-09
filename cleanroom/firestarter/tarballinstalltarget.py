@@ -14,7 +14,7 @@ import os
 import typing
 
 
-def _tar(efifs: str, rootfs: str, *, tarball_name: str, efi_tarball_name: str) -> None:
+def _tar(efi_fs: str, rootfs: str, *, tarball_name: str, efi_tarball_name: str) -> None:
 
     # Extract data
     if efi_tarball_name:
@@ -22,7 +22,7 @@ def _tar(efifs: str, rootfs: str, *, tarball_name: str, efi_tarball_name: str) -
             "/usr/bin/bash",
             "-c",
             '( cd {} ; tar -cf "{}" --auto-compress .) '.format(
-                efifs, efi_tarball_name
+                efi_fs, efi_tarball_name
             ),
         )
     if tarball_name:
@@ -56,7 +56,7 @@ class TarballInstallTarget(InstallTarget):
         if not parse_result.tarball and not parse_result.efi_tarball:
             return
 
-        # Mount filessytems and copy the rootfs into import_dir:
+        # Mount filessystems and copy the rootfs into import_dir:
         tool.execute_with_system_mounted(
             lambda e, r: _tar(
                 e,

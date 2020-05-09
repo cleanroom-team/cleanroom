@@ -21,7 +21,7 @@ class UseraddCommand(Command):
             "useradd",
             syntax="<NAME> [comment=<COMMENT>] [home=<HOMEDIR>] "
             "[gid=<GID>] [uid=<UID>] [groups=<GROUP1>,<GROUP2>] "
-            "[lock=False] [password=<CRYPTED_PASSWORD>] "
+            "[lock=False] [password=<ENCRYPTED_PASSWORD>] "
             "[shell=<PATH>] [expire=<EXPIRE_DATE>]",
             help_string="Modify an existing user.",
             file=__file__,

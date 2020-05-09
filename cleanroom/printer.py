@@ -76,7 +76,7 @@ def none(*args: str) -> None:
     pass
 
 
-def _ansify(seq: str) -> str:
+def _ansi_fy(seq: str) -> str:
     """Use ANSI color codes if possible.
 
     Use ANSI color codes if possible and strip them out if not.
@@ -113,20 +113,20 @@ class Printer:
 
         self.set_verbosity(verbosity)
 
-        self._ansi_reset = _ansify("\033[0m")
-        self._h_prefix = _ansify("\033[1;31m")
-        self._h1_suffix = _ansify("\033[0m\033[1;37m")
-        self._error_prefix = _ansify("\033[1;31m")
-        self._warn_prefix = _ansify("\033[1;33m")
-        self._ok_prefix = _ansify("\033[1;7;32m")
-        self._ok_suffix = _ansify("\033[0;32m")
+        self._ansi_reset = _ansi_fy("\033[0m")
+        self._h_prefix = _ansi_fy("\033[1;31m")
+        self._h1_suffix = _ansi_fy("\033[0m\033[1;37m")
+        self._error_prefix = _ansi_fy("\033[1;31m")
+        self._warn_prefix = _ansi_fy("\033[1;33m")
+        self._ok_prefix = _ansi_fy("\033[1;7;32m")
+        self._ok_suffix = _ansi_fy("\033[0;32m")
 
-        self._ig_fail_prefix = _ansify("\033[1;7;33m")
-        self._ig_fail_suffix = _ansify("\033[0;33m")
-        self._fail_prefix = _ansify("\033[1;7;31m")
-        self._fail_suffix = _ansify("\033[0;31m")
-        self._extra_prefix = _ansify("\033[1;36m")
-        self._extra_suffix = _ansify("\033[0;m\033[2;m")
+        self._ig_fail_prefix = _ansi_fy("\033[1;7;33m")
+        self._ig_fail_suffix = _ansi_fy("\033[0;33m")
+        self._fail_prefix = _ansi_fy("\033[1;7;31m")
+        self._fail_suffix = _ansi_fy("\033[0;31m")
+        self._extra_prefix = _ansi_fy("\033[1;36m")
+        self._extra_suffix = _ansi_fy("\033[0;m\033[2;m")
 
         self._buffer = ""
 
@@ -179,12 +179,12 @@ class Printer:
             self._h1_suffix, self._ansi_reset
         )
         prefix = "{}== ".format(self._h1_suffix)
-        outro = "{}============================================".format(
+        postfix = "{}============================================{}".format(
             self._h1_suffix, self._ansi_reset
         )
         self._print(intro, verbosity=verbosity)
         self._print(prefix, *args, self._ansi_reset, verbosity=verbosity)
-        self._print(outro, verbosity=verbosity)
+        self._print(postfix, verbosity=verbosity)
         self._print(verbosity=verbosity)
         self._buffer = ""
 

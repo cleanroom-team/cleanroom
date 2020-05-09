@@ -50,14 +50,14 @@ def _generate_grammar(*, debug_parser: bool = False):
     Grammar = pp.ZeroOrMore(pp.Group(pp.Optional(Command) + pp.Suppress(EOL)))
 
     if debug_parser:
-        for ename in (
+        for expr_name in (
             "Grammar Command ArgumentList KwArgument Argument "
             "SimpleArgument QuotedArgument DoubleQuotedArgument "
             "SingleQuotedArgument MultilineArgument "
             "Identifier LC EOL".split()
         ):
-            expr = locals()[ename]
-            expr.setName(ename)
+            expr = locals()[expr_name]
+            expr.setName(expr_name)
             expr.setDebug()
 
     Grammar.parseWithTabs()  # Keep tabs unexpanded!

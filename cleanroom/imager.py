@@ -335,7 +335,7 @@ def _create_nbd_device(
     return disk.NbdDevice.new_image_file(path, min_device_size, disk_format=disk_format)
 
 
-def _uuidify(data: str) -> str:
+def _uuid_ify(data: str) -> str:
     assert len(data) == 32
     return "{}-{}-{}-{}-{}".format(
         data[0:8], data[8:12], data[12:16], data[16:20], data[20:]
@@ -367,8 +367,8 @@ def _repartition(
             "repartitioning.".format(device.device())
         )
 
-    root_uuid = _uuidify(root_hash[:32]) if root_hash else ""
-    vrty_uuid = _uuidify(root_hash[32:]) if root_hash else ""
+    root_uuid = _uuid_ify(root_hash[:32]) if root_hash else ""
+    vrty_uuid = _uuid_ify(root_hash[32:]) if root_hash else ""
 
     if root_hash:
         debug("Root hash: {}.".format(root_hash))
@@ -473,7 +473,7 @@ def _install_bios_part_of_efi_emulator(
         efi_fd.write(bytes(new_pbr1))
         efi_fd.seek(6 * 512, 0)
         efi_fd.write(bytes(new_pbr2))
-    debug('PBRs written to "{}"'.format(efi_dev))
+    debug('PBR written to "{}"'.format(efi_dev))
 
 
 def _install_efi_part_of_efi_emulator(boot_mnt: str, efi_emulator: str) -> None:
@@ -504,7 +504,7 @@ def _install_efi_part_of_efi_emulator(boot_mnt: str, efi_emulator: str) -> None:
 		<key>DefaultVolume</key>
 		<string>EFI</string>
 		<key>DefaultLoader</key>
-		<string>\EFI\systemd\systemd-bootx64.efi</string>
+		<string>\\EFI\\systemd\\systemd-bootx64.efi</string>
 		<key>Fast</key>
 		<true/>
 	</dict>
@@ -524,7 +524,7 @@ def _install_efi_part_of_efi_emulator(boot_mnt: str, efi_emulator: str) -> None:
 					<key>Volume</key>
 					<string>EFI</string>
 					<key>Path</key>
-					<string>\EFI\systemd\systemd-bootx64.efi</string>
+					<string>\\EFI\\systemd\\systemd-bootx64.efi</string>
 					<key>Title</key>
 					<string>Cleanroom Linux</string>
 					<key>Type</key>

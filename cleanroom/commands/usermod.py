@@ -23,7 +23,7 @@ class UsermodCommand(Command):
             syntax="<NAME> [comment=<COMMENT>] [home=<HOMEDIR>] "
             "[gid=<GID>] [uid=<UID>] [rename=<NEW_NAME>] "
             "[groups=<GROUP1>,<GROUP2>] [lock=False] "
-            "[password=<CRYPTED_PASSWORD>] [shell=<PATH>] "
+            "[password=<ENCRYPTED_PASSWORD>] [shell=<PATH>] "
             "[expire=<EXPIRE_DATE>], [append=False]",
             help_string="Modify an existing user.",
             file=__file__,

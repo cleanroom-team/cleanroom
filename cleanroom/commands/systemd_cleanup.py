@@ -38,8 +38,8 @@ def _map_target_link(
 
     link_directory = os.path.dirname(link)
 
-    (link, old_link) = _map_base(old_base, new_base, link)
-    (link_target, old_link_target) = _map_base(
+    (link, _old_link) = _map_base(old_base, new_base, link)
+    (link_target, _old_link_target) = _map_base(
         old_base, new_base, os.path.join(link_directory, link_target)
     )
 
@@ -183,7 +183,7 @@ class SystemdCleanupCommand(Command):
 
         trace("walking:", old_base)
 
-        for root, dirs, files in os.walk(old_base):
+        for root, _dirs, files in os.walk(old_base):
             for f in files:
                 full_path = os.path.join(root, f)
                 trace("Checking", full_path)

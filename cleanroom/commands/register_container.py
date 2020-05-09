@@ -14,7 +14,7 @@ import textwrap
 import typing
 
 
-def _nspawnify(what: str, *systems: str) -> str:
+def _nspawn_ify(what: str, *systems: str) -> str:
     clean = [s for s in systems if s]
     if len(clean) > 0:
         return "\n{}={}".format(what, " ".join(*clean))
@@ -95,8 +95,8 @@ class RegisterContainerCommand(Command):
         )
         self._execute(location.next_line(), system_context, "mkdir", override_dir)
 
-        after = _nspawnify("After", *after_input.split(","))
-        requires = _nspawnify("Requires", *requires_input.split(","))
+        after = _nspawn_ify("After", *after_input.split(","))
+        requires = _nspawn_ify("Requires", *requires_input.split(","))
 
         self._execute(
             location.next_line(),

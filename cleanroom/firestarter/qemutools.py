@@ -66,14 +66,14 @@ def _append_fs(fs, *, read_only=False):
     ]
 
 
-def _append_efi(efivars):
-    if not os.path.exists(efivars):
-        copyfile("/usr/share/ovmf/x64/OVMF_VARS.fd", efivars)
+def _append_efi(efi_vars):
+    if not os.path.exists(efi_vars):
+        copyfile("/usr/share/ovmf/x64/OVMF_VARS.fd", efi_vars)
     return [
         "-drive",
         "if=pflash,format=raw,readonly," "file=/usr/share/ovmf/x64/OVMF_CODE.fd",
         "-drive",
-        "if=pflash,format=raw,file={}".format(efivars),
+        "if=pflash,format=raw,file={}".format(efi_vars),
     ]
 
 
@@ -146,14 +146,14 @@ def setup_parser_for_qemu(parser: typing.Any) -> None:
 
     parser.add_argument(
         "--ro-fs",
-        dest="ro_fses",
+        dest="ro_fs_es",
         default=[],
         action="append",
         help="Host folders to make available to guest -- " "read-only (id:path)",
     )
     parser.add_argument(
         "--fs",
-        dest="fses",
+        dest="fs_es",
         default=[],
         action="append",
         help="Host folder to make available to guest (id:path)",
@@ -206,9 +206,9 @@ def run_qemu(
         qemu_args += _append_hdd(boot_index, disk)
         boot_index += 1
 
-    for fs in parse_result.ro_fses:
+    for fs in parse_result.ro_fs_es:
         qemu_args += _append_fs(fs, read_only=True)
-    for fs in parse_result.fses:
+    for fs in parse_result.fs_es:
         qemu_args += _append_fs(fs, read_only=False)
 
     if parse_result.no_graphic:

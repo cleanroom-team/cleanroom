@@ -12,7 +12,7 @@ from cleanroom.systemcontext import SystemContext
 import typing
 
 
-def _trueify(value: bool) -> str:
+def _true_ify(value: bool) -> str:
     return "true" if value else "false"
 
 
@@ -103,35 +103,35 @@ class SystemdHardenUnitCommand(Command):
                 kwargs.get("CapabilityBoundingSet", "")
             )
         contents += "NoNewPrivileges={}\n".format(
-            _trueify(kwargs.get("NoNewPrivileges", True))
+            _true_ify(kwargs.get("NoNewPrivileges", True))
         )
         contents += "PrivateDevices={}\n".format(
-            _trueify(kwargs.get("PrivateDevices", True))
+            _true_ify(kwargs.get("PrivateDevices", True))
         )
-        contents += "PrivateTmp={}\n".format(_trueify(kwargs.get("PrivateTmp", True)))
+        contents += "PrivateTmp={}\n".format(_true_ify(kwargs.get("PrivateTmp", True)))
         contents += "PrivateUsers={}\n".format(
-            _trueify(kwargs.get("PrivateUsers", True))
+            _true_ify(kwargs.get("PrivateUsers", True))
         )
         contents += "ProtectControlGroups={}\n".format(
-            _trueify(kwargs.get("ProtectControlGroups", True))
+            _true_ify(kwargs.get("ProtectControlGroups", True))
         )
         contents += "ProtectHome={}\n".format(kwargs.get("ProtectHome", "true"))
         contents += "ProtectKernelModules={}\n".format(
-            _trueify(kwargs.get("ProtectKernelModules", True))
+            _true_ify(kwargs.get("ProtectKernelModules", True))
         )
         contents += "ProtectKernelTunables={}\n".format(
-            _trueify(kwargs.get("ProtectKernelTunables", True))
+            _true_ify(kwargs.get("ProtectKernelTunables", True))
         )
         contents += "ProtectKernelLogs={}\n".format(
-            _trueify(kwargs.get("ProtectKernelLogs", True))
+            _true_ify(kwargs.get("ProtectKernelLogs", True))
         )
         contents += "ProtectSystem={}\n".format(kwargs.get("ProtectSystem", "full"))
-        contents += "RemoveIPC={}\n".format(_trueify(kwargs.get("RemoveIPC", True)))
+        contents += "RemoveIPC={}\n".format(_true_ify(kwargs.get("RemoveIPC", True)))
         contents += "RestrictAddressFamilies={}\n".format(
             kwargs.get("RestrictAddressFamilies", "AF_UNIX AF_INET AF_INET6")
         )
         contents += "RestrictRealtime={}\n".format(
-            _trueify(kwargs.get("RestrictRealtime", True))
+            _true_ify(kwargs.get("RestrictRealtime", True))
         )
         contents += "SystemCallArchitectures={}\n".format(
             kwargs.get("SystemCallArchitecture", "native")

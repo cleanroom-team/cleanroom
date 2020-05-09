@@ -66,14 +66,14 @@ class PkgAvahiCommand(Command):
             location.next_line(),
             system_context,
             "sed",
-            "/RuleFile=\/etc/ cRuleFile=/var/lib/usbguard/rules.conf",
+            "/RuleFile=\\/etc/ cRuleFile=/var/lib/usbguard/rules.conf",
             "/etc/usbguard/usbguard-daemon.conf",
         )
         self._execute(
             location.next_line(),
             system_context,
             "sed",
-            "/IPCAccessControlFiles=\/etc/ cIPCAccessControlFiles=/var/lib/usbguard/IPCAccessControl.d",
+            "/IPCAccessControlFiles=\\/etc/ cIPCAccessControlFiles=/var/lib/usbguard/IPCAccessControl.d",
             "/etc/usbguard/usbguard-daemon.conf",
         )
 

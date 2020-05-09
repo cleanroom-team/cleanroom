@@ -49,7 +49,7 @@ class ImagePartitionInstallTarget(InstallTarget):
             action="store",
             default="subvolid=.images",
             dest="image_options",
-            help="Options used to mount image filessytem "
+            help="Options used to mount image filessystem "
             "[defaults to: subvol=.images]",
         )
 
