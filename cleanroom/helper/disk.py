@@ -54,6 +54,31 @@ def is_block_device(path: str) -> bool:
         return False
 
 
+def is_nbd_device_in_use(device: str, *, nbd_client_command: str = ""):
+    ret_val = True
+    result = run(nbd_client_command or "nbd-client", "--check", device, returncode=None)
+    if result.returncode == 1:
+        # Not connected according to nbd-client, now try to open:
+        # https://unix.stackexchange.com/questions/33508/check-which-network-block-devices-are-in-use
+        # says this extra step is necessary.
+        fd = os.open(device, os.O_EXCL)
+        ret_val = fd == -1
+        if fd != -1:
+            os.close(fd)
+    return ret_val
+
+
+def _get_max_nbd_count():
+    ret_val = 32
+
+    with open("/sys/module/nbd/parameters/nbds_max", "r") as input:
+        tmp = input.read().strip()
+        ret_val = int(tmp)
+        trace("Read number of nbd devices from /sys: {}.".format(ret_val))
+
+    return ret_val
+
+
 def quantify(size: int, block_size: int) -> int:
     quant_size = math.floor(size / block_size)
     if quant_size * block_size != size:
@@ -260,12 +285,18 @@ class NbdDevice(Device):
             trace("Loading nbd kernel module...")
             run(modprobe_command or "/usr/bin/modprobe", "nbd")
 
-        for counter in range(257):
+        nbd_count = _get_max_nbd_count()
+
+        for counter in range(nbd_count):
             device = _nbd_device(counter)
             counter += 1
             if not is_block_device(device):
-                trace("{} is not a block device, aborting".format(device))
-                return None
+                trace("{} is not a block device, skipping".format(device))
+                continue
+
+            if is_nbd_device_in_use(device, nbd_client_command=nbd_client_command):
+                trace("{} is in use, skipping".format(device))
+                continue
 
             try:
                 result = run(
