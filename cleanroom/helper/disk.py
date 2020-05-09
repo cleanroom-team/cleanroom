@@ -161,7 +161,10 @@ class NbdDevice(Device):
         *,
         disk_format: str = "qcow2",
         qemu_img_command: str = "",
-        qemu_nbd_command: str = ""
+        qemu_nbd_command: str = "",
+        nbd_client_command: str = "",
+        sync_command: str = "",
+        modprobe_command: str = "",
     ) -> NbdDevice:
         create_image_file(
             file_name, size, disk_format=disk_format, qemu_img_command=qemu_img_command
@@ -172,20 +175,37 @@ class NbdDevice(Device):
             )
         )
         return NbdDevice(
-            file_name, disk_format=disk_format, qemu_nbd_command=qemu_nbd_command
+            file_name,
+            disk_format=disk_format,
+            qemu_nbd_command=qemu_nbd_command,
+            nbd_client_command=nbd_client_command,
+            sync_command=sync_command,
+            modprobe_command=modprobe_command,
         )
 
     def __init__(
-        self, file_name: str, *, disk_format: str = "qcow2", qemu_nbd_command: str = ""
+        self,
+        file_name: str,
+        *,
+        disk_format: str = "qcow2",
+        qemu_nbd_command: str = "",
+        nbd_client_command: str = "",
+        sync_command: str = "",
+        modprobe_command: str = "",
     ) -> None:
         assert os.path.isfile(file_name)
 
         self._file_name = file_name
         self._disk_format = disk_format
         self._qemu_nbd_command = qemu_nbd_command
+        self._nbd_client_command = nbd_client_command
+        self._sync_command = sync_command
 
         device = self._create_nbd_block_device(
-            file_name, disk_format=disk_format, qemu_nbd_command=qemu_nbd_command
+            file_name,
+            disk_format=disk_format,
+            qemu_nbd_command=qemu_nbd_command,
+            modprobe_command=modprobe_command,
         )
         assert device
 
@@ -205,7 +225,9 @@ class NbdDevice(Device):
 
     def close(self) -> None:
         if self._device:
-            run("/usr/bin/sync")  # make sure changes are synced to disk!
+            run(
+                self._sync_command or "/usr/bin/sync"
+            )  # make sure changes are synced to disk!
             self._delete_nbd_block_device(self._device, self._qemu_nbd_command)
             self._device = ""
 
@@ -224,14 +246,19 @@ class NbdDevice(Device):
 
     @staticmethod
     def _create_nbd_block_device(
-        file_name: str, *, disk_format: str = "qcow2", qemu_nbd_command: str = ""
+        file_name: str,
+        *,
+        disk_format: str = "qcow2",
+        qemu_nbd_command: str = "",
+        nbd_client_command: str = "",
+        modprobe_command: str = "",
     ) -> typing.Optional[str]:
         assert _is_root()
         assert os.path.isfile(file_name)
 
         if not is_block_device(_nbd_device(0)):
             trace("Loading nbd kernel module...")
-            run("/usr/bin/modprobe", "nbd")
+            run(modprobe_command or "/usr/bin/modprobe", "nbd")
 
         for counter in range(257):
             device = _nbd_device(counter)
@@ -307,7 +334,7 @@ class Partitioner:
         *,
         start: typing.Optional[str] = None,
         size: typing.Any = "4G",
-        name: str = "swap partition"
+        name: str = "swap partition",
     ) -> Partition:
         return Partition(
             node=None,
@@ -340,7 +367,7 @@ class Partitioner:
         size: typing.Any = None,
         partition_type: str = "2d212206-b0ee-482e-9fec-e7c208bef27a",
         partition_uuid: str = "",
-        name: str
+        name: str,
     ) -> Partition:
         return Partition(
             node=None,

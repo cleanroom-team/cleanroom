@@ -182,7 +182,10 @@ def create_image(
     verity_partition: str,
     root_hash: str,
     sfdisk_command: str,
-    flock_command: str
+    flock_command: str,
+    nbd_client_command: str,
+    modprobe_command: str,
+    sync_command: str,
 ) -> None:
     debug('Creating image "{}".'.format(image_filename))
 
@@ -244,6 +247,9 @@ def create_image(
         efi_emulator=efi_emulator,
         sfdisk_command=sfdisk_command,
         flock_command=flock_command,
+        nbd_client_command=nbd_client_command,
+        sync_command=sync_command,
+        modprobe_command=modprobe_command,
     )
 
 
@@ -252,10 +258,18 @@ def _work_on_device_node(
     *,
     efi_emulator: typing.Optional[str],
     sfdisk_command: str,
-    flock_command: str
+    flock_command: str,
+    nbd_client_command: str,
+    sync_command: str,
+    modprobe_command: str,
 ):
     with _find_or_create_device_node(
-        ic.path, ic.disk_format, ic.min_device_size
+        ic.path,
+        ic.disk_format,
+        ic.min_device_size,
+        nbd_client_command=nbd_client_command,
+        sync_command=sync_command,
+        modprobe_command=modprobe_command,
     ) as device:
         info("Working on device {}.".format(ic.path))
 
@@ -311,12 +325,25 @@ def _work_on_device_node(
 
 
 def _find_or_create_device_node(
-    path: str, disk_format: str, min_device_size: int
+    path: str,
+    disk_format: str,
+    min_device_size: int,
+    *,
+    nbd_client_command: str,
+    sync_command: str,
+    modprobe_command: str,
 ) -> typing.ContextManager:
     if disk.is_block_device(path):
         _validate_size_of_block_device(path, min_device_size)
         return disk.Device(path)
-    return _create_nbd_device(path, disk_format, min_device_size)
+    return _create_nbd_device(
+        path,
+        disk_format,
+        min_device_size,
+        nbd_client_command=nbd_client_command,
+        sync_command=sync_command,
+        modprobe_command=modprobe_command,
+    )
 
 
 def _validate_size_of_block_device(path: str, min_device_size: int) -> None:
@@ -330,9 +357,22 @@ def _validate_size_of_block_device(path: str, min_device_size: int) -> None:
 
 
 def _create_nbd_device(
-    path: str, disk_format: str, min_device_size: int
+    path: str,
+    disk_format: str,
+    min_device_size: int,
+    *,
+    nbd_client_command: str,
+    sync_command: str,
+    modprobe_command: str,
 ) -> disk.Device:
-    return disk.NbdDevice.new_image_file(path, min_device_size, disk_format=disk_format)
+    return disk.NbdDevice.new_image_file(
+        path,
+        min_device_size,
+        disk_format=disk_format,
+        nbd_client_command=nbd_client_command,
+        sync_command=sync_command,
+        modprobe_command=modprobe_command,
+    )
 
 
 def _uuid_ify(data: str) -> str:
@@ -355,7 +395,7 @@ def _repartition(
     swap_size: int = 0,
     extra_partitions: typing.Tuple[ExtraPartition, ...] = (),
     flock_command: str,
-    sfdisk_command: str
+    sfdisk_command: str,
 ) -> typing.Mapping[str, str]:
     partitioner = disk.Partitioner(
         device, flock_command=flock_command, sfdisk_command=sfdisk_command
@@ -548,7 +588,7 @@ def _prepare_efi_partition(
     kernel_file_writer,
     *,
     efi_emulator: str,
-    mbr_dev: str
+    mbr_dev: str,
 ) -> None:
     trace("Preparing EFI partition.")
     _prepare_extra_partition(efi_dev, filesystem="vfat", label="EFI")
@@ -625,7 +665,7 @@ def _prepare_extra_partition(
     *,
     filesystem: typing.Optional[str] = None,
     label: typing.Optional[str] = None,
-    contents: typing.Optional[str] = None
+    contents: typing.Optional[str] = None,
 ) -> None:
     if filesystem is None:
         assert contents is None

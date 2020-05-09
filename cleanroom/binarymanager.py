@@ -42,6 +42,8 @@ class Binaries(Enum):
     QEMU_NBD = auto()
     NBD_CLIENT = auto()
     MKFS_VFAT = auto()
+    SYNC = auto()
+    MODPROBE = auto()
 
 
 def _check_for_binary(binary: str) -> str:
@@ -82,6 +84,8 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.QEMU_NBD: _check_for_binary("/usr/bin/qemu-nbd"),
         Binaries.NBD_CLIENT: _check_for_binary("/usr/bin/nbd-client"),
         Binaries.MKFS_VFAT: _check_for_binary("/usr/bin/mkfs.vfat"),
+        Binaries.SYNC: _check_for_binary("/usr/bin/sync"),
+        Binaries.MODPROBE: _check_for_binary("/usr/bin/modprobe"),
     }
     os_binaries: typing.Dict[Binaries, str] = {}
     distribution = _get_distribution()

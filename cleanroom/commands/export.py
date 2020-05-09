@@ -419,6 +419,9 @@ class ExportCommand(Command):
             root_hash=self._root_hash,
             flock_command=self._binary(Binaries.FLOCK),
             sfdisk_command=self._binary(Binaries.SFDISK),
+            nbd_client_command=self._binary(Binaries.NBD_CLIENT),
+            sync_command=self._binary(Binaries.SYNC),
+            modprobe_command=self._binary(Binaries.MODPROBE),
         )
 
         return export_volume
