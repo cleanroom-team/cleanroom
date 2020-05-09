@@ -4,18 +4,16 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-black = "*"
-python-language-server = {version = "*",extras = ["all"]}
-pytest = "*"
 pyparsing = "*"
 pipenv = "*"
-pylint = "*"
-mypy = "*"
 
 [dev-packages]
 pytest = "*"
 rope = "*"
-autopep8 = "*"
+black = "*"
 
 [requires]
 python_version = "3.8"
+
+[pipenv]
+allow_prereleases = true

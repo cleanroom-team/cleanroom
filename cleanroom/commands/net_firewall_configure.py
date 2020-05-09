@@ -18,16 +18,25 @@ class NetFirewallConfigureCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('net_firewall_configure',
-                         help_string='Set up basic firewall.', file=__file__,
-                         **services)
+        super().__init__(
+            "net_firewall_configure",
+            help_string="Set up basic firewall.",
+            file=__file__,
+            **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
         self._validate_no_arguments(location, *args, **kwargs)
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
         install_rules(location, system_context)

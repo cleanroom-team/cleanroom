@@ -20,19 +20,20 @@ def _ensure_directory(directory: str, btrfs_helper: BtrfsHelper) -> None:
     if not os.path.isdir(directory):
         btrfs_helper.create_subvolume(directory)
         if not os.path.isdir(directory):
-            raise PreflightError('Failed to set up work directory: '
-                                 '{} not created.'.format(directory))
+            raise PreflightError(
+                "Failed to set up work directory: " "{} not created.".format(directory)
+            )
 
 
 def _clear_directory(directory: str, btrfs_helper: BtrfsHelper) -> None:
-    trace('Cleaning directory: {}.'.format(directory))
+    trace("Cleaning directory: {}.".format(directory))
     umount_all(directory)
 
     if os.path.isdir(directory):
         # Fast path:-)
-        btrfs_helper.delete_subvolume(os.path.join(directory, 'fs'))
-        btrfs_helper.delete_subvolume(os.path.join(directory, 'meta'))
-        btrfs_helper.delete_subvolume(os.path.join(directory, 'cache'))
+        btrfs_helper.delete_subvolume(os.path.join(directory, "fs"))
+        btrfs_helper.delete_subvolume(os.path.join(directory, "meta"))
+        btrfs_helper.delete_subvolume(os.path.join(directory, "cache"))
         btrfs_helper.delete_subvolume(directory)
 
         # Slow fallback path:
@@ -46,40 +47,46 @@ def _clear_directory(directory: str, btrfs_helper: BtrfsHelper) -> None:
 class WorkDir:
     """Parse a container.conf file."""
 
-    def __init__(self, btrfs_helper: BtrfsHelper, *,
-                 work_directory: str,
-                 clear_scratch_directory: bool = False,
-                 clear_storage: bool = False) -> None:
+    def __init__(
+        self,
+        btrfs_helper: BtrfsHelper,
+        *,
+        work_directory: str,
+        clear_scratch_directory: bool = False,
+        clear_storage: bool = False
+    ) -> None:
         """Constructor."""
         self._btrfs_helper = btrfs_helper
         self._work_directory = work_directory
-        self._temp_directory: typing.Optional[tempfile.TemporaryDirectory] \
-            = None
+        self._temp_directory: typing.Optional[tempfile.TemporaryDirectory] = None
 
         if work_directory:
             if not os.path.exists(work_directory):
-                trace('Creating permanent work directory in "{}".'
-                      .format(work_directory))
+                trace(
+                    'Creating permanent work directory in "{}".'.format(work_directory)
+                )
                 os.makedirs(work_directory, 0o700)
             else:
                 if not btrfs_helper.is_btrfs_filesystem(work_directory):
-                    raise PreflightError('"{}" is not on a btrfs filesystem.'
-                                         .format(self.work_directory))
+                    raise PreflightError(
+                        '"{}" is not on a btrfs filesystem.'.format(self.work_directory)
+                    )
 
-                trace('Using existing work directory in "{}".'
-                      .format(work_directory))
+                trace('Using existing work directory in "{}".'.format(work_directory))
                 if not umount_all(work_directory):
-                    raise PreflightError('Failed to unmount mount in work '
-                                         'directory "{}".'
-                                         .format(work_directory))
+                    raise PreflightError(
+                        "Failed to unmount mount in work "
+                        'directory "{}".'.format(work_directory)
+                    )
                 if clear_scratch_directory:
                     self.clear_scratch_directory()
                 if clear_storage:
                     self.clear_storage_directory()
         else:
-            trace('Creating temporary work directory.')
-            self._temp_directory = tempfile.TemporaryDirectory(prefix='clrm-',
-                                                               dir='/var/tmp')
+            trace("Creating temporary work directory.")
+            self._temp_directory = tempfile.TemporaryDirectory(
+                prefix="clrm-", dir="/var/tmp"
+            )
             self._work_directory = self._temp_directory.name
 
         self._setup_work_directory()
@@ -112,17 +119,16 @@ class WorkDir:
     @property
     def scratch_directory(self) -> str:
         """Get the system directory."""
-        return os.path.join(self._work_directory, 'scratch')
+        return os.path.join(self._work_directory, "scratch")
 
     def clear_scratch_directory(self) -> None:
         _clear_directory(self.scratch_directory, self._btrfs_helper)
         self._btrfs_helper.create_subvolume(self.scratch_directory)
 
-
     @property
     def storage_directory(self) -> str:
         """Get the storage directory."""
-        return os.path.join(self._work_directory, 'storage')
+        return os.path.join(self._work_directory, "storage")
 
     def clear_storage_directory(self) -> None:
         # Trigger fast-path on storage directories:
@@ -145,9 +151,6 @@ class WorkDir:
         _ensure_directory(self.storage_directory, self._btrfs_helper)
         _ensure_directory(self.scratch_directory, self._btrfs_helper)
 
-        info('WorkDir: work directory     = "{}".'
-             .format(self.work_directory))
-        debug('WorkDir: scratch directory  = "{}".'
-              .format(self.scratch_directory))
-        debug('WorkDir: storage directory  = "{}".'
-              .format(self.storage_directory))
+        info('WorkDir: work directory     = "{}".'.format(self.work_directory))
+        debug('WorkDir: scratch directory  = "{}".'.format(self.scratch_directory))
+        debug('WorkDir: storage directory  = "{}".'.format(self.storage_directory))

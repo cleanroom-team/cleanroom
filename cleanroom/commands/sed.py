@@ -18,19 +18,28 @@ class SedCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('sed', syntax='<PATTERN> <FILE>',
-                         help_string='Run sed on a file.',
-                         file=__file__, **services)
+        super().__init__(
+            "sed",
+            syntax="<PATTERN> <FILE>",
+            help_string="Run sed on a file.",
+            file=__file__,
+            **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
-        self._validate_arguments_exact(location, 2,
-                                       '"{}" needs a pattern and a file.',
-                                       *args, **kwargs)
+        self._validate_arguments_exact(
+            location, 2, '"{}" needs a pattern and a file.', *args, **kwargs
+        )
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
-        run('/usr/bin/sed', '-i', '-e', args[0],
-            system_context.file_name(args[1]))
+        run("/usr/bin/sed", "-i", "-e", args[0], system_context.file_name(args[1]))

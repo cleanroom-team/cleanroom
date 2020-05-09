@@ -17,19 +17,34 @@ class StripLicenseFilesCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('strip_license_files',
-                         help_string='Strip away license files.',
-                         file=__file__, **services)
+        super().__init__(
+            "strip_license_files",
+            help_string="Strip away license files.",
+            file=__file__,
+            **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate arguments."""
         self._validate_no_arguments(location, *args, **kwargs)
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
-        location.set_description('Strip license files')
-        self._add_hook(location, system_context,
-                       'export', 'remove', '/usr/share/licenses/*',
-                       recursive=True, force=True)
+        location.set_description("Strip license files")
+        self._add_hook(
+            location,
+            system_context,
+            "export",
+            "remove",
+            "/usr/share/licenses/*",
+            recursive=True,
+            force=True,
+        )

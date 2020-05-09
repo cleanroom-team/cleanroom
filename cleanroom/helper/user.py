@@ -12,27 +12,28 @@ import os.path
 import typing
 
 
-User = collections.namedtuple('User', ['name', 'password', 'uid', 'gid',
-                                       'comment', 'home', 'shell'])
+User = collections.namedtuple(
+    "User", ["name", "password", "uid", "gid", "comment", "home", "shell"]
+)
 
 
 def _user_data(passwd_file: str, name: str) -> typing.Optional[User]:
     assert isinstance(name, str)
     if not os.path.isfile(passwd_file):
         return None
-    with open(passwd_file, 'r') as passwd:
+    with open(passwd_file, "r") as passwd:
         for line in passwd:
-            if line.endswith('\n'):
+            if line.endswith("\n"):
                 line = line[:-1]
-            current_user: typing.List[typing.Any] = line.split(':')
+            current_user: typing.List[typing.Any] = line.split(":")
             if current_user[0] == name:
                 current_user[2] = int(current_user[2])
                 current_user[3] = int(current_user[3])
                 return User(*current_user)
 
-    if name == 'root':
-        return User('root', 'x', 0, 0, 'root', '/root', '/usr/bin/bash')
-    return User('nobody', 'x', 65534, 65534, 'Nobody', '/', '/sbin/nologin')
+    if name == "root":
+        return User("root", "x", 0, 0, "root", "/root", "/usr/bin/bash")
+    return User("nobody", "x", 65534, 65534, "Nobody", "/", "/sbin/nologin")
 
 
 class UserHelper:
@@ -40,99 +41,117 @@ class UserHelper:
         self._add_command = add_command
         self._mod_command = mod_command
 
-    def useradd(self, user_name: str, *,
-                comment: str = '', home: str = '',
-                gid: int = -1, uid: int = -1, shell: str = '',
-                groups: str = '', password: str = '',
-                expire: typing.Optional[str] = None,
-                root_directory: str):
+    def useradd(
+        self,
+        user_name: str,
+        *,
+        comment: str = "",
+        home: str = "",
+        gid: int = -1,
+        uid: int = -1,
+        shell: str = "",
+        groups: str = "",
+        password: str = "",
+        expire: typing.Optional[str] = None,
+        root_directory: str
+    ):
         """Add a new user to the system."""
-        command = [self._add_command,  '--prefix',
-                   root_directory, user_name]
+        command = [self._add_command, "--prefix", root_directory, user_name]
 
         if comment:
-            command += ['--comment', comment]
+            command += ["--comment", comment]
 
         if home:
-            command += ['--home', home]
+            command += ["--home", home]
 
         if gid >= 0:
-            command += ['--gid', str(gid)]
+            command += ["--gid", str(gid)]
 
         if uid >= 0:
-            command += ['--uid', str(uid)]
+            command += ["--uid", str(uid)]
 
         if shell:
-            command += ['--shell', shell]
+            command += ["--shell", shell]
 
         if groups:
-            command += ['--groups', groups]
+            command += ["--groups", groups]
 
         if password:
-            command += ['--password', password]
+            command += ["--password", password]
 
         if expire is not None:
-            if expire == 'None':
-                command.append('--expiredate')
+            if expire == "None":
+                command.append("--expiredate")
             else:
-                command += ['--expiredate', expire]
+                command += ["--expiredate", expire]
 
         return run(*command).returncode == 0
 
-    def usermod(self, user_name, *, comment='', home='', gid=-1, uid=-1,
-                lock=None, rename='', shell='', append=False, groups='',
-                password='', expire=None, root_directory: str) -> bool:
+    def usermod(
+        self,
+        user_name,
+        *,
+        comment="",
+        home="",
+        gid=-1,
+        uid=-1,
+        lock=None,
+        rename="",
+        shell="",
+        append=False,
+        groups="",
+        password="",
+        expire=None,
+        root_directory: str
+    ) -> bool:
         """Modify an existing user."""
-        command = [self._mod_command,
-                   '--prefix', root_directory, user_name]
+        command = [self._mod_command, "--prefix", root_directory, user_name]
 
         if comment:
-            command += ['--comment', comment]
+            command += ["--comment", comment]
 
         if home:
-            command += ['--home', home]
+            command += ["--home", home]
 
         if gid >= 0:
-            command += ['--gid', str(gid)]
+            command += ["--gid", str(gid)]
 
         if uid >= 0:
-            command += ['--uid', str(uid)]
+            command += ["--uid", str(uid)]
 
         if lock is not None:
             if lock:
-                command.append('--lock')
+                command.append("--lock")
             elif not lock:
-                command.append('--unlock')
+                command.append("--unlock")
 
         if expire is not None:
-            if expire == 'None':
-                command.append('--expiredate')
+            if expire == "None":
+                command.append("--expiredate")
             else:
-                command += ['--expiredate', expire]
+                command += ["--expiredate", expire]
 
         if shell:
-            command += ['--shell', shell]
+            command += ["--shell", shell]
 
         if rename:
-            command += ['--login', rename]
+            command += ["--login", rename]
 
         if append:
-            command.append('--append')
+            command.append("--append")
 
         if groups:
-            command += ['--groups', groups]
+            command += ["--groups", groups]
 
         if password:
-            command += ['--password', password]
+            command += ["--password", password]
 
         if expire is not None:
-            command += ['--expiredate', expire]
+            command += ["--expiredate", expire]
 
         return run(*command).returncode == 0
 
     @staticmethod
-    def user_data(name: str, *, root_directory:str) \
-            -> typing.Optional[User]:
+    def user_data(name: str, *, root_directory: str) -> typing.Optional[User]:
         """Get user data from passwd file."""
-        return _user_data(os.path.join(root_directory, 'etc/passwd'),
-                          name)
+        return _user_data(os.path.join(root_directory, "etc/passwd"), name)

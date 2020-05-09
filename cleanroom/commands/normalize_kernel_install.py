@@ -19,30 +19,51 @@ class NormalizeKernelInstallCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('normalize_kernel_install',
-                         help_string='Handle different kernel flavors in Arch.',
-                         file=__file__, **services)
+        super().__init__(
+            "normalize_kernel_install",
+            help_string="Handle different kernel flavors in Arch.",
+            file=__file__,
+            **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
         self._validate_no_arguments(location, *args, **kwargs)
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
-        location.set_description('Handle different kernel flavors')
-        vmlinuz = os.path.join(system_context.boot_directory, 'vmlinuz')
+        location.set_description("Handle different kernel flavors")
+        vmlinuz = os.path.join(system_context.boot_directory, "vmlinuz")
 
-        makedirs(system_context, '/etc/mkinitcpio.d', exist_ok=True)
+        makedirs(system_context, "/etc/mkinitcpio.d", exist_ok=True)
 
         # Clean up after the mkinitcpio hook:
-        for kernel in ('', '-hardened', '-lts', '-zen', '-git',):
-            remove('/boot/vmlinuz{}'.format(kernel), force=True)
+        for kernel in (
+            "",
+            "-hardened",
+            "-lts",
+            "-zen",
+            "-git",
+        ):
+            remove("/boot/vmlinuz{}".format(kernel), force=True)
 
         # New style linux packages that put vmlinuz into /usr/lib/modules:
-        self._execute(location.next_line(), system_context,
-                      'move', '/usr/lib/modules/*/vmlinuz', vmlinuz,
-                      to_outside=True, ignore_missing_sources=True)
+        self._execute(
+            location.next_line(),
+            system_context,
+            "move",
+            "/usr/lib/modules/*/vmlinuz",
+            vmlinuz,
+            to_outside=True,
+            ignore_missing_sources=True,
+        )
 
-        assert(os.path.isfile(vmlinuz))
+        assert os.path.isfile(vmlinuz)

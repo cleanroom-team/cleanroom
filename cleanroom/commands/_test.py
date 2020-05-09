@@ -18,7 +18,7 @@ import typing
 def _environment(system_context: SystemContext) -> typing.Mapping[str, str]:
     """Generate environment for the system tests."""
     result = {k: str(v) for k, v in system_context.substitutions.items()}
-    result['PATH'] = '/usr/bin'
+    result["PATH"] = "/usr/bin"
     return result
 
 
@@ -45,30 +45,44 @@ class _TestCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('_test',
-                         help_string='Implicitly run to test images.\n\n'
-                         'Note: Will run all executable files in the '
-                         '"test" subdirectory of the systems directory and '
-                         'will pass the system name as first argument.',
-                         file=__file__, **services)
+        super().__init__(
+            "_test",
+            help_string="Implicitly run to test images.\n\n"
+            "Note: Will run all executable files in the "
+            '"test" subdirectory of the systems directory and '
+            "will pass the system name as first argument.",
+            file=__file__,
+            **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         self._validate_no_arguments(location, *args, **kwargs)
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
-        h2('Running tests for system "{}"'
-           .format(system_context.system_name),
-           verbosity=2)
+        h2(
+            'Running tests for system "{}"'.format(system_context.system_name),
+            verbosity=2,
+        )
         env = _environment(system_context)
 
         for test in _find_tests(system_context):
-            debug('Running test {}...'.format(test))
-            test_result = run(test, system_context.system_name,
-                              env=env, returncode=None,
-                              work_directory=system_context.fs_directory)
+            debug("Running test {}...".format(test))
+            test_result = run(
+                test,
+                system_context.system_name,
+                env=env,
+                returncode=None,
+                work_directory=system_context.fs_directory,
+            )
             if test_result.returncode == 0:
                 success('Test "{}"'.format(test), verbosity=3)
             else:

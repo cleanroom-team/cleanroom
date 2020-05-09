@@ -19,31 +19,48 @@ class SetTimezoneCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('set_timezone', syntax='<TIMEZONE>',
-                         help_string='Set up the timezone for a system.',
-                         file=__file__, **services)
+        super().__init__(
+            "set_timezone",
+            syntax="<TIMEZONE>",
+            help_string="Set up the timezone for a system.",
+            file=__file__,
+            **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
-        self._validate_arguments_exact(location, 1,
-                                       '"{}" needs a timezone to set up.',
-                                       *args, **kwargs)
+        self._validate_arguments_exact(
+            location, 1, '"{}" needs a timezone to set up.', *args, **kwargs
+        )
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
-        etc = '/etc'
-        localtime = 'localtime'
-        etc_localtime = etc + '/' + localtime
+        etc = "/etc"
+        localtime = "localtime"
+        etc_localtime = etc + "/" + localtime
 
         timezone = args[0]
-        full_timezone = '../usr/share/zoneinfo/' + timezone
+        full_timezone = "../usr/share/zoneinfo/" + timezone
         if not exists(system_context, full_timezone, work_directory=etc):
-            raise GenerateError('Timezone "{}" not found when trying to set timezone.'
-                                .format(timezone), location=location)
+            raise GenerateError(
+                'Timezone "{}" not found when trying to set timezone.'.format(timezone),
+                location=location,
+            )
 
-        self._execute(location, system_context, 'remove', etc_localtime)
-        self._execute(location.next_line(), system_context,
-                      'symlink', full_timezone, localtime,
-                      work_directory='/etc')
+        self._execute(location, system_context, "remove", etc_localtime)
+        self._execute(
+            location.next_line(),
+            system_context,
+            "symlink",
+            full_timezone,
+            localtime,
+            work_directory="/etc",
+        )

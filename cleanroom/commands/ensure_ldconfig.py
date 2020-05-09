@@ -18,29 +18,49 @@ class EnsureLdconfigCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('ensure_ldconfig',
-                         help_string='Ensure that ldconfig is run.',
-                         file=__file__, **services)
+        super().__init__(
+            "ensure_ldconfig",
+            help_string="Ensure that ldconfig is run.",
+            file=__file__,
+            **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
         self._validate_no_arguments(location, *args, **kwargs)
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
-        assert os.path.exists(system_context.file_name('/usr/bin/ldconfig'))
+        assert os.path.exists(system_context.file_name("/usr/bin/ldconfig"))
 
-        location.set_description('Run ldconfig')
-        self._add_hook(location, system_context,
-                       'export', 'run', '/usr/bin/ldconfig', '-X', inside=True)
-        location.set_description('Remove ldconfig data')
+        location.set_description("Run ldconfig")
+        self._add_hook(
+            location,
+            system_context,
+            "export",
+            "run",
+            "/usr/bin/ldconfig",
+            "-X",
+            inside=True,
+        )
+        location.set_description("Remove ldconfig data")
         # self._add_hook(location, system_context,
         #                'export', 'remove', '/usr/bin/ldconfig')
-        location.set_description('Remove ldconfig related services')
-        self._add_hook(location, system_context,
-                       'export', 'remove',
-                       '/usr/lib/systemd/system/*/ldconfig.service',
-                       '/usr/lib/systemd/system/ldconfig.service',
-                       force=True)
+        location.set_description("Remove ldconfig related services")
+        self._add_hook(
+            location,
+            system_context,
+            "export",
+            "remove",
+            "/usr/lib/systemd/system/*/ldconfig.service",
+            "/usr/lib/systemd/system/ldconfig.service",
+            force=True,
+        )

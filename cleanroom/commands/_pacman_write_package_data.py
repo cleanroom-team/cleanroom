@@ -19,18 +19,29 @@ class PacmanWritePackageDataCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('_pacman_write_package_data',
-                         help_string='Write pacman package data into the filesystem.',
-                         file=__file__,
-                         **services)
+        super().__init__(
+            "_pacman_write_package_data",
+            help_string="Write pacman package data into the filesystem.",
+            file=__file__,
+            **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
         self._validate_no_arguments(location, *args, **kwargs)
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
-        pacman_report(system_context, system_context.file_name('/usr/lib/pacman'),
-                      pacman_command=self._binary(Binaries.PACMAN))
+        pacman_report(
+            system_context,
+            system_context.file_name("/usr/lib/pacman"),
+            pacman_command=self._binary(Binaries.PACMAN),
+        )

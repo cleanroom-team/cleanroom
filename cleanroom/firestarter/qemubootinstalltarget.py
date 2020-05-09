@@ -17,26 +17,29 @@ import typing
 
 class QemuBootInstallTarget(InstallTarget):
     def __init__(self) -> None:
-        super().__init__('qemu_boot', 'Boot image in qemu')
+        super().__init__("qemu_boot", "Boot image in qemu")
 
     def __call__(self, parse_result: typing.Any) -> None:
         if not "DISPLAY" in os.environ:
             print("No DISPLAY variable set: Can not start qemu.")
             exit(1)
 
-        with TemporaryDirectory(prefix='clrm_qemu_') as tempdir:
-            extracted_version \
-                    = tool.write_image(parse_result.system_name, tempdir,
-                                       repository=parse_result.repository,
-                                       version=parse_result.system_version)
+        with TemporaryDirectory(prefix="clrm_qemu_") as tempdir:
+            extracted_version = tool.write_image(
+                parse_result.system_name,
+                tempdir,
+                repository=parse_result.repository,
+                version=parse_result.system_version,
+            )
 
-            extracted_image = os.path.join(tempdir,
-                                           'clrm_{}'.format(extracted_version))
+            extracted_image = os.path.join(tempdir, "clrm_{}".format(extracted_version))
             assert os.path.isfile(extracted_image)
 
-            qemu_tool.run_qemu(parse_result,
-                               drives=['{}:raw'.format(extracted_image)],
-                               work_directory=tempdir)
+            qemu_tool.run_qemu(
+                parse_result,
+                drives=["{}:raw".format(extracted_image)],
+                work_directory=tempdir,
+            )
 
     def setup_subparser(self, parser: typing.Any) -> None:
         qemu_tool.setup_parser_for_qemu(parser)

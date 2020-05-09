@@ -19,29 +19,48 @@ class PkgPostgresqlCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('pkg_postgresql', help_string='Setup postgresql.',
-                         file=__file__, **services)
+        super().__init__(
+            "pkg_postgresql", help_string="Setup postgresql.", file=__file__, **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
         self._validate_no_args(location, *args)
-        self._validate_kwargs(location, ('password',), **kwargs)
+        self._validate_kwargs(location, ("password",), **kwargs)
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
-        password = kwargs.get('password', '')
-        self._execute(location, system_context, 'pacman',
-                      'postgresql', 'postgresql-old-upgrade')
+        password = kwargs.get("password", "")
+        self._execute(
+            location, system_context, "pacman", "postgresql", "postgresql-old-upgrade"
+        )
 
-        self._execute(location.next_line(), system_context, 'mkdir',
-                      '/usr/lib/systemd/system/postgresql.service.d/',
-                      mode=0o755)
-        self._execute(location.next_line(), system_context,
-                      'systemd_harden_unit', 'postgresql.service')
-        create_file(system_context, '/usr/local/bin/setup-postgresql.sh',
-                    textwrap.dedent('''\
+        self._execute(
+            location.next_line(),
+            system_context,
+            "mkdir",
+            "/usr/lib/systemd/system/postgresql.service.d/",
+            mode=0o755,
+        )
+        self._execute(
+            location.next_line(),
+            system_context,
+            "systemd_harden_unit",
+            "postgresql.service",
+        )
+        create_file(
+            system_context,
+            "/usr/local/bin/setup-postgresql.sh",
+            textwrap.dedent(
+                """\
                     #!/usr/bin/bash
                     
                     DATADIR="$$1"
@@ -72,16 +91,35 @@ class PkgPostgresqlCommand(Command):
                     host    all             all             ::1/128                 md5
                     END_OF_CONFIG
                     fi
-                    ''').encode('utf-8'), mode=0o755)
+                    """
+            ).encode("utf-8"),
+            mode=0o755,
+        )
 
-        self._execute(location.next_line(), system_context,
-                      'usermod', 'postgres',
-                      shell='/usr/bin/bash', home='/home/postgres')
+        self._execute(
+            location.next_line(),
+            system_context,
+            "usermod",
+            "postgres",
+            shell="/usr/bin/bash",
+            home="/home/postgres",
+        )
 
-        self._execute(location.next_line(), system_context,
-                      'mkdir', '/home/postgres',
-                      mode=0o755, user='postgres', group='postgres')
+        self._execute(
+            location.next_line(),
+            system_context,
+            "mkdir",
+            "/home/postgres",
+            mode=0o755,
+            user="postgres",
+            group="postgres",
+        )
         if password:
-            create_file(system_context, '/home/postgres/.pgpass',
-                        '*:*:*:*:{}'.format(password).encode('utf-8'),
-                        mode=0o600, user='postgres', group='postgres')
+            create_file(
+                system_context,
+                "/home/postgres/.pgpass",
+                "*:*:*:*:{}".format(password).encode("utf-8"),
+                mode=0o600,
+                user="postgres",
+                group="postgres",
+            )

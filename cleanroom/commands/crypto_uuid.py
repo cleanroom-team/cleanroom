@@ -18,27 +18,38 @@ class CryptoUuidCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('crypto_uuid', syntax='<UUID> <NAME>',
-                         help_string='Set the UUID of the crypto partition and the NAME to bind to it.',
-                         file=__file__, **services)
+        super().__init__(
+            "crypto_uuid",
+            syntax="<UUID> <NAME>",
+            help_string="Set the UUID of the crypto partition and the NAME to bind to it.",
+            file=__file__,
+            **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
-        self._validate_arguments_exact(location, 2,
-                                       '"{}" needs a UUID and NAME to set up.', *args)
+        self._validate_arguments_exact(
+            location, 2, '"{}" needs a UUID and NAME to set up.', *args
+        )
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
         uuid = args[0]
-        cmdline = system_context.substitution('KERNEL_CMDLINE', '')
+        cmdline = system_context.substitution("KERNEL_CMDLINE", "")
 
-        if 'rd.luks.name=' in cmdline:
-            raise GenerateError('rd.luks.name already set.', location=location)
+        if "rd.luks.name=" in cmdline:
+            raise GenerateError("rd.luks.name already set.", location=location)
 
         if cmdline:
-            cmdline += ' '
-        cmdline += 'rd.luks.name={}={} rd.luks.options=discard'.format(uuid, args[1])
+            cmdline += " "
+        cmdline += "rd.luks.name={}={} rd.luks.options=discard".format(uuid, args[1])
 
-        system_context.set_substitution('KERNEL_CMDLINE', cmdline)
+        system_context.set_substitution("KERNEL_CMDLINE", cmdline)

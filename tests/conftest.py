@@ -10,8 +10,8 @@ import types
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                '..')))
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from cleanroom.command import Command
 from cleanroom.commandmanager import CommandManager
@@ -23,31 +23,32 @@ from cleanroom.systemcontext import SystemContext
 @pytest.fixture()
 def system_context(tmpdir):
     """Generate a system context."""
-    scratch_directory = tmpdir.mkdir('scratch')
-    storage_directory = tmpdir.mkdir('storage')
-    systems_definition_directory = tmpdir.mkdir('definitions')
-    repo_directory = tmpdir.mkdir('repo')
+    scratch_directory = tmpdir.mkdir("scratch")
+    storage_directory = tmpdir.mkdir("storage")
+    systems_definition_directory = tmpdir.mkdir("definitions")
+    repo_directory = tmpdir.mkdir("repo")
 
-    system_context = SystemContext(system_name='test_system',
-                                   base_system_name='',
-                                   scratch_directory=scratch_directory,
-                                   systems_definition_directory=systems_definition_directory,
-                                   storage_directory=storage_directory,
-                                   repository_base_directory=repo_directory,
-                                   timestamp='20190101-010101')
+    system_context = SystemContext(
+        system_name="test_system",
+        base_system_name="",
+        scratch_directory=scratch_directory,
+        systems_definition_directory=systems_definition_directory,
+        storage_directory=storage_directory,
+        repository_base_directory=repo_directory,
+        timestamp="20190101-010101",
+    )
     return system_context
 
 
 @pytest.fixture()
 def location():
-    return Location(file_name='<test>', line_number=1,
-                    description='test location')
+    return Location(file_name="<test>", line_number=1, description="test location")
 
 
 def _create_file(fs, file_name, contents=None):
     if contents is None:
-        contents = file_name.encode('utf-8')
-    with open(os.path.join(fs, file_name[1:]), 'wb') as f:
+        contents = file_name.encode("utf-8")
+    with open(os.path.join(fs, file_name[1:]), "wb") as f:
         f.write(contents)
 
 
@@ -57,20 +58,20 @@ def populated_system_context(system_context):
     fs_directory = system_context.fs_directory
     systems_definition_directory = system_context.systems_definition_directory
 
-    os.makedirs(os.path.join(fs_directory, 'usr/bin'))
-    os.makedirs(os.path.join(fs_directory, 'usr/lib'))
-    os.makedirs(os.path.join(fs_directory, 'etc'))
-    os.makedirs(os.path.join(fs_directory, 'home/test'))
+    os.makedirs(os.path.join(fs_directory, "usr/bin"))
+    os.makedirs(os.path.join(fs_directory, "usr/lib"))
+    os.makedirs(os.path.join(fs_directory, "etc"))
+    os.makedirs(os.path.join(fs_directory, "home/test"))
 
-    _create_file(fs_directory, '/usr/bin/ls')
-    _create_file(fs_directory, '/usr/bin/grep')
-    _create_file(fs_directory, '/usr/lib/libz')
-    _create_file(fs_directory, '/etc/passwd')
-    _create_file(fs_directory, '/home/test/example.txt')
+    _create_file(fs_directory, "/usr/bin/ls")
+    _create_file(fs_directory, "/usr/bin/grep")
+    _create_file(fs_directory, "/usr/lib/libz")
+    _create_file(fs_directory, "/etc/passwd")
+    _create_file(fs_directory, "/home/test/example.txt")
 
-    os.makedirs(os.path.join(systems_definition_directory, 'data/subdata'))
-    _create_file(systems_definition_directory, '/data/test.txt')
-    _create_file(systems_definition_directory, '/data/subdata/subtest.txt')
+    os.makedirs(os.path.join(systems_definition_directory, "data/subdata"))
+    _create_file(systems_definition_directory, "/data/test.txt")
+    _create_file(systems_definition_directory, "/data/subdata/subtest.txt")
 
     return system_context
 
@@ -86,16 +87,23 @@ _Parser_Instance = None
 
 @pytest.fixture
 def command_manager():
-    return CommandManager(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                          '../cleanroom/commands')))
+    return CommandManager(
+        os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../cleanroom/commands")
+        )
+    )
 
 
 # Injected into parser:
 def _parse_and_verify_string(parser, data, expected_base_system, expected):
     """Verify one line of input to the Parser."""
-    (base_system, exec_obj_list) = parser._parse_string(data, '<TEST_DATA>')
-    result = list(map(lambda x: (x.command, x.args,
-                                 x.kwargs, x.location.line_number), exec_obj_list))
+    (base_system, exec_obj_list) = parser._parse_string(data, "<TEST_DATA>")
+    result = list(
+        map(
+            lambda x: (x.command, x.args, x.kwargs, x.location.line_number),
+            exec_obj_list,
+        )
+    )
 
     assert base_system == expected_base_system
     assert result == expected
@@ -106,8 +114,7 @@ def _create_and_setup_parser(command_manager: CommandManager):
     result = Parser(command_manager, debug_parser=True)
 
     # inject for easier testing:
-    result.parse_and_verify_string \
-        = types.MethodType(_parse_and_verify_string, result)
+    result.parse_and_verify_string = types.MethodType(_parse_and_verify_string, result)
 
     return result
 
@@ -124,28 +131,33 @@ def parser(command_manager):
 @pytest.fixture()
 def user_setup(tmpdir):
     """Generate a simple passwd file."""
-    os.mkdir(os.path.join(tmpdir, 'etc'))
-    passwd_path = os.path.join(tmpdir, 'etc/passwd')
-    with open(passwd_path, 'w') as passwd:
-        passwd.write('''root:x:0:0:root user:/root:/bin/bash
+    os.mkdir(os.path.join(tmpdir, "etc"))
+    passwd_path = os.path.join(tmpdir, "etc/passwd")
+    with open(passwd_path, "w") as passwd:
+        passwd.write(
+            """root:x:0:0:root user:/root:/bin/bash
 bin:x:1:1::/:/sbin/nologin
 test:x:10001:10001:Test user:/home/test:/bin/false
 test1:x:10002:10001:Test user 1:/home/test:/bin/false
 test2:x:10003:10001:Test user 2:/home/test:/bin/false
 test3:x:10004:10001:Test user 3:/home/test:/bin/false
-''')
-    shadow_path = os.path.join(tmpdir, 'etc/shadow')
-    with open(shadow_path, 'w') as shadow:
-        shadow.write('''root:!::::::
+"""
+        )
+    shadow_path = os.path.join(tmpdir, "etc/shadow")
+    with open(shadow_path, "w") as shadow:
+        shadow.write(
+            """root:!::::::
 bin:!::::::
 test:!::::::
 test1:!::::::
 test2:!::::::
 test3:!::::::
-''')
-    group_path = os.path.join(tmpdir, 'etc/group')
-    with open(group_path, 'w') as group:
-        group.write('''root:x:0:root
+"""
+        )
+    group_path = os.path.join(tmpdir, "etc/group")
+    with open(group_path, "w") as group:
+        group.write(
+            """root:x:0:root
 sys:x:3:bin
 mem:x:8:
 log:x:19:
@@ -177,5 +189,6 @@ test:x:10001:test,test1,test2
 test1:x:10002
 test2:x:10003
 test3:x:10004
-''')
+"""
+        )
     return str(tmpdir)

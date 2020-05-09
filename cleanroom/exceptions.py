@@ -13,8 +13,12 @@ import typing
 class CleanRoomError(Exception):
     """Base class for all cleanroom Exceptions."""
 
-    def __init__(self, *args: typing.Any, location: Location = None,
-                 original_exception: typing.Optional[Exception] = None) -> None:
+    def __init__(
+        self,
+        *args: typing.Any,
+        location: Location = None,
+        original_exception: typing.Optional[Exception] = None
+    ) -> None:
         """Constructor."""
         super().__init__(*args)
         self.location = location
@@ -25,18 +29,18 @@ class CleanRoomError(Exception):
 
     def __str__(self) -> str:
         """Stringify exception."""
-        prefix = 'Error'
+        prefix = "Error"
         if self.location:
-            prefix += ' in {}'.format(self.location)
+            prefix += " in {}".format(self.location)
 
-        postfix = ''
+        postfix = ""
         if self.original_exception is not None:
             if isinstance(self.original_exception, AssertionError):
-                postfix = '\n    Trigger: AssertionError.'
+                postfix = "\n    Trigger: AssertionError."
             else:
-                postfix = '\n    Trigger: ' + str(self.original_exception)
+                postfix = "\n    Trigger: " + str(self.original_exception)
 
-        return '{}: {}{}'.format(prefix, super().__str__(), postfix)
+        return "{}: {}{}".format(prefix, super().__str__(), postfix)
 
 
 class PreflightError(CleanRoomError):

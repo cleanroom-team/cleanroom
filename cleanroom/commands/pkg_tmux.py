@@ -18,22 +18,33 @@ class PkgTmuxCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('pkg_tmux', help_string='Setup tmux.',
-                         file=__file__, **services)
+        super().__init__(
+            "pkg_tmux", help_string="Setup tmux.", file=__file__, **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
         self._validate_no_arguments(location, *args, **kwargs)
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
-        self._execute(location, system_context, 'pacman', 'tmux')
+        self._execute(location, system_context, "pacman", "tmux")
 
-        self._execute(location.next_line(), system_context,
-                      'create', '/root/.tmux.conf',
-                      textwrap.dedent('''\
+        self._execute(
+            location.next_line(),
+            system_context,
+            "create",
+            "/root/.tmux.conf",
+            textwrap.dedent(
+                """\
                       # Set activation key to ctrl-A:
                       set-option -g prefix C-a
 
@@ -51,4 +62,7 @@ class PkgTmuxCommand(Command):
                       # Set window notifications
                       setw -g monitor-activity on
                       set -g visual-activity on
-                      '''), mode=0o600)
+                      """
+            ),
+            mode=0o600,
+        )

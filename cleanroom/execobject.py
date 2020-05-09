@@ -8,5 +8,6 @@
 import collections
 
 
-ExecObject = collections.namedtuple('ExecObject',
-                                    ['location', 'command', 'args', 'kwargs'])
+ExecObject = collections.namedtuple(
+    "ExecObject", ["location", "command", "args", "kwargs"]
+)

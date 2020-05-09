@@ -18,45 +18,46 @@ import typing
 
 
 def _deviceify(device: str) -> str:
-    if device.startswith('PARTLABEL='):
-        device = '/dev/disk/by-partlabel/' + device[10:]
-    elif device.startswith('LABEL='):
-        device = '/dev/disk/by-label/' + device[6:]
-    elif device.startswith('PARTUUID='):
-        device = '/dev/disk/by-partuuid/' + device[9:]
-    elif device.startswith('UUID='):
-        device = '/dev/disk/by-uuid/' + device[5:]
-    elif device.startswith('ID='):
-        device = '/dev/disk/by-id/' + device[3:]
-    elif device.startswith('PATH='):
-        device = '/dev/disk/by-path/' + device[5:]
-    assert device.startswith('/dev/')
+    if device.startswith("PARTLABEL="):
+        device = "/dev/disk/by-partlabel/" + device[10:]
+    elif device.startswith("LABEL="):
+        device = "/dev/disk/by-label/" + device[6:]
+    elif device.startswith("PARTUUID="):
+        device = "/dev/disk/by-partuuid/" + device[9:]
+    elif device.startswith("UUID="):
+        device = "/dev/disk/by-uuid/" + device[5:]
+    elif device.startswith("ID="):
+        device = "/dev/disk/by-id/" + device[3:]
+    elif device.startswith("PATH="):
+        device = "/dev/disk/by-path/" + device[5:]
+    assert device.startswith("/dev/")
     return device
 
 
 def _escape_device(device: str) -> str:
     device = _deviceify(device)
 
-    device = device.replace('-', '\\x2d')
-    device = device.replace('=', '\\x3d')
-    device = device.replace(';', '\\x3b')
-    device = device.replace('/', '-')
+    device = device.replace("-", "\\x2d")
+    device = device.replace("=", "\\x3d")
+    device = device.replace(";", "\\x3b")
+    device = device.replace("/", "-")
 
     return device[1:]
 
 
-def _create_install_hook(location: Location, system_context: SystemContext,
-                         name: str, contents: str) -> str:
-    location.set_description('install mkinitcpio install hook {}'
-                             .format(name))
-    path = os.path.join('/usr/lib/initcpio/install', name)
-    create_file(system_context, path, contents.encode('utf-8'))
+def _create_install_hook(
+    location: Location, system_context: SystemContext, name: str, contents: str
+) -> str:
+    location.set_description("install mkinitcpio install hook {}".format(name))
+    path = os.path.join("/usr/lib/initcpio/install", name)
+    create_file(system_context, path, contents.encode("utf-8"))
     return path
 
 
-def _cleanup_extra_files(location: Location, system_context: SystemContext,
-                         *files: str) -> None:
-    location.set_description('Remove extra mkinitcpio files')
+def _cleanup_extra_files(
+    location: Location, system_context: SystemContext, *files: str
+) -> None:
+    location.set_description("Remove extra mkinitcpio files")
 
 
 class CreateInitrdCommand(Command):
@@ -64,32 +65,43 @@ class CreateInitrdCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('create_initrd', syntax='<INITRD_FILE>',
-                         help_string='Create an initrd.',
-                         file=__file__, **services)
+        super().__init__(
+            "create_initrd",
+            syntax="<INITRD_FILE>",
+            help_string="Create an initrd.",
+            file=__file__,
+            **services
+        )
 
         self._vg = None  # type: typing.Optional[str]
         self._image_fs = None  # type: typing.Optional[str]
         self._image_device = None  # type: typing.Optional[str]
         self._image_options = None  # type: typing.Optional[str]
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
-        self._validate_arguments_exact(location, 1,
-                                       '"{}" takes an initrd to create.',
-                                       *args, **kwargs)
+        self._validate_arguments_exact(
+            location, 1, '"{}" takes an initrd to create.', *args, **kwargs
+        )
 
-    def _create_systemd_units(self, location: Location, system_context: SystemContext) \
-            -> typing.Sequence[str]:
-        location.set_description('Install extra systemd units')
-        to_clean_up = ['/usr/lib/systemd/system/initrd-check-bios.service',
-                       '/usr/lib/systemd/system/initrd-sysroot-setup.service',
-                       '/usr/lib/systemd/system/initrd-find-root-lv-partitions.service',
-                       '/usr/lib/systemd/system/images.mount',
-                       '/usr/lib/systemd/system/initrd-find-image-partitions.service']
-        create_file(system_context, '/usr/lib/systemd/system/initrd-check-bios.service',
-                    textwrap.dedent('''\
+    def _create_systemd_units(
+        self, location: Location, system_context: SystemContext
+    ) -> typing.Sequence[str]:
+        location.set_description("Install extra systemd units")
+        to_clean_up = [
+            "/usr/lib/systemd/system/initrd-check-bios.service",
+            "/usr/lib/systemd/system/initrd-sysroot-setup.service",
+            "/usr/lib/systemd/system/initrd-find-root-lv-partitions.service",
+            "/usr/lib/systemd/system/images.mount",
+            "/usr/lib/systemd/system/initrd-find-image-partitions.service",
+        ]
+        create_file(
+            system_context,
+            "/usr/lib/systemd/system/initrd-check-bios.service",
+            textwrap.dedent(
+                """\
                     [Unit]
                     Description=Print TPM configuration
                     DefaultDependencies=no
@@ -106,10 +118,16 @@ class CreateInitrdCommand(Command):
                     
                     [Install]
                     WantedBy=initrd-root-device.target
-                    ''').encode('utf-8'), mode=0o644)
+                    """
+            ).encode("utf-8"),
+            mode=0o644,
+        )
 
-        create_file(system_context, '/usr/lib/systemd/system/initrd-sysroot-setup.service',
-                    textwrap.dedent('''\
+        create_file(
+            system_context,
+            "/usr/lib/systemd/system/initrd-sysroot-setup.service",
+            textwrap.dedent(
+                """\
                     [Unit]
                     Description=Set up root fs in /sysroot
                     DefaultDependencies=no
@@ -124,12 +142,18 @@ class CreateInitrdCommand(Command):
                     Type=oneshot
                     RemainAfterExit=yes
                     ExecStart=/usr/bin/tar -C /sysroot -xf /sysroot/usr/lib/boot/root-fs.tar
-                    ''').encode('utf-8'), mode=0o644)
+                    """
+            ).encode("utf-8"),
+            mode=0o644,
+        )
 
         if self._vg is not None:
-            device_name = 'dev-{}-{}'.format(self._vg, self._full_name)
-            create_file(system_context, '/usr/lib/systemd/system/initrd-find-root-lv-partitions.service',
-                        textwrap.dedent('''\
+            device_name = "dev-{}-{}".format(self._vg, self._full_name)
+            create_file(
+                system_context,
+                "/usr/lib/systemd/system/initrd-find-root-lv-partitions.service",
+                textwrap.dedent(
+                    """\
                         [Unit]
                         Description=Find partitions in root LV
                         DefaultDependencies=no
@@ -146,12 +170,19 @@ class CreateInitrdCommand(Command):
                         
                         [Install]
                         WantedBy={0}.device
-                        ''').format(device_name, self._vg, self._full_name).encode('utf-8'),
-                        mode=0o644)
+                        """
+                )
+                .format(device_name, self._vg, self._full_name)
+                .encode("utf-8"),
+                mode=0o644,
+            )
 
         if self._image_device is not None:
-            create_file(system_context, '/usr/lib/systemd/system/images.mount',
-                        textwrap.dedent('''\
+            create_file(
+                system_context,
+                "/usr/lib/systemd/system/images.mount",
+                textwrap.dedent(
+                    """\
                         [Unit]
                         Description=Mount /images in initrd
                         DefaultDependencies=no
@@ -162,11 +193,18 @@ class CreateInitrdCommand(Command):
                         Where=/images
                         Type={}
                         Options={}
-                        ''').format(self._image_device, self._image_fs, self._image_options)
-                            .encode('utf-8'), mode=0o644)
+                        """
+                )
+                .format(self._image_device, self._image_fs, self._image_options)
+                .encode("utf-8"),
+                mode=0o644,
+            )
 
-            create_file(system_context, '/usr/lib/systemd/system/initrd-find-image-partitions.service',
-                        textwrap.dedent('''\
+            create_file(
+                system_context,
+                "/usr/lib/systemd/system/initrd-find-image-partitions.service",
+                textwrap.dedent(
+                    """\
                         [Unit]
                         Description=Find partitions in image files
                         DefaultDependencies=no
@@ -184,30 +222,40 @@ class CreateInitrdCommand(Command):
                         
                         [Install]
                         WantedBy=images.mount
-                        ''').format(self._full_name).encode('utf-8'), mode=0o644)
+                        """
+                )
+                .format(self._full_name)
+                .encode("utf-8"),
+                mode=0o644,
+            )
 
         return to_clean_up
 
     def _sd_boot_image_hook(self) -> str:
-        hook = textwrap.dedent('''\
+        hook = textwrap.dedent(
+            """\
         #!/usr/bin/bash
 
         build() {
-        ''')
+        """
+        )
         if self._vg is not None:
-            hook += '''    # partprobe LV:
+            hook += """    # partprobe LV:
     add_systemd_unit "initrd-find-root-lv-partitions.service"
-    '''
-            hook += "    add_symlink \"/usr/lib/systemd/system/dev-{0}-{1}'" \
-                    ".device.wants/initrd-find-root-lv-partitions.service\" \\" \
-                .format(self._vg, self._full_name)
-            hook += '''
+    """
+            hook += (
+                "    add_symlink \"/usr/lib/systemd/system/dev-{0}-{1}'"
+                '.device.wants/initrd-find-root-lv-partitions.service" \\'.format(
+                    self._vg, self._full_name
+                )
+            )
+            hook += """
         "../initrd-find-root-lv-partitions.service"
 
-'''
+"""
         if self._image_device is not None:
             escaped_device = _escape_device(self._image_device)
-            hook += '''
+            hook += """
     # losetup image files:
     add_binary /usr/bin/losetup
 
@@ -217,8 +265,11 @@ class CreateInitrdCommand(Command):
     add_systemd_unit "initrd-find-image-partitions.service"
     add_symlink "/usr/lib/systemd/system/images.mount.wants/initrd-find-image-partitions.service" \
                 "../initrd-find-image-partitions.service"
-'''.format(escaped_device)
-        hook += textwrap.dedent('''\
+""".format(
+                escaped_device
+            )
+        hook += textwrap.dedent(
+            """\
         }
         
         help() {
@@ -228,14 +279,20 @@ class CreateInitrdCommand(Command):
         }
         
         # vim: set ft=sh ts=4 sw=4 et:
-        ''')
+        """
+        )
         return hook
 
-    def _install_mkinitcpio_hooks(self, location: Location, system_context: SystemContext) \
-            -> typing.Sequence[str]:
+    def _install_mkinitcpio_hooks(
+        self, location: Location, system_context: SystemContext
+    ) -> typing.Sequence[str]:
         to_clean_up = [
-            _create_install_hook(location, system_context,
-                                 'sd-check-bios', textwrap.dedent('''\
+            _create_install_hook(
+                location,
+                system_context,
+                "sd-check-bios",
+                textwrap.dedent(
+                    """\
                                  #!/usr/bin/bash
 
                                  build() {
@@ -257,9 +314,15 @@ class CreateInitrdCommand(Command):
                                  }
                                  
                                  # vim: set ft=sh ts=4 sw=4 et:
-                                 ''')),
-            _create_install_hook(location, system_context,
-                                 'sd-stateless', textwrap.dedent('''\
+                                 """
+                ),
+            ),
+            _create_install_hook(
+                location,
+                system_context,
+                "sd-stateless",
+                textwrap.dedent(
+                    """\
                                  #!/usr/bin/bash
                                 
                                  build() {
@@ -296,12 +359,18 @@ class CreateInitrdCommand(Command):
                                  }
                                 
                                  # vim: set ft=sh ts=4 sw=4 et:
-                                 ''')),
-            _create_install_hook(location, system_context,
-                                 'sd-boot-image',
-                                 self._sd_boot_image_hook()),
-            _create_install_hook(location, system_context,
-                                 'sd-verity', textwrap.dedent('''\
+                                 """
+                ),
+            ),
+            _create_install_hook(
+                location, system_context, "sd-boot-image", self._sd_boot_image_hook()
+            ),
+            _create_install_hook(
+                location,
+                system_context,
+                "sd-verity",
+                textwrap.dedent(
+                    """\
                                  #!/usr/bin/bash
                                                                      
                                  build() {
@@ -317,9 +386,15 @@ class CreateInitrdCommand(Command):
                                  }
                                  
                                  # vim: set ft=sh ts=4 sw=4 et:
-                                 ''')),
-            _create_install_hook(location, system_context,
-                                 'sd-volatile', textwrap.dedent('''\
+                                 """
+                ),
+            ),
+            _create_install_hook(
+                location,
+                system_context,
+                "sd-volatile",
+                textwrap.dedent(
+                    """\
                                  #!/usr/bin/bash
                                 
                                  build() {
@@ -337,31 +412,41 @@ class CreateInitrdCommand(Command):
                                  }
                                 
                                  # vim: set ft=sh ts=4 sw=4 et:
-                                 '''))]
+                                 """
+                ),
+            ),
+        ]
 
         return to_clean_up
 
-    def _install_mkinitcpio(self, location: Location,
-                            system_context: SystemContext) -> typing.Sequence[str]:
-        to_clean_up = ['/etc/mkinitcpio.d', '/etc/mkinitcpio.conf',
-                       '/boot/vmlinu*']
+    def _install_mkinitcpio(
+        self, location: Location, system_context: SystemContext
+    ) -> typing.Sequence[str]:
+        to_clean_up = ["/etc/mkinitcpio.d", "/etc/mkinitcpio.conf", "/boot/vmlinu*"]
 
-        location.set_description('Install mkinitcpio')
-        self._execute(location, system_context, 'pacman', 'mkinitcpio')
+        location.set_description("Install mkinitcpio")
+        self._execute(location, system_context, "pacman", "mkinitcpio")
 
-        location.set_description('Fix up mkinitcpio.conf')
-        self._execute(location.next_line(), system_context, 'sed',
-                      '/^HOOKS=/ '
-                      'cHOOKS="base systemd keyboard sd-vconsole '
-                      'sd-encrypt block sd-lvm2 filesystems btrfs '
-                      'sd-check-bios sd-stateless sd-verity '
-                      'sd-volatile sd-boot-image '
-                      'sd-shutdown"',
-                      '/etc/mkinitcpio.conf')
+        location.set_description("Fix up mkinitcpio.conf")
+        self._execute(
+            location.next_line(),
+            system_context,
+            "sed",
+            "/^HOOKS=/ "
+            'cHOOKS="base systemd keyboard sd-vconsole '
+            "sd-encrypt block sd-lvm2 filesystems btrfs "
+            "sd-check-bios sd-stateless sd-verity "
+            "sd-volatile sd-boot-image "
+            'sd-shutdown"',
+            "/etc/mkinitcpio.conf",
+        )
 
-        location.set_description('Create mkinitcpio presets')
-        create_file(system_context, '/etc/mkinitcpio.d/cleanroom.preset',
-                    textwrap.dedent('''\
+        location.set_description("Create mkinitcpio presets")
+        create_file(
+            system_context,
+            "/etc/mkinitcpio.d/cleanroom.preset",
+            textwrap.dedent(
+                """\
                     # mkinitcpio preset file for cleanroom
 
                     ALL_config="/etc/mkinitcpio.conf"
@@ -372,93 +457,119 @@ class CreateInitrdCommand(Command):
                     #default_config="/etc/mkinitcpio.conf"
                     default_image="/boot/initramfs.img"
                     #default_options=""
-                    ''').encode('utf-8'))
+                    """
+            ).encode("utf-8"),
+        )
 
-        self._execute(location.next_line(), system_context, 'sed',
-                      's%/initramfs-linux.*.img%/initrd%',
-                      '/etc/mkinitcpio.d/cleanroom.preset')
+        self._execute(
+            location.next_line(),
+            system_context,
+            "sed",
+            "s%/initramfs-linux.*.img%/initrd%",
+            "/etc/mkinitcpio.d/cleanroom.preset",
+        )
 
         return to_clean_up
 
-    def _remove_mkinitcpio(self, location: Location,
-                           system_context: SystemContext) -> None:
+    def _remove_mkinitcpio(
+        self, location: Location, system_context: SystemContext
+    ) -> None:
         # FIXME: Remove mkinitcpio once linux and ostree no longer depend on it!
-        self._execute(location, system_context, 'pacman', 'mkinitcpio',
-                      '--assume-installed', 'initramfs',
-                      '--assume-installed', 'mkinitcpio', remove=True)
-        remove(system_context, '/boot/vmlinuz')
+        self._execute(
+            location,
+            system_context,
+            "pacman",
+            "mkinitcpio",
+            "--assume-installed",
+            "initramfs",
+            "--assume-installed",
+            "mkinitcpio",
+            remove=True,
+        )
+        remove(system_context, "/boot/vmlinuz")
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
-        if not os.path.exists(system_context.file_name('usr/bin/mkinitcpio')):
-            info('Skipping initrd generation: No mkinitcpio binary.')
+        if not os.path.exists(system_context.file_name("usr/bin/mkinitcpio")):
+            info("Skipping initrd generation: No mkinitcpio binary.")
             return
 
-        if not os.path.exists(os.path.join(system_context.boot_directory,
-                                           'vmlinuz')):
-            info('Skipping initrd generation: No vmlinuz in boot directory.')
+        if not os.path.exists(os.path.join(system_context.boot_directory, "vmlinuz")):
+            info("Skipping initrd generation: No vmlinuz in boot directory.")
             return
 
-        self._vg = system_context.substitution('DEFAULT_VG', None)
+        self._vg = system_context.substitution("DEFAULT_VG", None)
         if not self._vg:
             self._vg = None
 
-        self._image_fs = system_context.substitution('IMAGE_FS', 'ext2')
-        self._image_device = \
-            _deviceify(system_context.substitution('IMAGE_DEVICE', ''))
-        self._image_options = system_context.substitution('IMAGE_OPTIONS', 'rw')
+        self._image_fs = system_context.substitution("IMAGE_FS", "ext2")
+        self._image_device = _deviceify(system_context.substitution("IMAGE_DEVICE", ""))
+        self._image_options = system_context.substitution("IMAGE_OPTIONS", "rw")
 
-        name_prefix = system_context.substitution('DISTRO_ID', 'clrm')
-        name_version = system_context.substitution('DISTRO_VERSION_ID',
-                                                   system_context.timestamp)
+        name_prefix = system_context.substitution("DISTRO_ID", "clrm")
+        name_version = system_context.substitution(
+            "DISTRO_VERSION_ID", system_context.timestamp
+        )
         self._full_name = "{}_{}".format(name_prefix, name_version)
 
         initrd = args[0]
 
         to_clean_up = []  # type: typing.List[str]
-        to_clean_up += '/boot/vmlinuz'
+        to_clean_up += "/boot/vmlinuz"
         to_clean_up += self._install_extra_binaries(location, system_context)
         to_clean_up += self._create_systemd_units(location, system_context)
         to_clean_up += self._install_mkinitcpio(location, system_context)
         to_clean_up += self._install_mkinitcpio_hooks(location, system_context)
 
-        copy(system_context, os.path.join(system_context.boot_directory, 'vmlinuz'),
-             '/boot/vmlinuz', from_outside=True)
+        copy(
+            system_context,
+            os.path.join(system_context.boot_directory, "vmlinuz"),
+            "/boot/vmlinuz",
+            from_outside=True,
+        )
 
-        run('/usr/bin/mkinitcpio', '-p', 'cleanroom',
+        run(
+            "/usr/bin/mkinitcpio",
+            "-p",
+            "cleanroom",
             chroot=system_context.fs_directory,
-            chroot_helper=self._binary(Binaries.CHROOT_HELPER))
+            chroot_helper=self._binary(Binaries.CHROOT_HELPER),
+        )
 
         initrd_directory = os.path.dirname(initrd)
         os.makedirs(initrd_directory, exist_ok=True)
-        move(system_context, '/boot/initramfs.img', initrd, to_outside=True)
+        move(system_context, "/boot/initramfs.img", initrd, to_outside=True)
 
         _cleanup_extra_files(location, system_context, *to_clean_up)
         self._remove_mkinitcpio(location, system_context)
 
-        assert(os.path.isfile(initrd))
+        assert os.path.isfile(initrd)
 
-
-    def _install_extra_binaries(self, location: Location,
-                                system_context: SystemContext) \
-            -> typing.Sequence[str]:
-        to_clean_up: typing.List[str] \
-            = [self._copy_extra_file(location, system_context,
-                                     'initrd-check-bios.sh'),
-               self._copy_extra_file(location, system_context,
-                                     'initrd-mnencode')]
+    def _install_extra_binaries(
+        self, location: Location, system_context: SystemContext
+    ) -> typing.Sequence[str]:
+        to_clean_up: typing.List[str] = [
+            self._copy_extra_file(location, system_context, "initrd-check-bios.sh"),
+            self._copy_extra_file(location, system_context, "initrd-mnencode"),
+        ]
         return to_clean_up
 
-    def _copy_extra_file(self, location: Location,
-                         system_context: SystemContext,
-                         extra_file: str) -> str:
-        location.set_description('Installing extra mkinitcpio file {}'
-                                 .format(extra_file))
+    def _copy_extra_file(
+        self, location: Location, system_context: SystemContext, extra_file: str
+    ) -> str:
+        location.set_description(
+            "Installing extra mkinitcpio file {}".format(extra_file)
+        )
         helper_directory = self._helper_directory
         assert helper_directory
         source_path = os.path.join(helper_directory, extra_file)
-        dest_path = os.path.join('/usr/bin', extra_file)
+        dest_path = os.path.join("/usr/bin", extra_file)
         copy(system_context, source_path, dest_path, from_outside=True)
         chmod(system_context, 0o755, dest_path)
         return dest_path

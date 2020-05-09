@@ -83,7 +83,7 @@ def _ansify(seq: str) -> str:
     """
     if sys.stdout.isatty():
         return seq
-    return ''
+    return ""
 
 
 class Printer:
@@ -99,62 +99,62 @@ class Printer:
     _instance = None
 
     @staticmethod
-    def instance() -> 'Printer':
+    def instance() -> "Printer":
         """Get the main printer instance."""
         if Printer._instance is None:
-            verbosity = int(getenv('CLRM_LOG_VERBOSITY', 0))
+            verbosity = int(getenv("CLRM_LOG_VERBOSITY", 0))
             Printer._instance = Printer(verbosity=verbosity)
         return Printer._instance
 
     def __init__(self, verbosity: int = 0) -> None:
         """Constructor."""
         self._verbose = 0
-        self._prefix = ''
+        self._prefix = ""
 
         self.set_verbosity(verbosity)
 
-        self._ansi_reset = _ansify('\033[0m')
-        self._h_prefix = _ansify('\033[1;31m')
-        self._h1_suffix = _ansify('\033[0m\033[1;37m')
-        self._error_prefix = _ansify('\033[1;31m')
-        self._warn_prefix = _ansify('\033[1;33m')
-        self._ok_prefix = _ansify('\033[1;7;32m')
-        self._ok_suffix = _ansify('\033[0;32m')
+        self._ansi_reset = _ansify("\033[0m")
+        self._h_prefix = _ansify("\033[1;31m")
+        self._h1_suffix = _ansify("\033[0m\033[1;37m")
+        self._error_prefix = _ansify("\033[1;31m")
+        self._warn_prefix = _ansify("\033[1;33m")
+        self._ok_prefix = _ansify("\033[1;7;32m")
+        self._ok_suffix = _ansify("\033[0;32m")
 
-        self._ig_fail_prefix = _ansify('\033[1;7;33m')
-        self._ig_fail_suffix = _ansify('\033[0;33m')
-        self._fail_prefix = _ansify('\033[1;7;31m')
-        self._fail_suffix = _ansify('\033[0;31m')
-        self._extra_prefix = _ansify('\033[1;36m')
-        self._extra_suffix = _ansify('\033[0;m\033[2;m')
+        self._ig_fail_prefix = _ansify("\033[1;7;33m")
+        self._ig_fail_suffix = _ansify("\033[0;33m")
+        self._fail_prefix = _ansify("\033[1;7;31m")
+        self._fail_suffix = _ansify("\033[0;31m")
+        self._extra_prefix = _ansify("\033[1;36m")
+        self._extra_suffix = _ansify("\033[0;m\033[2;m")
 
-        self._buffer = ''
+        self._buffer = ""
 
         Printer._instance = self
 
     def flush(self) -> None:
         buf = self._buffer
-        self._buffer = ''
+        self._buffer = ""
 
         if buf:
-            print('>>>>>> Flushing buffer:')
+            print(">>>>>> Flushing buffer:")
             print(buf)
-            print('>>>>>> End of Buffer <<<<<<')
+            print(">>>>>> End of Buffer <<<<<<")
         else:
-            print('>>>>>> No buffered output <<<<<<')
+            print(">>>>>> No buffered output <<<<<<")
 
     def set_verbosity(self, verbosity: int) -> None:
         """Set the verbosity."""
         self._verbose = verbosity
-        self._prefix = '      ' if verbosity > 0 else ''
+        self._prefix = "      " if verbosity > 0 else ""
 
     @staticmethod
     def show_verbosity_level() -> None:
         if Printer.instance()._print_at_verbosity_level(3):
-            verbose('Verbose output enabled.')
-            info('Info output enabled.')
-            debug('Debug output enabled.')
-            trace('Trace output enabled.')
+            verbose("Verbose output enabled.")
+            info("Info output enabled.")
+            debug("Debug output enabled.")
+            trace("Trace output enabled.")
 
     def _print_to_buffer(self, *args: str) -> None:
         buf = StringIO()
@@ -175,54 +175,60 @@ class Printer:
 
     def h1(self, *args, verbosity: int = 0) -> None:
         """Print big headline."""
-        intro = '\n\n{}============================================{}'\
-                .format(self._h1_suffix, self._ansi_reset)
-        prefix = '{}== '.format(self._h1_suffix)
-        outro = '{}============================================'\
-                .format(self._h1_suffix, self._ansi_reset)
+        intro = "\n\n{}============================================{}".format(
+            self._h1_suffix, self._ansi_reset
+        )
+        prefix = "{}== ".format(self._h1_suffix)
+        outro = "{}============================================".format(
+            self._h1_suffix, self._ansi_reset
+        )
         self._print(intro, verbosity=verbosity)
         self._print(prefix, *args, self._ansi_reset, verbosity=verbosity)
         self._print(outro, verbosity=verbosity)
         self._print(verbosity=verbosity)
-        self._buffer = ''
+        self._buffer = ""
 
     def h2(self, *args: str, verbosity: int = 0) -> None:
         """Print a headline."""
-        intro = '\n{}******{}'.format(self._h_prefix, self._h1_suffix)
+        intro = "\n{}******{}".format(self._h_prefix, self._h1_suffix)
         self._print(intro, *args, self._ansi_reset, verbosity=verbosity)
 
     def h3(self, *args: str, verbosity: int = 0) -> None:
         """Print a subheading."""
-        intro = '\n{}******{}'.format(self._h_prefix, self._ansi_reset)
+        intro = "\n{}******{}".format(self._h_prefix, self._ansi_reset)
         self._print(intro, *args, verbosity=verbosity)
 
     def error(self, *args: str, verbosity: int = 0) -> None:
         """Print error message."""
-        intro = '{}ERROR:'.format(self._error_prefix)
+        intro = "{}ERROR:".format(self._error_prefix)
         self._print(intro, *args, self._ansi_reset, verbosity=verbosity)
 
     def warn(self, *args: str, verbosity: int = 0) -> None:
         """Print warning message."""
-        intro = '{}warn: '.format(self._warn_prefix)
+        intro = "{}warn: ".format(self._warn_prefix)
         self._print(intro, *args, self._ansi_reset, verbosity=verbosity)
 
     def success(self, *args: str, verbosity: int = 0) -> None:
         """Print success message."""
-        intro = '{}  OK  {}'.format(self._ok_prefix, self._ok_suffix)
+        intro = "{}  OK  {}".format(self._ok_prefix, self._ok_suffix)
         self._print(intro, *args, self._ansi_reset, verbosity=verbosity)
-        self._buffer = ''
+        self._buffer = ""
 
-    def fail(self, *args: str, verbosity: int = 0,
-             force_exit: bool = True, ignore: bool = False) -> None:
+    def fail(
+        self,
+        *args: str,
+        verbosity: int = 0,
+        force_exit: bool = True,
+        ignore: bool = False
+    ) -> None:
         """Print fail message."""
         if ignore:
-            intro = '{} fail {}'.format(self._ig_fail_prefix,
-                                        self._ig_fail_suffix)
-            self._print(intro, *args, '(ignored)', self._ansi_reset,
-                        verbosity=verbosity)
+            intro = "{} fail {}".format(self._ig_fail_prefix, self._ig_fail_suffix)
+            self._print(
+                intro, *args, "(ignored)", self._ansi_reset, verbosity=verbosity
+            )
         else:
-            intro = '{} FAIL {}'.format(self._fail_prefix,
-                                        self._fail_suffix)
+            intro = "{} FAIL {}".format(self._fail_prefix, self._fail_suffix)
             self._print(intro, *args, self._ansi_reset, verbosity=verbosity)
             if force_exit:
                 sys.exit(1)
@@ -237,15 +243,15 @@ class Printer:
 
     def info(self, *args: str) -> None:
         """Print even more verbose."""
-        intro = '{}......{}'.format(self._extra_prefix, self._extra_suffix)
+        intro = "{}......{}".format(self._extra_prefix, self._extra_suffix)
         self._print(intro, *args, self._ansi_reset, verbosity=2)
 
     def debug(self, *args: str) -> None:
         """Print if debug is set."""
-        intro = '{}------{}'.format(self._extra_prefix, self._extra_suffix)
+        intro = "{}------{}".format(self._extra_prefix, self._extra_suffix)
         self._print(intro, *args, self._ansi_reset, verbosity=3)
 
     def trace(self, *args: str) -> None:
         """Print trace messsages."""
-        intro = '{}++++++{}'.format(self._extra_prefix, self._extra_suffix)
+        intro = "{}++++++{}".format(self._extra_prefix, self._extra_suffix)
         self._print(intro, *args, self._ansi_reset, verbosity=4)

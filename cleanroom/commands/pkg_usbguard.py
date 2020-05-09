@@ -19,51 +19,81 @@ class PkgAvahiCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('pkg_usbguard',
-                         help_string='Install usbguard',
-                         file=__file__, **services)
+        super().__init__(
+            "pkg_usbguard", help_string="Install usbguard", file=__file__, **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
         self._validate_no_arguments(location, *args, **kwargs)
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
-        self._execute(location, system_context, 'pacman', 'usbguard')
+        self._execute(location, system_context, "pacman", "usbguard")
 
         # Do setup:
         # enable the daemon (actually set up socket activation)
-        self._execute(location.next_line(), system_context,
-                      'systemd_enable', 'usbguard-dbus.service')
+        self._execute(
+            location.next_line(),
+            system_context,
+            "systemd_enable",
+            "usbguard-dbus.service",
+        )
 
-        create_file(system_context, '/usr/lib/tmpfiles.d/usbguard.conf',
-                    textwrap.dedent('''\
+        create_file(
+            system_context,
+            "/usr/lib/tmpfiles.d/usbguard.conf",
+            textwrap.dedent(
+                """\
                     d /var/log/usbguard 0750 root root - -
 
                     d /var/lib/usbguard 0750 root root - -
                     d /var/lib/usbguard/IPCAccessControl.d 0755 root root - -
                     f /var/lib/usbguard/rules.conf 0600 root root - -
-                    ''').encode('utf-8'))
+                    """
+            ).encode("utf-8"),
+        )
 
-        self._execute(location.next_line(), system_context,
-                      'sed', '/RuleFile=\/etc/ cRuleFile=/var/lib/usbguard/rules.conf',
-                      '/etc/usbguard/usbguard-daemon.conf')
-        self._execute(location.next_line(), system_context,
-                      'sed', '/IPCAccessControlFiles=\/etc/ cIPCAccessControlFiles=/var/lib/usbguard/IPCAccessControl.d',
-                       '/etc/usbguard/usbguard-daemon.conf')
+        self._execute(
+            location.next_line(),
+            system_context,
+            "sed",
+            "/RuleFile=\/etc/ cRuleFile=/var/lib/usbguard/rules.conf",
+            "/etc/usbguard/usbguard-daemon.conf",
+        )
+        self._execute(
+            location.next_line(),
+            system_context,
+            "sed",
+            "/IPCAccessControlFiles=\/etc/ cIPCAccessControlFiles=/var/lib/usbguard/IPCAccessControl.d",
+            "/etc/usbguard/usbguard-daemon.conf",
+        )
 
-        remove(system_context,
-               '/etc/usbguard/rules.conf',
-               '/etc/usbguard/IPCAccessControl.d',
-               recursive=True)
+        remove(
+            system_context,
+            "/etc/usbguard/rules.conf",
+            "/etc/usbguard/IPCAccessControl.d",
+            recursive=True,
+        )
 
         # Fix for https://github.com/USBGuard/usbguard/issues/287
-        makedirs(system_context, '/usr/lib/systemd/system/usbguard.service.d')
-        create_file(system_context, '/usr/lib/systemd/system/usbguard.service.d/bugfix.conf',
-                    textwrap.dedent('''\
+        makedirs(system_context, "/usr/lib/systemd/system/usbguard.service.d")
+        create_file(
+            system_context,
+            "/usr/lib/systemd/system/usbguard.service.d/bugfix.conf",
+            textwrap.dedent(
+                """\
                     [Service]
                     CapabilityBoundingSet=CAP_DAC_OVERRIDE
                     ReadWritePaths=-/var/lib/usbguard/rules.conf
-                    ''').encode('utf-8'))
+                    """
+            ).encode("utf-8"),
+        )

@@ -19,34 +19,53 @@ class TarCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('tar',
-                         syntax='<SOURCE> <TARGET> '
-                         '[to_outside=False] [compress=False] '
-                         '[work_directory=<DIR>]',
-                         help_string='Create a tarball.',
-                         file=__file__, **services)
+        super().__init__(
+            "tar",
+            syntax="<SOURCE> <TARGET> "
+            "[to_outside=False] [compress=False] "
+            "[work_directory=<DIR>]",
+            help_string="Create a tarball.",
+            file=__file__,
+            **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
-        self._validate_args_exact(location, 2,
-                                  '"{}" needs a source and a target.', *args)
-        self._validate_kwargs(location,
-                              ('to_outside', 'compress', 'work_directory',),
-                              **kwargs)
+        self._validate_args_exact(
+            location, 2, '"{}" needs a source and a target.', *args
+        )
+        self._validate_kwargs(
+            location, ("to_outside", "compress", "work_directory",), **kwargs
+        )
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
-        work_directory = kwargs.get('work_directory', '/')
+        work_directory = kwargs.get("work_directory", "/")
         source = system_context.file_name(os.path.join(work_directory, args[0]))
 
-        to_outside = kwargs.get('to_outside', False)
+        to_outside = kwargs.get("to_outside", False)
 
-        target = args[1] if to_outside \
+        target = (
+            args[1]
+            if to_outside
             else system_context.file_name(os.path.join(work_directory, args[1]))
+        )
         assert os.path.isabs(target)
 
-        arguments = ['-cz'] if kwargs.get('compress', False) else ['-c']
-        run(self._binary(Binaries.TAR), *arguments, '-f', target, source,
-            work_directory=work_directory)
+        arguments = ["-cz"] if kwargs.get("compress", False) else ["-c"]
+        run(
+            self._binary(Binaries.TAR),
+            *arguments,
+            "-f",
+            target,
+            source,
+            work_directory=work_directory
+        )

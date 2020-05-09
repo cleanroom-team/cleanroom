@@ -20,26 +20,39 @@ class PkgNginxCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('pkg_nginx', syntax='http=False https=True',
-                         help_string='Setup nginx web server.',
-                         file=__file__, **services)
+        super().__init__(
+            "pkg_nginx",
+            syntax="http=False https=True",
+            help_string="Setup nginx web server.",
+            file=__file__,
+            **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
         self._validate_no_args(location, *args)
-        self._validate_kwargs(location, ('http', 'https',), **kwargs)
-        self._require_kwargs(location, ('http', 'https',), **kwargs)
+        self._validate_kwargs(location, ("http", "https",), **kwargs)
+        self._require_kwargs(location, ("http", "https",), **kwargs)
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
-        self._execute(location, system_context, 'pacman', 'nginx')
+        self._execute(location, system_context, "pacman", "nginx")
 
         # Do setup:
         # Fix missing symlink:
-        create_file(system_context, '/etc/nginx/dhparams.pem',
-                    textwrap.dedent('''\
+        create_file(
+            system_context,
+            "/etc/nginx/dhparams.pem",
+            textwrap.dedent(
+                """\
                     -----BEGIN DH PARAMETERS-----
                     MIIBCAKCAQEAtiVyRgTKjub6YmPwk7YTp+CL6OG2zHFdUBMEUcGEsfHjPB/OXxQV
                     iv4tHQeOxVSoiwZi9u/zWbbttpHsAXMTJsq9EzDi7uQie8iBlOOHjK7hx7LNIABJ
@@ -48,10 +61,16 @@ class PkgNginxCommand(Command):
                     w4oadWDreQXxTjaq0kowz9hTk/eRgnnpb0NwZb4fTJ8oYo8m0yTHoeIWFrEDhBGR
                     30DFtTj6OKkkfz4tKJbcIr5+uJQZuqoXSwIBAg==
                     -----END DH PARAMETERS-----
-                    ''').encode('utf-8'), mode=0o640)
+                    """
+            ).encode("utf-8"),
+            mode=0o640,
+        )
 
-        create_file(system_context, '/etc/nginx/nginx.conf',
-                    textwrap.dedent('''\
+        create_file(
+            system_context,
+            "/etc/nginx/nginx.conf",
+            textwrap.dedent(
+                """\
                     user html;
                     worker_processes  1;
                     
@@ -89,40 +108,76 @@ class PkgNginxCommand(Command):
                     
                         include sites-enabled/*;
                     }
-                    ''').encode('utf-8'), mode=0o644, force=True)
+                    """
+            ).encode("utf-8"),
+            mode=0o644,
+            force=True,
+        )
 
-        os.makedirs(system_context.file_name('/usr/lib/systemd/system/nginx.service.d'))
-        self._execute(location.next_line(), system_context,
-                      'systemd_harden_unit', 'nginx.service',
-                      CapabilityBoundingSet='IGNORE',
-                      NoNewPrivileges=False,
-                      PrivateUsers=False)
+        os.makedirs(system_context.file_name("/usr/lib/systemd/system/nginx.service.d"))
+        self._execute(
+            location.next_line(),
+            system_context,
+            "systemd_harden_unit",
+            "nginx.service",
+            CapabilityBoundingSet="IGNORE",
+            NoNewPrivileges=False,
+            PrivateUsers=False,
+        )
 
-        os.makedirs(system_context.file_name('/etc/nginx/sites-available'))
-        os.makedirs(system_context.file_name('/etc/nginx/sites-enabled'))
-        if kwargs.get('https', True):
-            os.makedirs(system_context.file_name('/etc/nginx/ssl'))
+        os.makedirs(system_context.file_name("/etc/nginx/sites-available"))
+        os.makedirs(system_context.file_name("/etc/nginx/sites-enabled"))
+        if kwargs.get("https", True):
+            os.makedirs(system_context.file_name("/etc/nginx/ssl"))
 
         # enable the daemon (actually set up socket activation)
-        self._execute(location.next_line(), system_context,
-                      'systemd_enable', 'nginx.service')
+        self._execute(
+            location.next_line(), system_context, "systemd_enable", "nginx.service"
+        )
 
         # Open the firewall for it:
-        if kwargs.get('http', False):
-            self._execute(location.next_line(), system_context,
-                          'net_firewall_open_port', '80',
-                          protocol='tcp', comment='Nginx')
-        if kwargs.get('https', True):
-            self._execute(location.next_line(), system_context,
-                          'net_firewall_open_port', '443',
-                          protocol='tcp', comment='Nginx')
+        if kwargs.get("http", False):
+            self._execute(
+                location.next_line(),
+                system_context,
+                "net_firewall_open_port",
+                "80",
+                protocol="tcp",
+                comment="Nginx",
+            )
+        if kwargs.get("https", True):
+            self._execute(
+                location.next_line(),
+                system_context,
+                "net_firewall_open_port",
+                "443",
+                protocol="tcp",
+                comment="Nginx",
+            )
 
-            self._add_hook(location.next_line(), system_context,
-                           '_teardown', 'chown', '/etc/nginx/ssl',
-                           recursive=True, user='root', group='root')
-            self._add_hook(location.next_line(), system_context,
-                           '_teardown', 'chmod', 0o644,
-                           '/etc/nginx/ssl/*-cert.pem')
-            self._add_hook(location.next_line(), system_context,
-                           '_teardown', 'chmod', 0o640,
-                           '/etc/nginx/ssl/*-key.pem')
+            self._add_hook(
+                location.next_line(),
+                system_context,
+                "_teardown",
+                "chown",
+                "/etc/nginx/ssl",
+                recursive=True,
+                user="root",
+                group="root",
+            )
+            self._add_hook(
+                location.next_line(),
+                system_context,
+                "_teardown",
+                "chmod",
+                0o644,
+                "/etc/nginx/ssl/*-cert.pem",
+            )
+            self._add_hook(
+                location.next_line(),
+                system_context,
+                "_teardown",
+                "chmod",
+                0o640,
+                "/etc/nginx/ssl/*-key.pem",
+            )

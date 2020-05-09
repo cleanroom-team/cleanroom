@@ -20,61 +20,95 @@ class PkgSystemdHomedCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('pkg_systemd_homed',
-                         syntax="<PRIVATE_KEY_DATA> <PUBLIC_KEY_DATA>",
-                         help_string='Setup systemd-homed.',
-                         file=__file__, **services)
+        super().__init__(
+            "pkg_systemd_homed",
+            syntax="<PRIVATE_KEY_DATA> <PUBLIC_KEY_DATA>",
+            help_string="Setup systemd-homed.",
+            file=__file__,
+            **services
+        )
 
-    def validate(self, location: Location,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
-        self._validate_args_exact(location, 2,
-                                  '"{}" requires the private key data '
-                                  'and the public key data', *args)
+        self._validate_args_exact(
+            location,
+            2,
+            '"{}" requires the private key data ' "and the public key data",
+            *args
+        )
         self._validate_kwargs(location, (), **kwargs)
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: typing.Any, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: typing.Any,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
 
         private_key = args[0]
         public_key = args[1]
 
-        location.set_description('Validate keys')
+        location.set_description("Validate keys")
         if not "BEGIN PRIVATE KEY" in private_key:
-            raise GenerateError("Private key blob is not a private key.",
-                                location=location)
+            raise GenerateError(
+                "Private key blob is not a private key.", location=location
+            )
 
         if not "BEGIN PUBLIC KEY" in public_key:
-            raise GenerateError("Public key blob is not a public key.",
-                                location=location)
-        
+            raise GenerateError(
+                "Public key blob is not a public key.", location=location
+            )
+
         # enable the daemon (actually set up socket activation)
-        location.set_description('Enableing homed service')
-        self._execute(location.next_line(), system_context,
-                      'systemd_enable', 'systemd-homed.service')
+        location.set_description("Enableing homed service")
+        self._execute(
+            location.next_line(),
+            system_context,
+            "systemd_enable",
+            "systemd-homed.service",
+        )
 
         # Install keys into /usr:
-        location.set_description('Setup keys')
-        makedirs(system_context, '/usr/share/factory/var/lib/systemd/home',
-                 mode=0o700)
-        create_file(system_context, '/usr/share/factory/var/lib/systemd/home/local.private',
-                    private_key.encode('utf-8'), mode=0o600)
-        create_file(system_context, '/usr/share/factory/var/lib/systemd/home/local.public',
-                    public_key.encode('utf-8'), mode=0o600)
-        chmod(system_context, 0o600, '/usr/share/factory/var/lib/systemd/home/*')
-        chown(system_context, 0, 0, '/usr/share/factory/var/lib/systemd/home/*')
+        location.set_description("Setup keys")
+        makedirs(system_context, "/usr/share/factory/var/lib/systemd/home", mode=0o700)
+        create_file(
+            system_context,
+            "/usr/share/factory/var/lib/systemd/home/local.private",
+            private_key.encode("utf-8"),
+            mode=0o600,
+        )
+        create_file(
+            system_context,
+            "/usr/share/factory/var/lib/systemd/home/local.public",
+            public_key.encode("utf-8"),
+            mode=0o600,
+        )
+        chmod(system_context, 0o600, "/usr/share/factory/var/lib/systemd/home/*")
+        chown(system_context, 0, 0, "/usr/share/factory/var/lib/systemd/home/*")
 
         # Set up copying of keys to var:
-        create_file(system_context, '/usr/lib/tmpfiles.d/systemd-homed.conf',
-                    textwrap.dedent('''\
+        create_file(
+            system_context,
+            "/usr/lib/tmpfiles.d/systemd-homed.conf",
+            textwrap.dedent(
+                """\
                     C /var/lib/systemd/home - - - - 
-                    ''').encode('utf-8'), mode=0o644)
+                    """
+            ).encode("utf-8"),
+            mode=0o644,
+        )
 
         # Fix up pam:
-        location.set_description('Setting up PAM for homed')
-        create_file(system_context, '/etc/pam.d/system-auth',
-                    textwrap.dedent('''\
+        location.set_description("Setting up PAM for homed")
+        create_file(
+            system_context,
+            "/etc/pam.d/system-auth",
+            textwrap.dedent(
+                """\
                     #%PAM-1.0
 
                     auth     [success=1 new_authtok_reqd=1 ignore=ignore user_unknown=ignore default=bad] pam_systemd_home.so
@@ -95,4 +129,8 @@ class PkgSystemdHomedCommand(Command):
                     session  [success=1 new_authtok_reqd=1 ignore=ignore user_unknown=ignore default=bad] pam_systemd_home.so
                     session  required   pam_unix.so
                     session  optional   pam_permit.so
-                    ''').encode('utf-8'), mode=0o644, force=True)
+                    """
+            ).encode("utf-8"),
+            mode=0o644,
+            force=True,
+        )

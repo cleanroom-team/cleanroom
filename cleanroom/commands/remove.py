@@ -18,20 +18,30 @@ class RemoveCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        super().__init__('remove',
-                         syntax='<FILE_LIST> [force=True] [recursive=True] [outside=False]',
-                         help_string='remove files within the system.', file=__file__,
-                         **services)
+        super().__init__(
+            "remove",
+            syntax="<FILE_LIST> [force=True] [recursive=True] [outside=False]",
+            help_string="remove files within the system.",
+            file=__file__,
+            **services
+        )
 
-    def validate(self, location: Location,
-                 *args: str, **kwargs: typing.Any) -> None:
+    def validate(self, location: Location, *args: str, **kwargs: typing.Any) -> None:
         """Validate the arguments."""
-        self._validate_args_at_least(location, 1,
-                                     '"{}" needs at least one file or '
-                                     'directory to remove.', *args)
-        self._validate_kwargs(location, ('force', 'recursive', 'outside'), **kwargs)
+        self._validate_args_at_least(
+            location,
+            1,
+            '"{}" needs at least one file or ' "directory to remove.",
+            *args
+        )
+        self._validate_kwargs(location, ("force", "recursive", "outside"), **kwargs)
 
-    def __call__(self, location: Location, system_context: SystemContext,
-                 *args: str, **kwargs: typing.Any) -> None:
+    def __call__(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *args: str,
+        **kwargs: typing.Any
+    ) -> None:
         """Execute command."""
         remove(system_context, *args, **kwargs)
