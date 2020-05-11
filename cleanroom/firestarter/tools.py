@@ -6,7 +6,7 @@
 """
 
 
-from cleanroom.printer import trace, verbose
+from cleanroom.printer import trace, verbose, debug
 import cleanroom.helper.disk as disk
 import cleanroom.helper.mount as mount
 
@@ -31,7 +31,22 @@ def run(
     env["LC_ALL"] = "en_US.UTF-8"
 
     cwd = work_directory or None
-    return subprocess.run(args, env=env, capture_output=True, check=check, cwd=cwd)
+    result = subprocess.run(args, env=env, capture_output=True, check=False, cwd=cwd)
+    if result.returncode != 0:
+        debug(
+            "Borg returned with exit code {}:\nSTDOUT:\n{}\nSTDERR:\n{}.".format(
+                result.returncode, result.stdout, result.stderr
+            )
+        )
+    if result.returncode == 2 and check:
+        raise subprocess.CalledProcessError(
+            returncode=result.returncode,
+            cmd=args,
+            output=result.stdout,
+            stderr=result.stderr,
+        )
+
+    return result
 
 
 def run_borg(*args, work_directory: str = "") -> subprocess.CompletedProcess:
