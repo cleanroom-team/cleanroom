@@ -175,6 +175,7 @@ class Device:
             elif os.path.exists(dev):
                 warn('"{}" exists but is no block device!'.format(dev))
             sleep(0.5)
+        debug("Could not find device node {}.".format(dev))
         return False
 
 

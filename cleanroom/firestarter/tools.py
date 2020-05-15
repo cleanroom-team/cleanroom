@@ -31,6 +31,7 @@ def run(
     env["LC_ALL"] = "en_US.UTF-8"
 
     cwd = work_directory or None
+    trace('Running borg: "{}"...'.format('" "'.join(args)))
     result = subprocess.run(args, env=env, capture_output=True, check=False, cwd=cwd)
     if result.returncode != 0:
         debug(
