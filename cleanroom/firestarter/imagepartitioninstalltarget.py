@@ -47,10 +47,10 @@ class ImagePartitionInstallTarget(InstallTarget):
         parser.add_argument(
             "--image-options",
             action="store",
-            default="subvolid=.images",
+            default="subvol=/.images",
             dest="image_options",
             help="Options used to mount image filessystem "
-            "[defaults to: subvol=.images]",
+            "[defaults to: subvol=/.images]",
         )
 
     def __call__(self, parse_result: typing.Any) -> None:
