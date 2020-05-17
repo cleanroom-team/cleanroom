@@ -179,8 +179,6 @@ def run_qemu(
         "cores={}".format(parse_result.cores),
         "-machine",
         "pc-q35-2.12",
-        "-accel",
-        "kvm",
         "-m",
         "size={}".format(parse_result.memory),  # memory
         "-object",
