@@ -65,6 +65,8 @@ net_firewall_configure
 # Create a MOTD file:
 create /etc/motd <<<<For authorized use only...
 
+Root password is "root".
+
 >>>> force=True mode=0o644
 copy /etc/motd /etc/issue force=True # and copy it to issues
 
@@ -117,5 +119,5 @@ add_hook export
      message='remove locales from help'
 
 # root password is 'root'
-usermod root password='$6$ZfGdz/l9rvmvD8Wy$VP6uUeWRxvfd5OAeKDD/XQ1L9657o3AO3jxGepAvku96XgLq0OUhLCCFvd32lbMIbyYR1MOi59haRU7yT28/N.'
+usermod root password='$6$vQcfU8MejvgmkP0w$8NJw8S9/5LKwPQQcFTM46E3OkFjy9Xw8FNK19etphO6XlC.gkNn/voQqEHqlUtTrhGvoLBMVMlXpfRpFKE.aX/'
 
