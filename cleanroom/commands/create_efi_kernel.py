@@ -72,7 +72,7 @@ class CreateEfiKernelCommand(Command):
     ) -> None:
         """Validate the arguments."""
         self._validate_args_exact(
-            location, 1, '"{}" needs a efi kernel ' "image to create.", *args
+            location, 1, '"{}" needs a efi kernel image to create.', *args
         )
         self._validate_kwargs(
             location, ("kernel", "initrd_directory", "commandline"), **kwargs
