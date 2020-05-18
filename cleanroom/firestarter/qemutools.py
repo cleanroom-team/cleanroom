@@ -10,8 +10,6 @@ import os
 from shutil import copyfile
 import typing
 
-_append_hdd_counter = 0
-
 
 def _append_network(hostname, *, hostfwd=[], mac="", net="", host=""):
     hostfwd_args = ["hostfwd={}".format(p) for p in hostfwd]
@@ -34,20 +32,27 @@ def _append_network(hostname, *, hostfwd=[], mac="", net="", host=""):
     ]
 
 
-def _append_hdd(bootindex, disk):
+def _append_hdd(bootindex, counter, disk):
     disk_parts = disk.split(":")
+    usb_disk = "usb" in disk_parts
+    if usb_disk:
+        disk_parts.remove("usb")
+
     if len(disk_parts) < 2:
         disk_parts.append("qcow2")
     assert len(disk_parts) == 2
 
-    c = _append_hdd_counter
-    _append_hdd_counter += 1
+    c = counter
+
+    driver = "virtio-blk-pci"
+    if usb_disk:
+        driver = "usb-storage"
 
     return [
         "-drive",
         "file={},format={},if=none,id=disk{}".format(disk_parts[0], disk_parts[1], c),
         "-device",
-        "virtio-blk-pci,drive=disk{},bootindex={}".format(c, bootindex),
+        "{},drive=disk{},bootindex={}".format(driver, c, bootindex),
     ]
 
 
@@ -185,6 +190,7 @@ def run_qemu(
         "-device",
         "virtio-rng-pci,rng=rng0,max-bytes=512,period=1000",
         # Random number generator
+        "-usb",
     ]
 
     qemu_args += _append_network(
@@ -196,13 +202,15 @@ def run_qemu(
     )
 
     boot_index = 0
-    _append_hdd_counter = 0
+    hdd_counter = 0
     for disk in drives:
-        qemu_args += _append_hdd(boot_index, disk)
+        qemu_args += _append_hdd(boot_index, hdd_counter, disk)
         boot_index += 1
+        hdd_counter += 1
     for disk in parse_result.disks:
-        qemu_args += _append_hdd(boot_index, disk)
+        qemu_args += _append_hdd(boot_index, hdd_counter, disk)
         boot_index += 1
+        hdd_counter += 1
 
     for fs in parse_result.ro_fs_es:
         qemu_args += _append_fs(fs, read_only=True)

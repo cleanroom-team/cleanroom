@@ -35,11 +35,19 @@ class QemuBootInstallTarget(InstallTarget):
             extracted_image = os.path.join(tempdir, "clrm_{}".format(extracted_version))
             assert os.path.isfile(extracted_image)
 
+            clrm_device = "{}:raw".format(extracted_image)
+            if parse_result.usb_clrm:
+                clrm_device += ":usb"
+
             qemu_tool.run_qemu(
-                parse_result,
-                drives=["{}:raw".format(extracted_image)],
-                work_directory=tempdir,
+                parse_result, drives=[clrm_device], work_directory=tempdir,
             )
 
     def setup_subparser(self, parser: typing.Any) -> None:
         qemu_tool.setup_parser_for_qemu(parser)
+        parser.add_argument(
+            "--usb-clrm",
+            dest="usb_clrm",
+            action="store_true",
+            help="Put CLRM onto a USB stick",
+        )

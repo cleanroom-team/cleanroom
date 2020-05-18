@@ -1,0 +1,12 @@
+# A very basic system that should boot
+
+based_on type-baremetal
+
+set_hostname repart pretty=Repart
+set_machine_id cccccccccccccccccccccccccccccccc
+
+add_partition 10-efi type=esp minSize=128M maxSize=1G weight=250
+add_partition 20-swap type=swap minSize=1G maxSize=4G weight=250 priority=1000
+add_partition 30-rest type=linux-generic label=fs_btrfs
+
+export borg_repository
