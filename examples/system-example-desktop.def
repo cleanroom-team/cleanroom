@@ -52,8 +52,6 @@ LABEL=fs_btrfs  /mnt/images        btrfs compress=zstd:15,subvol=/.images,noauto
 create /etc/modules-load.d/bluetooth.conf <<<<btusb
 >>>> mode=0o644
 
-set_root_device /dev/mapper/root
-
 # Export a image:
 ## This will run create_image and export the result into the provided borg repository:
 export borg_repository

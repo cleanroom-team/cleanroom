@@ -12,6 +12,4 @@ Gateway=10.42.0.1
 DNS=10.42.0.1
 >>>>
 
-set_root_device /dev/mapper/root
-
 export borg_repository
