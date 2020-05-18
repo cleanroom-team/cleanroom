@@ -77,16 +77,14 @@ def _create_dmverity(
 
 
 def _setup_kernel_commandline(
-    base_cmdline: str, squashfs_device: str, verity_device: str, root_hash: str
+    base_cmdline: str, root_hash: str
 ) -> str:
     cmdline = " ".join(
         (
             base_cmdline,
-            "systemd.verity=yes",
-            "systemd.verity_root_data={}".format(squashfs_device),
-            "systemd.verity_root_hash={}".format(verity_device),
+            "root=/dev/mapper/root",
             "roothash={}".format(root_hash),
-            "FOO",
+            "FOO",  # One of my mainboards eats the last letter of the last argument:-/
         )
     )
     return cmdline
@@ -246,14 +244,6 @@ class ExportCommand(Command):
         """Execute command."""
         self._setup(*args, **kwargs)
 
-        if not system_context.has_substitution("ROOT_DEVICE"):
-            self._execute(
-                location.next_line(),
-                system_context,
-                "set_root_device",
-                "/dev/mapper/root",
-            )
-
         h2('Exporting system "{}".'.format(system_context.system_name))
         debug("Running Hooks.")
         self._run_all_exportcommand_hooks(system_context)
@@ -323,13 +313,11 @@ class ExportCommand(Command):
         location: Location,
         system_context: SystemContext,
         base_cmdline: str,
-        squashfs_device: str,
-        verity_device: str,
         root_hash: str,
         target_directory: str,
     ) -> str:
         full_cmdline = _setup_kernel_commandline(
-            base_cmdline, squashfs_device, verity_device, root_hash
+            base_cmdline, root_hash
         )
         kernel_name = _kernel_name(system_context)
 
@@ -358,9 +346,6 @@ class ExportCommand(Command):
             timestamp=system_context.timestamp,
             veritysetup_command=self._binary(Binaries.VERITYSETUP),
         )
-
-        verity_device = "UUID={}".format(verity_uuid)
-        squashfs_device = "PARTLABEL={}".format(_root_part_label(system_context))
 
         cmdline = system_context.substitution("KERNEL_CMDLINE", "")
         cmdline = " ".join(

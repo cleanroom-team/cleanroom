@@ -381,7 +381,7 @@ class CreateInitrdCommand(Command):
                                  
                                  help() {
                                      cat <<HELPEOF
-                                 This hook allows for dm-verity setup via systemd.verity=true
+                                 This hook allows for dm-verity setup
                                  HELPEOF
                                  }
                                  

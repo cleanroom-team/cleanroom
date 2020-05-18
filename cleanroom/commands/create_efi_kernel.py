@@ -97,12 +97,6 @@ class CreateEfiKernelCommand(Command):
         **kwargs: typing.Any
     ) -> None:
         """Execute command."""
-
-        if system_context.substitution("ROOT_DEVICE") is None:
-            GenerateError(
-                "ROOT_DEVICE must be set when creating EFI kernel.", location=location
-            )
-
         output = args[0]
         kernel = kwargs.get("kernel", "")
         initrd_directory = kwargs.get(
