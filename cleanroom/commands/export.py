@@ -76,9 +76,7 @@ def _create_dmverity(
     return verity_file, uuid, root_hash
 
 
-def _setup_kernel_commandline(
-    base_cmdline: str, root_hash: str
-) -> str:
+def _setup_kernel_commandline(base_cmdline: str, root_hash: str) -> str:
     cmdline = " ".join(
         (
             base_cmdline,
@@ -316,9 +314,7 @@ class ExportCommand(Command):
         root_hash: str,
         target_directory: str,
     ) -> str:
-        full_cmdline = _setup_kernel_commandline(
-            base_cmdline, root_hash
-        )
+        full_cmdline = _setup_kernel_commandline(base_cmdline, root_hash)
         kernel_name = _kernel_name(system_context)
 
         self._create_efi_kernel(location, system_context, kernel_name, full_cmdline)
@@ -358,8 +354,6 @@ class ExportCommand(Command):
                 location,
                 system_context,
                 cmdline,
-                squashfs_device,
-                verity_device,
                 root_hash,
                 system_context.cache_directory,
             )
