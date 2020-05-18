@@ -16,12 +16,9 @@ set KERNEL_CMDLINE 'quiet'
 
 # sed and gzip are needed for locale-gen
 # which is needed by some of the pacman hooks
-# dbus-broker is actually pretty optional, but I prefer
 # it over standard dbus
 pacstrap config=type-base/pacstrap.conf
     ca-certificates
-
-    dbus-broker
 
     systemd gnutls
 
@@ -55,10 +52,6 @@ ensure_ldconfig
 ensure_no_kernel_install
 ensure_no_update_service
 ensure_no_sysusers
-
-### Use dbus-broker:
-systemd_enable dbus-broker.service
-systemd_enable dbus-broker.service user=True
 
 ## Remove dbus-daemon and surrounding infrostructure:
 remove /usr/bin/dbus-daemon /usr/lib/systemd/system/dbus.service
