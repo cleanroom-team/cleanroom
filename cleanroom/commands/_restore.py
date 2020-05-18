@@ -50,6 +50,9 @@ class RestoreCommand(Command):
 
         if not os.path.isdir(system_context.scratch_directory):
             btrfs_helper.create_subvolume(system_context.scratch_directory)
+            btrfs_helper.set_property(
+                system_context.scratch_directory, name="compression", value="none"
+            )
 
         btrfs_helper.create_snapshot(
             os.path.join(system_context.base_storage_directory, "meta"),

@@ -22,6 +22,11 @@ class BtrfsHelper:
         trace("BTRFS: Create subvolume {}.".format(directory))
         run(self._command, "subvolume", "create", directory, trace_output=trace)
 
+    def set_property(self, object: str, *, name: str, value: str) -> None:
+        """Create a new subvolume."""
+        trace("BTRFS: Set property {} to {} on {}.".format(name, value, object))
+        run(self._command, "property", "set", object, name, value, trace_output=trace)
+
     def create_snapshot(
         self, source: str, destination: str, *, read_only: bool = False
     ) -> None:

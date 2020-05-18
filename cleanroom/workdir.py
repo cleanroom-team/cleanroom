@@ -19,6 +19,7 @@ import typing
 def _ensure_directory(directory: str, btrfs_helper: BtrfsHelper) -> None:
     if not os.path.isdir(directory):
         btrfs_helper.create_subvolume(directory)
+        btrfs_helper.set_property(directory, name="compression", value="none")
         if not os.path.isdir(directory):
             raise PreflightError(
                 "Failed to set up work directory: " "{} not created.".format(directory)
@@ -75,7 +76,7 @@ class WorkDir:
                 trace('Using existing work directory in "{}".'.format(work_directory))
                 if not umount_all(work_directory):
                     raise PreflightError(
-                        "Failed to unmount mount in work "
+                        "Failed to unmount all in work "
                         'directory "{}".'.format(work_directory)
                     )
                 if clear_scratch_directory:
@@ -123,7 +124,7 @@ class WorkDir:
 
     def clear_scratch_directory(self) -> None:
         _clear_directory(self.scratch_directory, self._btrfs_helper)
-        self._btrfs_helper.create_subvolume(self.scratch_directory)
+        _ensure_directory(self.scratch_directory, self._btrfs_helper)
 
     @property
     def storage_directory(self) -> str:
