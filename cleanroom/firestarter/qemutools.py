@@ -10,6 +10,8 @@ import os
 from shutil import copyfile
 import typing
 
+_append_hdd_counter = 0
+
 
 def _append_network(hostname, *, hostfwd=[], mac="", net="", host=""):
     hostfwd_args = ["hostfwd={}".format(p) for p in hostfwd]
@@ -38,8 +40,8 @@ def _append_hdd(bootindex, disk):
         disk_parts.append("qcow2")
     assert len(disk_parts) == 2
 
-    c = _append_hdd.counter
-    _append_hdd.counter += 1
+    c = _append_hdd_counter
+    _append_hdd_counter += 1
 
     return [
         "-drive",
@@ -47,9 +49,6 @@ def _append_hdd(bootindex, disk):
         "-device",
         "virtio-blk-pci,drive=disk{},bootindex={}".format(c, bootindex),
     ]
-
-
-_append_hdd.counter = 0
 
 
 def _append_fs(fs, *, read_only=False):
@@ -169,7 +168,7 @@ def setup_parser_for_qemu(parser: typing.Any) -> None:
 
 def run_qemu(
     parse_result: typing.Any, *, drives: typing.List[str] = [], work_directory: str
-) -> typing.List[str]:
+):
     qemu_args = [
         "/usr/bin/qemu-system-x86_64",
         "--enable-kvm",
@@ -197,6 +196,7 @@ def run_qemu(
     )
 
     boot_index = 0
+    _append_hdd_counter = 0
     for disk in drives:
         qemu_args += _append_hdd(boot_index, disk)
         boot_index += 1

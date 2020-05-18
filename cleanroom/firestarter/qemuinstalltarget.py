@@ -52,7 +52,7 @@ def _setup_btrfs(mount_point: str):
 def create_qemu_image(
     image_path: str,
     *,
-    image_size: str,
+    image_size: int,
     image_format: str = "qcow2",
     system_name: str,
     system_version: str = "",

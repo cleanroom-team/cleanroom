@@ -101,12 +101,12 @@ class WorkDir:
             self._temp_directory.__enter__()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+    def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit a context."""
         if self._temp_directory:
             tmp_directory = self._temp_directory
             self._temp_directory = None
-            return tmp_directory.__exit__(exc_type, exc_val, exc_tb)
+            tmp_directory.__exit__(exc_type, exc_val, exc_tb)
 
         return False
 

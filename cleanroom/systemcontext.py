@@ -70,8 +70,8 @@ class SystemContext:
         h2("Creating system {}".format(self._system_name))
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
-        return False
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
 
     @property
     def timestamp(self) -> str:

@@ -587,7 +587,7 @@ def _prepare_efi_partition(
     has_kernel: bool,
     kernel_file_writer,
     *,
-    efi_emulator: str,
+    efi_emulator: typing.Optional[str],
     mbr_dev: str,
 ) -> None:
     trace("Preparing EFI partition.")

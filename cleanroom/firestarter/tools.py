@@ -23,10 +23,7 @@ import typing
 
 
 def run(
-    *args,
-    work_directory: str = "",
-    check: bool = True,
-    env: typing.Dict[str, str] = os.environ
+    *args, work_directory: str = "", check: bool = True, env: os._Environ = os.environ
 ) -> subprocess.CompletedProcess:
     env["LC_ALL"] = "en_US.UTF-8"
 
@@ -36,7 +33,9 @@ def run(
     if result.returncode != 0:
         debug(
             "Borg returned with exit code {}:\nSTDOUT:\n{}\nSTDERR:\n{}.".format(
-                result.returncode, result.stdout, result.stderr
+                result.returncode,
+                result.stdout.decode("utf-8"),
+                result.stderr.decode("utf-8"),
             )
         )
     if result.returncode == 2 and check:

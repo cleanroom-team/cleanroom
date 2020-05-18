@@ -155,7 +155,9 @@ class SystemsManager(object):
         debug('"{}" depends on "{}"'.format(system_name, base_system_name))
 
         parent_node = self._add_system(base_system_name) if base_system_name else None
-        assert not base_system_name or parent_node.system == base_system_name
+        assert not base_system_name or (
+            parent_node and parent_node.system == base_system_name
+        )
 
         node = _DependencyNode(system_name, parent_node, exec_obj_list)
 
