@@ -5,15 +5,17 @@ based_on type-bootable
 # BAREMETAL_SETUP
 pacman bridge-utils borg fish gptfdisk hdparm htop
 
-    fwupd fzf
+    fzf
 
-    sbsigntools smartmontools tinyserial wget
+    sbsigntools tinyserial wget
 
     tlp tlp-rdw acpi_call ethtool smartmontools x86_energy_perf_policy
 
     e2fsprogs xfsprogs
 
     ripgrep rsync
+
+    vim strace
 
 pkg_tmux
 
