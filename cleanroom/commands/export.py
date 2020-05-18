@@ -13,7 +13,7 @@ from cleanroom.helper.file import exists
 from cleanroom.helper.run import run
 from cleanroom.systemcontext import SystemContext
 import cleanroom.helper.disk as disk
-from cleanroom.imager import ExtraPartition, create_image, parse_extra_partitions
+from cleanroom.imager import ExtraPartition, create_image
 from cleanroom.printer import debug, h2, info, verbose
 
 
@@ -120,10 +120,7 @@ class ExportCommand(Command):
 
         self._image_format = "raw"
 
-        self._extra_partitions = []  # type: typing.List[ExtraPartition]
-        self._efi_emulator = ("",)
-        self._efi_size = 0
-        self._swap_size = 0
+        self._efi_emulator = ""
 
         self._kernel_file = ""
         self._root_partition = ""
@@ -137,9 +134,7 @@ class ExportCommand(Command):
             "export",
             syntax="REPOSITORY "
             "[efi_key=<KEY>] [efi_cert=<CERT>] "
-            "[efi_size=0M] [swap_size=0M] "
             "[efi_emulator=/path/to/Clover] "
-            "[extra_partitions=p1,p2,...] "
             "[image_format=(raw|qcow2)] "
             "[repository_compression=zstd] "
             "[repository_compression_level=5] "
@@ -162,10 +157,7 @@ class ExportCommand(Command):
             (
                 "efi_key",
                 "efi_cert",
-                "efi_size",
                 "efi_emulator",
-                "swap_size",
-                "extra_partitions",
                 "image_format",
                 "repository_compression",
                 "repository_compression_level",
@@ -234,12 +226,6 @@ class ExportCommand(Command):
         self._image_format = kwargs.get("image_format", "raw")
         self._efi_emulator = kwargs.get("efi_emulator", "")
 
-        self._extra_partitions = parse_extra_partitions(
-            kwargs.get("extra_partitions", "").split(",")
-        )
-
-        self._efi_size = disk.mib_ify(kwargs.get("efi_size", 0))
-        self._swap_size = disk.mib_ify(kwargs.get("swap_size", 0))
         self._repository_compression = kwargs.get("repository_compression", "zstd")
         self._repository_compression_level = kwargs.get(
             "repository_compression_level", 5
@@ -259,6 +245,14 @@ class ExportCommand(Command):
     ) -> None:
         """Execute command."""
         self._setup(*args, **kwargs)
+
+        if not system_context.has_substitution("ROOT_DEVICE"):
+            self._execute(
+                location.next_line(),
+                system_context,
+                "set_root_device",
+                "/dev/mapper/root",
+            )
 
         h2('Exporting system "{}".'.format(system_context.system_name))
         debug("Running Hooks.")
@@ -409,9 +403,9 @@ class ExportCommand(Command):
         create_image(
             image_filename,
             self._image_format,
-            self._extra_partitions,
-            self._efi_size,
-            self._swap_size,
+            [],
+            0,
+            0,
             efi_emulator=self._efi_emulator,
             kernel_file=self._kernel_file,
             root_partition=self._root_partition,

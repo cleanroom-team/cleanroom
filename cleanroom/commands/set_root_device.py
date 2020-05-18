@@ -44,12 +44,6 @@ class SetRootDeviceCommand(Command):
                 location=location,
             )
 
-    def _write_file(
-        self, system_context: SystemContext, file_name: str, contents: str
-    ) -> None:
-        with open(os.path.join(system_context.boot_directory, file_name), "wb") as f:
-            f.write(contents.encode("utf-8"))
-
     def __call__(
         self,
         location: Location,
@@ -70,7 +64,6 @@ class SetRootDeviceCommand(Command):
             )
 
         system_context.set_substitution(root_device_key, device)
-        self._write_file(system_context, "root_device", root_device_key)
 
         if " " in device:
             device = '"{}"'.format(device)
