@@ -134,6 +134,15 @@ def create_image_file(
     file_name: str, size: int, *, disk_format: str = "qcow2", qemu_img_command: str = ""
 ) -> None:
     assert _is_root()
+
+    if not os.path.exists(file_name):
+        trace("New image file")
+        with open(file_name, "a") as f:
+            pass
+        trace(".... image file created.")
+        run("/usr/bin/attr", "+C", file_name, returncode=None)
+        trace(".... nocow attribtue set on file (if supported).")
+
     run(
         qemu_img_command or "/usr/bin/qemu-img",
         "create",
