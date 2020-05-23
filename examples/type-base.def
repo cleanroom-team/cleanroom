@@ -29,7 +29,7 @@ pacstrap config=type-base/pacstrap.conf
     which
 
 # Make sure these files are *not* in the image:
-remove /etc/machine-id /usr/bin/init force=True
+remove /etc/machine-id /usr/bin/init /etc/crypttab /etc/fstab force=True
 
 # Remove some arch-specific files that are not needed:
 remove /usr/lib/tmpfiles.d/arch.conf
