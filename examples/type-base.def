@@ -53,9 +53,6 @@ ensure_no_kernel_install
 ensure_no_update_service
 ensure_no_sysusers
 
-## Remove dbus-daemon and surrounding infrostructure:
-remove /usr/bin/dbus-daemon /usr/lib/systemd/system/dbus.service
-
 ### Fix up permission of dm-event* units.
 chmod 0o644 /usr/lib/systemd/system/dm-event.*
 
