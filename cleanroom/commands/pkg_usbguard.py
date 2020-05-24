@@ -55,9 +55,9 @@ class PkgAvahiCommand(Command):
                 """\
                     d /var/log/usbguard 0750 root root - -
 
-                    d /var/lib/usbguard 0750 root root - -
-                    d /var/lib/usbguard/IPCAccessControl.d 0755 root root - -
-                    f /var/lib/usbguard/rules.conf 0600 root root - -
+                    d /var/etc/usbguard 0750 root root - -
+                    d /var/etc/usbguard/IPCAccessControl.d 0755 root root - -
+                    f /var/etc/usbguard/rules.conf 0600 root root - -
                     """
             ).encode("utf-8"),
         )
@@ -66,14 +66,14 @@ class PkgAvahiCommand(Command):
             location.next_line(),
             system_context,
             "sed",
-            "/RuleFile=\\/etc/ cRuleFile=/var/lib/usbguard/rules.conf",
+            "/RuleFile=\\/etc/ cRuleFile=/var/etc/usbguard/rules.conf",
             "/etc/usbguard/usbguard-daemon.conf",
         )
         self._execute(
             location.next_line(),
             system_context,
             "sed",
-            "/IPCAccessControlFiles=\\/etc/ cIPCAccessControlFiles=/var/lib/usbguard/IPCAccessControl.d",
+            "/IPCAccessControlFiles=\\/etc/ cIPCAccessControlFiles=/var/etc/usbguard/IPCAccessControl.d",
             "/etc/usbguard/usbguard-daemon.conf",
         )
 
@@ -91,9 +91,9 @@ class PkgAvahiCommand(Command):
             "/usr/lib/systemd/system/usbguard.service.d/bugfix.conf",
             textwrap.dedent(
                 """\
-                    [Service]
-                    CapabilityBoundingSet=CAP_DAC_OVERRIDE
-                    ReadWritePaths=-/var/lib/usbguard/rules.conf
-                    """
+                [Service]
+                CapabilityBoundingSet=CAP_DAC_OVERRIDE
+                ReadWritePaths=-/var/etc/usbguard/rules.conf
+                """
             ).encode("utf-8"),
         )

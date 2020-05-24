@@ -93,8 +93,8 @@ class PkgGnomeCommand(Command):
             system_context,
             "create",
             "/usr/lib/tmpfiles.d/networkmanager.conf",
-            """d /var/lib/NetworkManager 0700 root root
-d /var/lib/NetworkManager/system-connections 0750 root root
+            """d /var/etc/NetworkManager 0700 root root
+d /var/etc/NetworkManager/system-connections 0750 root root
 """,
             mode=0o644,
         )
@@ -132,7 +132,7 @@ d /var/lib/NetworkManager/system-connections 0750 root root
             location.next_line(),
             system_context,
             "mkdir",
-            "/var/lib/NetworkManager/system-connections",
+            "/var/etc/NetworkManager/system-connections",
         )
         self._execute(
             location.next_line(),
@@ -146,7 +146,7 @@ d /var/lib/NetworkManager/system-connections 0750 root root
             location.next_line(),
             system_context,
             "symlink",
-            "../../var/lib/NetworkManager/system-connections",
+            "../../var/etc/NetworkManager/system-connections",
             "system-connections",
             work_directory="/etc/NetworkManager",
         )
