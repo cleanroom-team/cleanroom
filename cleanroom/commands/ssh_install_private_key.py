@@ -24,7 +24,7 @@ class SshInstallPrivateKeyCommand(Command):
         """Constructor."""
         super().__init__(
             "ssh_install_private_key",
-            syntax="<USER> <KEYFILE>",
+            syntax="<USER> <KEYFILE> [include_public_key=False]",
             help_string="Install <KEYFILE> as private key for <USER>.",
             file=__file__,
             **services
@@ -34,9 +34,10 @@ class SshInstallPrivateKeyCommand(Command):
         self, location: Location, *args: typing.Any, **kwargs: typing.Any
     ) -> None:
         """Validate the arguments."""
-        self._validate_arguments_exact(
-            location, 2, '"{}" needs a user and a keyfile.', *args, **kwargs
+        self._validate_args_exact(
+            location, 2, '"{}" needs a user and a keyfile.', *args
         )
+        self._validate_kwargs(location, ("include_public_key",), **kwargs)
 
     def _check_or_create_directory(
         self,
@@ -113,3 +114,23 @@ class SshInstallPrivateKeyCommand(Command):
         trace("Ownership adjusted.")
         chmod(system_context, 0o600, installed_key_file)
         trace("Mode adjusted.")
+
+        if kwargs.get("include_public_key", False):
+            public_key = key_file + ".pub"
+            installed_public_key = os.path.join(
+                ssh_directory, os.path.basename(public_key)
+            )
+
+            self._execute(
+                location.next_line(),
+                system_context,
+                "copy",
+                public_key,
+                installed_public_key,
+                from_outside=True,
+            )
+            trace("Copied key.")
+            chown(system_context, user.uid, user.gid, installed_public_key)
+            trace("Ownership adjusted.")
+            chmod(system_context, 0o644, installed_public_key)
+            trace("Mode adjusted.")
