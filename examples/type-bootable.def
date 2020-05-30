@@ -5,6 +5,8 @@
 based_on type-networkedbase
 
 pacman linux
+    --assume-installed initramfs
+
     linux-firmware ipw2100-fw ipw2200-fw alsa-firmware
 
     btrfs-progs dosfstools squashfs-tools

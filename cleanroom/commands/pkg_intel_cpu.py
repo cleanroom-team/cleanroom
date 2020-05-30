@@ -63,13 +63,8 @@ class PkgIntelCpuCommand(Command):
             to_outside=True,
         )
 
-        # enable kms:
-        self._execute(
-            location.next_line(),
-            system_context,
-            "sed",
-            "s/^MODULES=(/MODULES=(crc32c-intel /",
-            "/etc/mkinitcpio.conf",
+        system_context.set_or_append_substitution(
+            "MKINITCPIO_EXTRA_MODULES", "crc32c-intel"
         )
 
         # Clean out firmware:

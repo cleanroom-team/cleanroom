@@ -419,6 +419,19 @@ class CreateInitrdCommand(Command):
 
         return to_clean_up
 
+    def _fix_mkinitcpio_conf(
+        self, location: Location, system_context: SystemContext, name: str
+    ):
+        extra = system_context.substitution("MKINITCPIO_EXTRA_{}".format(name), "")
+        if extra:
+            self._execute(
+                location.next_line(),
+                system_context,
+                "sed",
+                "/^{}=/ c{}=({})".format(name, name, extra,),
+                "/etc/mkinitcpio.conf",
+            )
+
     def _install_mkinitcpio(
         self, location: Location, system_context: SystemContext
     ) -> typing.Sequence[str]:
@@ -433,13 +446,18 @@ class CreateInitrdCommand(Command):
             system_context,
             "sed",
             "/^HOOKS=/ "
-            'cHOOKS="base systemd keyboard sd-vconsole '
+            "cHOOKS=(base systemd keyboard sd-vconsole "
             "sd-encrypt block sd-lvm2 filesystems btrfs "
             "sd-check-bios sd-stateless sd-verity "
             "sd-volatile sd-boot-image "
-            'sd-shutdown"',
+            "sd-shutdown{})",
             "/etc/mkinitcpio.conf",
         )
+
+        self._fix_mkinitcpio_conf(location.next_line(), system_context, "HOOKS")
+        self._fix_mkinitcpio_conf(location.next_line(), system_context, "FILES")
+        self._fix_mkinitcpio_conf(location.next_line(), system_context, "BINARIES")
+        self._fix_mkinitcpio_conf(location.next_line(), system_context, "MODULES")
 
         location.set_description("Create mkinitcpio presets")
         create_file(
