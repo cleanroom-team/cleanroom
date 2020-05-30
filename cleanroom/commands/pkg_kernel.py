@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""normalize_kernel_install command.
+"""pkg_kernel command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
@@ -7,21 +6,22 @@
 
 from cleanroom.command import Command
 from cleanroom.location import Location
-from cleanroom.helper.file import makedirs, remove
 from cleanroom.systemcontext import SystemContext
 
-import os.path
+import textwrap
 import typing
+import os.path
 
 
-class NormalizeKernelInstallCommand(Command):
-    """The normalize_kernel_install command."""
+class PkgKernelCommand(Command):
+    """The pkg_kernel command."""
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
         super().__init__(
-            "normalize_kernel_install",
-            help_string="Handle different kernel flavors in Arch.",
+            "pkg_kernel",
+            syntax_string="[variant=(lts|hardened|DEFAULT)]",
+            help_string="Set up a Kernel. If no variant is given, then the default kernel is installed.",
             file=__file__,
             **services
         )
@@ -30,7 +30,8 @@ class NormalizeKernelInstallCommand(Command):
         self, location: Location, *args: typing.Any, **kwargs: typing.Any
     ) -> None:
         """Validate the arguments."""
-        self._validate_no_arguments(location, *args, **kwargs)
+        self._validate_no_args(location, *args)
+        self._validate_kwargs(location, ("variant",), **kwargs)
 
     def __call__(
         self,
@@ -40,20 +41,22 @@ class NormalizeKernelInstallCommand(Command):
         **kwargs: typing.Any
     ) -> None:
         """Execute command."""
-        location.set_description("Handle different kernel flavors")
+
+        kernel = "linux"
+        variant = kwargs.get("variant", "")
+        if variant:
+            kernel = "{}-{}".format(kernel, variant)
+
+        self._execute(
+            location,
+            system_context,
+            "pacman",
+            "--assume-installed",
+            "initramfs",
+            kernel,
+        )
+
         vmlinuz = os.path.join(system_context.boot_directory, "vmlinuz")
-
-        makedirs(system_context, "/etc/mkinitcpio.d", exist_ok=True)
-
-        # Clean up after the mkinitcpio hook:
-        for kernel in (
-            "",
-            "-hardened",
-            "-lts",
-            "-zen",
-            "-git",
-        ):
-            remove("/boot/vmlinuz{}".format(kernel), force=True)
 
         # New style linux packages that put vmlinuz into /usr/lib/modules:
         self._execute(

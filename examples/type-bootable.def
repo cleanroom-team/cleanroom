@@ -4,10 +4,9 @@
 
 based_on type-networkedbase
 
-pacman linux
-    --assume-installed initramfs
+pkg_kernel
 
-    linux-firmware ipw2100-fw ipw2200-fw alsa-firmware
+pacman linux-firmware ipw2100-fw ipw2200-fw alsa-firmware
 
     btrfs-progs dosfstools squashfs-tools
 
@@ -18,8 +17,6 @@ pacman linux
     efibootmgr
 
     pciutils sed tar usbutils
-
-normalize_kernel_install
 
 ## Systemd units:
 
