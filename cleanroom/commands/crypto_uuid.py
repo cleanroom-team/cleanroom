@@ -43,13 +43,13 @@ class CryptoUuidCommand(Command):
     ) -> None:
         """Execute command."""
         uuid = args[0]
-        cmdline = system_context.substitution("KERNEL_CMDLINE", "")
+        name = args[1]
 
+        cmdline = system_context.substitution("KERNEL_CMDLINE", "")
         if "rd.luks.name=" in cmdline:
             raise GenerateError("rd.luks.name already set.", location=location)
 
-        if cmdline:
-            cmdline += " "
-        cmdline += "rd.luks.name={}={} rd.luks.options=discard".format(uuid, args[1])
-
-        system_context.set_substitution("KERNEL_CMDLINE", cmdline)
+        system_context.set_or_append_substitution(
+            "KERNEL_CMDLINE",
+            "rd.luks.name={}={} rd.luks.options=discard".format(uuid, name),
+        )

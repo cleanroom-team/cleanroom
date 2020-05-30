@@ -343,10 +343,9 @@ class ExportCommand(Command):
             veritysetup_command=self._binary(Binaries.VERITYSETUP),
         )
 
-        cmdline = system_context.substitution("KERNEL_CMDLINE", "")
-        cmdline = " ".join(
-            (cmdline, "systemd.volatile=true", "rootfstype=squashfs")
-        ).strip()
+        cmdline = system_context.set_or_append_substitution(
+            "KERNEL_CMDLINE", "systemd.volatile=true rootfstype=squashfs"
+        )
 
         kernel_file = ""
         if has_kernel:
