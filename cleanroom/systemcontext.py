@@ -188,10 +188,20 @@ class SystemContext:
     def substitutions(self) -> typing.Mapping[str, str]:
         return self._substitutions
 
-    def set_substitution(self, key: str, value: str) -> None:
+    def set_substitution(self, key: str, value: str) -> str:
         """Add a substitution to the substitution table."""
         self._substitutions[key] = value
         debug('Added substitution: "{}"="{}".'.format(key, value))
+        return value
+
+    def set_or_append_substitution(self, key: str, value: str) -> str:
+        """Set the value to the substitution key if the key is not yet known and append otherwise."""
+        v = self.substitution(key, "")
+        if v:
+            v += " "
+        v += value
+        self.set_substitution(key, v)
+        return v
 
     def substitution(
         self, key: str, default_value: typing.Optional[str] = None
