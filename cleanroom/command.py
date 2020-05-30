@@ -46,13 +46,8 @@ def _expand_arg(system_context: SystemContext, arg: typing.Any) -> typing.Any:
     )
 
 
-def process_args(
-    system_context: SystemContext, *args: typing.Any
-) -> typing.Tuple[str, ...]:
-    result: typing.Tuple[str, ...] = ()
-    for a in args:
-        result = (*result, _expand_arg(system_context, str(a)))
-    return result
+def process_args(system_context: SystemContext, *args: typing.Any) -> typing.List[str]:
+    return list(map(lambda a: _expand_arg(system_context, str(a)), args))
 
 
 def process_kwargs(

@@ -6,20 +6,20 @@
 
 
 from cleanroom.location import Location
-from cleanroom.command import Command
+from cleanroom.command import Command, process_args
 from cleanroom.systemcontext import SystemContext
 
 import typing
 
 
-class SetDefaultTargetCommand(Command):
+class SetCommand(Command):
     """The set command."""
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
         super().__init__(
             "set",
-            syntax="<KEY> <VALUE> [local=True]",
+            syntax="<KEY> <VALUE>",
             help_string="Set up a substitution.",
             file=__file__,
             **services
@@ -41,4 +41,6 @@ class SetDefaultTargetCommand(Command):
         **kwargs: typing.Any
     ) -> None:
         """Execute command."""
-        system_context.set_substitution(args[0], args[1])
+        keyValue = process_args(system_context, *args)
+        assert len(keyValue) == 2
+        system_context.set_substitution(keyValue[0], keyValue[1])
