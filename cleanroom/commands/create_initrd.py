@@ -450,7 +450,7 @@ class CreateInitrdCommand(Command):
             "sd-encrypt block sd-lvm2 filesystems btrfs "
             "sd-check-bios sd-stateless sd-verity "
             "sd-volatile sd-boot-image "
-            "sd-shutdown{})",
+            "sd-shutdown)",
             "/etc/mkinitcpio.conf",
         )
 
@@ -514,10 +514,6 @@ class CreateInitrdCommand(Command):
         **kwargs: typing.Any
     ) -> None:
         """Execute command."""
-        if not os.path.exists(system_context.file_name("usr/bin/mkinitcpio")):
-            info("Skipping initrd generation: No mkinitcpio binary.")
-            return
-
         if not os.path.exists(os.path.join(system_context.boot_directory, "vmlinuz")):
             info("Skipping initrd generation: No vmlinuz in boot directory.")
             return
