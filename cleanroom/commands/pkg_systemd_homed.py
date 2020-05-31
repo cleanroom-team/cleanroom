@@ -107,30 +107,49 @@ class PkgSystemdHomedCommand(Command):
         location.set_description("Setting up PAM for homed")
         create_file(
             system_context,
+            "/etc/pam.d/nss-auth",
+            textwrap.dedent(
+                """\
+                #%PAM-1.0
+
+                auth     sufficient pam_unix.so try_first_pass nullok
+                auth     sufficient pam_systemd_home.so
+                auth     required   pam_deny.so
+
+                account  sufficient pam_unix.so
+                account  sufficient pam_systemd_home.so
+                account  required   pam_deny.so
+
+                password sufficient pam_unix.so try_first_pass nullok sha512 shadow
+                password sufficient pam_systemd_home.so
+                password required   pam_deny.so
+                """
+            ).encode("utf-8"),
+            mode=0o644,
+        )
+        create_file(
+            system_context,
             "/etc/pam.d/system-auth",
             textwrap.dedent(
                 """\
-                    #%PAM-1.0
+                #%PAM-1.0
 
-                    auth     [success=1 new_authtok_reqd=1 ignore=ignore user_unknown=ignore default=bad] pam_systemd_home.so
-                    auth     required   pam_unix.so try_first_pass nullok
-                    auth     optional   pam_permit.so
-                    auth     required   pam_env.so
+                auth      substack   nss-auth
+                auth      optional   pam_permit.so
+                auth      required   pam_env.so
 
-                    account  [success=1 new_authtok_reqd=1 ignore=ignore user_unknown=ignore default=bad] pam_systemd_home.so
-                    account  required   pam_unix.so
-                    account  optional   pam_permit.so
-                    account  required   pam_time.so
+                account   substack   nss-auth
+                account   optional   pam_permit.so
+                account   required   pam_time.so
 
-                    password [success=1 new_authtok_reqd=1 ignore=ignore user_unknown=ignore default=bad] pam_systemd_home.so
-                    password required   pam_unix.so try_first_pass nullok sha512 shadow
-                    password optional   pam_permit.so
+                password  substack   nss-auth
+                password  optional   pam_permit.so
 
-                    session  required   pam_limits.so
-                    session  [success=1 new_authtok_reqd=1 ignore=ignore user_unknown=ignore default=bad] pam_systemd_home.so
-                    session  required   pam_unix.so
-                    session  optional   pam_permit.so
-                    """
+                session   required  pam_limits.so
+                session   optional  pam_systemd_home.so
+                session   required  pam_unix.so
+                session   optional  pam_permit.so
+                """
             ).encode("utf-8"),
             mode=0o644,
             force=True,
