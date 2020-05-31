@@ -6,7 +6,7 @@
 
 
 from cleanroom.binarymanager import Binaries
-from cleanroom.command import Command, process_args, process_kwargs
+from cleanroom.command import Command
 from cleanroom.helper.run import run
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
@@ -52,7 +52,4 @@ class RunCommand(Command):
             kwargs["chroot"] = system_context.fs_directory
             kwargs["chroot_helper"] = self._binary(Binaries.CHROOT_HELPER)
 
-        run(
-            *process_args(system_context, *args),
-            **process_kwargs(system_context, **kwargs)
-        )
+        run(*list(map(lambda a: str(a), args)), **kwargs)

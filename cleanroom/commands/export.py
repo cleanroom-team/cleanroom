@@ -22,22 +22,15 @@ import shutil
 import typing
 
 
-def _root_part_label(system_context: SystemContext) -> str:
-    label = system_context.substitution("ROOTFS_PARTLABEL", "")
-    return (
-        label
-        if label
-        else "{}_{}".format(
-            system_context.substitution("DISTRO_ID", "clrm"),
-            system_context.substitution("DISTRO_VERSION_ID", system_context.timestamp),
-        )
-    )
-
-
 def _kernel_name(system_context: SystemContext) -> str:
     boot_data = system_context.boot_directory
     assert boot_data
-    return os.path.join(boot_data, "linux-{}.efi".format(system_context.timestamp))
+    return os.path.join(
+        boot_data,
+        "linux_{}.efi".format(
+            system_context.substitution_expanded("DISTRO_VERSION_ID", "")
+        ),
+    )
 
 
 def _size_extend(file: str) -> None:
@@ -52,13 +45,9 @@ def _size_extend(file: str) -> None:
 
 
 def _create_dmverity(
-    target_directory: str,
-    squashfs_file: str,
-    *,
-    timestamp: str,
-    veritysetup_command: str
+    target_directory: str, squashfs_file: str, *, version: str, veritysetup_command: str
 ) -> typing.Tuple[str, str, str]:
-    verity_file = os.path.join(target_directory, "vrty_{}".format(timestamp))
+    verity_file = os.path.join(target_directory, "vrty_{}".format(version))
     result = run(veritysetup_command, "format", squashfs_file, verity_file)
 
     _size_extend(verity_file)
@@ -89,14 +78,14 @@ def _setup_kernel_commandline(base_cmdline: str, root_hash: str) -> str:
 
 
 def _validate_installation(location: Location, system_context: SystemContext) -> None:
-    hostname = system_context.substitution("HOSTNAME")
-    if hostname is None:
+    hostname = system_context.substitution_expanded("HOSTNAME")
+    if not hostname:
         raise GenerateError(
             "Trying to export a system without a hostname.", location=location
         )
 
-    machine_id = system_context.substitution("MACHINE_ID")
-    if machine_id is None:
+    machine_id = system_context.substitution_expanded("MACHINE_ID")
+    if not machine_id:
         raise GenerateError(
             "Trying to export a system without " "a machine_id.", location=location
         )
@@ -232,6 +221,20 @@ class ExportCommand(Command):
 
         self._usr_only = kwargs.get("usr_only", True)
 
+    def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
+        return [
+            (
+                "EXPORT_DIRECTORY",
+                "",
+                "The directory to export into. Only set while export command is running",
+            ),
+            (
+                "ROOTFS_PARTLABEL",
+                "${DISTRO_ID}_${DISTRO_VERSION_ID}",
+                "Root filesystem partition label.",
+            ),
+        ]
+
     def __call__(
         self,
         location: Location,
@@ -271,6 +274,7 @@ class ExportCommand(Command):
 
         info("Cleaning up export location.")
         self.delete_export_directory(export_directory)
+        system_context.set_substitution("EXPORT_DIRECTORY", "")
 
     def _create_root_tarball(
         self, location: Location, system_context: SystemContext
@@ -339,7 +343,7 @@ class ExportCommand(Command):
         (verity_file, verity_uuid, root_hash) = _create_dmverity(
             system_context.cache_directory,
             squashfs_file,
-            timestamp=system_context.timestamp,
+            version=system_context.substitution_expanded("DISTRO_VERSION_ID", ""),
             veritysetup_command=self._binary(Binaries.VERITYSETUP),
         )
 
@@ -367,8 +371,8 @@ class ExportCommand(Command):
             btrfs_helper.delete_subvolume_recursive(export_volume)
         btrfs_helper.create_subvolume(export_volume)
 
-        os_name = system_context.substitution("DISTRO_ID", "clrm")
-        timestamp = system_context.substitution("TIMESTAMP", "unknown")
+        os_name = system_context.substitution_expanded("DISTRO_ID", "")
+        timestamp = system_context.substitution_expanded("TIMESTAMP", "")
 
         image_filename = os.path.join(
             export_volume,
@@ -460,7 +464,10 @@ class ExportCommand(Command):
     def _create_squashfs(
         self, system_context: SystemContext, target_directory: str
     ) -> str:
-        squash_file = os.path.join(target_directory, _root_part_label(system_context))
+        rootfs_label = system_context.substitution_expanded("ROOTFS_PARTLABEL", "")
+        if not rootfs_label:
+            raise GenerateError("ROOTFS_PARTLABEL is unset.")
+        squash_file = os.path.join(target_directory, rootfs_label,)
         target_directory = "usr" if self._usr_only else "."
         target_args = ["-keep-as-directory"] if self._usr_only else []
         run(

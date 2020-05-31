@@ -43,5 +43,5 @@ class AppendCommand(Command):
         **kwargs: typing.Any
     ) -> None:
         """Execute command."""
-        to_write = system_context.substitute(args[1]).encode("utf-8")
+        to_write = args[1].encode("utf-8")
         append_file(system_context, args[0], to_write, **kwargs)

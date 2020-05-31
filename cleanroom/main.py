@@ -35,6 +35,12 @@ def _parse_commandline(*arguments: str) -> typing.Any:
         action="store_true",
         help="List known commands for definition files",
     )
+    parser.add_argument(
+        "--list-substitutions",
+        dest="list_substitutions",
+        action="store_true",
+        help="List known substitutions that can be used in definition files",
+    )
 
     parser.add_argument(
         "--ignore-errors",
@@ -104,7 +110,7 @@ def main(*command_arguments: str) -> None:
     """Run cleanroom with arguments."""
     args = _parse_commandline(*command_arguments)
 
-    if not args.list_commands and not args.systems:
+    if not args.list_commands and not args.list_substitutions and not args.systems:
         print("No systems to process.")
         sys.exit(1)
 
@@ -146,13 +152,17 @@ def main(*command_arguments: str) -> None:
         user_helper=user_helper,
     )
 
-    preflight_check(
-        "command", command_manager.preflight_check, ignore_errors=args.ignore_errors
-    )
-
     if args.list_commands:
         command_manager.print_commands()
         exit(0)
+
+    if args.list_substitutions:
+        command_manager.print_substitutions()
+        exit(0)
+
+    preflight_check(
+        "command", command_manager.preflight_check, ignore_errors=args.ignore_errors
+    )
 
     h2("Starting preparation phase")
 

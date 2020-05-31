@@ -40,32 +40,34 @@ class CreateOsReleaseCommand(Command):
     ) -> None:
         """Execute command."""
         os_release = 'NAME="{}"\n'.format(
-            system_context.substitution("DISTRO_NAME", "Arch Linux")
+            system_context.substitution_expanded("DISTRO_NAME", "")
         )
         os_release += 'PRETTY_NAME="{}"\n'.format(
-            system_context.substitution("DISTRO_PRETTY_NAME", "Arch Linux")
+            system_context.substitution_expanded("DISTRO_PRETTY_NAME", "")
         )
         os_release += 'ID="{}"\n'.format(
-            system_context.substitution("DISTRO_ID", "arch")
+            system_context.substitution_expanded("DISTRO_ID", "")
         )
-        os_release += 'ID_LIKE="arch"\n'
-        os_release += 'ANSI_COLOR="0;36"\n'
+        os_release += 'ID_LIKE="{}"\n'.format(
+            system_context.substitution_expanded("DISTRO_ID_LIKE", "")
+        )
+        os_release += 'ANSI_COLOR="{}"\n'.format(
+            system_context.substitution_expanded("DISTRO_ANSI_COLOR", "")
+        )
         os_release += 'HOME_URL="{}"\n'.format(
-            system_context.substitution("DISTRO_HOME_URL", "https://www.archlinux.org/")
+            system_context.substitution_expanded("DISTRO_HOME_URL", "")
         )
         os_release += 'SUPPORT_URL="{}"\n'.format(
-            system_context.substitution(
-                "DISTRO_SUPPORT_URL", "https://bbs.archlinux.org/"
-            )
+            system_context.substitution_expanded("DISTRO_SUPPORT_URL", "")
         )
         os_release += 'BUG_REPORT_URL="{}"\n'.format(
-            system_context.substitution("DISTRO_BUG_URL", "https://bugs.archlinux.org/")
+            system_context.substitution_expanded("DISTRO_BUG_URL", "")
         )
         os_release += 'VERSION="{}"\n'.format(
-            system_context.substitution("DISTRO_VERSION", "unknown")
+            system_context.substitution_expanded("DISTRO_VERSION", "")
         )
         os_release += 'VERSION_ID="{}"\n'.format(
-            system_context.substitution("DISTRO_VERSION_ID", "unknown")
+            system_context.substitution_expanded("DISTRO_VERSION_ID", "")
         )
 
         self._execute(

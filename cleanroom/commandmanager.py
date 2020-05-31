@@ -8,8 +8,8 @@
 from .command import Command, stringify
 from .exceptions import PreflightError
 from .location import Location
-from .printer import debug, h2, success, trace
-from .systemcontext import SystemContext
+from .printer import debug, error, h2, success, trace
+from .systemcontext import SystemContext, _recursive_expand
 
 import collections
 import importlib.util
@@ -28,8 +28,31 @@ CommandInfo = collections.namedtuple(
         "dependency_func",
         "validate_func",
         "execute_func",
+        "register_substitutions",
     ],
 )
+
+
+def _process_args(system_context: SystemContext, *args: typing.Any) -> typing.Any:
+    return tuple(map(lambda a: _recursive_expand(system_context, a), args))
+
+
+def _process_kwargs(
+    system_context: SystemContext, **kwargs: typing.Any
+) -> typing.Dict[str, typing.Any]:
+    return {k: _recursive_expand(system_context, v) for k, v in kwargs.items()}
+
+
+def call_command(
+    location: Location,
+    system_context: SystemContext,
+    command: Command,
+    *args: typing.Any,
+    **kwargs: typing.Dict[str, typing.Any]
+):
+    _args = _process_args(system_context, *args)
+    _kwargs = _process_kwargs(system_context, **kwargs)
+    command(location, system_context, *_args, **_kwargs)
 
 
 class CommandManager:
@@ -57,6 +80,59 @@ class CommandManager:
                     command_info.file_name,
                 )
             )
+
+    def _collect_substitutions(self) -> typing.List[typing.Tuple[str, str, str, str]]:
+        result: typing.List[typing.Tuple[str, str, str, str]] = []
+        duplications: typing.Dict[str, str] = {}
+        for cmd in self._commands.keys():
+            command_info = self.command(cmd)
+            assert command_info
+
+            name = command_info.name
+            for (key, value, description) in command_info.register_substitutions():
+                result.append((key, value, description, name))
+                assert not key in duplications
+                duplications[key] = name
+
+        return result
+
+    def print_substitutions(self) -> None:
+        h2("Predefined Substitutions:")
+        print(
+            "  BASE_SYSTEM_NAME, SYSTEM_NAME:\n    The names of the current system and its base system\n\n"
+            "  BASE_SYSTEM_LIST:\n    Comma-separated list of all base systems\n\n"
+            "  SCRATCH_DIR, ROOT_DIR, META_DIR, CACHE_DIR:\n    Directories used during system creation\n\n"
+            "  SYSTEMS_DEFINITION_DIR:\n    The directory holding system definition files\n\n"
+            "  SYSTEM_HELPER_DIR:\n    The directory containing files associated with the current system definition\n\n"
+            "  TIMESTAMP:\n    The current timestamp\n\n"
+        )
+
+        h2("Command Substitutions:")
+        self._known_substitutions: typing.List[typing.Tuple[str, str, str]] = []
+
+        substitutions = self._collect_substitutions()
+        substitutions.sort()
+        for (key, value, description, name) in substitutions:
+            print('  {} ("{}"): {}\n    {}\n'.format(key, value, name, description))
+
+    def setup_substitutions(self, system_context: SystemContext):
+        if system_context._base_context:
+            debug(
+                'System Context inherited, using substitutions from "{}".'.format(
+                    system_context._base_context.system_name
+                )
+            )
+            return
+
+        substitutions = self._collect_substitutions()
+        for (key, value, _, _) in substitutions:
+            assert not system_context.has_substitution(key)
+            debug(
+                'Setting up system context: substitution "{}" = "{}".'.format(
+                    key, value
+                )
+            )
+            system_context.set_substitution(key, value)
 
     def preflight_check(self) -> None:
         if not self._search_directories:
@@ -98,7 +174,7 @@ class CommandManager:
         ) -> None:
             cmd_str = stringify(cmd.name, args, kwargs)
             trace("{}: Executing {}.".format(location, cmd_str))
-            command(location, system_context, *args, **kwargs)
+            call_command(location, system_context, cmd, *args, **kwargs)
             success("{}: Executed {}.".format(location, cmd_str), verbosity=2)
 
         self._commands[name] = CommandInfo(
@@ -115,6 +191,7 @@ class CommandManager:
             execute_func=lambda loc, sc, *args, **kwargs: __execute_func(
                 command, loc, sc, *args, **kwargs
             ),
+            register_substitutions=command.register_substitutions,
         )
 
     def _find_commands_in_directory(self, directory: str) -> None:

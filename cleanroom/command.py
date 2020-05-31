@@ -19,7 +19,6 @@ from .systemcontext import SystemContext
 
 import os
 import os.path
-from string import Template
 import typing
 
 
@@ -36,27 +35,6 @@ def stringify(
     )
     separator = " " if args_str and kwargs_str else ""
     return '"{}"'.format(command) + args_str + separator + kwargs_str
-
-
-def _expand_arg(system_context: SystemContext, arg: typing.Any) -> typing.Any:
-    return (
-        Template(arg).substitute(system_context.substitutions)
-        if isinstance(arg, str)
-        else arg
-    )
-
-
-def process_args(system_context: SystemContext, *args: typing.Any) -> typing.List[str]:
-    return list(map(lambda a: _expand_arg(system_context, str(a)), args))
-
-
-def process_kwargs(
-    system_context: SystemContext, **kwargs: typing.Any
-) -> typing.Dict[str, typing.Any]:
-    result: typing.Dict[str, typing.Any] = {}
-    for k, v in kwargs.items():
-        result[k] = _expand_arg(system_context, v)
-    return result
 
 
 class Command:
@@ -99,12 +77,17 @@ class Command:
         """Print help string."""
         return self._help_string
 
+    def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
+        return []
+
     def validate(
         self, location: Location, *args: typing.Any, **kwargs: typing.Any
     ) -> None:
         """Implement this!
 
         Validate all arguments.
+        
+        Note that args and kwargs will *NOT* be string expanded and might contain substitutions!
         """
         fail('Command "{}" called validate illegally!'.format(self.name))
         return None
@@ -122,7 +105,10 @@ class Command:
         *args: typing.Any,
         **kwargs: typing.Any
     ) -> None:
-        """Implement this!"""
+        """Implement this!
+        
+        Note that args and kwargs will be string expanded and not contain substitutions!
+        """
         fail('Command "{}"() triggered illegally!'.format(self.name))
 
     def _execute(

@@ -44,6 +44,15 @@ class SetMachineIdCommand(Command):
                 '"{}" is not a valid machine-id.'.format(machine_id), location=location
             )
 
+    def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
+        return [
+            (
+                "MACHINE_ID",
+                "",
+                "The machine id for the system. Only valid after set_machine_id was called",
+            ),
+        ]
+
     def __call__(
         self,
         location: Location,
@@ -52,8 +61,12 @@ class SetMachineIdCommand(Command):
         **kwargs: typing.Any
     ) -> None:
         """Execute command."""
-        if system_context.has_substitution("MACHINE_ID"):
-            raise GenerateError("Machine-id was already set.", location=location)
+        old_machine_id = system_context.substitution("MACHINE_ID", "")
+        if old_machine_id:
+            raise GenerateError(
+                'Machine-id was already set to "{}".'.format(old_machine_id),
+                location=location,
+            )
 
         machine_id = args[0]
         system_context.set_substitution("MACHINE_ID", machine_id)

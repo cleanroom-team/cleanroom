@@ -33,6 +33,12 @@ class SetHostnameCommand(Command):
         self._validate_args_exact(location, 1, '"{}" needs a static hostname.', *args)
         self._validate_kwargs(location, ("pretty",), **kwargs)
 
+    def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
+        return [
+            ("HOSTNAME", "", "The hostname to be set"),
+            ("PRETTY_HOSTNAME", "", "The pretty hostname to set"),
+        ]
+
     def __call__(
         self,
         location: Location,
@@ -44,7 +50,7 @@ class SetHostnameCommand(Command):
         static_hostname = args[0]
         pretty_hostname = kwargs.get("pretty", static_hostname)
 
-        if system_context.has_substitution("HOSTNAME"):
+        if system_context.substitution("HOSTNAME", ""):
             raise GenerateError("Hostname was already set.", location=location)
 
         system_context.set_substitution("HOSTNAME", static_hostname)

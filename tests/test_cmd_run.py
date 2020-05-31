@@ -12,7 +12,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from cleanroom.command import process_args, process_kwargs
+from cleanroom.commandmanager import _process_args, _process_kwargs
 
 
 @pytest.mark.parametrize(
@@ -21,7 +21,7 @@ from cleanroom.command import process_args, process_kwargs
         pytest.param(("test", "1, 2, 3"), ("test", "1, 2, 3"), id="basic"),
         pytest.param(
             ("test", 1, True, False, None),
-            ("test", "1", "True", "False", "None"),
+            ("test", 1, True, False, None),
             id="special inputs",
         ),
         pytest.param(
@@ -36,7 +36,7 @@ def test_cmd_run_map_args(system_context, test_input, expected):
     system_context.set_substitution("TEST", "<replaced>")
     system_context.set_substitution("ROOT_DIR", "/some/place")
 
-    result = process_args(system_context, *test_input)
+    result = _process_args(system_context, *test_input)
     assert result == expected
 
 
@@ -65,5 +65,5 @@ def test_cmd_run_map_kwargs(system_context, test_input, expected):
     system_context.set_substitution("TEST", "<replaced>")
     system_context.set_substitution("ROOT_DIR", "/some/place")
 
-    result = process_kwargs(system_context, **test_input)
+    result = _process_kwargs(system_context, **test_input)
     assert result == expected

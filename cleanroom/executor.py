@@ -52,6 +52,8 @@ class Executor:
             repository_base_directory=self._repository_base_directory,
             timestamp=self._timestamp,
         ) as system_context:
+            self._command_manager.setup_substitutions(system_context)
+
             for exec_obj in exec_obj_list:
                 os.chdir(system_context.systems_definition_directory)
                 command = self._command_manager.command(exec_obj.command)

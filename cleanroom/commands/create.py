@@ -48,6 +48,5 @@ class CreateCommand(Command):
     ) -> None:
         """Execute command."""
         file_name = args[0]
-        to_write = system_context.substitute(args[1]).encode("utf-8")
-
+        to_write = args[1].encode("utf-8")
         create_file(system_context, file_name, to_write, **kwargs)

@@ -36,6 +36,15 @@ class SetLocalesCommand(Command):
         )
         self._validate_kwargs(location, ("charmap",), **kwargs)
 
+    def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
+        return [
+            (
+                "CLRM_LOCALES",
+                "",
+                "Comma-separated list of locales set up by set_locales command.",
+            ),
+        ]
+
     def __call__(
         self,
         location: Location,
@@ -73,7 +82,7 @@ class SetLocalesCommand(Command):
         system_context: SystemContext,
         locales: typing.Sequence[str],
     ) -> None:
-        if not system_context.has_substitution("CLRM_LOCALES"):
+        if not system_context.substitution("CLRM_LOCALES", ""):
             location.set_description("run locale-gen")
             self._add_hook(
                 location,

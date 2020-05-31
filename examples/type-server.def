@@ -6,8 +6,6 @@ sed '/^CHASSIS=/ cCHASSIS="server"' /etc/machine.info
 
 pacman qemu-headless
 
-systemd_set_default multi-user.target
-
 # Remove temporary IPv6 addresses for servers:
 remove /etc/sysctl.d/ipv6_tempaddr.conf
 

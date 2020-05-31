@@ -5,8 +5,8 @@
 """
 
 
+from cleanroom.command import Command
 from cleanroom.location import Location
-from cleanroom.command import Command, process_args
 from cleanroom.systemcontext import SystemContext
 
 import typing
@@ -41,6 +41,5 @@ class SetCommand(Command):
         **kwargs: typing.Any
     ) -> None:
         """Execute command."""
-        keyValue = process_args(system_context, *args)
-        assert len(keyValue) == 2
-        system_context.set_substitution(keyValue[0], keyValue[1])
+        print(args)
+        system_context.set_substitution(args[0], args[1])

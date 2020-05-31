@@ -10,8 +10,6 @@ based_on scratch
 ###  # ROOT:        path to the systems filesystem root
 
 # Set up some more substitutions:
-set ARCH x86_64
-set VENDOR org.archlinux.cleanroom
 set KERNEL_CMDLINE 'quiet'
 
 # sed and gzip are needed for locale-gen
@@ -87,9 +85,6 @@ remove /etc/pacman.d/mirrorlist
 # Set timezone:
 set_timezone Europe/Berlin
 
-# Boot without UI by default:
-systemd_set_default multi-user.target
-
 # Remove license files from generated images:
 strip_license_files
 # also strip documentation files:
@@ -106,15 +101,15 @@ mkdir /etc/systemd/nspawn
 
 # Strip locales from man and help pages:
 add_hook export
-    run /usr/bin/find ${ROOT_DIR}/usr/share/man -mindepth 1 -maxdepth 1 -depth
+    run /usr/bin/find $${ROOT_DIR}/usr/share/man -mindepth 1 -maxdepth 1 -depth
         -not ( -name cat* -or -name man* ) -exec rm -rf {} ;
         returncode=None shell=True
     message='remove locales from man'
 add_hook export
-    run /usr/bin/find ${ROOT_DIR}/usr/share/help -mindepth 1 -maxdepth 1 -depth
+    run /usr/bin/find $${ROOT_DIR}/usr/share/help -mindepth 1 -maxdepth 1 -depth
         -not -name C -exec rm -rf {} ; returncode=None shell=True
      message='remove locales from help'
 
 # root password is 'root'
-usermod root password='$6$vQcfU8MejvgmkP0w$8NJw8S9/5LKwPQQcFTM46E3OkFjy9Xw8FNK19etphO6XlC.gkNn/voQqEHqlUtTrhGvoLBMVMlXpfRpFKE.aX/'
+usermod root password='$$6$$vQcfU8MejvgmkP0w$$8NJw8S9/5LKwPQQcFTM46E3OkFjy9Xw8FNK19etphO6XlC.gkNn/voQqEHqlUtTrhGvoLBMVMlXpfRpFKE.aX/'
 

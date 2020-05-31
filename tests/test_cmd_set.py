@@ -12,7 +12,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from cleanroom.command import process_args, process_kwargs
+from cleanroom.commandmanager import call_command
 from cleanroom.commands.set import SetCommand
 
 
@@ -40,7 +40,7 @@ def test_cmd_set(system_context, location, key, value, expected):
 
     set_cmd = SetCommand()
 
-    set_cmd(location, system_context, key, value)
+    call_command(location, system_context, set_cmd, key, value)
 
     result = system_context.substitution(key, "")
 

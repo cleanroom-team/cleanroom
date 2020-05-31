@@ -35,6 +35,15 @@ class SystemdSetDefaultCommand(Command):
             location, 1, '"{}" needs a target name.', *args, **kwargs
         )
 
+    def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
+        return [
+            (
+                "DEFAULT_BOOT_TARGET",
+                "multi-user.target",
+                "The systemd target to boot into",
+            ),
+        ]
+
     def __call__(
         self,
         location: Location,

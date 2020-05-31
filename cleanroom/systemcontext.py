@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from .printer import debug, h2, trace
+from .printer import error, debug, h2, trace
 from .execobject import ExecObject
 
 import os
@@ -15,6 +15,27 @@ import os.path
 import pickle
 import string
 import typing
+
+
+def _recursive_expand(system_context: SystemContext, arg: typing.Any) -> typing.Any:
+    result = arg
+    if isinstance(arg, str):
+        try:
+            count = 0
+            while True:
+                count += 1
+                old_result = result
+                result = string.Template(old_result).safe_substitute(
+                    system_context.substitutions
+                )
+                if result == old_result or count > 20:
+                    assert count <= 20
+                    break
+
+        except ValueError as e:
+            error('Failed to expand string "{}": {}'.format(arg, e))
+
+    return result
 
 
 def _unpickle(pickle_jar: str) -> SystemContext:
@@ -153,18 +174,6 @@ class SystemContext:
         ts = "unknown" if self.timestamp is None else self.timestamp
         self.set_substitution("TIMESTAMP", ts)
 
-        self.set_substitution("DISTRO_NAME", "cleanroom")
-        self.set_substitution("DISTRO_PRETTY_NAME", "cleanroom")
-        self.set_substitution("DISTRO_ID", "clrm")
-        self.set_substitution("DISTRO_VERSION", ts)
-        self.set_substitution("DISTRO_VERSION_ID", ts)
-
-        self.set_substitution("DEFAULT_VG", "")
-
-        self.set_substitution("IMAGE_FS", "btrfs")
-        self.set_substitution("IMAGE_OPTIONS", "rw,subvol=/.images")
-        self.set_substitution("IMAGE_DEVICE", "/dev/disk/by-label/fs_btrfs")
-
     # Handle Hooks:
     def add_hook(self, hook: str, exec_obj: ExecObject) -> None:
         """Add a hook."""
@@ -191,7 +200,7 @@ class SystemContext:
     def set_substitution(self, key: str, value: str) -> str:
         """Add a substitution to the substitution table."""
         self._substitutions[key] = value
-        debug('Added substitution: "{}"="{}".'.format(key, value))
+        trace('Added substitution: "{}"="{}".'.format(key, value))
         return value
 
     def set_or_append_substitution(self, key: str, value: str) -> str:
@@ -209,13 +218,17 @@ class SystemContext:
         """Get substitution value."""
         return self.substitutions.get(key, default_value)
 
+    def substitution_expanded(
+        self, key: str, default_value: typing.Optional[str] = None
+    ) -> typing.Any:
+        return self.expand(self.substitution(key, default_value))
+
+    def expand(self, input: str) -> str:
+        return _recursive_expand(self, input)
+
     def has_substitution(self, key: str) -> bool:
         """Check wether a substitution is defined."""
         return key in self.substitutions
-
-    def substitute(self, text: str) -> str:
-        """Substitute variables in text."""
-        return string.Template(text).substitute(**self.substitutions)
 
     def file_name(self, path: str) -> str:
         result = os.path.join(

@@ -10,7 +10,7 @@ from cleanroom.helper.file import chmod, copy, create_file, remove, move
 from cleanroom.helper.run import run
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
-from cleanroom.printer import info
+from cleanroom.printer import info, debug, trace
 
 import os.path
 import textwrap
@@ -122,6 +122,7 @@ class CreateInitrdCommand(Command):
             ).encode("utf-8"),
             mode=0o644,
         )
+        trace("Wrote initrd-check-bios.service")
 
         create_file(
             system_context,
@@ -146,6 +147,7 @@ class CreateInitrdCommand(Command):
             ).encode("utf-8"),
             mode=0o644,
         )
+        trace("Wrote initrd-sysroot-setup.service")
 
         if self._vg is not None:
             device_name = "dev-{}-{}".format(self._vg, self._full_name)
@@ -176,8 +178,9 @@ class CreateInitrdCommand(Command):
                 .encode("utf-8"),
                 mode=0o644,
             )
+            trace("Wrote initrd-find-root-lv-partitions.service")
 
-        if self._image_device is not None:
+        if self._image_device:
             create_file(
                 system_context,
                 "/usr/lib/systemd/system/images.mount",
@@ -198,6 +201,11 @@ class CreateInitrdCommand(Command):
                 .format(self._image_device, self._image_fs, self._image_options)
                 .encode("utf-8"),
                 mode=0o644,
+            )
+            trace(
+                "Wrote images.mount (Where={}, Type={}, Options={})".format(
+                    self._image_device, self._image_fs, self._image_options
+                )
             )
 
             create_file(
@@ -227,6 +235,9 @@ class CreateInitrdCommand(Command):
                 .format(self._full_name)
                 .encode("utf-8"),
                 mode=0o644,
+            )
+            trace(
+                "Wrote initrd-find-image-partitions (/images/{}".format(self._full_name)
             )
 
         return to_clean_up
@@ -422,7 +433,7 @@ class CreateInitrdCommand(Command):
     def _fix_mkinitcpio_conf(
         self, location: Location, system_context: SystemContext, name: str
     ):
-        extra = system_context.substitution("MKINITCPIO_EXTRA_{}".format(name), "")
+        extra = system_context.substitution_expanded("MKINITCPIO_EXTRA_{}".format(name), "")
         if extra:
             self._execute(
                 location.next_line(),
@@ -506,6 +517,26 @@ class CreateInitrdCommand(Command):
         )
         remove(system_context, "/boot/vmlinuz")
 
+    def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
+        return [
+            ("IMAGE_FS", "ext2", "The filesystem type to load clrm-images from",),
+            ("IMAGE_DEVICE", "", "The device to load clrm-images from",),
+            (
+                "IMAGE_OPTIONS",
+                "rw",
+                "The filesystem options to mount the IMAGE_DEVICE with",
+            ),
+            (
+                "DEFAULT_VG",
+                "",
+                "The volume group to look for clrm rootfs/verity partitions on",
+            ),
+            ("MKINITCPIO_EXTRA_MODULES", "", "Extra modules to add to the initrd",),
+            ("MKINITCPIO_EXTRA_HOOKS", "", "Extra hooks to add to the initrd",),
+            ("MKINITCPIO_EXTRA_BINARIES", "", "Extra binaries to add to the initrd",),
+            ("MKINITCPIO_EXTRA_FILES", "", "Extra files to add to the initrd",),
+        ]
+
     def __call__(
         self,
         location: Location,
@@ -518,16 +549,16 @@ class CreateInitrdCommand(Command):
             info("Skipping initrd generation: No vmlinuz in boot directory.")
             return
 
-        self._vg = system_context.substitution("DEFAULT_VG", None)
+        self._vg = system_context.substitution_expanded("DEFAULT_VG", "")
         if not self._vg:
             self._vg = None
 
-        self._image_fs = system_context.substitution("IMAGE_FS", "ext2")
-        self._image_device = _deviceify(system_context.substitution("IMAGE_DEVICE", ""))
-        self._image_options = system_context.substitution("IMAGE_OPTIONS", "rw")
+        self._image_fs = system_context.substitution_expanded("IMAGE_FS", "")
+        self._image_device = _deviceify(system_context.substitution_expanded("IMAGE_DEVICE", ""))
+        self._image_options = system_context.substitution_expanded("IMAGE_OPTIONS", "")
 
-        name_prefix = system_context.substitution("DISTRO_ID", "clrm")
-        name_version = system_context.substitution(
+        name_prefix = system_context.substitution_expanded("DISTRO_ID", "")
+        name_version = system_context.substitution_expanded(
             "DISTRO_VERSION_ID", system_context.timestamp
         )
         self._full_name = "{}_{}".format(name_prefix, name_version)
