@@ -45,9 +45,13 @@ def _size_extend(file: str) -> None:
 
 
 def _create_dmverity(
-    target_directory: str, squashfs_file: str, *, version: str, veritysetup_command: str
+    target_directory: str,
+    squashfs_file: str,
+    *,
+    vrty_label: str,
+    veritysetup_command: str
 ) -> typing.Tuple[str, str, str]:
-    verity_file = os.path.join(target_directory, "vrty_{}".format(version))
+    verity_file = os.path.join(target_directory, vrty_label)
     result = run(veritysetup_command, "format", squashfs_file, verity_file)
 
     _size_extend(verity_file)
@@ -233,6 +237,11 @@ class ExportCommand(Command):
                 "${DISTRO_ID}_${DISTRO_VERSION_ID}",
                 "Root filesystem partition label.",
             ),
+            (
+                "VRTYFS_PARTLABEL",
+                "vrty_${DISTRO_VERSION_ID}",
+                "Dm-verity filesystem partition label.",
+            ),
         ]
 
     def __call__(
@@ -340,10 +349,12 @@ class ExportCommand(Command):
         squashfs_file = self._create_squashfs(
             system_context, system_context.cache_directory
         )
+        vrty_label = system_context.substitution_expanded("VRTYFS_PARTLABEL", "")
+        assert vrty_label
         (verity_file, verity_uuid, root_hash) = _create_dmverity(
             system_context.cache_directory,
             squashfs_file,
-            version=system_context.substitution_expanded("DISTRO_VERSION_ID", ""),
+            vrty_label=vrty_label,
             veritysetup_command=self._binary(Binaries.VERITYSETUP),
         )
 
