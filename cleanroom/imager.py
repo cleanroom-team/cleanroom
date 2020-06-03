@@ -169,6 +169,18 @@ def _file_size(file_name: str) -> int:
     return 0
 
 
+def _get_tree_size(start_path: str) -> int:
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(start_path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            # skip if it is symbolic link
+            if not os.path.islink(fp):
+                total_size += os.path.getsize(fp)
+
+    return total_size
+
+
 def create_image(
     image_filename: str,
     image_format: str,
@@ -176,6 +188,7 @@ def create_image(
     efi_size: int,
     swap_size: int,
     *,
+    extra_efi_files: typing.Optional[str],
     efi_emulator: typing.Optional[str],
     kernel_file: typing.Optional[str],
     root_partition: str,
@@ -207,6 +220,9 @@ def create_image(
     efi_size = _calculate_efi_size(kernel_size, efi_size)
     if efi_emulator:
         efi_size += 10 * mib
+    if extra_efi_files:
+        efi_size += _get_tree_size(extra_efi_files)
+
     trace(
         "EFI size: {}b, Swap size: {}b, extra partitions: {}".format(
             efi_size, swap_size, extra_total
@@ -245,6 +261,7 @@ def create_image(
             writer=writer,
         ),
         efi_emulator=efi_emulator,
+        extra_efi_files=extra_efi_files,
         sfdisk_command=sfdisk_command,
         flock_command=flock_command,
         nbd_client_command=nbd_client_command,
@@ -257,6 +274,7 @@ def _work_on_device_node(
     ic: RawImageConfig,
     *,
     efi_emulator: typing.Optional[str],
+    extra_efi_files: typing.Optional[str],
     sfdisk_command: str,
     flock_command: str,
     nbd_client_command: str,
@@ -293,15 +311,21 @@ def _work_on_device_node(
         success("Partitions created.", verbosity=2)
 
         if "swap" in partition_devices:
+            trace("Running mkswap.")
             helper_run("/usr/bin/mkswap", "-L", "main", partition_devices["swap"])
+            success("Swap formatted.", verbosity=3)
+
+        trace("Writing root partition.")
         assert "root" in partition_devices
         ic.writer.write_root_partition(partition_devices["root"])
         success("Root partition installed.", verbosity=2)
 
+        trace("Writing verity partition.")
         assert "verity" in partition_devices
         ic.writer.write_verity_partition(partition_devices["verity"])
         success("Verity partition installed.", verbosity=2)
 
+        trace("")
         assert "efi" in partition_devices
         _prepare_efi_partition(
             partition_devices["efi"],
@@ -309,6 +333,7 @@ def _work_on_device_node(
             ic.writer.has_linux_kernel(),
             ic.writer.write_linux_kernel,
             efi_emulator=efi_emulator,
+            extra_efi_files=extra_efi_files,
             mbr_dev=device.device(),
         )
         success("EFI partition installed.", verbosity=2)
@@ -588,6 +613,7 @@ def _prepare_efi_partition(
     kernel_file_writer,
     *,
     efi_emulator: typing.Optional[str],
+    extra_efi_files: typing.Optional[str],
     mbr_dev: str,
 ) -> None:
     trace("Preparing EFI partition.")
@@ -617,6 +643,10 @@ def _prepare_efi_partition(
                     if efi_emulator:
                         _install_efi_part_of_efi_emulator(boot_mnt, efi_emulator)
                         trace("... Clover binaries have been installed.")
+
+                    if extra_efi_files:
+                        shutil.copytree(extra_efi_files, boot_mnt, dirs_exist_ok=True)
+                        trace("... Extra EFI files installed.")
 
                     # install systemd as default boot loader:
                     default_boot_path = os.path.join(boot_mnt, "EFI/Boot")

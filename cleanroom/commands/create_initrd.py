@@ -195,7 +195,7 @@ class CreateInitrdCommand(Command):
                         What={}
                         Where=/images
                         Type={}
-                        Options={}
+                        Options={},nodev,noexec,nosuid,ro
                         """
                 )
                 .format(self._image_device, self._image_fs, self._image_options)
@@ -433,7 +433,9 @@ class CreateInitrdCommand(Command):
     def _fix_mkinitcpio_conf(
         self, location: Location, system_context: SystemContext, name: str
     ):
-        extra = system_context.substitution_expanded("MKINITCPIO_EXTRA_{}".format(name), "")
+        extra = system_context.substitution_expanded(
+            "MKINITCPIO_EXTRA_{}".format(name), ""
+        )
         if extra:
             self._execute(
                 location.next_line(),
@@ -554,7 +556,9 @@ class CreateInitrdCommand(Command):
             self._vg = None
 
         self._image_fs = system_context.substitution_expanded("IMAGE_FS", "")
-        self._image_device = _deviceify(system_context.substitution_expanded("IMAGE_DEVICE", ""))
+        self._image_device = _deviceify(
+            system_context.substitution_expanded("IMAGE_DEVICE", "")
+        )
         self._image_options = system_context.substitution_expanded("IMAGE_OPTIONS", "")
 
         name_prefix = system_context.substitution_expanded("DISTRO_ID", "")

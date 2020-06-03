@@ -29,6 +29,13 @@ pacstrap config=type-base/pacstrap.conf
 # Make sure these files are *not* in the image:
 remove /etc/machine-id /usr/bin/init /etc/crypttab /etc/fstab force=True
 
+create /etc/fstab <<<<# Filesystem table
+
+## Suppress some filesystems from the Ui!
+LABEL=${ROOTFS_PARTLABEL} /mnt/${DISTRO_ID}_rootfs nofail,noauto,ro 0 0
+LABEL=${VRTYFS_PARTLABEL} /mnt/${DISTRO_ID}_vrty nofail,noauto,ro 0 0
+>>>> mode=0o755
+
 # Remove some arch-specific files that are not needed:
 remove /usr/lib/tmpfiles.d/arch.conf
     /usr/share/factory/etc/* recursive=True

@@ -15,6 +15,7 @@ import collections
 import importlib.util
 import inspect
 import os
+import re
 import typing
 
 
@@ -124,8 +125,12 @@ class CommandManager:
             )
             return
 
+        pattern = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
+
         substitutions = self._collect_substitutions()
         for (key, value, _, _) in substitutions:
+            if not pattern.match(key):
+                continue  # skip this key, but keep it in documentation!
             assert not system_context.has_substitution(key)
             debug(
                 'Setting up system context: substitution "{}" = "{}".'.format(

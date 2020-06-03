@@ -223,6 +223,10 @@ class SystemContext:
     ) -> typing.Any:
         return self.expand(self.substitution(key, default_value))
 
+    def debug_dump_substitutions(self):
+        for (k, v) in self._substitutions.items():
+            print('"{}"="{}"'.format(k, v))
+
     def expand(self, input: str) -> str:
         return _recursive_expand(self, input)
 

@@ -7,8 +7,8 @@
 
 from cleanroom.command import Command
 from cleanroom.exceptions import ParseError
-from cleanroom.helper.file import create_file, makedirs
 from cleanroom.location import Location
+from cleanroom.printer import trace
 from cleanroom.systemcontext import SystemContext
 
 import os.path
@@ -22,10 +22,10 @@ class AddPartitionCommand(Command):
         """Constructor."""
         super().__init__(
             "add_partition",
-            syntax="name type=<TYPE> [label=<LABEL> uuid=<UUID> priority=<INT> weight=<INT> "
+            syntax="name device=<device_id> type=<TYPE> [label=<LABEL> uuid=<UUID> priority=<INT> weight=<INT> "
             "paddingWeight=<INT> minSize=<SIZE> maxSize=<SIZE> "
             "minPadding=<SIZE> maxPadding=<SIZE>]",
-            help_string="Add a partition to be created on the system by systemd-repart.\n",
+            help_string="Add a partition to be created on the system.\n",
             file=__file__,
             **services
         )
@@ -39,6 +39,7 @@ class AddPartitionCommand(Command):
             location,
             (
                 "type",
+                "device",
                 "label",
                 "uuid",
                 "priority",
@@ -79,6 +80,15 @@ class AddPartitionCommand(Command):
         ):
             raise ParseError("Invalid type found: {}.".format(type))
 
+    def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
+        return [
+            (
+                "EFI_PARTITION_UUID",
+                "",
+                "The partition UUID of the first defined EFI partition",
+            ),
+        ]
+
     def __call__(
         self,
         location: Location,
@@ -90,6 +100,9 @@ class AddPartitionCommand(Command):
         name = args[0]
         if not name.endswith(".conf"):
             name += ".conf"
+
+        device_id = kwargs.get("device", "disk0")
+        assert not " " in device_id
 
         contents = "[Partition]\n"
 
@@ -123,10 +136,34 @@ class AddPartitionCommand(Command):
         if maxPadding:
             contents += "PaddingMaxBytes={}\n".format(maxPadding)
 
-        makedirs(system_context, "/usr/lib/repart.d", mode=0o750, exist_ok=True)
-        create_file(
-            system_context,
-            os.path.join("/usr/lib/repart.d", name),
-            contents.encode("utf-8"),
-            mode=0o644,
+        rel_path = os.path.join(
+            system_context.substitution("DISTRO_ID"), "repart.d", device_id,
         )
+        path = os.path.join(system_context.boot_directory, "extra", rel_path,)
+        filename = os.path.join(path, name)
+        trace("Creating repart.d file {} (relative: {}).".format(filename, rel_path))
+
+        os.makedirs(path, mode=0o750, exist_ok=True)
+        with open(filename, "wb") as f:
+            f.write(contents.encode("utf-8"))
+        os.chown(filename, 0, 0, follow_symlinks=False)
+        os.chmod(filename, 0o644)
+
+        # set up substitutions:
+        device_ids = system_context.substitution_expanded(
+            "DEPLOY_DEVICE_IDS", ""
+        ).split()
+        if not device_id in device_ids:
+            device_ids.append(device_id)
+        system_context.set_substitution("DEPLOY_DEVICE_IDS", " ".join(device_ids))
+
+        key = "DEPLOY_{}_REPART_D".format(device_id)
+        repart_path = system_context.substitution_expanded(key, "")
+        if not repart_path:
+            trace("Setting {} to {}.".format(key, rel_path))
+            system_context.set_substitution(key, rel_path)
+        else:
+            assert rel_path == repart_path
+
+        if type == "esp" and uuid:
+            system_context.set_substitution("EFI_PARTITION_PARTUUID", uuid)

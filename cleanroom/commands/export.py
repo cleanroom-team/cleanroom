@@ -188,13 +188,13 @@ class ExportCommand(Command):
         if efi_emulator:
             if not os.path.isdir(os.path.join(efi_emulator, "EFI")):
                 raise ParseError(
-                    '"{}" is not a valide efi emulator. '
+                    '"{}" is not a valid efi emulator. '
                     'The folder needs to contain a "EFI" folder.'.format(efi_emulator),
                     location=location,
                 )
             if not os.path.isdir(os.path.join(efi_emulator, "Bootloaders")):
                 raise ParseError(
-                    '"{}" is not a valide efi emulator. '
+                    '"{}" is not a valid efi emulator. '
                     'The folder needs to contain a "Bootloaders" folder.'.format(
                         efi_emulator
                     ),
@@ -202,7 +202,7 @@ class ExportCommand(Command):
                 )
             if not os.path.isdir(os.path.join(efi_emulator, "BootSectors")):
                 raise ParseError(
-                    '"{}" is not a valide efi emulator. '
+                    '"{}" is not a valid efi emulator. '
                     'The folder needs to contain a "BootSectors" folder.'.format(
                         efi_emulator
                     ),
@@ -242,6 +242,11 @@ class ExportCommand(Command):
                 "vrty_${DISTRO_VERSION_ID}",
                 "Dm-verity filesystem partition label.",
             ),
+            (
+                "CLRM_IMAGE_FILENAME",
+                "${DISTRO_ID}_${DISTRO_VERSION_ID}",
+                "File name for the clrm image file",
+            ),
         ]
 
     def __call__(
@@ -259,6 +264,7 @@ class ExportCommand(Command):
         self._run_all_exportcommand_hooks(system_context)
 
         verbose("Preparing system for export.")
+        self._execute(location.next_line(), system_context, "_write_deploy_info")
         self.prepare_for_export(location, system_context)
 
         info("Validating installation for export.")
@@ -382,17 +388,20 @@ class ExportCommand(Command):
             btrfs_helper.delete_subvolume_recursive(export_volume)
         btrfs_helper.create_subvolume(export_volume)
 
-        os_name = system_context.substitution_expanded("DISTRO_ID", "")
-        timestamp = system_context.substitution_expanded("TIMESTAMP", "")
+        image_name = system_context.substitution_expanded("CLRM_IMAGE_FILENAME", "")
+        assert image_name
 
         image_filename = os.path.join(
             export_volume,
-            "{}_{}{}".format(
-                os_name,
-                timestamp,
+            "{}{}".format(
+                image_name,
                 "." + self._image_format if self._image_format != "raw" else "",
             ),
         )
+
+        extra_dir = os.path.join(system_context.boot_directory, "extra")
+        extra_efi_files = extra_dir if os.path.isdir(extra_dir) else None
+
         create_image(
             image_filename,
             self._image_format,
@@ -400,6 +409,7 @@ class ExportCommand(Command):
             0,
             0,
             efi_emulator=self._efi_emulator,
+            extra_efi_files=extra_efi_files,
             kernel_file=self._kernel_file,
             root_partition=self._root_partition,
             verity_partition=self._verity_partition,
