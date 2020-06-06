@@ -95,7 +95,7 @@ class PkgAvahiCommand(Command):
             system_context,
             "/usr/share/factory/var/etc/usbguard/rules.conf",
             b"",
-            mode=0o755,
+            mode=0o600,
         )
 
         remove(
