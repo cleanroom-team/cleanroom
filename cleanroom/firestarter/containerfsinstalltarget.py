@@ -15,12 +15,11 @@ import typing
 
 
 def _extract_into_snapshot(_, rootfs: str, *, import_snapshot: str) -> None:
-
     # Extract data
     tool.run(
         "/usr/bin/bash",
         "-c",
-        "( cd {} ; tar -cf - . ) | ( cd {} ; tar -xf - )".format(
+        '( cd "{}" ; tar -cf - . ) | ( cd "{}" ; tar -xf - )'.format(
             rootfs, import_snapshot
         ),
     )

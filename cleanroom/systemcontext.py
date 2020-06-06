@@ -74,6 +74,19 @@ class SystemContext:
         self._system_storage_directory = os.path.join(storage_directory, system_name)
         self._base_storage_directory = ""
 
+        debug(
+            "SystemContext: Directories:\n"
+            "          repository_base: {}...\n"
+            "          scratch: {}...\n"
+            "          system-definitions: {}...\n"
+            "          system-storage: {}...".format(
+                self._repository_base_directory,
+                self._scratch_directory,
+                self._systems_definition_directory,
+                self._system_storage_directory,
+            )
+        )
+
         self._base_context: typing.Optional[SystemContext] = None
         self._hooks: typing.Dict[str, typing.List[ExecObject]] = {}
         self._hooks_that_already_ran: typing.List[str] = []

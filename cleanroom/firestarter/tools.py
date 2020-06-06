@@ -28,11 +28,11 @@ def run(
     env["LC_ALL"] = "en_US.UTF-8"
 
     cwd = work_directory or None
-    trace('Running borg: "{}"...'.format('" "'.join(args)))
+    trace('Running: "{}"...'.format('" "'.join(args)))
     result = subprocess.run(args, env=env, capture_output=True, check=False, cwd=cwd)
     if result.returncode != 0:
         debug(
-            "Borg returned with exit code {}:\nSTDOUT:\n{}\nSTDERR:\n{}.".format(
+            "Command returned with exit code {}:\nSTDOUT:\n{}\nSTDERR:\n{}.".format(
                 result.returncode,
                 result.stdout.decode("utf-8"),
                 result.stderr.decode("utf-8"),
