@@ -442,7 +442,7 @@ def _repartition(
 
     trace("Setting basic partitions")
     partitions = [
-        partitioner.efi_partition(start="2m", size=efi_size),
+        partitioner.efi_partition(start="1m", size=efi_size),
         partitioner.data_partition(
             size=root_size,
             name=root_label,
