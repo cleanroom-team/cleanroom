@@ -6,7 +6,7 @@
 
 
 from cleanroom.command import Command
-from cleanroom.helper.file import create_file, makedirs, remove
+from cleanroom.helper.file import create_file, makedirs, remove, move
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
@@ -56,8 +56,7 @@ class PkgAvahiCommand(Command):
                     d /var/log/usbguard 0750 root root - -
 
                     d /var/etc/usbguard 0750 root root - -
-                    d /var/etc/usbguard/IPCAccessControl.d 0755 root root - -
-                    f /var/etc/usbguard/rules.conf 0600 root root - -
+                    C /var/etc/usbguard - - - - -
                     """
             ).encode("utf-8"),
         )
@@ -76,12 +75,31 @@ class PkgAvahiCommand(Command):
             "/IPCAccessControlFiles=\\/etc/ cIPCAccessControlFiles=/var/etc/usbguard/IPCAccessControl.d",
             "/etc/usbguard/usbguard-daemon.conf",
         )
+        self._execute(
+            location.next_line(),
+            system_context,
+            "sed",
+            "/ImplicitPolicyTarget=/ cImplicitPolicyTarget=allow",
+            "/etc/usbguard/usbguard-daemon.conf",
+        )
+
+        makedirs(
+            system_context, "/usr/share/factory/var/etc/usbguard/IPCaccessControl.d"
+        )
+        move(
+            system_context,
+            "/etc/usbguard/usbguard-daemon.conf",
+            "/usr/share/factory/var/etc/usbguard",
+        )
+        create_file(
+            system_context,
+            "/usr/share/factory/var/etc/usbguard/rules.conf",
+            b"",
+            mode=0o755,
+        )
 
         remove(
-            system_context,
-            "/etc/usbguard/rules.conf",
-            "/etc/usbguard/IPCAccessControl.d",
-            recursive=True,
+            system_context, "/etc/usbguard", recursive=True,
         )
 
         # Fix for https://github.com/USBGuard/usbguard/issues/287
@@ -94,6 +112,8 @@ class PkgAvahiCommand(Command):
                 [Service]
                 CapabilityBoundingSet=CAP_DAC_OVERRIDE
                 ReadWritePaths=-/var/etc/usbguard/rules.conf
+                ExecStart=
+                ExecStart=/usr/bin/usbguard-daemon -k -c /var/etc/usbguard/usbguard-daemon.conf
                 """
             ).encode("utf-8"),
         )
