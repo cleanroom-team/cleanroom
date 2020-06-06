@@ -18,6 +18,8 @@ import typing
 
 
 def _deviceify(device: str) -> str:
+    if not device:
+        return ""
     if device.startswith("PARTLABEL="):
         device = "/dev/disk/by-partlabel/" + device[10:]
     elif device.startswith("LABEL="):
