@@ -151,7 +151,7 @@ def export_into_directory(
 
 
 def copy_efi_partition(
-    *, image_file: str, efi_device, tempdir: str, kernel_only: bool = True
+        *, image_file: str, efi_device: str, efi_options: str, efi_fs_type: str, tempdir: str, kernel_only: bool = True
 ):
     verbose("Copying EFI configuration out of image file.")
     with disk.NbdDevice(image_file, disk_format="raw") as internal_device:
@@ -160,7 +160,7 @@ def copy_efi_partition(
             internal_device.device(1), os.path.join(tempdir, "_efi")
         ) as int_efi:
             with mount.Mount(
-                efi_device, os.path.join(tempdir, "efi"), fs_type="vfat"
+                efi_device, os.path.join(tempdir, "efi"), fs_type=efi_fs_type, options=efi_options,
             ) as efi:
                 if kernel_only:
                     img_dir = os.path.join(int_efi, "EFI", "Linux")
