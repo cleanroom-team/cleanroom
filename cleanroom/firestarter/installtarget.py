@@ -14,7 +14,9 @@ class InstallTarget(object):
         self._name = name
         self._help_string = help_string
 
-    def __call__(self, parse_result: typing.Any) -> None:
+    def __call__(
+        self, *, parse_result: typing.Any, tmp_dir: str, image_file: str
+    ) -> int:
         assert False
 
     def setup_subparser(self, subparser: typing.Any) -> None:

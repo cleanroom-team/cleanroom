@@ -5,24 +5,26 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
-from cleanroom.firestarter.imagepartitioninstalltarget import (
-    ImagePartitionInstallTarget,
-)
 from cleanroom.firestarter.installtarget import InstallTarget
+
 from cleanroom.firestarter.containerfsinstalltarget import (
     ContainerFilesystemInstallTarget,
 )
-from cleanroom.firestarter.directoryinstalltarget import DirectoryInstallTarget
+from cleanroom.firestarter.copyinstalltarget import CopyInstallTarget
+from cleanroom.firestarter.imagepartitioninstalltarget import (
+    ImagePartitionInstallTarget,
+)
 from cleanroom.firestarter.mountinstalltarget import MountInstallTarget
-from cleanroom.firestarter.qemubootinstalltarget import QemuBootInstallTarget
 from cleanroom.firestarter.qemuinstalltarget import QemuInstallTarget
 from cleanroom.firestarter.tarballinstalltarget import TarballInstallTarget
-from cleanroom.printer import Printer
+
+from cleanroom.printer import Printer, trace, debug
+from cleanroom.firestarter.tools import BorgMount
 
 from argparse import ArgumentParser
 import os
 import sys
+from tempfile import TemporaryDirectory
 import typing
 
 
@@ -58,7 +60,7 @@ def _parse_commandline(
     )
 
     subparsers = parser.add_subparsers(
-        help="Installation target specifics", dest="target_type"
+        help="Installation target specifics", dest="subcommand", required=True,
     )
     for it in install_targets:
         it.setup_subparser(subparsers.add_parser(it.name, help=it.help_string))
@@ -69,13 +71,12 @@ def _parse_commandline(
 # Main section:
 
 
-def main(*command_args: str):
-    known_install_targets = [
+def main(*command_args: str) -> int:
+    known_install_targets: typing.List[InstallTarget] = [
         ContainerFilesystemInstallTarget(),
-        DirectoryInstallTarget(),
+        CopyInstallTarget(),
         ImagePartitionInstallTarget(),
         MountInstallTarget(),
-        QemuBootInstallTarget(),
         QemuInstallTarget(),
         TarballInstallTarget(),
     ]
@@ -89,16 +90,48 @@ def main(*command_args: str):
     pr.set_verbosity(parse_result.verbose)
     pr.show_verbosity_level()
 
+    trace("Arguments parsed from command line: {}.".format(parse_result))
+
     install_target = next(
-        x for x in known_install_targets if x.name == parse_result.target_type
+        x for x in known_install_targets if x.name == parse_result.subcommand
     )
-    install_target(parse_result)
+    assert install_target
+    debug("Install target {} found.".format(install_target.name))
+
+    with TemporaryDirectory(prefix="fs_{}".format(install_target.name)) as tmp_dir:
+        trace("Using temporary directory: {}.".format(tmp_dir))
+
+        image_dir = os.path.join(tmp_dir, "borg")
+        os.makedirs(image_dir)
+
+        with BorgMount(
+            image_dir,
+            system_name=parse_result.system_name,
+            repository=parse_result.repository,
+            version=parse_result.system_version,
+        ) as image_file:
+            trace("Mounted borg directory with image file: {}.".format(image_file))
+            debug(
+                "Running install target with parse_args={}, tmp_dir={} and image_file={}.".format(
+                    parse_result, tmp_dir, image_file
+                )
+            )
+            result = install_target(
+                parse_result=parse_result, tmp_dir=tmp_dir, image_file=image_file,
+            )
+            debug("Install target done: return code: {}.".format(result))
+            trace("Starting cleanup.")
+
+    trace("Done, leaving with return code {}.".format(result))
+    return result
 
 
 def run():
     current_directory = os.getcwd()
 
     try:
-        main(*sys.argv)
+        result = main(*sys.argv)
     finally:
         os.chdir(current_directory)
+
+    return result

@@ -83,135 +83,64 @@ def extract_archive(archive: str, target_directory: str, *, repository: str) -> 
     )
 
 
-def write_image(
-    system_name: str, target_directory: str, *, repository: str, version: str = ""
-) -> str:
-    (archive_to_extract, extracted_version) = find_archive(
-        system_name, repository=repository, version=version
-    )
-    if not archive_to_extract:
-        if version:
-            print(
-                'Could not find version "{}" of system "{}" to extract.'.format(
-                    version, system_name
-                )
-            )
-        else:
-            print('Could not find system "{}" to extract'.format(system_name))
-        sys.exit(2)
-
-    extract_archive(archive_to_extract, target_directory, repository=repository)
-
-    return extracted_version
-
-
-def export_into_directory(
-    system_name: str,
-    target_directory: str,
-    *,
-    repository: str,
-    version: str = "",
-    create_directory: bool = False,
-    owner: str = "",
-    group: str = "",
-    mode: int = 0
-) -> str:
-    if not os.path.isdir(target_directory):
-        if create_directory:
-            os.makedirs(target_directory)
-
-    assert os.path.isdir(target_directory)
-
-    with TemporaryDirectory(prefix="clrm_dir_", dir=target_directory) as tempdir:
-        extracted_version = write_image(
-            system_name, tempdir, repository=repository, version=version
-        )
-
-        exported_file_name = "clrm_{}".format(extracted_version)
-        exported_file = os.path.join(tempdir, exported_file_name)
-        assert os.path.isfile(exported_file)
-
-        if group or owner:
-            chown(exported_file, user=owner or "root", group=group or "root")
-        if mode:
-            os.chmod(exported_file, mode)
-
-        target_file = os.path.join(target_directory, exported_file_name)
-        os.rename(exported_file, target_file)
-
-        # Create symlink:
-        link_location = os.path.join(target_directory, "latest.img")
-        if os.path.islink(link_location):
-            os.unlink(link_location)
-        os.symlink("./{}".format(exported_file_name), link_location)
-        if group or owner:
-            chown(link_location, user=owner or "root", group=group or "root")
-
-        return target_file
-
-
-def copy_efi_partition(
-        *, image_file: str, efi_device: str, efi_options: str, efi_fs_type: str, tempdir: str, kernel_only: bool = True
-):
-    verbose("Copying EFI configuration out of image file.")
-    with disk.NbdDevice(image_file, disk_format="raw") as internal_device:
-        internal_device.wait_for_device_node(partition=1)
-        with mount.Mount(
-            internal_device.device(1), os.path.join(tempdir, "_efi")
-        ) as int_efi:
-            with mount.Mount(
-                efi_device, os.path.join(tempdir, "efi"), fs_type=efi_fs_type, options=efi_options,
-            ) as efi:
-                if kernel_only:
-                    img_dir = os.path.join(int_efi, "EFI", "Linux")
-                    efi_dir = os.path.join(efi, "EFI", "Linux")
-                    assert os.path.isdir(img_dir)
-                    if not os.path.isdir(efi_dir):
-                        os.makedirs(efi_dir)
-
-                    for f in [
-                        f
-                        for f in os.listdir(img_dir)
-                        if os.path.isfile(os.path.join(img_dir, f))
-                    ]:
-                        trace("Copying EFI kernel {}.".format(f))
-                        copyfile(os.path.join(img_dir, f), os.path.join(efi_dir, f))
-                else:
-                    trace("Copying EFI folder into system.")
-                    copy_tree(int_efi, efi)
-
-
 def execute_with_system_mounted(
-    to_execute: typing.Callable[[str, str], None],
-    *,
-    repository: str,
-    system_name: str,
-    system_version: str = ""
-) -> None:
-    with TemporaryDirectory(prefix="clrm_qemu_") as tempdir:
-        verbose("Extracting image")
-        image_path = export_into_directory(
-            system_name, tempdir, repository=repository, version=system_version
+    to_execute: typing.Callable[[str, str], int], *, image_file: str, tmp_dir: str
+) -> int:
+    assert os.path.isfile(image_file)
+
+    with disk.NbdDevice(image_file, disk_format="raw", read_only=True) as device:
+        verbose("Mounting EFI...")
+        device.wait_for_device_node(partition=1)
+        with mount.Mount(
+            device.device(1),
+            os.path.join(tmp_dir, "EFI"),
+            fs_type="vfat",
+            options="ro",
+        ) as efi:
+            verbose("Mounting root filesystem...")
+            with mount.Mount(
+                device.device(2),
+                os.path.join(tmp_dir, "root"),
+                fs_type="squashfs",
+                options="ro",
+            ) as root:
+
+                trace('Executing with EFI "{}" and root "{}".'.format(efi, root))
+                result = to_execute(efi, root)
+
+    return result
+
+
+class BorgMount:
+    def __init__(
+        self, mnt_point: str, *, repository: str, system_name: str, version: str,
+    ) -> None:
+        if not os.path.isdir(mnt_point):
+            raise OSError('Mount point "{}" is not a directory.'.format(mnt_point))
+
+        (archive, _) = find_archive(system_name, repository=repository, version=version)
+        if not archive:
+            raise OSError("Failed to find repository or system.")
+
+        self._mnt_point = mnt_point
+        self._repository = repository
+        self._archive = archive
+        self._version = version
+
+    def __enter__(self) -> typing.Any:
+        run_borg(
+            "mount", "{}::{}".format(self._repository, self._archive), self._mnt_point
         )
 
-        assert os.path.isfile(image_path)
+        # find image file:
+        image_files = [
+            f
+            for f in os.listdir(self._mnt_point)
+            if self._version in f and os.path.isfile(os.path.join(self._mnt_point, f))
+        ]
+        assert len(image_files) == 1
 
-        with disk.NbdDevice(image_path, disk_format="raw") as device:
-            verbose("Mounting EFI...")
-            device.wait_for_device_node(partition=1)
-            with mount.Mount(
-                device.device(1),
-                os.path.join(tempdir, "EFI"),
-                fs_type="vfat",
-                options="ro",
-            ) as efi:
-                verbose("Mounting root filesystem...")
-                with mount.Mount(
-                    device.device(2),
-                    os.path.join(tempdir, "root"),
-                    fs_type="squashfs",
-                    options="ro",
-                ) as root:
+        return os.path.join(self._mnt_point, image_files[0])
 
-                    verbose('Executing with EFI "{}" and root "{}".'.format(efi, root))
-                    to_execute(efi, root)
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        mount.umount(self._mnt_point)

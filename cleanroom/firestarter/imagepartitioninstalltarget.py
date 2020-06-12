@@ -9,11 +9,76 @@
 from cleanroom.firestarter.installtarget import InstallTarget
 import cleanroom.firestarter.tools as tool
 import cleanroom.helper.mount as mount
+from cleanroom.printer import debug, trace
 
 import os.path
-from tempfile import TemporaryDirectory
+from shutil import copy2, copytree
 from sys import exit
 import typing
+
+
+def _copy_file(src, dest, overwrite: bool):
+    file = os.path.basename(src)
+    if not os.path.exists(os.path.join(dest, file)) or overwrite:
+        debug(
+            "Copying {} into {}{}".format(src, dest, " [FORCE]." if overwrite else ".")
+        )
+        copy2(src, dest)
+    else:
+        debug("Skipped copy of {} into {}.".format(src, dest))
+
+
+def _copy_efi(
+    src: str, dest: str, *, include_bootloader: bool = False, overwrite: bool = False
+) -> int:
+    try:
+        efi_path = os.path.join(dest, "EFI")
+        os.makedirs(efi_path, exist_ok=True)
+
+        linux_src_path = os.path.join(src, "EFI/Linux")
+        kernels = [
+            f
+            for f in os.listdir(linux_src_path)
+            if os.path.isfile(os.path.join(linux_src_path, f))
+        ]
+        debug('Found kernel(s): "{}".'.format('", "'.join(kernels)))
+        assert len(kernels) == 1
+        kernel = kernels[0]
+
+        _copy_file(
+            os.path.join(linux_src_path, kernel),
+            os.path.join(dest, "EFI/Linux"),
+            overwrite=overwrite,
+        )
+
+        if include_bootloader:
+            trace("Copying bootloader.")
+
+            efi_src_path = os.path.join(src, "EFI")
+
+            dirs = [
+                d
+                for d in os.listdir(efi_src_path)
+                if d != "Linux" and os.path.isdir(os.path.join(efi_src_path, d))
+            ]
+            for d in dirs:
+                trace(
+                    "Copying {} to {}".format(os.path.join(efi_src_path, d), efi_path)
+                )
+                copytree(os.path.join(efi_src_path, d), efi_path, dirs_exist_ok=True)
+
+            copytree(
+                os.path.join(src, "loader"),
+                os.path.join(dest, "loader"),
+                dirs_exist_ok=True,
+            )
+
+    except Exception as e:
+        debug("Failed to install EFI: {}.".format(e))
+        return 1
+    else:
+        debug("Successfully installed EFI")
+        return 0
 
 
 class ImagePartitionInstallTarget(InstallTarget):
@@ -45,7 +110,6 @@ class ImagePartitionInstallTarget(InstallTarget):
             help="The filesystem used on the EFI partition.",
         )
 
-
         parser.add_argument(
             "--image-device",
             action="store",
@@ -68,8 +132,24 @@ class ImagePartitionInstallTarget(InstallTarget):
             help="Options used to mount image filessystem "
             "[defaults to: subvol=/.images]",
         )
+        parser.add_argument(
+            "--add-bootloader",
+            action="store_true",
+            default=False,
+            dest="include_bootloader",
+            help="Install the boot loader files in addition to the kernel.",
+        )
+        parser.add_argument(
+            "--overwrite",
+            action="store_true",
+            default=False,
+            dest="overwrite",
+            help="Overwrite existing images/kernels.",
+        )
 
-    def __call__(self, parse_result: typing.Any) -> None:
+    def __call__(
+        self, *, parse_result: typing.Any, tmp_dir: str, image_file: str
+    ) -> int:
         if not parse_result.efi_device:
             print("No --efi-device provided, stopping.")
             exit(1)
@@ -77,24 +157,27 @@ class ImagePartitionInstallTarget(InstallTarget):
             print("No --image-device provided, stopping.")
             exit(1)
 
-        with TemporaryDirectory() as tempdir:
-            with mount.Mount(
-                parse_result.image_device,
-                os.path.join(tempdir, "images"),
-                options=parse_result.image_options,
-                fs_type=parse_result.image_fs_type,
-            ) as images_mnt:
-                exported_file = tool.export_into_directory(
-                    parse_result.system_name,
-                    images_mnt,
-                    version=parse_result.system_version,
-                    repository=parse_result.repository,
-                )
+        with mount.Mount(
+            parse_result.image_device,
+            os.path.join(tmp_dir, "images"),
+            options=parse_result.image_options,
+            fs_type=parse_result.image_fs_type,
+        ) as images_mnt:
+            _copy_file(image_file, images_mnt, overwrite=parse_result.overwrite)
 
-                tool.copy_efi_partition(
-                    image_file=exported_file,
-                    efi_device=parse_result.efi_device,
-                    efi_options=parse_result.efi_options,
-                    efi_fs_type=parse_result.efi_fs_type,
-                    tempdir=tempdir,
-                )
+        with mount.Mount(
+            parse_result.efi_device,
+            os.path.join(tmp_dir, "efi_dest"),
+            options=parse_result.efi_options,
+            fs_type=parse_result.efi_fs_type,
+        ) as efi_dest_mnt:
+            return tool.execute_with_system_mounted(
+                lambda e, _: _copy_efi(
+                    e,
+                    efi_dest_mnt,
+                    include_bootloader=parse_result.include_bootloader,
+                    overwrite=parse_result.overwrite,
+                ),
+                image_file=image_file,
+                tmp_dir=tmp_dir,
+            )

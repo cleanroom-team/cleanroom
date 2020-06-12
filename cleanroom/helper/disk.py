@@ -61,10 +61,14 @@ def is_nbd_device_in_use(device: str, *, nbd_client_command: str = ""):
         # Not connected according to nbd-client, now try to open:
         # https://unix.stackexchange.com/questions/33508/check-which-network-block-devices-are-in-use
         # says this extra step is necessary.
+        trace("Running extra open check...")
         fd = os.open(device, os.O_EXCL)
         ret_val = fd == -1
         if fd != -1:
             os.close(fd)
+
+        trace("    Extra check result: {}.".format(ret_val))
+
     return ret_val
 
 
@@ -227,6 +231,7 @@ class NbdDevice(Device):
         nbd_client_command: str = "",
         sync_command: str = "",
         modprobe_command: str = "",
+        read_only: bool = False,
     ) -> None:
         assert os.path.isfile(file_name)
 
@@ -241,6 +246,7 @@ class NbdDevice(Device):
             disk_format=disk_format,
             qemu_nbd_command=qemu_nbd_command,
             modprobe_command=modprobe_command,
+            read_only=read_only,
         )
         assert device
 
@@ -287,6 +293,7 @@ class NbdDevice(Device):
         qemu_nbd_command: str = "",
         nbd_client_command: str = "",
         modprobe_command: str = "",
+        read_only: bool = False,
     ) -> typing.Optional[str]:
         assert _is_root()
         assert os.path.isfile(file_name)
@@ -294,6 +301,9 @@ class NbdDevice(Device):
         if not is_block_device(_nbd_device(0)):
             trace("Loading nbd kernel module...")
             run(modprobe_command or "/usr/bin/modprobe", "nbd")
+
+        assert is_block_device(_nbd_device(0))
+        debug("nbd kernel module is installed and ready.")
 
         nbd_count = _get_max_nbd_count()
 
@@ -308,12 +318,18 @@ class NbdDevice(Device):
                 trace("{} is in use, skipping".format(device))
                 continue
 
+            args = [
+                "--connect={}".format(device),
+                "--format={}".format(disk_format),
+                file_name,
+            ]
+            if read_only:
+                args.append("-r")
+
             try:
                 result = run(
                     qemu_nbd_command or "/usr/bin/qemu-nbd",
-                    "--connect={}".format(device),
-                    "--format={}".format(disk_format),
-                    file_name,
+                    *args,
                     returncode=None,
                     timeout=5,
                     stdout="/dev/null",

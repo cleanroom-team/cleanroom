@@ -14,29 +14,31 @@ import os
 import typing
 
 
-def _extract_into_snapshot(_, rootfs: str, *, import_snapshot: str) -> None:
+def _extract_into_snapshot(_, rootfs: str, *, import_snapshot: str) -> int:
     # Extract data
-    tool.run(
+    return tool.run(
         "/usr/bin/bash",
         "-c",
         '( cd "{}" ; tar -cf - . ) | ( cd "{}" ; tar -xf - )'.format(
             rootfs, import_snapshot
         ),
-    )
+    ).returncode
 
 
 class ContainerFilesystemInstallTarget(InstallTarget):
     def __init__(self) -> None:
         super().__init__("container_fs", "Install a container filesystem.")
 
-    def __call__(self, parse_result: typing.Any) -> None:
+    def __call__(
+        self, *, parse_result: typing.Any, tmp_dir: str, image_file: str
+    ) -> int:
         container_name = parse_result.override_system_name
         if not container_name:
             container_name = parse_result.system_name
             if container_name.startswith("system-"):
                 container_name = container_name[7:]
 
-        container_dir = os.path.join("/var/lib/machines", container_name)
+        container_dir = os.path.join(parse_result.machines_dir, container_name)
         import_dir = container_dir + "_import"
 
         try:
@@ -44,11 +46,10 @@ class ContainerFilesystemInstallTarget(InstallTarget):
             btrfs.create_subvolume(import_dir)
 
             # Mount filessystems and copy the rootfs into import_dir:
-            tool.execute_with_system_mounted(
+            result = tool.execute_with_system_mounted(
                 lambda e, r: _extract_into_snapshot(e, r, import_snapshot=import_dir),
-                repository=parse_result.repository,
-                system_name=parse_result.system_name,
-                system_version=parse_result.system_version,
+                image_file=image_file,
+                tmp_dir=tmp_dir,
             )
 
             # Delete *old* container-name:
@@ -61,6 +62,8 @@ class ContainerFilesystemInstallTarget(InstallTarget):
         finally:
             btrfs.delete_subvolume(import_dir)
 
+        return result
+
     def setup_subparser(self, parser: typing.Any) -> None:
         parser.add_argument(
             "--container-name",
@@ -69,6 +72,12 @@ class ContainerFilesystemInstallTarget(InstallTarget):
             nargs="?",
             default="",
             help="Container name to use "
-            "[default: system-name without "
-            '"system-" prefix]',
+            '[default: system-name without "system-" prefix]',
+        )
+        parser.add_argument(
+            "--machines-dir",
+            dest="machines_dir",
+            action="store",
+            default="/var/lib/machines",
+            help="Machines directory " "[default: /var/lib/machines]",
         )

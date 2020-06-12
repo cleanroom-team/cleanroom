@@ -16,7 +16,7 @@ from tempfile import TemporaryDirectory
 import typing
 
 
-def _execution(efi: str, rootfs: str, *, command: str) -> None:
+def _execution(efi: str, rootfs: str, *, command: str) -> int:
     to_exec = command or '/usr/bin/bash -c "read -n1 -s"'
     prompt = "" if command else "<<< Press any key to continue >>>"
 
@@ -34,7 +34,7 @@ def _execution(efi: str, rootfs: str, *, command: str) -> None:
     if prompt:
         print(prompt)
 
-    tool.run(*split(to_exec), env=env)
+    return tool.run(*split(to_exec), env=env).returncode
 
 
 class MountInstallTarget(InstallTarget):
@@ -45,12 +45,13 @@ class MountInstallTarget(InstallTarget):
             "the given command is done executing.",
         )
 
-    def __call__(self, parse_result: typing.Any) -> None:
-        tool.execute_with_system_mounted(
+    def __call__(
+        self, *, parse_result: typing.Any, tmp_dir: str, image_file: str
+    ) -> int:
+        return tool.execute_with_system_mounted(
             lambda e, r: _execution(e, r, command=parse_result.command),
-            repository=parse_result.repository,
-            system_name=parse_result.system_name,
-            system_version=parse_result.system_version,
+            image_file=image_file,
+            tmp_dir=tmp_dir,
         )
 
     def setup_subparser(self, parser: typing.Any) -> None:

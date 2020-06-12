@@ -35,8 +35,11 @@ def _append_network(hostname, *, hostfwd=[], mac="", net="", host=""):
 def _append_hdd(bootindex, counter, disk):
     disk_parts = disk.split(":")
     usb_disk = "usb" in disk_parts
+    read_only = "read-only" in disk_parts
     if usb_disk:
         disk_parts.remove("usb")
+    if read_only:
+        disk_parts.remove("read-only")
 
     if len(disk_parts) < 2:
         disk_parts.append("qcow2")
@@ -48,9 +51,15 @@ def _append_hdd(bootindex, counter, disk):
     if usb_disk:
         driver = "usb-storage"
 
+    drive_extra = ""
+    if read_only:
+        drive_extra += ",read-only"
+
     return [
         "-drive",
-        "file={},format={},if=none,id=disk{}".format(disk_parts[0], disk_parts[1], c),
+        "file={},format={},if=none,id=disk{}{}".format(
+            disk_parts[0], disk_parts[1], c, drive_extra
+        ),
         "-device",
         "{},drive=disk{},bootindex={}".format(driver, c, bootindex),
     ]
@@ -173,7 +182,7 @@ def setup_parser_for_qemu(parser: typing.Any) -> None:
 
 def run_qemu(
     parse_result: typing.Any, *, drives: typing.List[str] = [], work_directory: str
-):
+) -> int:
     qemu_args = [
         "/usr/bin/qemu-system-x86_64",
         "--enable-kvm",
@@ -233,3 +242,5 @@ def run_qemu(
         print("Qemu run Failed with return code {}.".format(result.returncode))
         print("Qemu stdout: {}".format(result.stdout))
         print("Qemu stderr: {}".format(result.stderr))
+
+    return result.returncode
