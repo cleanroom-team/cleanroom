@@ -77,12 +77,6 @@ def find_archive(
     return archive_to_use, archive_to_use[len(system_name) + 1 :]
 
 
-def extract_archive(archive: str, target_directory: str, *, repository: str) -> None:
-    run_borg(
-        "extract", "{}::{}".format(repository, archive), work_directory=target_directory
-    )
-
-
 def execute_with_system_mounted(
     to_execute: typing.Callable[[str, str], int], *, image_file: str, tmp_dir: str
 ) -> int:
