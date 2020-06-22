@@ -144,7 +144,7 @@ def create_image_file(
         with open(file_name, "a") as f:
             pass
         trace(".... image file created.")
-        run("/usr/bin/attr", "+C", file_name, returncode=None)
+        run("/usr/bin/chattr", "+C", file_name, returncode=None)
         trace(".... nocow attribtue set on file (if supported).")
 
     run(

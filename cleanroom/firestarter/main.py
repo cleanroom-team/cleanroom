@@ -15,6 +15,7 @@ from cleanroom.firestarter.imagepartitioninstalltarget import (
     ImagePartitionInstallTarget,
 )
 from cleanroom.firestarter.mountinstalltarget import MountInstallTarget
+from cleanroom.firestarter.partitioninstalltarget import PartitionInstallTarget
 from cleanroom.firestarter.qemuinstalltarget import QemuInstallTarget
 from cleanroom.firestarter.tarballinstalltarget import TarballInstallTarget
 
@@ -63,6 +64,11 @@ def _parse_commandline(
         help="Installation target specifics", dest="subcommand", required=True,
     )
     for it in install_targets:
+        debug(
+            'Setting up subparser for "{}" with help "{}".'.format(
+                it.name, it.help_string
+            )
+        )
         it.setup_subparser(subparsers.add_parser(it.name, help=it.help_string))
 
     return parser.parse_args(args[1:])
@@ -77,6 +83,7 @@ def main(*command_args: str) -> int:
         CopyInstallTarget(),
         ImagePartitionInstallTarget(),
         MountInstallTarget(),
+        PartitionInstallTarget(),
         QemuInstallTarget(),
         TarballInstallTarget(),
     ]
