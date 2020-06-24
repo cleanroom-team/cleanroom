@@ -92,7 +92,7 @@ or make sure that root can start UI applications for this to work:
 export BORG_PASSPHRASE=foobar
 "${CLRM_BASE}/firestarter" \
     --repository="${BASE_DIR}/borg_repository \
-    system-example qemu_boot
+    system-example qemu-image
 ```
 
 Log in as root user using password root1234

@@ -17,6 +17,7 @@ from cleanroom.firestarter.imagepartitioninstalltarget import (
 from cleanroom.firestarter.mountinstalltarget import MountInstallTarget
 from cleanroom.firestarter.partitioninstalltarget import PartitionInstallTarget
 from cleanroom.firestarter.qemuinstalltarget import QemuInstallTarget
+from cleanroom.firestarter.qemuimageinstalltarget import QemuImageInstallTarget
 from cleanroom.firestarter.tarballinstalltarget import TarballInstallTarget
 
 from cleanroom.printer import Printer, trace, debug
@@ -84,6 +85,7 @@ def main(*command_args: str) -> int:
         ImagePartitionInstallTarget(),
         MountInstallTarget(),
         PartitionInstallTarget(),
+        QemuImageInstallTarget(),
         QemuInstallTarget(),
         TarballInstallTarget(),
     ]
