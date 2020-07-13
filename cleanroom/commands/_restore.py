@@ -44,7 +44,10 @@ class RestoreCommand(Command):
         """Execute command."""
 
         base = args[0]
-        assert system_context.base_context.system_name == base
+        assert (
+            system_context.base_context
+            and system_context.base_context.system_name == base
+        )
 
         btrfs_helper = self._service("btrfs_helper")
 

@@ -172,7 +172,7 @@ def _mount_directories_if_needed(root_dir, *, pacman_in_filesystem=False):
     )
 
 
-def _unmount_directories_if_needed(root_dir, *, pacman_in_filesystem=False):
+def _umount_directories_if_needed(root_dir, *, pacman_in_filesystem=False):
     debug("Cleaning up pacman chroot.")
     umount_all(root_dir)
 
@@ -310,7 +310,7 @@ def pacman(
         pacman_command=pacman_command,
         pacman_in_filesystem=previous_pacstate
     )
-    _unmount_directories_if_needed(
+    _umount_directories_if_needed(
         system_context.fs_directory, pacman_in_filesystem=previous_pacstate
     )
 
@@ -367,21 +367,21 @@ def pacman_report(
     )
 
     # Generate file list:
-    qlin = os.path.join(directory, "pacman-Ql.txt.in")
+    ql_in = os.path.join(directory, "pacman-Ql.txt.in")
     action = ["-Ql"]
     _run_pacman(
         system_context,
         *action,
-        stdout=qlin,
+        stdout=ql_in,
         pacman_command=pacman_command,
         pacman_in_filesystem=False
     )
 
     # Filter prefix from file list:
-    with open(qlin, "r") as input_fd:
+    with open(ql_in, "r") as input_fd:
         with open(os.path.join(directory, "pacman-Ql.txt"), "w") as output_fd:
             for line in input_fd:
                 output_fd.write(line.replace(system_context.fs_directory, ""))
 
     # Remove prefix-ed version:
-    os.remove(qlin)
+    os.remove(ql_in)

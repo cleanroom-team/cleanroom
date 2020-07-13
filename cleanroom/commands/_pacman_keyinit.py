@@ -43,8 +43,8 @@ class PacstrapCommand(Command):
     ) -> None:
         """Execute command."""
 
-        pacman_key_command = kwargs.get("pacman_key")
-        gpg_dir = kwargs.get("gpg_dir")
+        pacman_key_command = kwargs.get("pacman_key", "")
+        gpg_dir = kwargs.get("gpg_dir", "")
 
         run(
             pacman_key_command,

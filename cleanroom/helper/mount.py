@@ -54,7 +54,7 @@ def mount_points(
 
 
 def umount(directory: str, chroot: typing.Optional[str] = None) -> None:
-    """Unmount a directory."""
+    """Umount a directory."""
     assert len(mount_points(directory)) == 1
 
     run("/usr/bin/umount", _map_into_chroot(directory, chroot))
@@ -63,7 +63,7 @@ def umount(directory: str, chroot: typing.Optional[str] = None) -> None:
 
 
 def umount_all(directory: str, chroot: typing.Optional[str] = None) -> bool:
-    """Unmount all mount points below a directory."""
+    """Umount all mount points below a directory."""
     sub_mounts = mount_points(directory, chroot=chroot)
 
     if sub_mounts:

@@ -55,7 +55,7 @@ class PacstrapCommand(Command):
         **kwargs: typing.Any
     ) -> None:
         """Execute command."""
-        pacman_setup(system_context, kwargs.get("config"))
+        pacman_setup(system_context, kwargs.get("config", ""))
 
         pacman_key_command = self._binary(Binaries.PACMAN_KEY)
         pacman_keyinit(system_context, pacman_key_command=pacman_key_command)

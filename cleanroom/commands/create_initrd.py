@@ -17,7 +17,7 @@ import textwrap
 import typing
 
 
-def _deviceify(device: str) -> str:
+def _device_ify(device: str) -> str:
     if not device:
         return ""
     if device.startswith("PARTLABEL="):
@@ -37,7 +37,7 @@ def _deviceify(device: str) -> str:
 
 
 def _escape_device(device: str) -> str:
-    device = _deviceify(device)
+    device = _device_ify(device)
 
     device = device.replace("-", "\\x2d")
     device = device.replace("=", "\\x3d")
@@ -558,7 +558,7 @@ class CreateInitrdCommand(Command):
             self._vg = None
 
         self._image_fs = system_context.substitution_expanded("IMAGE_FS", "")
-        self._image_device = _deviceify(
+        self._image_device = _device_ify(
             system_context.substitution_expanded("IMAGE_DEVICE", "")
         )
         self._image_options = system_context.substitution_expanded("IMAGE_OPTIONS", "")

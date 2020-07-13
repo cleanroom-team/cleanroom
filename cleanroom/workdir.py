@@ -76,7 +76,7 @@ class WorkDir:
                 trace('Using existing work directory in "{}".'.format(work_directory))
                 if not umount_all(work_directory):
                     raise PreflightError(
-                        "Failed to unmount all in work "
+                        "Failed to umount all in work "
                         'directory "{}".'.format(work_directory)
                     )
                 if clear_scratch_directory:

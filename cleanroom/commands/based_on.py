@@ -68,7 +68,10 @@ class BasedOnCommand(Command):
             self._add_hook(location, system_context, "testing", "_test")
             self._execute(location, system_context, "_setup")
         else:
-            assert system_context.base_context.system_name == base_system
+            assert (
+                system_context.base_context
+                and system_context.base_context.system_name == base_system
+            )
             verbose("Building on top of {}.".format(base_system))
             self._execute(location, system_context, "_restore", base_system)
 
