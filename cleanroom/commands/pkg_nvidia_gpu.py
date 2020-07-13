@@ -1,6 +1,6 @@
 """pkg_nvidia_gpu command.
 
-@author: Paul Hunnnisett phunnilemur@gmail.com
+@author: Paul Hunnisett <phunnilemur@gmail.com>
 """
 
 from cleanroom.command import Command
@@ -13,18 +13,20 @@ import typing
 class PkgNvidiaGpuCommand(Command):
     """The pkg_nvidia_gpu command."""
 
-
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
         super().__init__(
-            "pkg_nvidia_gpu", help_string="Set up NVidia GPU.", file=__file__, **services
-     )
+            "pkg_nvidia_gpu",
+            help_string="Set up NVidia GPU.",
+            file=__file__,
+            **services
+        )
 
-
-    def validate(self, location: Location, *args: typing.Any, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
         self._validate_no_arguments(location, *args, **kwargs)
-
 
     def __call__(
         self,
@@ -39,7 +41,6 @@ class PkgNvidiaGpuCommand(Command):
         system_context.set_or_append_substitution(
             "KERNEL_CMDLINE", "nvidia-drm.modeset=1 nouveau.blacklist=1"
         )
-
 
         self._execute(
             location,
@@ -64,4 +65,4 @@ class PkgNvidiaGpuCommand(Command):
             "create",
             "/etc/modprobe.d/nouveau-blacklist.conf",
             "blacklist noveau",
-       )
+        )
