@@ -54,6 +54,7 @@ remove /usr/lib/systemd/system/timers.target.wants/shadow.timer
 ensure_no_unused_shell_files
 ensure_hwdb
 ensure_ldconfig
+ensure_depmod
 ensure_no_kernel_install
 ensure_no_update_service
 ensure_no_sysusers
