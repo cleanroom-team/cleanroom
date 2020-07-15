@@ -17,34 +17,34 @@ import typing
 class Binaries(Enum):
     """Important binaries."""
 
+    APT_GET = auto()
     BORG = auto()
     BTRFS = auto()
-    MKNOD = auto()
-    PACMAN = auto()
-    PACMAN_KEY = auto()
-    APT_GET = auto()
-    DPKG = auto()
+    CHROOT_HELPER = auto()
     DEBOOTSTRAP = auto()
-    SBSIGN = auto()
-    OBJCOPY = auto()
-    MKSQUASHFS = auto()
-    VERITYSETUP = auto()
-    TAR = auto()
-    USERMOD = auto()
-    USERADD = auto()
+    DEPMOD = auto()
+    DPKG = auto()
+    FLOCK = auto()
     GROUPADD = auto()
     GROUPMOD = auto()
-    CHROOT_HELPER = auto()
-    SYSTEMCTL = auto()
-    SFDISK = auto()
-    FLOCK = auto()
+    MKFS_VFAT = auto()
+    MKNOD = auto()
+    MKSQUASHFS = auto()
+    MODPROBE = auto()
+    NBD_CLIENT = auto()
+    OBJCOPY = auto()
+    PACMAN = auto()
+    PACMAN_KEY = auto()
     QEMU_IMG = auto()
     QEMU_NBD = auto()
-    NBD_CLIENT = auto()
-    MKFS_VFAT = auto()
+    SBSIGN = auto()
+    SFDISK = auto()
     SYNC = auto()
-    MODPROBE = auto()
-    DEPMOD = auto()
+    SYSTEMCTL = auto()
+    TAR = auto()
+    USERADD = auto()
+    USERMOD = auto()
+    VERITYSETUP = auto()
 
 
 def _check_for_binary(binary: str) -> str:
@@ -68,26 +68,26 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
     binaries = {
         Binaries.BORG: _check_for_binary("/usr/bin/borg"),
         Binaries.BTRFS: _check_for_binary("/usr/bin/btrfs"),
-        Binaries.SBSIGN: _check_for_binary("/usr/bin/sbsign"),
-        Binaries.OBJCOPY: _check_for_binary("/usr/bin/objcopy"),
+        Binaries.CHROOT_HELPER: _check_for_binary("/usr/bin/arch-chroot"),
+        Binaries.DEPMOD: _check_for_binary("/usr/bin/depmod"),
+        Binaries.FLOCK: _check_for_binary("/usr/bin/flock"),
+        Binaries.GROUPADD: _check_for_binary("/usr/sbin/groupadd"),
+        Binaries.GROUPMOD: _check_for_binary("/usr/sbin/groupmod"),
+        Binaries.MKFS_VFAT: _check_for_binary("/usr/bin/mkfs.vfat"),
         Binaries.MKNOD: _check_for_binary("/usr/bin/mknod"),
         Binaries.MKSQUASHFS: _check_for_binary("/usr/bin/mksquashfs"),
-        Binaries.TAR: _check_for_binary("/usr/bin/tar"),
-        Binaries.USERMOD: _check_for_binary("/usr/sbin/usermod"),
-        Binaries.USERADD: _check_for_binary("/usr/sbin/useradd"),
-        Binaries.GROUPMOD: _check_for_binary("/usr/sbin/groupmod"),
-        Binaries.GROUPADD: _check_for_binary("/usr/sbin/groupadd"),
-        Binaries.CHROOT_HELPER: _check_for_binary("/usr/bin/arch-chroot"),
-        Binaries.SYSTEMCTL: _check_for_binary("/usr/bin/systemctl"),
-        Binaries.FLOCK: _check_for_binary("/usr/bin/flock"),
-        Binaries.SFDISK: _check_for_binary("/usr/bin/sfdisk"),
+        Binaries.MODPROBE: _check_for_binary("/usr/bin/modprobe"),
+        Binaries.NBD_CLIENT: _check_for_binary("/usr/bin/nbd-client"),
+        Binaries.OBJCOPY: _check_for_binary("/usr/bin/objcopy"),
         Binaries.QEMU_IMG: _check_for_binary("/usr/bin/qemu-img"),
         Binaries.QEMU_NBD: _check_for_binary("/usr/bin/qemu-nbd"),
-        Binaries.NBD_CLIENT: _check_for_binary("/usr/bin/nbd-client"),
-        Binaries.MKFS_VFAT: _check_for_binary("/usr/bin/mkfs.vfat"),
+        Binaries.SBSIGN: _check_for_binary("/usr/bin/sbsign"),
+        Binaries.SFDISK: _check_for_binary("/usr/bin/sfdisk"),
         Binaries.SYNC: _check_for_binary("/usr/bin/sync"),
-        Binaries.MODPROBE: _check_for_binary("/usr/bin/modprobe"),
-        Binaries.DEPMOD: _check_for_binary('/usr/bin/depmod'),
+        Binaries.SYSTEMCTL: _check_for_binary("/usr/bin/systemctl"),
+        Binaries.TAR: _check_for_binary("/usr/bin/tar"),
+        Binaries.USERADD: _check_for_binary("/usr/sbin/useradd"),
+        Binaries.USERMOD: _check_for_binary("/usr/sbin/usermod"),
     }
     os_binaries: typing.Dict[Binaries, str] = {}
     distribution = _get_distribution()
@@ -95,14 +95,14 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
     if distribution == "debian":
         os_binaries = {
             Binaries.APT_GET: _check_for_binary("/usr/bin/apt-get"),
-            Binaries.DPKG: _check_for_binary("/usr/bin/dpkg"),
             Binaries.DEBOOTSTRAP: _check_for_binary("/usr/sbin/debootstrap"),
+            Binaries.DPKG: _check_for_binary("/usr/bin/dpkg"),
             Binaries.VERITYSETUP: _check_for_binary("/usr/sbin/veritysetup"),
         }
     elif distribution == "arch" or distribution == "archlinux":
         os_binaries = {
-            Binaries.PACMAN: _check_for_binary("/usr/bin/pacman"),
             Binaries.PACMAN_KEY: _check_for_binary("/usr/bin/pacman-key"),
+            Binaries.PACMAN: _check_for_binary("/usr/bin/pacman"),
             Binaries.VERITYSETUP: _check_for_binary("/usr/bin/veritysetup"),
         }
     else:
