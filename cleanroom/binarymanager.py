@@ -44,6 +44,7 @@ class Binaries(Enum):
     MKFS_VFAT = auto()
     SYNC = auto()
     MODPROBE = auto()
+    DEPMOD = auto()
 
 
 def _check_for_binary(binary: str) -> str:
@@ -86,6 +87,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.MKFS_VFAT: _check_for_binary("/usr/bin/mkfs.vfat"),
         Binaries.SYNC: _check_for_binary("/usr/bin/sync"),
         Binaries.MODPROBE: _check_for_binary("/usr/bin/modprobe"),
+        Binaries.DEPMOD: _check_for_binary('/usr/bin/depmod'),
     }
     os_binaries: typing.Dict[Binaries, str] = {}
     distribution = _get_distribution()
