@@ -64,5 +64,5 @@ class PkgNvidiaGpuCommand(Command):
             system_context,
             "create",
             "/etc/modprobe.d/nouveau-blacklist.conf",
-            "blacklist noveau",
+            "blacklist nouveau",
         )
