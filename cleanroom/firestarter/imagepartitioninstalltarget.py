@@ -11,13 +11,13 @@ import cleanroom.firestarter.tools as tool
 import cleanroom.helper.mount as mount
 from cleanroom.printer import debug, trace
 
-import os.path
+import os
 from shutil import copy2, copytree
 from sys import exit
 import typing
 
 
-def _copy_file(src, dest, overwrite: bool):
+def _copy_file(src: str, dest: str, overwrite: bool):
     file = os.path.basename(src)
     if not os.path.exists(os.path.join(dest, file)) or overwrite:
         debug(
@@ -87,22 +87,22 @@ class ImagePartitionInstallTarget(InstallTarget):
             "image_partition", "export image into image_partition and update EFI."
         )
 
-    def setup_subparser(self, parser: typing.Any) -> None:
-        parser.add_argument(
+    def setup_subparser(self, subparser: typing.Any) -> None:
+        subparser.add_argument(
             "--efi-device",
             action="store",
             default="",
             dest="efi_device",
             help="The device containing the EFI partition.",
         )
-        parser.add_argument(
+        subparser.add_argument(
             "--efi-options",
             action="store",
             default="",
             dest="efi_options",
             help="The mount options for the EFI partition.",
         )
-        parser.add_argument(
+        subparser.add_argument(
             "--efi-fs-type",
             action="store",
             default="vfat",
@@ -110,21 +110,21 @@ class ImagePartitionInstallTarget(InstallTarget):
             help="The filesystem used on the EFI partition.",
         )
 
-        parser.add_argument(
+        subparser.add_argument(
             "--image-device",
             action="store",
             default="",
             dest="image_device",
             help="The device containing the images.",
         )
-        parser.add_argument(
+        subparser.add_argument(
             "--image-fs-type",
             action="store",
             default="btrfs",
             dest="image_fs_type",
             help="The filesystem type containing the image " "[defaults to btrfs].",
         )
-        parser.add_argument(
+        subparser.add_argument(
             "--image-options",
             action="store",
             default="subvol=/.images",
@@ -132,14 +132,14 @@ class ImagePartitionInstallTarget(InstallTarget):
             help="Options used to mount image filessystem "
             "[defaults to: subvol=/.images]",
         )
-        parser.add_argument(
+        subparser.add_argument(
             "--add-bootloader",
             action="store_true",
             default=False,
             dest="include_bootloader",
             help="Install the boot loader files in addition to the kernel.",
         )
-        parser.add_argument(
+        subparser.add_argument(
             "--overwrite",
             action="store_true",
             default=False,

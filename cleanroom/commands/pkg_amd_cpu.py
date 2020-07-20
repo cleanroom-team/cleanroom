@@ -9,7 +9,7 @@ from cleanroom.helper.file import create_file
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
-import os.path
+import os
 import typing
 
 

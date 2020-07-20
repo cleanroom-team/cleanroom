@@ -11,7 +11,7 @@ from cleanroom.systemcontext import SystemContext
 
 import typing
 
-import os.path
+import os
 
 
 class StripDevelopmentFilesCommand(Command):

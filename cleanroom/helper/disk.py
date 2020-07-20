@@ -11,11 +11,9 @@ from ..exceptions import GenerateError
 from ..printer import debug, trace, warn
 from .run import run
 
-import collections
 import json
 import math
 import os
-import os.path
 import subprocess
 from re import findall
 import stat
@@ -23,23 +21,25 @@ import typing
 from time import sleep
 
 
-Disk = collections.namedtuple(
-    "Disk",
-    [
-        "label",
-        "id",
-        "device",
-        "unit",
-        "firstlba",
-        "lastlba",
-        "partitions",
-        "sectorsize",
-    ],
-)
-Partition = collections.namedtuple(
-    "Partition",
-    ["node", "start", "size", "partition_type", "uuid", "name", "sectorsize"],
-)
+class Disk(typing.NamedTuple):
+    label: str
+    id: str
+    device: str
+    unit: str
+    firstlba: typing.Optional[int]
+    lastlba: typing.Optional[int]
+    partitions: typing.List[Partition]
+    sectorsize: int
+
+
+class Partition(typing.NamedTuple):
+    node: typing.Optional[str]
+    start: typing.Optional[int]
+    size: typing.Optional[int]
+    partition_type: str
+    uuid: str
+    name: str
+    sectorsize: int
 
 
 def _is_root() -> bool:
@@ -141,7 +141,7 @@ def create_image_file(
 
     if not os.path.exists(file_name):
         trace("New image file")
-        with open(file_name, "a") as f:
+        with open(file_name, "a") as _:
             pass
         trace(".... image file created.")
         run("/usr/bin/chattr", "+C", file_name, returncode=None)
@@ -168,7 +168,9 @@ class Device:
     def __enter__(self) -> typing.Any:
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(
+        self, exc_type: typing.Any, exc_val: typing.Any, exc_tb: typing.Any
+    ) -> None:
         pass
 
     def device(self, partition: typing.Optional[int] = None) -> str:
@@ -177,12 +179,12 @@ class Device:
         return "{}{}".format(self._device, partition)
 
     def close(self):
-        pass
+        self._device = ""
 
     def wait_for_device_node(self, partition: typing.Optional[int] = None) -> bool:
         dev = self.device(partition)
         trace('Waiting for "{}".'.format(dev))
-        for i in range(20):
+        for _ in range(20):
             if is_block_device(dev):
                 return True
             elif os.path.exists(dev):
@@ -261,16 +263,18 @@ class NbdDevice(Device):
     def __enter__(self) -> typing.Any:
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(
+        self, exc_type: typing.Any, exc_val: typing.Any, exc_tb: typing.Any
+    ) -> None:
         self.close()
 
     def close(self) -> None:
-        if self._device:
+        if self.device():
             run(
                 self._sync_command or "/usr/bin/sync"
             )  # make sure changes are synced to disk!
             self._delete_nbd_block_device(self._device, self._qemu_nbd_command)
-            self._device = ""
+            super().close()
 
     def device(self, partition: typing.Optional[int] = None) -> str:
         if partition is None:
@@ -382,15 +386,15 @@ class Partitioner:
         self._flock_command = flock_command or "/usr/bin/flock"
         self._sfdisk_command = sfdisk_command or "/usr/bin/sfdisk"
         self._device = device
-        self._data = None  # type: typing.Optional[Disk]
+        self._data: typing.Optional[Disk] = None
 
         self._get_partition_data()
 
     @staticmethod
     def swap_partition(
         *,
-        start: typing.Optional[str] = None,
-        size: typing.Any = "4G",
+        start: typing.Optional[int] = None,
+        size: int = byte_size("4G"),
         name: str = "swap partition",
     ) -> Partition:
         return Partition(
@@ -405,7 +409,7 @@ class Partitioner:
 
     @staticmethod
     def efi_partition(
-        *, start: typing.Optional[str] = None, size: typing.Any = "512M"
+        *, start: typing.Optional[int] = None, size: int = byte_size("512M")
     ) -> Partition:
         return Partition(
             node=None,
@@ -420,8 +424,8 @@ class Partitioner:
     @staticmethod
     def data_partition(
         *,
-        start: typing.Optional[str] = None,
-        size: typing.Any = None,
+        start: typing.Optional[int] = None,
+        size: typing.Optional[int] = None,
         partition_type: str = "2d212206-b0ee-482e-9fec-e7c208bef27a",
         partition_uuid: str = "",
         name: str,

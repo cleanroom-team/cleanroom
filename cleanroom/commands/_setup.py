@@ -5,7 +5,7 @@
 """
 
 
-from cleanroom.binarymanager import BinaryManager, Binaries
+from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.helper.btrfs import BtrfsHelper
 from cleanroom.helper.run import run
@@ -49,7 +49,7 @@ def _setup_fs_directory(system_context: SystemContext, mknod_command: str) -> No
     )
 
 
-class _SetupCommand(Command):
+class SetupCommand(Command):
     """The _setup Command."""
 
     def __init__(self, **services: typing.Any) -> None:

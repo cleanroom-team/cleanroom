@@ -40,7 +40,7 @@ def _find_tests(system_context: SystemContext) -> typing.Generator[str, None, No
         yield test
 
 
-class _TestCommand(Command):
+class TestCommand(Command):
     """The _test Command."""
 
     def __init__(self, **services: typing.Any) -> None:

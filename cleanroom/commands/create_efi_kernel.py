@@ -14,7 +14,7 @@ from cleanroom.systemcontext import SystemContext
 from cleanroom.printer import debug
 
 from glob import glob
-import os.path
+import os
 import tempfile
 import typing
 
@@ -40,7 +40,7 @@ def _get_initrd_parts(location: Location, path: str) -> typing.List[str]:
     if not path:
         raise GenerateError("No initrd-parts directory.", location=location)
 
-    initrd_parts = []  # type: typing.List[str]
+    initrd_parts: typing.List[str] = []
     for f in glob(os.path.join(path, "*")):
         if os.path.isfile(f):
             initrd_parts.append(f)
@@ -115,7 +115,7 @@ class CreateEfiKernelCommand(Command):
         debug("{}: osrelease: {}.".format(self.name, osrelease_file))
         debug("{}: efistub  : {}.".format(self.name, efistub))
 
-        self._validate_files(kernel, *initrd_files, osrelease_file, efistub)
+        self._validate_files(location, kernel, *initrd_files, osrelease_file, efistub)
         with tempfile.TemporaryDirectory() as tmp:
             initrd = _create_initrd(tmp, *initrd_files)
             cmdline = _create_cmdline_file(tmp, cmdline_input)

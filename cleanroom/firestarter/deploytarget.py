@@ -8,7 +8,6 @@
 
 from cleanroom.firestarter.installtarget import InstallTarget
 
-import os
 import typing
 
 
@@ -18,8 +17,10 @@ class DeployInstallTarget(InstallTarget):
             "deploy", "Deploy the machine as specified in its deployment information"
         )
 
-    def setup_subparser(self, parser: typing.Any) -> None:
+    def setup_subparser(self, subparser: typing.Any) -> None:
         pass
 
-    def __call__(self, parse_result: typing.Any) -> None:
-        pass
+    def __call__(
+        self, *, parse_result: typing.Any, tmp_dir: str, image_file: str
+    ) -> int:
+        return 0

@@ -5,7 +5,6 @@
 """
 
 
-from ...binarymanager import Binaries
 from ...systemcontext import SystemContext
 from ..run import run
 
@@ -20,20 +19,8 @@ def _package_type(system_context: SystemContext) -> typing.Optional[str]:
     return system_context.substitution("CLRM_PACKAGE_TYPE", "")
 
 
-def _set_package_type(system_context: SystemContext) -> None:
-    system_context.set_substitution("CLRM_PACKAGE_TYPE", "deb")
-
-
 def _apt_state(system_context: SystemContext) -> bool:
     return system_context.substitution("APT_INSTALL_STATE", str(False))
-
-
-def _set_apt_state(system_context: SystemContext, internal: bool = False) -> None:
-    system_context.set_substitution("APT_INSTALL_STATE", str(internal))
-
-
-def _fs_directory(system_context: SystemContext) -> str:
-    return system_context.fs_directory
 
 
 def _dpkg_state_directory(system_context: SystemContext, internal: bool = False) -> str:
@@ -83,8 +70,8 @@ def debootstrap(
     variant: str = "",
     target: str,
     mirror: str,
-    include: str = None,
-    exclude: str = None,
+    include: typing.Optional[str] = None,
+    exclude: typing.Optional[str] = None,
     debootstrap_command: str
 ) -> None:
     """Run debootstrap on host."""
@@ -94,7 +81,7 @@ def debootstrap(
     assert suite
     assert target
 
-    args = []  # type: typing.List[str]
+    args: typing.List[str] = []
     if variant:
         args.append("--variant={}".format(variant))
     if include:

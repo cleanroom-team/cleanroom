@@ -12,12 +12,11 @@ from cleanroom.location import Location
 from cleanroom.helper.file import exists
 from cleanroom.helper.run import run
 from cleanroom.systemcontext import SystemContext
-import cleanroom.helper.disk as disk
-from cleanroom.imager import ExtraPartition, create_image
+from cleanroom.imager import create_image
 from cleanroom.printer import debug, h2, info, verbose
 
 
-import os.path
+import os
 import shutil
 import typing
 
@@ -56,8 +55,8 @@ def _create_dmverity(
 
     _size_extend(verity_file)
 
-    root_hash = None
-    uuid = None
+    root_hash: typing.Optional[str] = None
+    uuid: typing.Optional[str] = None
     for line in result.stdout.split("\n"):
         if line.startswith("Root hash:"):
             root_hash = line[10:].strip()
@@ -209,7 +208,7 @@ class ExportCommand(Command):
                     location=location,
                 )
 
-    def _setup(self, *args, **kwargs):
+    def _setup(self, *args: typing.Any, **kwargs: typing.Any):
         self._key = kwargs.get("efi_key", "")
         self._cert = kwargs.get("efi_cert", "")
         self._image_format = kwargs.get("image_format", "raw")
@@ -357,7 +356,7 @@ class ExportCommand(Command):
         )
         vrty_label = system_context.substitution_expanded("VRTYFS_PARTLABEL", "")
         assert vrty_label
-        (verity_file, verity_uuid, root_hash) = _create_dmverity(
+        (verity_file, _, root_hash) = _create_dmverity(
             system_context.cache_directory,
             squashfs_file,
             vrty_label=vrty_label,

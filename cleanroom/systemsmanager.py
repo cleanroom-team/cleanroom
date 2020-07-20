@@ -150,7 +150,7 @@ class SystemsManager(object):
         location = Location(
             file_name="<built-in>", line_number=1, description="System setup"
         )
-        exec_obj_list.append(ExecObject(location.next_line(), "_teardown", [], {}))
+        exec_obj_list.append(ExecObject(location.next_line(), "_teardown", (), {}))
 
         debug('"{}" depends on "{}"'.format(system_name, base_system_name))
 

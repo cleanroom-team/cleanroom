@@ -9,7 +9,7 @@ from ..printer import trace, none
 from .run import run
 
 import re
-import os.path
+import os
 import stat
 import typing
 
@@ -168,7 +168,9 @@ class Mount:
         )
         return self._directory
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(
+        self, exc_type: typing.Any, exc_val: typing.Any, exc_tb: typing.Any
+    ) -> None:
         if self._fallback_cwd:
             os.chdir(self._fallback_cwd)
         umount(self._directory)

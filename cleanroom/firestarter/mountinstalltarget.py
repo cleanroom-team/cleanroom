@@ -12,7 +12,6 @@ from cleanroom.printer import verbose
 
 import os
 from shlex import split
-from tempfile import TemporaryDirectory
 import typing
 
 
@@ -54,8 +53,8 @@ class MountInstallTarget(InstallTarget):
             tmp_dir=tmp_dir,
         )
 
-    def setup_subparser(self, parser: typing.Any) -> None:
-        parser.add_argument(
+    def setup_subparser(self, subparser: typing.Any) -> None:
+        subparser.add_argument(
             "--command",
             action="store",
             nargs="?",

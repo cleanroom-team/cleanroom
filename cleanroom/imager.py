@@ -15,7 +15,6 @@ from .helper import mount
 from .helper.run import run as helper_run
 from .printer import info, debug, fail, success, trace, verbose
 
-import collections
 import os
 import shutil
 import tempfile
@@ -27,20 +26,25 @@ mib = 1024 * 1024
 
 class DataProvider:
     def write_root_partition(self, target_device: str):
-        assert False
+        pass
 
     def write_verity_partition(self, target_device: str):
-        assert False
+        pass
 
-    def has_linux_kernel(self):
-        assert False
+    def has_linux_kernel(self) -> bool:
+        return False
 
     def write_linux_kernel(self, target_directory: str):
-        assert False
+        pass
 
 
 class FileDataProvider(DataProvider):
-    def __init__(self, root_partition, verity_partition, kernel_file):
+    def __init__(
+        self,
+        root_partition: str,
+        verity_partition: str,
+        kernel_file: typing.Optional[str],
+    ):
         self._root_partition = root_partition
         self._verity_partition = verity_partition
         self._kernel_file = kernel_file
@@ -51,8 +55,8 @@ class FileDataProvider(DataProvider):
     def write_verity_partition(self, target_device: str):
         shutil.copyfile(self._verity_partition, target_device)
 
-    def has_linux_kernel(self):
-        return self._kernel_file
+    def has_linux_kernel(self) -> bool:
+        return self._kernel_file != ""
 
     def write_linux_kernel(self, target_directory: str):
         if self._kernel_file:
@@ -62,42 +66,40 @@ class FileDataProvider(DataProvider):
             )
 
 
-ExtraPartition = collections.namedtuple(
-    "ExtraPartition", ["size", "filesystem", "label", "contents"]
-)
-ImageConfig = collections.namedtuple(
-    "ImageConfig",
-    [
-        "path",
-        "disk_format",
-        "force",
-        "repartition",
-        "efi_size",
-        "swap_size",
-        "extra_partitions",
-    ],
-)
-RawImageConfig = collections.namedtuple(
-    "RawImageConfig",
-    [
-        "path",
-        "disk_format",
-        "force",
-        "repartition",
-        "min_device_size",
-        "efi_size",
-        "root_size",
-        "verity_size",
-        "swap_size",
-        "root_hash",
-        "efi_label",
-        "root_label",
-        "verity_label",
-        "swap_label",
-        "extra_partitions",
-        "writer",
-    ],
-)
+class ExtraPartition(typing.NamedTuple):
+    size: int
+    filesystem: str
+    label: str
+    contents: str
+
+
+class ImageConfig(typing.NamedTuple):
+    path: str
+    disk_format: str
+    force: bool
+    repartition: bool
+    efi_size: int
+    swap_size: int
+    extra_partitions: typing.List[ExtraPartition]
+
+
+class RawImageConfig(typing.NamedTuple):
+    path: str
+    disk_format: str
+    force: bool
+    repartition: bool
+    min_device_size: int
+    efi_size: int
+    root_size: int
+    verity_size: int
+    swap_size: int
+    root_hash: str
+    efi_label: typing.Optional[str]
+    root_label: typing.Optional[str]
+    verity_label: typing.Optional[str]
+    swap_label: typing.Optional[str]
+    extra_partitions: typing.List[ExtraPartition]
+    writer: DataProvider
 
 
 def _minimum_efi_size(kernel_size: int) -> int:
@@ -154,7 +156,7 @@ def _parse_extra_partition_value(value: str) -> typing.Optional[ExtraPartition]:
 def parse_extra_partitions(
     extra_partition_data: typing.List[str],
 ) -> typing.List[ExtraPartition]:
-    result = []  # type: typing.List[ExtraPartition]
+    result: typing.List[ExtraPartition] = []
     for ep in extra_partition_data:
         parsed_ep = _parse_extra_partition_value(ep) if ep else None
         if parsed_ep:
@@ -171,7 +173,7 @@ def _file_size(file_name: str) -> int:
 
 def _get_tree_size(start_path: str) -> int:
     total_size = 0
-    for dirpath, dirnames, filenames in os.walk(start_path):
+    for dirpath, _, filenames in os.walk(start_path):
         for f in filenames:
             fp = os.path.join(dirpath, f)
             # skip if it is symbolic link
@@ -294,8 +296,8 @@ def _work_on_device_node(
         partition_devices = _repartition(
             device,
             ic.repartition,
-            ic.root_label,
-            ic.verity_label,
+            ic.root_label if ic.root_label else "",
+            ic.verity_label if ic.verity_label else "",
             efi_size=ic.efi_size,
             root_size=ic.root_size,
             verity_size=ic.verity_size,
@@ -357,7 +359,7 @@ def _find_or_create_device_node(
     nbd_client_command: str,
     sync_command: str,
     modprobe_command: str,
-) -> typing.ContextManager:
+) -> disk.Device:
     if disk.is_block_device(path):
         _validate_size_of_block_device(path, min_device_size)
         return disk.Device(path)
@@ -418,7 +420,7 @@ def _repartition(
     root_size: int,
     verity_size: int,
     swap_size: int = 0,
-    extra_partitions: typing.Tuple[ExtraPartition, ...] = (),
+    extra_partitions: typing.List[ExtraPartition] = [],
     flock_command: str,
     sfdisk_command: str,
 ) -> typing.Mapping[str, str]:
@@ -442,7 +444,7 @@ def _repartition(
 
     trace("Setting basic partitions")
     partitions = [
-        partitioner.efi_partition(start="1m", size=efi_size),
+        partitioner.efi_partition(start=disk.byte_size("1m"), size=efi_size),
         partitioner.data_partition(
             size=root_size,
             name=root_label,
@@ -610,7 +612,7 @@ def _prepare_efi_partition(
     efi_dev: str,
     root_dev: str,
     has_kernel: bool,
-    kernel_file_writer,
+    kernel_file_writer: typing.Callable[..., None],
     *,
     efi_emulator: typing.Optional[str],
     extra_efi_files: typing.Optional[str],
@@ -682,10 +684,6 @@ def _prepare_efi_partition(
         helper_run("/usr/bin/sync")  # make sure changes are synced to disk!
 
 
-def _file_to_partition(device: str, file_name: str) -> None:
-    shutil.copyfile(file_name, device)
-
-
 def _format_partition(device: str, filesystem: str, *label_args: str) -> None:
     helper_run("/usr/bin/mkfs.{}".format(filesystem), *label_args, device)
 
@@ -703,7 +701,7 @@ def _prepare_extra_partition(
 
     verbose("Preparing extra partition on {} using {}.".format(device, filesystem))
 
-    label_args = ()  # type: typing.Tuple[str, ...]
+    label_args: typing.Tuple[str, ...] = ()
     if label is not None:
         debug('... setting label to "{}".'.format(label))
         if filesystem == "fat" or filesystem == "vfat":

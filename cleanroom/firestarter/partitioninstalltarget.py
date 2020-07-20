@@ -92,8 +92,8 @@ class PartitionInstallTarget(InstallTarget):
     def __init__(self) -> None:
         super().__init__("partition", "Partition installation devices")
 
-    def setup_subparser(self, parser: typing.Any) -> None:
-        parser.add_argument(
+    def setup_subparser(self, subparser: typing.Any) -> None:
+        subparser.add_argument(
             "mappings",
             metavar="(<DEV>|<FILE>:<FORMAT>:<SIZE>?):<REPART_DIR>",
             help="A mapping of device to systemd-repart directory, separated by :",

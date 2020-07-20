@@ -13,7 +13,7 @@ import os
 import typing
 
 
-class _StoreCommand(Command):
+class StoreCommand(Command):
     """The _store command."""
 
     def __init__(self, **services: typing.Any) -> None:

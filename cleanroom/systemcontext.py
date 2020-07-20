@@ -104,7 +104,7 @@ class SystemContext:
         h2("Creating system {}".format(self._system_name))
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: typing.Any, exc_val: typing.Any, exc_tb: typing.Any):
         pass
 
     @property

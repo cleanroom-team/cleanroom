@@ -11,11 +11,7 @@ import cleanroom.helper.disk as disk
 import cleanroom.helper.mount as mount
 
 import os
-from shutil import chown, copyfile
-from distutils.dir_util import copy_tree
 import subprocess
-import sys
-from tempfile import TemporaryDirectory
 import typing
 
 
@@ -23,7 +19,10 @@ import typing
 
 
 def run(
-    *args, work_directory: str = "", check: bool = True, env: os._Environ = os.environ
+    *args: str,
+    work_directory: str = "",
+    check: bool = True,
+    env: typing.Any = os.environ,  ## What is a better type for this?
 ) -> subprocess.CompletedProcess:
     env["LC_ALL"] = "en_US.UTF-8"
 
@@ -49,7 +48,7 @@ def run(
     return result
 
 
-def run_borg(*args, work_directory: str = "") -> subprocess.CompletedProcess:
+def run_borg(*args: str, work_directory: str = "") -> subprocess.CompletedProcess:
     return run("/usr/bin/borg", *args, work_directory=work_directory)
 
 
@@ -136,5 +135,7 @@ class BorgMount:
 
         return os.path.join(self._mnt_point, image_files[0])
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(
+        self, exc_type: typing.Any, exc_val: typing.Any, exc_tb: typing.Any
+    ) -> None:
         mount.umount(self._mnt_point)

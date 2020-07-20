@@ -173,7 +173,7 @@ class Printer:
     def _print_at_verbosity_level(self, verbosity: int) -> bool:
         return verbosity <= self._verbose
 
-    def h1(self, *args, verbosity: int = 0) -> None:
+    def h1(self, *args: str, verbosity: int = 0) -> None:
         """Print big headline."""
         intro = "\n\n{}============================================{}".format(
             self._h1_suffix, self._ansi_reset

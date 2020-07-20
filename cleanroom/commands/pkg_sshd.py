@@ -69,20 +69,24 @@ class PkgSshdCommand(Command):
     ) -> None:
         self._execute(location, system_context, "pacman", "openssh")
 
-    def _yes_or_no(self, arg: str, **kwargs) -> str:
+    def _yes_or_no(self, arg: str, **kwargs: typing.Any) -> str:
         if kwargs.get(arg, False):
             return "yes"
         return "no"
 
     def _set_sshd_config_yes_or_no(
-        self, location: Location, system_context: SystemContext, arg: str, **kwargs
+        self,
+        location: Location,
+        system_context: SystemContext,
+        arg: str,
+        **kwargs: typing.Any
     ) -> None:
         self._set_sshd_config(
             location, system_context, arg, self._yes_or_no(arg, **kwargs)
         )
 
     def _harden_sshd(
-        self, location: Location, system_context: SystemContext, **kwargs
+        self, location: Location, system_context: SystemContext, **kwargs: typing.Any
     ) -> None:
         # Install custom moduli
         moduli = os.path.join(self._config_directory(system_context), "moduli")

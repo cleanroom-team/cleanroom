@@ -8,7 +8,7 @@ from cleanroom.command import Command
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
-import os.path
+import os
 import typing
 
 

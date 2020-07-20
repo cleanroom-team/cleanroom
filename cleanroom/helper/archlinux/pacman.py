@@ -5,10 +5,8 @@
 """
 
 
-from ...binarymanager import Binaries
 from ...printer import debug, info
 from ...systemcontext import SystemContext
-from ..btrfs import BtrfsHelper
 from ..run import run
 from ..mount import umount_all, mount
 
@@ -137,7 +135,7 @@ def _pacman_keyinit(system_context: SystemContext, pacman_key_command: str) -> N
     )
 
 
-def _mountpoint(root_dir, folder, dev, **kwargs):
+def _mountpoint(root_dir: str, folder: str, dev: str, **kwargs: typing.Any):
     debug("Mounting {} in chroot.".format(folder))
     path = os.path.join(root_dir, folder)
     if not os.path.isdir(path):
@@ -145,7 +143,7 @@ def _mountpoint(root_dir, folder, dev, **kwargs):
     mount(dev, path, **kwargs)
 
 
-def _mount_directories_if_needed(root_dir, *, pacman_in_filesystem=False):
+def _mount_directories_if_needed(root_dir: str, *, pacman_in_filesystem: bool = False):
     debug("Preparing pacman chroot for external pacman run.")
     _mountpoint(root_dir, "proc", "proc", options="nosuid,noexec,nodev", fs_type="proc")
     _mountpoint(
@@ -172,7 +170,7 @@ def _mount_directories_if_needed(root_dir, *, pacman_in_filesystem=False):
     )
 
 
-def _umount_directories_if_needed(root_dir, *, pacman_in_filesystem=False):
+def _umount_directories_if_needed(root_dir: str, *, pacman_in_filesystem: bool = False):
     debug("Cleaning up pacman chroot.")
     umount_all(root_dir)
 
@@ -182,7 +180,7 @@ def _run_pacman(
     *args: str,
     pacman_command: str,
     pacman_in_filesystem: bool,
-    **kwargs
+    **kwargs: typing.Any
 ) -> None:
     _sanity_check(system_context)
 

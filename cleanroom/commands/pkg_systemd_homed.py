@@ -7,13 +7,12 @@
 
 from cleanroom.command import Command
 from cleanroom.exceptions import GenerateError
-from cleanroom.helper.file import chmod, chown, copy, create_file, makedirs
+from cleanroom.helper.file import chmod, chown, create_file, makedirs
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
 import textwrap
 import typing
-import os
 
 
 class PkgSystemdHomedCommand(Command):

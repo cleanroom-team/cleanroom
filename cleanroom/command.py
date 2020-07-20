@@ -170,7 +170,7 @@ class Command:
         """Return the helper directory."""
         return self.__helper_directory
 
-    def _config_directory(self, system_context) -> str:
+    def _config_directory(self, system_context: SystemContext) -> str:
         return os.path.join(
             system_context.systems_definition_directory, "config", self.name
         )

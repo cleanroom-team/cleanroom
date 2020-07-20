@@ -15,7 +15,7 @@ import typing
 class CreateOsReleaseCommand(Command):
     """The create_os_release command."""
 
-    def __init__(self, **services) -> None:
+    def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
         super().__init__(
             "create_os_release",

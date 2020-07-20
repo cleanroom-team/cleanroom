@@ -59,7 +59,7 @@ class WorkDir:
         """Constructor."""
         self._btrfs_helper = btrfs_helper
         self._work_directory = work_directory
-        self._temp_directory: typing.Optional[tempfile.TemporaryDirectory] = None
+        self._temp_directory: typing.Optional[tempfile.TemporaryDirectory[str]] = None
 
         if work_directory:
             if not os.path.exists(work_directory):
@@ -102,7 +102,7 @@ class WorkDir:
             self._temp_directory.__enter__()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: typing.Any, exc_val: typing.Any, exc_tb: typing.Any):
         """Exit a context."""
         if self._temp_directory:
             tmp_directory = self._temp_directory

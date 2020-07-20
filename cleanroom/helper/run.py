@@ -19,15 +19,15 @@ def _quote_args(*args: str) -> str:
 
 
 def report_completed_process(
-    channel: typing.Optional[typing.Callable],
+    channel: typing.Optional[typing.Callable[..., None]],
     completed_process: subprocess.CompletedProcess,
 ) -> None:
     """Report the completion state of an external command."""
     if channel is None:
         return
 
-    stdout = "<REDIRECTED>"
-    stderr = stdout
+    stdout: str = "<REDIRECTED>"
+    stderr: str = stdout
 
     if completed_process.stdout is not None:
         stdout = completed_process.stdout
@@ -45,7 +45,7 @@ def run(
     *args: str,
     returncode: typing.Optional[int] = 0,
     work_directory: typing.Optional[str] = None,
-    trace_output: typing.Optional[typing.Callable] = trace,
+    trace_output: typing.Optional[typing.Callable[..., None]] = trace,
     chroot: typing.Optional[str] = None,
     shell: bool = False,
     stdout: typing.Optional[str] = None,
@@ -122,7 +122,7 @@ def run(
 
 
 def _report_output_lines(
-    channel: typing.Callable, headline: str, line_data: str
+    channel: typing.Callable[..., None], headline: str, line_data: str
 ) -> None:
     """Pretty-print output lines."""
     channel(headline)

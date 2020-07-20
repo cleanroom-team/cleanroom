@@ -7,7 +7,6 @@
 
 from cleanroom.command import Command
 from cleanroom.exceptions import GenerateError
-from cleanroom.helper.file import makedirs
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 

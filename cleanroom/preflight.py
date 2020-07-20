@@ -6,14 +6,14 @@
 
 
 from .exceptions import PreflightError
-from .printer import debug, fail, h2, success, warn
+from .printer import debug, fail, success
 
 import os
 import typing
 
 
 def preflight_check(
-    title: str, func: typing.Callable[[], None], *, ignore_errors=False
+    title: str, func: typing.Callable[[], None], *, ignore_errors: bool = False
 ) -> None:
     try:
         func()

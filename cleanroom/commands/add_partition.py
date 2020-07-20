@@ -11,7 +11,7 @@ from cleanroom.location import Location
 from cleanroom.printer import trace
 from cleanroom.systemcontext import SystemContext
 
-import os.path
+import os
 import typing
 
 
@@ -30,7 +30,9 @@ class AddPartitionCommand(Command):
             **services
         )
 
-    def validate(self, location: Location, *args: str, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
         self._validate_args_exact(
             location, 1, '"{}" needs a name for the partition file.', *args
@@ -93,7 +95,7 @@ class AddPartitionCommand(Command):
         self,
         location: Location,
         system_context: SystemContext,
-        *args: str,
+        *args: typing.Any,
         **kwargs: typing.Any
     ) -> None:
         """Execute command."""

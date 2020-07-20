@@ -16,7 +16,7 @@ class CleanRoomError(Exception):
     def __init__(
         self,
         *args: typing.Any,
-        location: Location = None,
+        location: typing.Optional[Location] = None,
         original_exception: typing.Optional[Exception] = None
     ) -> None:
         """Constructor."""

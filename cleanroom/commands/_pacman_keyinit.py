@@ -10,7 +10,6 @@ from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 from cleanroom.helper.run import run
 
-import os.path
 import typing
 
 
@@ -28,7 +27,9 @@ class PacstrapCommand(Command):
             **services
         )
 
-    def validate(self, location: Location, *args: str, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
         self._validate_no_args(location, *args)
         self._validate_kwargs(location, ("pacman_key", "gpg_dir"), **kwargs)
@@ -38,7 +39,7 @@ class PacstrapCommand(Command):
         self,
         location: Location,
         system_context: SystemContext,
-        *args: str,
+        *args: typing.Any,
         **kwargs: typing.Any
     ) -> None:
         """Execute command."""

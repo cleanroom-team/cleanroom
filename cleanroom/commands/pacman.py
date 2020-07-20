@@ -55,7 +55,7 @@ class PacmanCommand(Command):
             *args,
             remove=kwargs.get("remove", False),
             overwrite=kwargs.get("overwrite", ""),
-            assume_installed=kwargs.get("assume_installed", None),
+            assume_installed=kwargs.get("assume_installed", ""),
             pacman_command=self._binary(Binaries.PACMAN),
             chroot_helper=self._binary(Binaries.CHROOT_HELPER)
         )

@@ -16,8 +16,8 @@ class CopyInstallTarget(InstallTarget):
     def __init__(self) -> None:
         super().__init__("copy", "copy the image to a directory, device or file")
 
-    def setup_subparser(self, parser: typing.Any) -> None:
-        parser.add_argument(
+    def setup_subparser(self, subparser: typing.Any) -> None:
+        subparser.add_argument(
             dest="target", action="store", help="The target to copy into.",
         )
 

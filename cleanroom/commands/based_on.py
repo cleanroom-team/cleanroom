@@ -9,7 +9,7 @@ from cleanroom.command import Command
 from cleanroom.exceptions import ParseError
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
-from cleanroom.printer import trace, verbose
+from cleanroom.printer import verbose
 
 import re
 import typing

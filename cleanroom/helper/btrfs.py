@@ -8,12 +8,12 @@
 from ..printer import trace
 from .run import run
 
-import os.path
+import os
 import typing
 
 
 class BtrfsHelper:
-    def __init__(self, btrfs_command):
+    def __init__(self, btrfs_command: str):
         assert btrfs_command
         self._command = btrfs_command
 

@@ -26,7 +26,9 @@ class RemoveCommand(Command):
             **services
         )
 
-    def validate(self, location: Location, *args: str, **kwargs: typing.Any) -> None:
+    def validate(
+        self, location: Location, *args: typing.Any, **kwargs: typing.Any
+    ) -> None:
         """Validate the arguments."""
         self._validate_args_at_least(
             location,
@@ -40,7 +42,7 @@ class RemoveCommand(Command):
         self,
         location: Location,
         system_context: SystemContext,
-        *args: str,
+        *args: typing.Any,
         **kwargs: typing.Any
     ) -> None:
         """Execute command."""

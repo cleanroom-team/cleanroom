@@ -7,18 +7,21 @@
 
 from .run import run
 
-import collections
-import os.path
+import os
 import typing
 
 
-User = collections.namedtuple(
-    "User", ["name", "password", "uid", "gid", "comment", "home", "shell"]
-)
+class User(typing.NamedTuple):
+    name: str
+    password: str
+    uid: int
+    gid: int
+    comment: str
+    home: str
+    shell: str
 
 
 def _user_data(passwd_file: str, name: str) -> typing.Optional[User]:
-    assert isinstance(name, str)
     if not os.path.isfile(passwd_file):
         return None
     with open(passwd_file, "r") as passwd:
@@ -89,19 +92,19 @@ class UserHelper:
 
     def usermod(
         self,
-        user_name,
+        user_name: str,
         *,
-        comment="",
-        home="",
-        gid=-1,
-        uid=-1,
-        lock=None,
-        rename="",
-        shell="",
-        append=False,
-        groups="",
-        password="",
-        expire=None,
+        comment: str = "",
+        home: str = "",
+        gid: int = -1,
+        uid: int = -1,
+        lock: typing.Optional[bool] = None,
+        rename: str = "",
+        shell: str = "",
+        append: bool = False,
+        groups: str = "",
+        password: str = "",
+        expire: typing.Optional[str] = None,
         root_directory: str
     ) -> bool:
         """Modify an existing user."""
@@ -122,7 +125,7 @@ class UserHelper:
         if lock is not None:
             if lock:
                 command.append("--lock")
-            elif not lock:
+            else:
                 command.append("--unlock")
 
         if expire is not None:

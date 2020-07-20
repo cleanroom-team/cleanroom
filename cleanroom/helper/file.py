@@ -68,7 +68,7 @@ def expand_files(
 def _check_file(
     system_context: SystemContext,
     f: str,
-    op: typing.Callable,
+    op: typing.Callable[..., bool],
     description: str,
     work_directory: typing.Optional[str] = None,
 ) -> bool:
@@ -321,7 +321,7 @@ def prepend_file(
 
 def _file_op(
     system_context: typing.Optional[SystemContext],
-    op: typing.Callable,
+    op: typing.Callable[..., None],
     description: str,
     *args: str,
     to_outside: bool = False,

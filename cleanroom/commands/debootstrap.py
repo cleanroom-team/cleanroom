@@ -58,9 +58,9 @@ class DebootstrapCommand(Command):
             suite=kwargs.get("suite", ""),
             target=system_context.fs_directory,
             mirror=kwargs.get("mirror", ""),
-            variant=kwargs.get("variant", None),
-            include=kwargs.get("include", None),
-            exclude=kwargs.get("exclude", None),
+            variant=kwargs.get("variant", ""),
+            include=kwargs.get("include", ""),
+            exclude=kwargs.get("exclude", ""),
             debootstrap_command=self._binary(Binaries.DEBOOTSTRAP),
         )
 

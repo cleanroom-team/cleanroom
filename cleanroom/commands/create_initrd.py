@@ -10,9 +10,9 @@ from cleanroom.helper.file import chmod, copy, create_file, remove, move
 from cleanroom.helper.run import run
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
-from cleanroom.printer import info, debug, trace
+from cleanroom.printer import info, trace
 
-import os.path
+import os
 import textwrap
 import typing
 
@@ -75,10 +75,10 @@ class CreateInitrdCommand(Command):
             **services
         )
 
-        self._vg = None  # type: typing.Optional[str]
-        self._image_fs = None  # type: typing.Optional[str]
-        self._image_device = None  # type: typing.Optional[str]
-        self._image_options = None  # type: typing.Optional[str]
+        self._vg: typing.Optional[str] = None
+        self._image_fs: typing.Optional[str] = None
+        self._image_device: typing.Optional[str] = None
+        self._image_options: typing.Optional[str] = None
 
     def validate(
         self, location: Location, *args: typing.Any, **kwargs: typing.Any
@@ -571,7 +571,7 @@ class CreateInitrdCommand(Command):
 
         initrd = args[0]
 
-        to_clean_up = []  # type: typing.List[str]
+        to_clean_up: typing.List[str] = []
         to_clean_up += "/boot/vmlinuz"
         to_clean_up += self._install_extra_binaries(location, system_context)
         to_clean_up += self._create_systemd_units(location, system_context)

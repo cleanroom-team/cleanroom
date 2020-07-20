@@ -8,10 +8,9 @@
 from .command import Command, stringify
 from .exceptions import PreflightError
 from .location import Location
-from .printer import debug, error, h2, success, trace
-from .systemcontext import SystemContext, _recursive_expand
+from .printer import debug, h2, success, trace
+from .systemcontext import SystemContext
 
-import collections
 import importlib.util
 import inspect
 import os
@@ -19,29 +18,40 @@ import re
 import typing
 
 
-CommandInfo = collections.namedtuple(
-    "CommandInfo",
-    [
-        "name",
-        "syntax_string",
-        "help_string",
-        "file_name",
-        "dependency_func",
-        "validate_func",
-        "execute_func",
-        "register_substitutions",
-    ],
-)
+class CommandInfo(typing.NamedTuple):
+    name: str
+    syntax_string: str
+    help_string: str
+    file_name: str
+    dependency_func: typing.Callable[
+        [typing.Tuple[typing.Any, ...], typing.Dict[str, typing.Any]],
+        typing.Optional[str],
+    ]
+    validate_func: typing.Callable[
+        [Location, typing.Tuple[typing.Any, ...], typing.Dict[str, typing.Any],], None,
+    ]
+    execute_func: typing.Callable[
+        [
+            Location,
+            SystemContext,
+            typing.Tuple[typing.Any, ...],
+            typing.Dict[str, typing.Any],
+        ],
+        None,
+    ]
+    register_substitutions: typing.Callable[
+        [], typing.List[typing.Tuple[str, str, str]]
+    ]
 
 
 def _process_args(system_context: SystemContext, *args: typing.Any) -> typing.Any:
-    return tuple(map(lambda a: _recursive_expand(system_context, a), args))
+    return tuple(map(lambda a: system_context.expand(a), args))
 
 
 def _process_kwargs(
     system_context: SystemContext, **kwargs: typing.Any
 ) -> typing.Dict[str, typing.Any]:
-    return {k: _recursive_expand(system_context, v) for k, v in kwargs.items()}
+    return {k: system_context.expand(v) for k, v in kwargs.items()}
 
 
 def call_command(
@@ -49,7 +59,7 @@ def call_command(
     system_context: SystemContext,
     command: Command,
     *args: typing.Any,
-    **kwargs: typing.Dict[str, typing.Any]
+    **kwargs: typing.Any
 ):
     _args = _process_args(system_context, *args)
     _kwargs = _process_kwargs(system_context, **kwargs)
@@ -117,10 +127,10 @@ class CommandManager:
             print('  {} ("{}"): {}\n    {}\n'.format(key, value, name, description))
 
     def setup_substitutions(self, system_context: SystemContext):
-        if system_context._base_context:
+        if system_context.base_context:
             debug(
                 'System Context inherited, using substitutions from "{}".'.format(
-                    system_context._base_context.system_name
+                    system_context.base_context.system_name
                 )
             )
             return
@@ -216,7 +226,7 @@ class CommandManager:
             assert spec and spec.loader
             spec.loader.exec_module(cmd_module)
 
-            def is_command(x):
+            def is_command(x: typing.Any) -> bool:
                 return (
                     inspect.isclass(x)
                     and x.__name__.endswith("Command")

@@ -19,14 +19,14 @@ from shutil import copyfile, copytree
 import typing
 
 
-def _create_hdd_image(device):
+def _create_hdd_image(device: disk.Device):
     verbose("hdd.img created.")
     partitioner = disk.Partitioner(device)
 
     partitioner.repartition(
         [
-            disk.Partitioner.efi_partition(size="512M"),
-            disk.Partitioner.swap_partition(size="1G", name="swap"),
+            disk.Partitioner.efi_partition(size=disk.byte_size("512M")),
+            disk.Partitioner.swap_partition(size=disk.byte_size("1G"), name="swap"),
             disk.Partitioner.data_partition(name="data"),
         ]
     )
@@ -150,10 +150,10 @@ class QemuImageInstallTarget(InstallTarget):
             work_directory=tmp_dir,
         )
 
-    def setup_subparser(self, parser: typing.Any) -> None:
-        qemu_tool.setup_parser_for_qemu(parser)
+    def setup_subparser(self, subparser: typing.Any) -> None:
+        qemu_tool.setup_parser_for_qemu(subparser)
 
-        parser.add_argument(
+        subparser.add_argument(
             "--hdd-size",
             dest="hdd_size",
             action="store",
@@ -162,7 +162,7 @@ class QemuImageInstallTarget(InstallTarget):
             help="Size of HDD to generate.",
         )
 
-        parser.add_argument(
+        subparser.add_argument(
             "--hdd-format",
             dest="hdd_format",
             action="store",

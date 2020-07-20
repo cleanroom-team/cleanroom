@@ -9,7 +9,6 @@ from cleanroom.command import Command
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
-import os
 import typing
 
 

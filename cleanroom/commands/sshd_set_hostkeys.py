@@ -12,7 +12,7 @@ from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
 import glob
-import os.path
+import os
 import typing
 
 

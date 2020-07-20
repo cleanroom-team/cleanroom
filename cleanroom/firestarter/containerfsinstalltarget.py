@@ -64,8 +64,8 @@ class ContainerFilesystemInstallTarget(InstallTarget):
 
         return result
 
-    def setup_subparser(self, parser: typing.Any) -> None:
-        parser.add_argument(
+    def setup_subparser(self, subparser: typing.Any) -> None:
+        subparser.add_argument(
             "--container-name",
             dest="override_system_name",
             action="store",
@@ -74,7 +74,7 @@ class ContainerFilesystemInstallTarget(InstallTarget):
             help="Container name to use "
             '[default: system-name without "system-" prefix]',
         )
-        parser.add_argument(
+        subparser.add_argument(
             "--machines-dir",
             dest="machines_dir",
             action="store",

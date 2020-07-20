@@ -7,11 +7,9 @@
 
 
 from cleanroom.firestarter.installtarget import InstallTarget
-import cleanroom.firestarter.tools as tool
 import cleanroom.firestarter.qemutools as qemu_tool
 
 import os
-from tempfile import TemporaryDirectory
 import typing
 
 
@@ -34,9 +32,9 @@ class QemuInstallTarget(InstallTarget):
             parse_result, drives=[clrm_device], work_directory=tmp_dir,
         )
 
-    def setup_subparser(self, parser: typing.Any) -> None:
-        qemu_tool.setup_parser_for_qemu(parser)
-        parser.add_argument(
+    def setup_subparser(self, subparser: typing.Any) -> None:
+        qemu_tool.setup_parser_for_qemu(subparser)
+        subparser.add_argument(
             "--usb-clrm",
             dest="usb_clrm",
             action="store_true",

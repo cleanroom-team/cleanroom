@@ -16,7 +16,7 @@ import typing
 class CreateCommand(Command):
     """The create command."""
 
-    def __init__(self, **services) -> None:
+    def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
         super().__init__(
             "create",

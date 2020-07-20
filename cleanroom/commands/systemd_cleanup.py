@@ -11,7 +11,7 @@ from cleanroom.location import Location
 from cleanroom.printer import trace
 from cleanroom.systemcontext import SystemContext
 
-import os.path
+import os
 import shutil
 import typing
 
@@ -38,8 +38,8 @@ def _map_target_link(
 
     link_directory = os.path.dirname(link)
 
-    (link, _old_link) = _map_base(old_base, new_base, link)
-    (link_target, _old_link_target) = _map_base(
+    (link, _) = _map_base(old_base, new_base, link)
+    (link_target, _) = _map_base(
         old_base, new_base, os.path.join(link_directory, link_target)
     )
 
@@ -50,7 +50,9 @@ def _map_target_link(
     return link, link_target
 
 
-def _map_host_link(root_directory, old_base, new_base, link, link_target):
+def _map_host_link(
+    root_directory: str, old_base: str, new_base: str, link: str, link_target: str
+):
     assert root_directory.endswith("/")
     assert old_base.startswith(root_directory)
     assert new_base.startswith(root_directory)
@@ -75,7 +77,13 @@ def _map_host_link(root_directory, old_base, new_base, link, link_target):
     return os.path.join(root_directory, host_link[1:]), link_target
 
 
-def _move_symlink(location, system_context, old_base, new_base, link):
+def _move_symlink(
+    location: Location,
+    system_context: SystemContext,
+    old_base: str,
+    new_base: str,
+    link: str,
+):
     """Move a symlink."""
     root_directory = system_context.fs_directory + "/"
     link_target = os.readlink(link)
@@ -125,7 +133,7 @@ def _move_symlink(location, system_context, old_base, new_base, link):
         os.unlink(link)
 
 
-def _move_file(location, old_base, new_base, path):
+def _move_file(location: Location, old_base: str, new_base: str, path: str):
     """Move a file."""
     path_dir = os.path.dirname(path)
     path_name = os.path.basename(path)
@@ -183,7 +191,7 @@ class SystemdCleanupCommand(Command):
 
         trace("walking:", old_base)
 
-        for root, _dirs, files in os.walk(old_base):
+        for root, _, files in os.walk(old_base):
             for f in files:
                 full_path = os.path.join(root, f)
                 trace("Checking", full_path)

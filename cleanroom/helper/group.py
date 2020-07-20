@@ -7,12 +7,15 @@
 
 from .run import run
 
-import collections
-import os.path
+import os
 import typing
 
 
-Group = collections.namedtuple("Group", ["name", "password", "gid", "members"])
+class Group(typing.NamedTuple):
+    name: str
+    password: str
+    gid: int
+    members: typing.List[str]
 
 
 def _group_data(group_file: str, name: str) -> typing.Optional[Group]:
@@ -23,7 +26,7 @@ def _group_data(group_file: str, name: str) -> typing.Optional[Group]:
         for line in group:
             if line.endswith("\n"):
                 line = line[:-1]
-            current_group = line.split(":")  # type: typing.Any
+            current_group: typing.Any = line.split(":")
             if current_group[0] == name:
                 current_group[2] = int(current_group[2])
                 if current_group[3] == "":

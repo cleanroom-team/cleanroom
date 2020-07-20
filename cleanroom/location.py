@@ -19,7 +19,7 @@ class Location:
         file_name: typing.Optional[str] = None,
         line_number: typing.Optional[int] = None,
         description: typing.Optional[str] = None,
-        parent: Location = None
+        parent: typing.Optional[Location] = None
     ) -> None:
         """Constructor."""
         if line_number is not None:

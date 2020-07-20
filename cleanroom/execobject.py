@@ -5,9 +5,14 @@
 """
 
 
-import collections
+from cleanroom.location import Location
 
 
-ExecObject = collections.namedtuple(
-    "ExecObject", ["location", "command", "args", "kwargs"]
-)
+import typing
+
+
+class ExecObject(typing.NamedTuple):
+    location: Location
+    command: str
+    args: typing.Tuple[typing.Any, ...]
+    kwargs: typing.Dict[str, typing.Any]

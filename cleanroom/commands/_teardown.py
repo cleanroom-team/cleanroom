@@ -13,7 +13,7 @@ from cleanroom.printer import debug
 import typing
 
 
-class _TeardownCommand(Command):
+class TeardownCommand(Command):
     """The _teardown Command."""
 
     def __init__(self, **services: typing.Any) -> None:
