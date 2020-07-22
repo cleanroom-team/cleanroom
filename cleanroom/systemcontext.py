@@ -120,6 +120,13 @@ class SystemContext:
         return self._system_name
 
     @property
+    def pretty_system_name(self) -> str:
+        name = self._system_name
+        if name.startswith("system-"):
+            name = name[7:]
+        return name
+
+    @property
     def systems_definition_directory(self) -> str:
         return self._systems_definition_directory
 
@@ -184,6 +191,7 @@ class SystemContext:
         )
         self.set_substitution("SYSTEM_HELPER_DIR", self.system_helper_directory)
         self.set_substitution("SYSTEM_NAME", self.system_name)
+        self.set_substitution("PRETTY_SYSTEM_NAME", self.pretty_system_name)
         ts = "unknown" if self.timestamp is None else self.timestamp
         self.set_substitution("TIMESTAMP", ts)
 
