@@ -21,13 +21,13 @@ import shutil
 import typing
 
 
-def _kernel_name(system_context: SystemContext) -> str:
+def _kernel_name(system_context: SystemContext, *, postfix: str = "") -> str:
     boot_data = system_context.boot_directory
     assert boot_data
     return os.path.join(
         boot_data,
-        "linux_{}.efi".format(
-            system_context.substitution_expanded("DISTRO_VERSION_ID", "")
+        "{}{}_{}.efi".format(
+            system_context.pretty_system_name, postfix, system_context.timestamp
         ),
     )
 
@@ -243,7 +243,7 @@ class ExportCommand(Command):
             ),
             (
                 "CLRM_IMAGE_FILENAME",
-                "${DISTRO_ID}_${DISTRO_VERSION_ID}",
+                "${PRETTY_SYSTEM_NAME}_${DISTRO_VERSION_ID}.img",
                 "File name for the clrm image file",
             ),
         ]

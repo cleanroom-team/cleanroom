@@ -563,11 +563,8 @@ class CreateInitrdCommand(Command):
         )
         self._image_options = system_context.substitution_expanded("IMAGE_OPTIONS", "")
 
-        name_prefix = system_context.substitution_expanded("DISTRO_ID", "")
-        name_version = system_context.substitution_expanded(
-            "DISTRO_VERSION_ID", system_context.timestamp
-        )
-        self._full_name = "{}_{}".format(name_prefix, name_version)
+        image_name = system_context.substitution_expanded("CLRM_IMAGE_FILENAME", "")
+        self._full_name = image_name
 
         initrd = args[0]
 
