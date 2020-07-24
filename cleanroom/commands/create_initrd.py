@@ -93,38 +93,11 @@ class CreateInitrdCommand(Command):
     ) -> typing.Sequence[str]:
         location.set_description("Install extra systemd units")
         to_clean_up = [
-            "/usr/lib/systemd/system/initrd-check-bios.service",
             "/usr/lib/systemd/system/initrd-sysroot-setup.service",
             "/usr/lib/systemd/system/initrd-find-root-lv-partitions.service",
             "/usr/lib/systemd/system/images.mount",
             "/usr/lib/systemd/system/initrd-find-image-partitions.service",
         ]
-        create_file(
-            system_context,
-            "/usr/lib/systemd/system/initrd-check-bios.service",
-            textwrap.dedent(
-                """\
-                    [Unit]
-                    Description=Print TPM configuration
-                    DefaultDependencies=no
-                    Requires=sysroot.mount
-                    After=sysroot.mount systemd-volatile-root.service
-                    Before=initrd-root-fs.target shutdown.target
-                    Conflicts=shutdown.target
-                    
-                    [Service]
-                    Type=oneshot
-                    RemainAfterExit=yes
-                    ExecStart=/usr/bin/initrd-check-bios.sh
-                    StandardOutput=journal+console
-                    
-                    [Install]
-                    WantedBy=initrd-root-device.target
-                    """
-            ).encode("utf-8"),
-            mode=0o644,
-        )
-        trace("Wrote initrd-check-bios.service")
 
         create_file(
             system_context,
@@ -303,36 +276,6 @@ class CreateInitrdCommand(Command):
             _create_install_hook(
                 location,
                 system_context,
-                "sd-check-bios",
-                textwrap.dedent(
-                    """\
-                                 #!/usr/bin/bash
-
-                                 build() {
-                                     # Setup rescue target:
-                                     add_binary "/usr/bin/initrd-check-bios.sh"
-                                     add_binary "/usr/bin/initrd-mnencode"
-                                     add_binary "/usr/bin/md5sum"
-                                 
-                                     add_systemd_unit "initrd-check-bios.service"
-                                     add_symlink "/usr/lib/systemd/system/initrd-root-device.target.wants/initrd-check-bios.service" \
-                                                 "../initrd-check-bios.service"
-                                     add_module tpm_tis tpm_atmel tpm_nsc
-                                 }
-                                 
-                                 help() {
-                                     cat <<HELPEOF
-                                 This hook will enable printing a passphrase with TPM registers
-                                 HELPEOF
-                                 }
-                                 
-                                 # vim: set ft=sh ts=4 sw=4 et:
-                                 """
-                ),
-            ),
-            _create_install_hook(
-                location,
-                system_context,
                 "sd-stateless",
                 textwrap.dedent(
                     """\
@@ -463,8 +406,7 @@ class CreateInitrdCommand(Command):
             "/^HOOKS=/ "
             "cHOOKS=(base systemd keyboard sd-vconsole "
             "sd-encrypt block sd-lvm2 filesystems btrfs "
-            "sd-check-bios sd-stateless sd-verity "
-            "sd-volatile sd-boot-image "
+            "sd-stateless sd-verity sd-volatile sd-boot-image "
             "sd-shutdown)",
             "/etc/mkinitcpio.conf",
         )
@@ -570,7 +512,6 @@ class CreateInitrdCommand(Command):
 
         to_clean_up: typing.List[str] = []
         to_clean_up += "/boot/vmlinuz"
-        to_clean_up += self._install_extra_binaries(location, system_context)
         to_clean_up += self._create_systemd_units(location, system_context)
         to_clean_up += self._install_mkinitcpio(location, system_context)
         to_clean_up += self._install_mkinitcpio_hooks(location, system_context)
@@ -598,26 +539,3 @@ class CreateInitrdCommand(Command):
         self._remove_mkinitcpio(location, system_context)
 
         assert os.path.isfile(initrd)
-
-    def _install_extra_binaries(
-        self, location: Location, system_context: SystemContext
-    ) -> typing.Sequence[str]:
-        to_clean_up: typing.List[str] = [
-            self._copy_extra_file(location, system_context, "initrd-check-bios.sh"),
-            self._copy_extra_file(location, system_context, "initrd-mnencode"),
-        ]
-        return to_clean_up
-
-    def _copy_extra_file(
-        self, location: Location, system_context: SystemContext, extra_file: str
-    ) -> str:
-        location.set_description(
-            "Installing extra mkinitcpio file {}".format(extra_file)
-        )
-        helper_directory = self._helper_directory
-        assert helper_directory
-        source_path = os.path.join(helper_directory, extra_file)
-        dest_path = os.path.join("/usr/bin", extra_file)
-        copy(system_context, source_path, dest_path, from_outside=True)
-        chmod(system_context, 0o755, dest_path)
-        return dest_path
