@@ -92,20 +92,33 @@ class CommandManager:
                 )
             )
 
-    def _collect_substitutions(self) -> typing.List[typing.Tuple[str, str, str, str]]:
-        result: typing.List[typing.Tuple[str, str, str, str]] = []
-        duplications: typing.Dict[str, str] = {}
+    def _collect_substitutions(
+        self,
+    ) -> typing.List[typing.Tuple[str, str, str, typing.Tuple[str, ...]]]:
+        result: typing.Dict[
+            str, typing.Tuple[str, str, str, typing.Tuple[str, ...]]
+        ] = {}
+
         for cmd in self._commands.keys():
             command_info = self.command(cmd)
             assert command_info
 
             name = command_info.name
             for (key, value, description) in command_info.register_substitutions():
-                result.append((key, value, description, name))
-                assert not key in duplications
-                duplications[key] = name
+                if not key in result:
+                    result[key] = (key, value, description, (name,))
+                else:
+                    (old_key, old_value, old_description, old_names) = result[key]
+                    assert (
+                        old_key == key
+                        and old_value == value
+                        and old_description == description
+                        and not name in old_names
+                        and old_names
+                    )
+                    result[key] = (key, value, description, (*old_names, name))
 
-        return result
+        return [v for v in result.values()]
 
     def print_substitutions(self) -> None:
         h2("Predefined Substitutions:")
