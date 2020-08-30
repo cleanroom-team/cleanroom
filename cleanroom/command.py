@@ -14,7 +14,7 @@ from .binarymanager import Binaries
 from .exceptions import GenerateError, ParseError
 from .execobject import ExecObject
 from .location import Location
-from .printer import fail, h3, success, verbose
+from .printer import debug, fail, h3, success, verbose
 from .systemcontext import SystemContext
 
 import os
@@ -47,18 +47,23 @@ class Command:
         file: str,
         syntax: str = "",
         help_string: str,
-        **services: typing.Any
+        **services: typing.Any,
     ) -> None:
         """Constructor."""
         self._name = name
         self._syntax_string = syntax
         self._help_string = help_string
         helper_directory = os.path.join(
-            os.path.dirname(os.path.realpath(file)), "helper", self._name
+            os.path.dirname(os.path.realpath(file)), os.path.basename(file)[:-3],
         )
         self.__helper_directory = (
             helper_directory if os.path.isdir(helper_directory) else None
         )
+        if self.__helper_directory is None:
+            debug(f"Checked {helper_directory} for helpers for command {name}: NONE")
+        else:
+            debug(f"Checked {helper_directory} for helpers for command {name}: FOUND")
+
         self._services = services
 
     @property
@@ -103,7 +108,7 @@ class Command:
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Implement this!
         
@@ -117,7 +122,7 @@ class Command:
         system_context: SystemContext,
         command: str,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         command_info = self._service("command_manager").command(command)
         if not command_info:
@@ -132,7 +137,7 @@ class Command:
         hook_name: str,
         command: str,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Add a hook."""
         command_info = self._service("command_manager").command(command)
@@ -188,7 +193,7 @@ class Command:
         arg_count: int,
         message: str,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         self._validate_args_exact(location, arg_count, message, *args)
         self._validate_kwargs(location, (), **kwargs)
@@ -199,7 +204,7 @@ class Command:
         arg_count: int,
         message: str,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         self._validate_args_at_least(location, arg_count, message, *args)
         self._validate_kwargs(location, (), **kwargs)
@@ -223,7 +228,7 @@ class Command:
         self,
         location: Location,
         known_kwargs: typing.Tuple[str, ...],
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         if not known_kwargs:
             if kwargs:
@@ -244,7 +249,7 @@ class Command:
         self,
         location: Location,
         required_kwargs: typing.Tuple[str, ...],
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         for key in required_kwargs:
             if key not in kwargs:
