@@ -11,7 +11,7 @@ from cleanroom.exceptions import GenerateError
 from cleanroom.helper.run import run
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
-from cleanroom.printer import debug
+from cleanroom.printer import debug, trace
 
 from glob import glob
 import os
@@ -49,6 +49,8 @@ def _get_initrd_parts(location: Location, path: str) -> typing.List[str]:
             'No initrd-parts found in directory "{}".'.format(path), location=location
         )
     initrd_parts.sort()
+    for ip in initrd_parts:
+        trace(f"    Adding into initrd: {ip} ...")
     return initrd_parts
 
 
@@ -64,7 +66,7 @@ class CreateEfiKernelCommand(Command):
             "commandline=<KERNEL_COMMANDLINE>",
             help_string="Create a efi kernel with built-in initrd.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -94,7 +96,7 @@ class CreateEfiKernelCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         output = args[0]
