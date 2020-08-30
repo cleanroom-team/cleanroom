@@ -24,6 +24,7 @@ class Binaries(Enum):
     DEBOOTSTRAP = auto()
     DEPMOD = auto()
     DPKG = auto()
+    FIND = auto()
     FLOCK = auto()
     GROUPADD = auto()
     GROUPMOD = auto()
@@ -70,6 +71,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.BTRFS: _check_for_binary("/usr/bin/btrfs"),
         Binaries.CHROOT_HELPER: _check_for_binary("/usr/bin/arch-chroot"),
         Binaries.DEPMOD: _check_for_binary("/usr/bin/depmod"),
+        Binaries.FIND: _check_for_binary("/usr/bin/find"),
         Binaries.FLOCK: _check_for_binary("/usr/bin/flock"),
         Binaries.GROUPADD: _check_for_binary("/usr/sbin/groupadd"),
         Binaries.GROUPMOD: _check_for_binary("/usr/sbin/groupmod"),
