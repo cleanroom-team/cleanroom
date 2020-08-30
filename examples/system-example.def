@@ -5,8 +5,6 @@ based_on type-server
 set_hostname server pretty=Server
 set_machine_id cccccccccccccccccccccccccccccccc
 
-add_partition 
-
 # pkg_amd_cpu
 
 add_partition 00_esp   device=disk0 type=esp minSize=100M maxSize=100M uuid=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
