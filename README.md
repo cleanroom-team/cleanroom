@@ -19,7 +19,43 @@ Up-to-date code can be found at:
 
 ## Installation
 
-Use python setuptools as usual.
+Just use the code straight from the repository:-)
+
+### Optional Build Container
+
+If you do not want your systems to be built in your normal OS setup,
+you can create an optional build container for Cleanroom.
+
+```
+pacstrap clrm-archlinux \
+    arch-install-scripts \
+    binutils borg btrfs-progs \
+    cpio \
+    devtools dosfstools \
+    nbd \
+    pacman python-pip \
+    qemu \
+    sbsigntools \
+    squashfs-tools \
+    tar
+```
+
+should get you started.
+
+Use
+
+```
+build_container \
+    --build-container=clrm-archlinux \
+    --systems-directory=/SYSTEMS/DIRECTORY \
+    --work-directory=/WORK/DIR \
+    --repository-base-directory=/REPOSITORY/BASE \
+    clrm --verbose --verbose --verbose --verbose \
+    --clear-scratch-directory \
+    SYSTEM_NAME
+```
+
+to build inside this container.
 
 ## Tests
 
