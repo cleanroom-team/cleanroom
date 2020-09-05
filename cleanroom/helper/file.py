@@ -50,11 +50,11 @@ def expand_files(
     """
 
     def func(f: str):
-        return (
-            file_name(system_context, f)
-            if system_context
-            else os.path.join(os.getcwd(), f)
-        )
+        if system_context:
+            return file_name(system_context, f)
+        if os.path.isabs(f):
+            return f
+        return os.path.join(os.getcwd(), f)
 
     to_iterate = map(func, files)
 
