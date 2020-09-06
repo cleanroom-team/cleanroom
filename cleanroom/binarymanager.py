@@ -28,6 +28,7 @@ class Binaries(Enum):
     FLOCK = auto()
     GROUPADD = auto()
     GROUPMOD = auto()
+    LSOF = auto()
     MKFS_VFAT = auto()
     MKNOD = auto()
     MKSQUASHFS = auto()
@@ -87,6 +88,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.FLOCK: _check_for_binary("flock"),
         Binaries.GROUPADD: _check_for_binary("groupadd"),
         Binaries.GROUPMOD: _check_for_binary("groupmod"),
+        Binaries.LSOF: _check_for_binary("lsof"),
         Binaries.MKFS_VFAT: _check_for_binary("mkfs.vfat"),
         Binaries.MKNOD: _check_for_binary("mknod"),
         Binaries.MKSQUASHFS: _check_for_binary("mksquashfs"),
