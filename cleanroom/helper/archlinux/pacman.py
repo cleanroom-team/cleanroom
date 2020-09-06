@@ -137,7 +137,10 @@ def _pacman_keyinit(system_context: SystemContext, pacman_key_command: str) -> N
 
 def _mountpoint(root_dir: str, folder: str, dev: str, **kwargs: typing.Any):
     debug("Mounting {} in chroot.".format(folder))
-    path = os.path.join(root_dir, folder)
+    path = root_dir
+    if folder:
+        path = os.path.join(root_dir, folder)
+
     if not os.path.isdir(path):
         os.makedirs(path)
     mount(dev, path, **kwargs)
@@ -145,21 +148,10 @@ def _mountpoint(root_dir: str, folder: str, dev: str, **kwargs: typing.Any):
 
 def _mount_directories_if_needed(root_dir: str, *, pacman_in_filesystem: bool = False):
     debug("Preparing pacman chroot for external pacman run.")
+    _mountpoint(root_dir, "", root_dir, options="bind")
     _mountpoint(root_dir, "proc", "proc", options="nosuid,noexec,nodev", fs_type="proc")
-    _mountpoint(
-        root_dir, "sys", "sys", options="nosuid,noexec,nodev,ro", fs_type="sysfs"
-    )
     _mountpoint(root_dir, "dev", "udev", options="mode=0755,nosuid", fs_type="devtmpfs")
-    _mountpoint(
-        root_dir,
-        "dev/pts",
-        "devpts",
-        options="mode=0620,gid=5,nosuid,noexec",
-        fs_type="devpts",
-    )
-    _mountpoint(
-        root_dir, "dev/shm", "shm", options="mode=1777,nosuid,nodev", fs_type="tmpfs"
-    )
+    _mountpoint(root_dir, "sys", "/sys", options="bind,ro")
     _mountpoint(root_dir, "run", "/run", options="bind")
     _mountpoint(
         root_dir,
@@ -168,6 +160,22 @@ def _mount_directories_if_needed(root_dir: str, *, pacman_in_filesystem: bool = 
         options="mode=1777,strictatime,nodev,nosuid",
         fs_type="tmpfs",
     )
+
+
+def _kill_processes_in(root_dir: str):
+    result = run("/usr/bin/lsof")
+    result.check_returncode()
+
+    pids: typing.List[str] = []
+    for line in result.stdout.split("\n"):
+        if f" {root_dir}/" in line:
+            pid = line.split(None, 2)[1]
+            pids.append(pid)
+
+    if pids:
+        pids = list(set(pids))
+        result = run("/usr/bin/kill", "-9", *pids)
+        result.check_returncode()
 
 
 def _umount_directories_if_needed(root_dir: str, *, pacman_in_filesystem: bool = False):
@@ -180,7 +188,7 @@ def _run_pacman(
     *args: str,
     pacman_command: str,
     pacman_in_filesystem: bool,
-    **kwargs: typing.Any
+    **kwargs: typing.Any,
 ) -> None:
     _sanity_check(system_context)
 
@@ -190,7 +198,7 @@ def _run_pacman(
         *all_args,
         work_directory=system_context.systems_definition_directory,
         timeout=600,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -215,7 +223,7 @@ def pacstrap(
     *packages: str,
     config: str,
     pacman_command: str,
-    chroot_helper: str
+    chroot_helper: str,
 ) -> None:
     """Run pacstrap on host."""
     assert _package_type(system_context) == "pacman"
@@ -232,7 +240,7 @@ def pacstrap(
         system_context,
         *packages,
         pacman_command=pacman_command,
-        chroot_helper=chroot_helper
+        chroot_helper=chroot_helper,
     )
 
 
@@ -280,7 +288,7 @@ def pacman(
     assume_installed: str = "",
     overwrite: str = "",
     pacman_command: str,
-    chroot_helper: str
+    chroot_helper: str,
 ) -> None:
     """Use pacman to install packages."""
     previous_pacstate = os.path.isfile(system_context.file_name("/usr/bin/pacman"))
@@ -306,8 +314,12 @@ def pacman(
         *action,
         *packages,
         pacman_command=pacman_command,
-        pacman_in_filesystem=previous_pacstate
+        pacman_in_filesystem=previous_pacstate,
     )
+
+    # Kill processes that pacman might have started (incl. gpg-agents)
+    _kill_processes_in(system_context.scratch_directory)
+
     _umount_directories_if_needed(
         system_context.fs_directory, pacman_in_filesystem=previous_pacstate
     )
@@ -361,7 +373,7 @@ def pacman_report(
         *action,
         stdout=qi,
         pacman_command=pacman_command,
-        pacman_in_filesystem=False
+        pacman_in_filesystem=False,
     )
 
     # Generate file list:
@@ -372,7 +384,7 @@ def pacman_report(
         *action,
         stdout=ql_in,
         pacman_command=pacman_command,
-        pacman_in_filesystem=False
+        pacman_in_filesystem=False,
     )
 
     # Filter prefix from file list:
