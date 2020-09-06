@@ -7,6 +7,7 @@
 
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
+from cleanroom.exceptions import ParseError
 from cleanroom.helper.archlinux.pacman import (
     gpg_directory,
     pacstrap,
@@ -40,6 +41,11 @@ class PacstrapCommand(Command):
         self, location: Location, *args: typing.Any, **kwargs: typing.Any
     ) -> None:
         """Validate the arguments."""
+        if not self._binary(Binaries.PACMAN) or not self._binary(
+            Binaries.CHROOT_HELPER
+        ):
+            raise ParseError("No pacman binary was found.")
+
         self._validate_args_at_least(
             location,
             1,
