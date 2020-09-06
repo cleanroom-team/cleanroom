@@ -37,6 +37,7 @@ class ContainerFilesystemInstallTarget(InstallTarget):
             container_name = parse_result.system_name
             if container_name.startswith("system-"):
                 container_name = container_name[7:]
+        read_write = parse_result.read_write
 
         container_dir = os.path.join(parse_result.machines_dir, container_name)
         import_dir = container_dir + "_import"
@@ -57,7 +58,7 @@ class ContainerFilesystemInstallTarget(InstallTarget):
                 btrfs.delete_subvolume(container_dir)
 
             # Copy over container filesystem:
-            btrfs.create_snapshot(import_dir, container_dir, read_only=True)
+            btrfs.create_snapshot(import_dir, container_dir, read_only=not read_write)
 
         finally:
             btrfs.delete_subvolume(import_dir)
@@ -79,5 +80,12 @@ class ContainerFilesystemInstallTarget(InstallTarget):
             dest="machines_dir",
             action="store",
             default="/var/lib/machines",
-            help="Machines directory " "[default: /var/lib/machines]",
+            help="Machines directory [default: /var/lib/machines]",
+        )
+        subparser.add_argument(
+            "--read-write",
+            dest="read_write",
+            action="store_true",
+            default=False,
+            help="Make final snapshot read/write [default is read-only].",
         )
