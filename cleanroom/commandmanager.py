@@ -201,9 +201,18 @@ class CommandManager:
             **kwargs: typing.Any
         ) -> None:
             cmd_str = stringify(cmd.name, args, kwargs)
-            trace("{}: Executing {}.".format(location, cmd_str))
+            trace(
+                "{}::{}: Executing {}.".format(
+                    system_context.system_name, location, cmd_str
+                )
+            )
             call_command(location, system_context, cmd, *args, **kwargs)
-            success("{}: Executed {}.".format(location, cmd_str), verbosity=2)
+            success(
+                "{}::{}: Executed {}.".format(
+                    system_context.system_name, location, cmd_str
+                ),
+                verbosity=2,
+            )
 
         self._commands[name] = CommandInfo(
             name=name,
