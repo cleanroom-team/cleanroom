@@ -35,10 +35,11 @@ def report_completed_process(
     if completed_process.stderr is not None:
         stderr = completed_process.stderr
 
-    channel("Arguments  : {}".format(" ".join(completed_process.args)))
-    channel("Return Code: {}".format(completed_process.returncode))
-    _report_output_lines(channel, "StdOut     :", stdout)
-    _report_output_lines(channel, "StdErr     :", stderr)
+    if completed_process.returncode != 0 or stdout or stderr:
+        channel("Arguments  : {}".format(" ".join(completed_process.args)))
+        channel("Return Code: {}".format(completed_process.returncode))
+        _report_output_lines(channel, "StdOut     :", stdout)
+        _report_output_lines(channel, "StdErr     :", stderr)
 
 
 def run(
