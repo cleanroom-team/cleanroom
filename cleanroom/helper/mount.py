@@ -47,7 +47,6 @@ def mount_points(
         mount_point = match.group(2)
 
         if mount_point == directory or mount_point.startswith(directory + "/"):
-            trace("Mount point: {}.".format(mount_point))
             sub_mounts.append(mount_point)
 
     return sorted(sub_mounts, key=len, reverse=True)
@@ -64,15 +63,12 @@ def umount(directory: str, chroot: typing.Optional[str] = None) -> None:
 
 def umount_all(directory: str, chroot: typing.Optional[str] = None) -> bool:
     """Umount all mount points below a directory."""
-    sub_mounts = mount_points(directory, chroot=chroot)
+    if len(mount_points(directory)) == 0:
+        return True
 
-    if sub_mounts:
-        for mp in sub_mounts:
-            umount(mp)
+    run("/usr/bin/umount", "--recursive", _map_into_chroot(directory, chroot))
 
-        sub_mounts = mount_points(directory, chroot=chroot)
-
-    return len(sub_mounts) == 0
+    return len(mount_points(directory)) == 0
 
 
 def mount(

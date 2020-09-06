@@ -74,11 +74,18 @@ class WorkDir:
                     )
 
                 trace('Using existing work directory in "{}".'.format(work_directory))
-                if not umount_all(work_directory):
-                    raise PreflightError(
-                        "Failed to umount all in work "
-                        'directory "{}".'.format(work_directory)
-                    )
+                if os.path.isdir(os.path.join(work_directory, "scratch")):
+                    if not umount_all(os.path.join(work_directory, "scratch")):
+                        raise PreflightError(
+                            "Failed to umount all in work "
+                            'directory "{}".'.format(work_directory)
+                        )
+                if os.path.isdir(os.path.join(work_directory, "storage")):
+                    if not umount_all(os.path.join(work_directory, "storage")):
+                        raise PreflightError(
+                            "Failed to umount all in work "
+                            'directory "{}".'.format(work_directory)
+                        )
                 if clear_scratch_directory:
                     self.clear_scratch_directory()
                 if clear_storage:
