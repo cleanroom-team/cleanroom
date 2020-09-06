@@ -143,6 +143,4 @@ class BinaryManager:
 
     def binary(self, selector: Binaries) -> str:
         """Get a binary from the context."""
-        binary = self._binaries[selector]
-        trace("Binary for {}: {}.".format(selector, binary))
-        return binary
+        return self._binaries[selector]
