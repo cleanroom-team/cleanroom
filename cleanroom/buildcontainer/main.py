@@ -192,7 +192,7 @@ def main(*command_arguments: str) -> None:
     if not args.non_ephemeral:
         extra_args += ["--ephemeral"]
 
-    subprocess.run(
+    result = subprocess.run(
         [
             "/usr/bin/systemd-nspawn",
             f"--directory={build_container}",
@@ -207,3 +207,6 @@ def main(*command_arguments: str) -> None:
             *run_args,
         ]
     )
+    if result.returncode != 0:
+        print(f"ERROR: CLRM failed with exit code {result.returncode}.")
+    sys.exit(result.returncode)
