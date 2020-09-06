@@ -67,11 +67,11 @@ def _parse_commandline(*arguments: str) -> typing.Any:
         help="Keep network functional in the container.",
     )
     parser.add_argument(
-        "--non-volatile",
-        dest="non_volatile",
+        "--non-ephemeral",
+        dest="non_ephemeral",
         action="store_true",
         default=False,
-        help="Use a non-volatile container.",
+        help="Use a non-ephemeral container.",
     )
 
     parser.add_argument(
@@ -189,7 +189,7 @@ def main(*command_arguments: str) -> None:
 
     if not args.with_network:
         extra_args += ["--private-network"]
-    if not args.non_volatile:
+    if not args.non_ephemeral:
         extra_args += ["--ephemeral"]
 
     subprocess.run(
