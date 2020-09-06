@@ -32,8 +32,9 @@ pacstrap clrm-archlinux \
     binutils borg btrfs-progs \
     cpio \
     devtools dosfstools \
+    lsof \
     nbd \
-    pacman python-pip \
+    pacman python-pyparsing \
     qemu \
     sbsigntools \
     squashfs-tools \
