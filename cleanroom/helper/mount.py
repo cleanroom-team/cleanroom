@@ -107,8 +107,9 @@ def mount(
 
     target = _map_into_chroot(directory, chroot)
 
-    is_loop = "loop" in options.split(",")
-    is_bind = "bind" in options.split(",")
+    options_array = options.split(",")
+    is_loop = "loop" in options_array
+    is_bind = "bind" in options_array or "rbind" in options_array
     if is_pseudo:
         is_block = False
     else:
@@ -122,7 +123,7 @@ def mount(
 
     run("/usr/bin/mount", *args)
 
-    assert len(mount_points(directory)) == 1
+    assert len(mount_points(directory)) >= 1
 
 
 class Mount:
