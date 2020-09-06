@@ -75,7 +75,7 @@ class TestCommand(Command):
         env = _environment(system_context)
 
         for test in _find_tests(system_context):
-            debug("Running test {}...".format(test))
+            trace("{}::Running test {}...".format(system_context.system_name, test))
             test_result = run(
                 test,
                 system_context.system_name,
@@ -84,7 +84,10 @@ class TestCommand(Command):
                 work_directory=system_context.fs_directory,
             )
             if test_result.returncode == 0:
-                success('Test "{}"'.format(test), verbosity=3)
+                success(
+                    '{}::Test "{}"'.format(system_context.system_name, test),
+                    verbosity=3,
+                )
             else:
                 report_completed_process(msg, test_result)
-                fail('Test "{}"'.format(test))
+                fail('{}::Test "{}"'.format(system_context.system_name, test))
