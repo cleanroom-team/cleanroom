@@ -272,6 +272,7 @@ class ExportCommand(Command):
 
         export_directory = self.create_export_directory(system_context)
         assert export_directory
+        self.create_image(system_context, export_directory)
 
         system_context.set_substitution("EXPORT_DIRECTORY", export_directory)
 
@@ -387,6 +388,9 @@ class ExportCommand(Command):
             btrfs_helper.delete_subvolume_recursive(export_volume)
         btrfs_helper.create_subvolume(export_volume)
 
+        return export_volume
+
+    def create_image(self, system_context: SystemContext, export_volume: str):
         image_name = system_context.substitution_expanded("CLRM_IMAGE_FILENAME", "")
         assert image_name
 
@@ -419,8 +423,6 @@ class ExportCommand(Command):
             sync_command=self._binary(Binaries.SYNC),
             modprobe_command=self._binary(Binaries.MODPROBE),
         )
-
-        return export_volume
 
     def delete_export_directory(self, export_directory: str) -> None:
         """Nothing to see, move on."""
