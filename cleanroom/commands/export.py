@@ -264,7 +264,17 @@ class ExportCommand(Command):
 
         verbose("Preparing system for export.")
         self._execute(location.next_line(), system_context, "_write_deploy_info")
-        self.prepare_for_export(location, system_context)
+
+        # Create some extra data:
+        self._create_root_tarball(location, system_context)
+        has_kernel = self._create_initramfs(location, system_context)
+
+        (
+            self._kernel_file,
+            self._root_partition,
+            self._verity_partition,
+            self._root_hash,
+        ) = self._create_cache_data(location, system_context, has_kernel=has_kernel)
 
         info("Validating installation for export.")
         if not self._skip_validation:
@@ -311,19 +321,6 @@ class ExportCommand(Command):
             "root",
             work_directory=system_context.fs_directory,
         )
-
-    def prepare_for_export(
-        self, location: Location, system_context: SystemContext
-    ) -> None:
-        self._create_root_tarball(location, system_context)
-        has_kernel = self._create_initramfs(location, system_context)
-
-        (
-            self._kernel_file,
-            self._root_partition,
-            self._verity_partition,
-            self._root_hash,
-        ) = self._create_cache_data(location, system_context, has_kernel=has_kernel)
 
     def _create_complete_kernel(
         self,
