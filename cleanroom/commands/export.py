@@ -43,31 +43,6 @@ def _size_extend(file: str) -> None:
         f.write(b"\0" * to_add)
 
 
-def _create_dmverity(
-    target_directory: str,
-    squashfs_file: str,
-    *,
-    vrty_label: str,
-    veritysetup_command: str
-) -> typing.Tuple[str, str, str]:
-    verity_file = os.path.join(target_directory, vrty_label)
-    result = run(veritysetup_command, "format", squashfs_file, verity_file)
-
-    _size_extend(verity_file)
-
-    root_hash: typing.Optional[str] = None
-    uuid: typing.Optional[str] = None
-    for line in result.stdout.split("\n"):
-        if line.startswith("Root hash:"):
-            root_hash = line[10:].strip()
-        if line.startswith("UUID:"):
-            uuid = line[10:].strip()
-
-    assert root_hash is not None
-    assert uuid is not None
-    return verity_file, uuid, root_hash
-
-
 def _setup_kernel_commandline(base_cmdline: str, root_hash: str) -> str:
     cmdline = " ".join(
         (
@@ -363,13 +338,19 @@ class ExportCommand(Command):
         )
 
         vrty_label = system_context.substitution_expanded("VRTYFS_PARTLABEL", "")
-        assert vrty_label
-        (verity_file, _, root_hash) = _create_dmverity(
-            system_context.cache_directory,
-            squashfs_file,
-            vrty_label=vrty_label,
-            veritysetup_command=self._binary(Binaries.VERITYSETUP),
+        if not vrty_label:
+            raise GenerateError("VRTYFS_PARTLABEL is unset.")
+        verity_file = os.path.join(system_context.cache_directory, vrty_label)
+
+        self._execute(
+            location,
+            system_context,
+            "_create_dmverity_fsimage",
+            verity_file,
+            base_image=squashfs_file,
         )
+        root_hash = system_context.substitution("LAST_DMVERITY_ROOTHASH", "")
+        assert root_hash
 
         cmdline = system_context.set_or_append_substitution(
             "KERNEL_CMDLINE", "systemd.volatile=true rootfstype=squashfs"
