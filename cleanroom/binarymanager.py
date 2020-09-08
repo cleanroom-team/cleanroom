@@ -6,7 +6,7 @@
 
 
 from .exceptions import PreflightError
-from .printer import debug, fail, trace, warn
+from .printer import debug, trace, warn
 
 from enum import Enum, auto, unique
 import os

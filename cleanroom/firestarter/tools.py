@@ -28,14 +28,17 @@ def run(
 
     cwd = work_directory or None
     trace('Running: "{}"...'.format('" "'.join(args)))
-    result = subprocess.run(args, env=env, capture_output=True, check=False, cwd=cwd)
+    result = subprocess.run(
+        args,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+        cwd=cwd,
+    )
     if result.returncode != 0:
         debug(
-            "Command returned with exit code {}:\nSTDOUT:\n{}\nSTDERR:\n{}.".format(
-                result.returncode,
-                result.stdout.decode("utf-8"),
-                result.stderr.decode("utf-8"),
-            )
+            f'Command returned with exit code {result.returncode}:\nSTDOUT:\n{result.stdout.decode("utf-8")}\nSTDERR:\n{result.stderr.decode("utf-8")}.'
         )
     if result.returncode == 2 and check:
         raise subprocess.CalledProcessError(
@@ -44,7 +47,6 @@ def run(
             output=result.stdout,
             stderr=result.stderr,
         )
-
     return result
 
 

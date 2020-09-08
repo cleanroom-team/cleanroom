@@ -6,7 +6,7 @@
 
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
-from cleanroom.helper.file import chmod, copy, create_file, remove, move
+from cleanroom.helper.file import copy, create_file, remove, move
 from cleanroom.helper.run import run
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext

@@ -52,7 +52,7 @@ def run(
     stdout: typing.Optional[str] = None,
     stderr: typing.Optional[str] = None,
     chroot_helper: typing.Optional[str] = None,
-    **kwargs: typing.Any
+    **kwargs: typing.Any,
 ) -> subprocess.CompletedProcess:
     """Run command and trace the external command result and output."""
     if work_directory is not None:
@@ -87,7 +87,7 @@ def run(
             args,
             stdout=stdout_fd or subprocess.PIPE,
             stderr=stdout_fd or subprocess.PIPE,
-            **kwargs
+            **kwargs,
         )
     except subprocess.TimeoutExpired as to:
         print(
@@ -103,12 +103,12 @@ def run(
         if stderr_fd:
             stderr_fd.close()
 
-    assert completed_process is not None
-
-    if completed_process.stdout is not None:
+    if not completed_process.stdout is str:
         completed_process.stdout = completed_process.stdout.decode("utf-8")
-    if completed_process.stderr is not None:
+    if not completed_process.stderr is str:
         completed_process.stderr = completed_process.stderr.decode("utf-8")
+
+    assert completed_process is not None
 
     report_completed_process(trace_output, completed_process)
 
@@ -131,4 +131,4 @@ def _report_output_lines(
         return
     lines = line_data.split("\n")
     for line in lines:
-        channel("    {}".format(line))
+        channel(f"    {line}")
