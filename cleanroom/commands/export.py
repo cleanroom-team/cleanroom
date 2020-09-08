@@ -226,12 +226,32 @@ class ExportCommand(Command):
         self._create_root_tarball(location, system_context)
         has_kernel = self._create_initramfs(location, system_context)
 
-        (
-            self._kernel_file,
-            self._root_partition,
-            self._verity_partition,
-            self._root_hash,
-        ) = self._create_cache_data(location, system_context, has_kernel=has_kernel)
+        rootfs_file = self._create_root_fsimage(location, system_context)
+        (verity_file, root_hash) = self._create_rootverity_fsimage(
+            location, system_context, rootfs=rootfs_file
+        )
+        assert root_hash
+
+        cmdline = system_context.set_or_append_substitution(
+            "KERNEL_CMDLINE", "systemd.volatile=true rootfstype=squashfs"
+        )
+        cmdline = _setup_kernel_commandline(cmdline, root_hash)
+
+        kernel_file = ""
+        if has_kernel:
+            kernel_file = os.path.join(
+                system_context.boot_directory,
+                system_context.substitution("KERNEL_FILENAME", ""),
+            )
+            assert kernel_file
+            self._create_complete_kernel(
+                location, system_context, cmdline, kernel_file=kernel_file,
+            )
+
+        self._kernel_file = kernel_file
+        self._root_partition = rootfs_file
+        self._verity_partition = verity_file
+        self._root_hash = root_hash
 
         info("Validating installation for export.")
         if not self._skip_validation:
