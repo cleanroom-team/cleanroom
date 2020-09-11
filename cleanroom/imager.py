@@ -24,6 +24,17 @@ import typing
 mib = 1024 * 1024
 
 
+def size_extend(file: str) -> None:
+    size = os.path.getsize(file)
+    block_size = 2 * 1024 * 1024  # 2MiB
+    to_add = block_size - (size % block_size)
+    if to_add == 0:
+        return
+
+    with open(file, "ab") as f:
+        f.write(b"\0" * to_add)
+
+
 class DataProvider:
     def write_root_partition(self, target_device: str):
         pass

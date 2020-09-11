@@ -349,9 +349,19 @@ class ExportCommand(Command):
     def _create_cache_data(
         self, location: Location, system_context: SystemContext, *, has_kernel: bool
     ) -> typing.Tuple[str, str, str, str]:
-        squashfs_file = self._create_squashfs(
-            system_context, system_context.cache_directory
+        rootfs_label = system_context.substitution_expanded("ROOTFS_PARTLABEL", "")
+        if not rootfs_label:
+            raise GenerateError("ROOTFS_PARTLABEL is unset.")
+        squashfs_file = os.path.join(system_context.cache_directory, rootfs_label,)
+
+        self._execute(
+            location,
+            system_context,
+            "_create_root_fsimage",
+            squashfs_file,
+            usr_only=self._usr_only,
         )
+
         vrty_label = system_context.substitution_expanded("VRTYFS_PARTLABEL", "")
         assert vrty_label
         (verity_file, _, root_hash) = _create_dmverity(
@@ -479,35 +489,6 @@ class ExportCommand(Command):
         return os.path.exists(
             os.path.join(system_context.boot_directory, "initrd-parts/50-mkinitcpio")
         )
-
-    def _create_squashfs(
-        self, system_context: SystemContext, target_directory: str
-    ) -> str:
-        rootfs_label = system_context.substitution_expanded("ROOTFS_PARTLABEL", "")
-        if not rootfs_label:
-            raise GenerateError("ROOTFS_PARTLABEL is unset.")
-        squash_file = os.path.join(target_directory, rootfs_label,)
-        target_directory = "usr" if self._usr_only else "."
-        target_args = ["-keep-as-directory"] if self._usr_only else []
-        run(
-            self._binary(Binaries.MKSQUASHFS),
-            target_directory,
-            squash_file,
-            *target_args,
-            "-comp",
-            "zstd",
-            "-noappend",
-            "-no-exports",
-            "-noI",
-            "-noD",
-            "-noF",
-            "-noX",
-            "-processors",
-            "1",
-            work_directory=system_context.fs_directory
-        )
-        _size_extend(squash_file)
-        return squash_file
 
     def _run_all_exportcommand_hooks(self, system_context: SystemContext) -> None:
         self._run_hooks(system_context, "_teardown")
