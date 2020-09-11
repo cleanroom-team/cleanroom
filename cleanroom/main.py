@@ -130,7 +130,8 @@ def main(*command_arguments: str) -> None:
 
     btrfs_helper = BtrfsHelper(binary_manager.binary(Binaries.BTRFS))
     user_helper = UserHelper(
-        binary_manager.binary(Binaries.USERADD), binary_manager.binary(Binaries.USERMOD)
+        binary_manager.binary(Binaries.USERADD),
+        binary_manager.binary(Binaries.USERMOD),
     )
     group_helper = GroupHelper(
         binary_manager.binary(Binaries.GROUPADD),

@@ -19,12 +19,12 @@ class BtrfsHelper:
 
     def create_subvolume(self, directory: str) -> None:
         """Create a new subvolume."""
-        trace("BTRFS: Create subvolume {}.".format(directory))
+        trace(f"BTRFS: Create subvolume {directory}.")
         run(self._command, "subvolume", "create", directory, trace_output=trace)
 
     def set_property(self, object: str, *, name: str, value: str) -> None:
         """Create a new subvolume."""
-        trace("BTRFS: Set property {} to {} on {}.".format(name, value, object))
+        trace(f"BTRFS: Set property {name} to {value} on {object}.")
         run(self._command, "property", "set", object, name, value, trace_output=trace)
 
     def create_snapshot(
@@ -35,9 +35,7 @@ class BtrfsHelper:
         extra_args = (*extra_args, "-r") if read_only else extra_args
 
         trace(
-            "BTRFS: Create snapshot of {} into {} ({}).".format(
-                source, destination, "ro" if read_only else "rw"
-            )
+            f'BTRFS: Create snapshot of {source} into {destination} ({"ro" if read_only else "rw"}).'
         )
         run(
             self._command,
@@ -46,7 +44,7 @@ class BtrfsHelper:
             *extra_args,
             source,
             destination,
-            trace_output=trace
+            trace_output=trace,
         )
 
     def delete_subvolume(self, directory: str) -> bool:
