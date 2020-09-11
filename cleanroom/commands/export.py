@@ -188,7 +188,11 @@ class ExportCommand(Command):
 
         # Create some extra data:
         self._create_root_tarball(location, system_context)
-        has_kernel = self._create_initramfs(location, system_context)
+        has_kernel = os.path.exists(
+            os.path.join(system_context.boot_directory, "vmlinuz")
+        )
+        if has_kernel:
+            self._create_initrd(location, system_context)
 
         root_partition = self._create_root_fsimage(
             location, system_context, usr_only=usr_only
@@ -489,9 +493,7 @@ class ExportCommand(Command):
             commandline=cmdline,
         )
 
-    def _create_initramfs(
-        self, location: Location, system_context: SystemContext
-    ) -> bool:
+    def _create_initrd(self, location: Location, system_context: SystemContext):
         location.set_description("Create initrd")
         initrd_parts = os.path.join(system_context.boot_directory, "initrd-parts")
         os.makedirs(initrd_parts, exist_ok=True)
@@ -502,7 +504,7 @@ class ExportCommand(Command):
             os.path.join(initrd_parts, "50-mkinitcpio"),
         )
 
-        return os.path.exists(
+        assert os.path.exists(
             os.path.join(system_context.boot_directory, "initrd-parts/50-mkinitcpio")
         )
 
