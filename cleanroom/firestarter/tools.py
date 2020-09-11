@@ -51,7 +51,11 @@ def run(
 
 
 def run_borg(*args: str, work_directory: str = "") -> subprocess.CompletedProcess:
-    return run("/usr/bin/borg", *args, work_directory=work_directory)
+    env = os.environ
+    env["BORG_UNKNOWN_UNENCRYPTED_ACCESS_IS_OK"] = "yes"
+    env["BORG_RELOCATED_REPO_ACCESS_IS_OK"] = "yes"
+
+    return run("/usr/bin/borg", *args, work_directory=work_directory, env=env)
 
 
 def find_archive(

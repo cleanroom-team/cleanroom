@@ -12,7 +12,7 @@ from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
 import typing
-import os.path
+import os
 
 
 class ExportDirectoryCommand(Command):
@@ -61,6 +61,10 @@ class ExportDirectoryCommand(Command):
 
         backup_name = system_context.system_name + "-" + system_context.timestamp
 
+        env = os.environ
+        env["BORG_UNKNOWN_UNENCRYPTED_ACCESS_IS_OK"] = "yes"
+        env["BORG_RELOCATED_REPO_ACCESS_IS_OK"] = "yes"
+
         run(
             self._service("binary_manager").binary(Binaries.BORG),
             "create",
@@ -73,4 +77,5 @@ class ExportDirectoryCommand(Command):
             "{}::{}".format(export_repository, backup_name),
             ".",
             work_directory=export_directory,
+            env=env,
         )
