@@ -241,7 +241,7 @@ class ExportCommand(Command):
         if has_kernel:
             kernel_file = os.path.join(
                 system_context.boot_directory,
-                system_context.substitution("KERNEL_FILENAME", ""),
+                system_context.substitution_expanded("KERNEL_FILENAME", ""),
             )
             assert kernel_file
             self._create_complete_kernel(
