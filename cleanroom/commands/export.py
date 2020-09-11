@@ -105,7 +105,7 @@ class ExportCommand(Command):
             "[usr_only=True]",
             help_string="Export a filesystem image.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -127,7 +127,7 @@ class ExportCommand(Command):
                 "skip_validation",
                 "usr_only",
             ),
-            **kwargs
+            **kwargs,
         )
 
         if "key" in kwargs:
@@ -228,7 +228,7 @@ class ExportCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         self._setup(*args, **kwargs)
