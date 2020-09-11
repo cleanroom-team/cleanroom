@@ -73,6 +73,20 @@ def _parse_commandline(*arguments: str) -> typing.Any:
         default=False,
         help="Use a non-ephemeral container.",
     )
+    parser.add_argument(
+        "--with-post-shell",
+        dest="post_shell",
+        action="store_true",
+        default=False,
+        help="Spawn a shell after clrm is done.",
+    )
+    parser.add_argument(
+        "--with-fail-shell",
+        dest="fail_shell",
+        action="store_true",
+        default=False,
+        help="Spawn a shell after clrm is done.",
+    )
 
     parser.add_argument(
         dest="executable", help="The program to run", choices=["clrm", "bash"],
@@ -185,6 +199,13 @@ def main(*command_arguments: str) -> None:
     if not args.non_ephemeral:
         extra_args += ["--ephemeral"]
 
+    wrapper = "wrapper.sh"
+    if args.post_shell:
+        wrapper = "wrapper_post.sh"
+    if args.fail_shell:
+        wrapper = "wrapper_fail.sh"
+    wrapper = os.path.join("/clrm/python/cleanroom/buildcontainer/scripts", wrapper)
+
     result = subprocess.run(
         [
             "/usr/bin/systemd-nspawn",
@@ -197,6 +218,7 @@ def main(*command_arguments: str) -> None:
             f"--bind-ro={systems_directory}:/clrm/systems",
             "--register=false",
             *extra_args,
+            wrapper,
             *run_args,
         ]
     )
