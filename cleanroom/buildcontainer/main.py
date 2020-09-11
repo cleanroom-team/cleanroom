@@ -149,13 +149,6 @@ def main(*command_arguments: str) -> None:
         os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     )
 
-    # print(f'build chroot             : "{build_container}".')
-    # print(f'    python executable    : "{python}".')
-    # print(f'systems directory        : "{systems_directory}".')
-    # print(f'work directory           : "{work_directory}".')
-    # print(f'repository base directory: "{repository_base_directory}".')
-    # print(f'code directory           : "{code_directory}.')
-
     extra_args: typing.List[str] = []
     if "BORG_BASE_DIR" in os.environ:
         borg_base_dir = os.environ["BORG_BASE_DIR"]
