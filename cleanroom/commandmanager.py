@@ -232,7 +232,7 @@ class CommandManager:
         )
 
     def _find_commands_in_directory(self, directory: str) -> None:
-        for f in os.listdir(directory):
+        for f in sorted(os.listdir(directory)):
             if not f.endswith(".py"):
                 continue
 
