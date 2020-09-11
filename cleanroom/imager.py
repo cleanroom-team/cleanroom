@@ -14,6 +14,7 @@ from .helper import disk
 from .helper import mount
 from .helper.run import run as helper_run
 from .printer import info, debug, fail, success, trace, verbose
+from .helper.file import file_size
 
 import os
 import shutil
@@ -26,7 +27,7 @@ mib = 1024 * 1024
 
 def size_extend(file: str) -> None:
     size = os.path.getsize(file)
-    block_size = 2 * 1024 * 1024  # 2MiB
+    block_size = 1024 * 1024  # 1 MiB
     to_add = block_size - (size % block_size)
     if to_add == 0:
         return
@@ -175,13 +176,6 @@ def parse_extra_partitions(
     return result
 
 
-def _file_size(file_name: str) -> int:
-    if file_name:
-        statinfo = os.stat(file_name)
-        return statinfo.st_size
-    return 0
-
-
 def _get_tree_size(start_path: str) -> int:
     total_size = 0
     for dirpath, _, filenames in os.walk(start_path):
@@ -215,9 +209,9 @@ def create_image(
 ) -> None:
     debug('Creating image "{}".'.format(image_filename))
 
-    kernel_size = _file_size(kernel_file) if kernel_file else 0
-    root_size = _file_size(root_partition)
-    verity_size = _file_size(verity_partition)
+    kernel_size = file_size(None, kernel_file) if kernel_file else 0
+    root_size = file_size(None, root_partition)
+    verity_size = file_size(None, verity_partition)
 
     trace(
         "Got sizes from repository: kernel: {}b, root: {}b, verity: {}b".format(
