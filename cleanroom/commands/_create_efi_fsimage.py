@@ -227,7 +227,7 @@ class CreateEfiFsimageCommand(Command):
             if not os.path.isdir(extra_files):
                 raise GenerateError(f"extra_files {extra_files} is not a directory.")
 
-        kernel_size = file_size(None, kernel_file) if kernel_file else 1024 * 1024
+        kernel_size = file_size(None, kernel_file) if kernel_file else 256 * 1024
         boot_loader_size = file_size(None, boot_loader_file)
 
         min_efi_size = kernel_size
@@ -236,8 +236,7 @@ class CreateEfiFsimageCommand(Command):
                 min_efi_size += 10 * mib
             if extra_files:
                 min_efi_size += _get_tree_size(extra_files)
-            if boot_loader_size:
-                min_efi_size += 2 * boot_loader_size
+            min_efi_size += 2 * boot_loader_size
 
         efi_size = _calculate_efi_size(min_efi_size, requested_size)
 
