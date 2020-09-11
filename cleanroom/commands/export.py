@@ -428,7 +428,7 @@ class ExportCommand(Command):
         self._execute(
             location.next_line(),
             system_context,
-            "create_efi_kernel",
+            "_create_efi_kernel",
             kernel_name,
             kernel=os.path.join(boot_directory, "vmlinuz"),
             initrd_directory=os.path.join(boot_directory, "initrd-parts"),
