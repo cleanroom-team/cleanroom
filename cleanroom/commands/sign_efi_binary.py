@@ -29,7 +29,7 @@ class SignEfiBinaryCommand(Command):
             "[keep_unsigned=False]",
             help_string="Sign <FILE> using <KEY> and <CERT>.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -46,7 +46,7 @@ class SignEfiBinaryCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         to_sign = args[0]
