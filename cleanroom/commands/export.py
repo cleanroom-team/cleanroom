@@ -17,30 +17,7 @@ from cleanroom.printer import debug, h2, info, verbose
 
 
 import os
-import shutil
 import typing
-
-
-def _kernel_name(system_context: SystemContext, *, postfix: str = "") -> str:
-    boot_data = system_context.boot_directory
-    assert boot_data
-    return os.path.join(
-        boot_data,
-        "{}{}_{}.efi".format(
-            system_context.pretty_system_name, postfix, system_context.timestamp
-        ),
-    )
-
-
-def _size_extend(file: str) -> None:
-    size = os.path.getsize(file)
-    block_size = 4 * 1024 * 1024  # 4MiB
-    to_add = block_size - (size % block_size)
-    if to_add == 0:
-        return
-
-    with open(file, "ab") as f:
-        f.write(b"\0" * to_add)
 
 
 def _setup_kernel_commandline(base_cmdline: str, root_hash: str) -> str:
@@ -217,6 +194,11 @@ class ExportCommand(Command):
                 "Dm-verity filesystem partition label.",
             ),
             (
+                "KERNEL_FILENAME",
+                "${PRETTY_SYSTEM_NAME}_${DISTRO_VERSION_ID}.efi",
+                "File name for the clrm image file",
+            ),
+            (
                 "CLRM_IMAGE_FILENAME",
                 "${PRETTY_SYSTEM_NAME}_${DISTRO_VERSION_ID}.img",
                 "File name for the clrm image file",
@@ -301,29 +283,32 @@ class ExportCommand(Command):
         self,
         location: Location,
         system_context: SystemContext,
-        base_cmdline: str,
-        root_hash: str,
-        target_directory: str,
-    ) -> str:
-        full_cmdline = _setup_kernel_commandline(base_cmdline, root_hash)
-        kernel_name = _kernel_name(system_context)
-
-        self._create_efi_kernel(location, system_context, kernel_name, full_cmdline)
+        cmdline: str,
+        *,
+        kernel_file: str,
+    ):
+        self._create_efi_kernel(
+            location, system_context, cmdline, kernel_file=kernel_file,
+        )
 
         if self._key and self._cert:
             debug("Signing EFI kernel.")
-            self._sign_efi_kernel(
-                location, system_context, kernel_name, self._key, self._cert
+            location.set_description("Sign EFI kernel")
+            self._execute(
+                location.next_line(),
+                system_context,
+                "sign_efi_binary",
+                kernel_file,
+                key=self._key,
+                cert=self._cert,
+                outside=True,
             )
 
-        kernel_filename = os.path.join(target_directory, os.path.basename(kernel_name))
-        shutil.copyfile(kernel_name, kernel_filename)
+        assert os.path.isfile(kernel_file)
 
-        return kernel_filename
-
-    def _create_cache_data(
-        self, location: Location, system_context: SystemContext, *, has_kernel: bool
-    ) -> typing.Tuple[str, str, str, str]:
+    def _create_root_fsimage(
+        self, location: Location, system_context: SystemContext,
+    ) -> str:
         rootfs_label = system_context.substitution_expanded("ROOTFS_PARTLABEL", "")
         if not rootfs_label:
             raise GenerateError("ROOTFS_PARTLABEL is unset.")
@@ -337,6 +322,11 @@ class ExportCommand(Command):
             usr_only=self._usr_only,
         )
 
+        return squashfs_file
+
+    def _create_rootverity_fsimage(
+        self, location: Location, system_context: SystemContext, *, rootfs: str
+    ) -> typing.Tuple[str, str]:
         vrty_label = system_context.substitution_expanded("VRTYFS_PARTLABEL", "")
         if not vrty_label:
             raise GenerateError("VRTYFS_PARTLABEL is unset.")
@@ -347,26 +337,39 @@ class ExportCommand(Command):
             system_context,
             "_create_dmverity_fsimage",
             verity_file,
-            base_image=squashfs_file,
+            base_image=rootfs,
         )
         root_hash = system_context.substitution("LAST_DMVERITY_ROOTHASH", "")
+        assert root_hash
+
+        return (verity_file, root_hash)
+
+    def _create_cache_data(
+        self, location: Location, system_context: SystemContext, *, has_kernel: bool
+    ) -> typing.Tuple[str, str, str, str]:
+        rootfs_file = self._create_root_fsimage(location, system_context)
+        (verity_file, root_hash) = self._create_rootverity_fsimage(
+            location, system_context, rootfs=rootfs_file
+        )
         assert root_hash
 
         cmdline = system_context.set_or_append_substitution(
             "KERNEL_CMDLINE", "systemd.volatile=true rootfstype=squashfs"
         )
+        cmdline = _setup_kernel_commandline(cmdline, root_hash)
 
         kernel_file = ""
         if has_kernel:
-            kernel_file = self._create_complete_kernel(
-                location,
-                system_context,
-                cmdline,
-                root_hash,
-                system_context.cache_directory,
+            kernel_file = os.path.join(
+                system_context.boot_directory,
+                system_context.substitution_expanded("KERNEL_FILENAME", ""),
+            )
+            assert kernel_file
+            self._create_complete_kernel(
+                location, system_context, cmdline, kernel_file=kernel_file,
             )
 
-        return kernel_file, squashfs_file, verity_file, root_hash
+        return kernel_file, rootfs_file, verity_file, root_hash
 
     def create_export_directory(self, system_context: SystemContext) -> str:
         """Return the root directory."""
@@ -420,8 +423,9 @@ class ExportCommand(Command):
         self,
         location: Location,
         system_context: SystemContext,
-        kernel_name: str,
         cmdline: str,
+        *,
+        kernel_file: str,
     ) -> None:
         location.set_description("Create EFI kernel")
         boot_directory = system_context.boot_directory
@@ -429,29 +433,10 @@ class ExportCommand(Command):
             location.next_line(),
             system_context,
             "_create_efi_kernel",
-            kernel_name,
+            kernel_file,
             kernel=os.path.join(boot_directory, "vmlinuz"),
             initrd_directory=os.path.join(boot_directory, "initrd-parts"),
             commandline=cmdline,
-        )
-
-    def _sign_efi_kernel(
-        self,
-        location: Location,
-        system_context: SystemContext,
-        kernel: str,
-        key: str,
-        cert: str,
-    ) -> None:
-        location.set_description("Sign EFI kernel")
-        self._execute(
-            location.next_line(),
-            system_context,
-            "sign_efi_binary",
-            kernel,
-            key=key,
-            cert=cert,
-            outside=True,
         )
 
     def _create_initramfs(
