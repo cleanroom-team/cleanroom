@@ -5,12 +5,12 @@
 """
 
 
-from tempfile import TemporaryDirectory
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.location import Location
 from cleanroom.helper.file import file_size
 from cleanroom.helper.run import run
+from cleanroom.printer import debug
 from cleanroom.systemcontext import SystemContext
 
 import os
@@ -23,6 +23,7 @@ def _write_repart_config(
     with open(os.path.join(dir, file), "w") as conf:
         conf.write("[Partition]\n")
         conf.write(f"Type={type}\n")
+        conf.write("SizeMinBytes=4096\n")
         conf.write(f"CopyBlocks={image}\n")
         if label:
             conf.write(f"Label={label}\n")
@@ -95,11 +96,13 @@ class CreateExportImageCommand(Command):
         verity_uuid = kwargs.get("verity_uuid", "")
         assert verity_partition
 
-        total_size = (
-            (2 * 1024 * 1024)
-            + file_size(None, efi_partition)
-            + file_size(None, root_partition)
-            + file_size(None, verity_partition)
+        efi_size = file_size(None, efi_partition)
+        root_size = file_size(None, root_partition)
+        verity_size = file_size(None, verity_partition)
+        total_size = (2 * 1024 * 1024) + efi_size + root_size + verity_size
+
+        debug(
+            f"Creating export image with {total_size} bytes (EFI: {efi_size}, root: {root_size}, verity: {verity_size})"
         )
 
         with open(image_filename, "wb") as fd:
