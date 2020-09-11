@@ -59,7 +59,7 @@ def call_command(
     system_context: SystemContext,
     command: Command,
     *args: typing.Any,
-    **kwargs: typing.Any
+    **kwargs: typing.Any,
 ):
     _args = _process_args(system_context, *args)
     _kwargs = _process_kwargs(system_context, **kwargs)
@@ -198,7 +198,7 @@ class CommandManager:
             location: Location,
             system_context: SystemContext,
             *args: typing.Any,
-            **kwargs: typing.Any
+            **kwargs: typing.Any,
         ) -> None:
             cmd_str = stringify(cmd.name, args, kwargs)
             trace(
