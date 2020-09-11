@@ -9,11 +9,10 @@ from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.exceptions import GenerateError, ParseError
 from cleanroom.location import Location
-from cleanroom.helper.file import exists
+from cleanroom.helper.file import exists, file_size
 from cleanroom.helper.run import run
 from cleanroom.systemcontext import SystemContext
-from cleanroom.imager import create_image
-from cleanroom.printer import debug, h2, info, verbose
+from cleanroom.printer import debug, h2, info, trace, verbose
 
 
 import os
@@ -51,31 +50,13 @@ class ExportCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        self._repository = ""
-        self._repository_compression = "zstd"
-        self._repository_compression_level = 16
-
-        self._key = ""
-        self._cert = ""
-
-        self._image_format = "raw"
-
-        self._efi_emulator = ""
-
-        self._kernel_file = ""
-        self._root_partition = ""
-        self._verity_partition = ""
-
-        self._root_hash = ""
-
-        self._skip_validation = False
+        self._root_hash: str = ""
 
         super().__init__(
             "export",
             syntax="REPOSITORY "
             "[efi_key=<KEY>] [efi_cert=<CERT>] "
             "[efi_emulator=/path/to/Clover] "
-            "[image_format=(raw|qcow2)] "
             "[repository_compression=zstd] "
             "[repository_compression_level=5] "
             "[skip_validation=False] "
@@ -98,7 +79,6 @@ class ExportCommand(Command):
                 "efi_key",
                 "efi_cert",
                 "efi_emulator",
-                "image_format",
                 "repository_compression",
                 "repository_compression_level",
                 "skip_validation",
@@ -119,13 +99,6 @@ class ExportCommand(Command):
                     '"{}": key keyword is required when ' "cert keyword is given.",
                     location=location,
                 )
-
-        image_format = kwargs.get("image_format", "raw")
-        if image_format not in ("raw", "qcow2",):
-            raise ParseError(
-                '"{}" is not a supported image format.'.format(image_format),
-                location=location,
-            )
 
         repo_compression = kwargs.get("repository_compression", "zstd")
         if repo_compression not in ("none", "lz4", "zstd", "zlib", "lzma",):
@@ -159,22 +132,6 @@ class ExportCommand(Command):
                     ),
                     location=location,
                 )
-
-    def _setup(self, *args: typing.Any, **kwargs: typing.Any):
-        self._key = kwargs.get("efi_key", "")
-        self._cert = kwargs.get("efi_cert", "")
-        self._image_format = kwargs.get("image_format", "raw")
-        self._efi_emulator = kwargs.get("efi_emulator", "")
-
-        self._repository_compression = kwargs.get("repository_compression", "zstd")
-        self._repository_compression_level = kwargs.get(
-            "repository_compression_level", 5
-        )
-        self._repository = args[0]
-
-        self._skip_validation = kwargs.get("skip_validation", False)
-
-        self._usr_only = kwargs.get("usr_only", True)
 
     def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
         return [
@@ -213,7 +170,14 @@ class ExportCommand(Command):
         **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
-        self._setup(*args, **kwargs)
+        cert = kwargs.get("efi_cert", "")
+        efi_emulator = kwargs.get("efi_emulator", "")
+        key = kwargs.get("efi_key", "")
+        skip_validation = kwargs.get("skip_validation", False)
+        repository = args[0]
+        repository_compression = kwargs.get("repository_compression", "zstd")
+        repository_compression_level = kwargs.get("repository_compression_level", 5)
+        usr_only = kwargs.get("usr_only", True)
 
         h2('Exporting system "{}".'.format(system_context.system_name))
         debug("Running Hooks.")
@@ -226,40 +190,66 @@ class ExportCommand(Command):
         self._create_root_tarball(location, system_context)
         has_kernel = self._create_initramfs(location, system_context)
 
-        rootfs_file = self._create_root_fsimage(location, system_context)
-        (verity_file, root_hash) = self._create_rootverity_fsimage(
-            location, system_context, rootfs=rootfs_file
+        root_partition = self._create_root_fsimage(
+            location, system_context, usr_only=usr_only
         )
-        assert root_hash
+        assert root_partition
+        (verity_partition, self._root_hash) = self._create_rootverity_fsimage(
+            location, system_context, rootfs=root_partition,
+        )
+        assert self._root_hash
 
         cmdline = system_context.set_or_append_substitution(
             "KERNEL_CMDLINE", "systemd.volatile=true rootfstype=squashfs"
         )
-        cmdline = _setup_kernel_commandline(cmdline, root_hash)
+        cmdline = _setup_kernel_commandline(cmdline, self._root_hash)
 
         kernel_file = ""
         if has_kernel:
+            trace(
+                f'KERNEL_FILENAME: {system_context.substitution("KERNEL_FILENAME", "")}'
+            )
             kernel_file = os.path.join(
                 system_context.boot_directory,
                 system_context.substitution_expanded("KERNEL_FILENAME", ""),
             )
+
             assert kernel_file
             self._create_complete_kernel(
-                location, system_context, cmdline, kernel_file=kernel_file,
+                location,
+                system_context,
+                cmdline,
+                kernel_file=kernel_file,
+                efi_key=key,
+                efi_cert=cert,
             )
 
-        self._kernel_file = kernel_file
-        self._root_partition = rootfs_file
-        self._verity_partition = verity_file
-        self._root_hash = root_hash
+        efi_partition = os.path.join(
+            system_context.cache_directory, "efi_partition.img"
+        )
+
+        self._create_efi_partition(
+            location,
+            system_context,
+            efi_partition=efi_partition,
+            kernel_file=kernel_file,
+            efi_emulator=efi_emulator,
+        )
 
         info("Validating installation for export.")
-        if not self._skip_validation:
+        if not skip_validation:
             _validate_installation(location.next_line(), system_context)
 
         export_directory = self.create_export_directory(system_context)
         assert export_directory
-        self.create_image(system_context, export_directory)
+        self.create_image(
+            location,
+            system_context,
+            export_directory,
+            efi_partition=efi_partition,
+            root_partition=root_partition,
+            verity_partition=verity_partition,
+        )
 
         system_context.set_substitution("EXPORT_DIRECTORY", export_directory)
 
@@ -269,9 +259,9 @@ class ExportCommand(Command):
             system_context,
             "_export_directory",
             export_directory,
-            compression=self._repository_compression,
-            compression_level=self._repository_compression_level,
-            repository=self._repository,
+            compression=repository_compression,
+            compression_level=repository_compression_level,
+            repository=repository,
         )
 
         info("Cleaning up export location.")
@@ -306,12 +296,14 @@ class ExportCommand(Command):
         cmdline: str,
         *,
         kernel_file: str,
+        efi_key: str,
+        efi_cert: str,
     ):
         self._create_efi_kernel(
             location, system_context, cmdline, kernel_file=kernel_file,
         )
 
-        if self._key and self._cert:
+        if efi_key and efi_cert:
             debug("Signing EFI kernel.")
             location.set_description("Sign EFI kernel")
             self._execute(
@@ -319,15 +311,44 @@ class ExportCommand(Command):
                 system_context,
                 "sign_efi_binary",
                 kernel_file,
-                key=self._key,
-                cert=self._cert,
+                key=efi_key,
+                cert=efi_cert,
                 outside=True,
+                keep_unsigned=False,
             )
 
+        trace(f"Validating existence of {kernel_file}.")
         assert os.path.isfile(kernel_file)
 
+    def _create_efi_partition(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        *,
+        efi_partition: str,
+        efi_emulator: str,
+        kernel_file: str,
+    ):
+        extra_dir = os.path.join(system_context.boot_directory, "extra")
+        extra_files = extra_dir if os.path.isdir(extra_dir) else ""
+
+        self._execute(
+            location,
+            system_context,
+            "_create_efi_fsimage",
+            efi_partition,
+            kernel_file=kernel_file,
+            systemd_boot_loader=os.path.join(
+                system_context.fs_directory,
+                "usr/lib/systemd/boot/efi/systemd-bootx64.efi",
+            ),
+            extra_files=extra_files,
+            efi_emulator=efi_emulator,
+            partition_label="ESP",
+        )
+
     def _create_root_fsimage(
-        self, location: Location, system_context: SystemContext,
+        self, location: Location, system_context: SystemContext, *, usr_only: bool
     ) -> str:
         rootfs_label = system_context.substitution_expanded("ROOTFS_PARTLABEL", "")
         if not rootfs_label:
@@ -339,7 +360,7 @@ class ExportCommand(Command):
             system_context,
             "_create_root_fsimage",
             squashfs_file,
-            usr_only=self._usr_only,
+            usr_only=usr_only,
         )
 
         return squashfs_file
@@ -401,38 +422,47 @@ class ExportCommand(Command):
 
         return export_volume
 
-    def create_image(self, system_context: SystemContext, export_volume: str):
+    def create_image(
+        self,
+        location: Location,
+        system_context: SystemContext,
+        export_volume: str,
+        *,
+        efi_partition: str,
+        root_partition: str,
+        verity_partition: str,
+    ):
         image_name = system_context.substitution_expanded("CLRM_IMAGE_FILENAME", "")
         assert image_name
 
-        image_filename = os.path.join(
-            export_volume,
-            "{}{}".format(
-                image_name,
-                "." + self._image_format if self._image_format != "raw" else "",
-            ),
+        image_filename = os.path.join(export_volume, image_name,)
+
+        assert efi_partition
+        assert root_partition
+        assert verity_partition
+
+        total_size = (
+            (2 * 1024 * 1024)
+            + file_size(None, efi_partition)
+            + file_size(None, root_partition)
+            + file_size(None, verity_partition)
         )
 
-        extra_dir = os.path.join(system_context.boot_directory, "extra")
-        extra_efi_files = extra_dir if os.path.isdir(extra_dir) else None
+        with open(image_filename, "wb") as fd:
+            fd.seek(total_size - 1)
+            fd.write(b"\b")
 
-        create_image(
+        self._execute(
+            location,
+            system_context,
+            "_create_export_image",
             image_filename,
-            self._image_format,
-            [],
-            0,
-            0,
-            efi_emulator=self._efi_emulator,
-            extra_efi_files=extra_efi_files,
-            kernel_file=self._kernel_file,
-            root_partition=self._root_partition,
-            verity_partition=self._verity_partition,
-            root_hash=self._root_hash,
-            flock_command=self._binary(Binaries.FLOCK),
-            sfdisk_command=self._binary(Binaries.SFDISK),
-            nbd_client_command=self._binary(Binaries.NBD_CLIENT),
-            sync_command=self._binary(Binaries.SYNC),
-            modprobe_command=self._binary(Binaries.MODPROBE),
+            efi_fsimage=efi_partition,
+            root_fsimage=root_partition,
+            verity_fsimage=verity_partition,
+            efi_label="ESP",
+            root_label=system_context.substitution_expanded("ROOTFS_PARTLABEL", ""),
+            verity_label=system_context.substitution_expanded("VERITY_PARTLABEL", ""),
         )
 
     def delete_export_directory(self, export_directory: str) -> None:

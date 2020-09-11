@@ -33,7 +33,7 @@ pacstrap clrm-archlinux \
     cpio \
     devtools dosfstools \
     lsof \
-    nbd \
+    mtools \
     pacman python-pyparsing \
     qemu \
     sbsigntools \

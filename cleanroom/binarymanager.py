@@ -33,6 +33,8 @@ class Binaries(Enum):
     MKNOD = auto()
     MKSQUASHFS = auto()
     MODPROBE = auto()
+    MTOOLS_MMD = auto()
+    MTOOLS_MCOPY = auto()
     NBD_CLIENT = auto()
     OBJCOPY = auto()
     PACMAN = auto()
@@ -43,6 +45,7 @@ class Binaries(Enum):
     SFDISK = auto()
     SYNC = auto()
     SYSTEMCTL = auto()
+    SYSTEMD_REPART = auto()
     TAR = auto()
     USERADD = auto()
     USERMOD = auto()
@@ -93,6 +96,8 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.MKNOD: _check_for_binary("mknod"),
         Binaries.MKSQUASHFS: _check_for_binary("mksquashfs"),
         Binaries.MODPROBE: _check_for_binary("modprobe"),
+        Binaries.MTOOLS_MMD: _check_for_binary("mmd"),
+        Binaries.MTOOLS_MCOPY: _check_for_binary("mcopy"),
         Binaries.NBD_CLIENT: _check_for_binary("nbd-client"),
         Binaries.OBJCOPY: _check_for_binary("objcopy"),
         Binaries.QEMU_IMG: _check_for_binary("qemu-img"),
@@ -101,6 +106,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.SFDISK: _check_for_binary("sfdisk"),
         Binaries.SYNC: _check_for_binary("sync"),
         Binaries.SYSTEMCTL: _check_for_binary("systemctl"),
+        Binaries.SYSTEMD_REPART: _check_for_binary("systemd-repart"),
         Binaries.TAR: _check_for_binary("tar"),
         Binaries.USERADD: _check_for_binary("useradd"),
         Binaries.USERMOD: _check_for_binary("usermod"),

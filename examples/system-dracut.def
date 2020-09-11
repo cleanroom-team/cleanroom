@@ -1,0 +1,38 @@
+# A simple example server
+
+based_on type-server
+
+set CLRM_INITRD_GENERATOR dracut
+
+set_hostname server pretty=Server
+set_machine_id cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd
+
+# pkg_amd_cpu
+
+add_partition 00_esp   device=disk0 type=esp minSize=100M maxSize=100M uuid=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+add_partition 10_swap  device=disk0 type=swap minSize=1G maxSize=1G uuid=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+add_partition 20_image device=disk0 type=linux-generic minSize=10G maxSize=10G uuid=cccccccccccccccccccccccccccccccc label=image
+add_partition 30_var   device=disk0 type=var minSize=1G maxSize=2G weight=100 uuid=dddddddddddddddddddddddddddddddd label=var
+add_partition 40_home  device=disk0 type=home uuid=eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee label=home
+
+# Image setup:
+set IMAGE_DEVICE 'PARTUUID=cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd'
+set IMAGE_FS 'xfs'
+set IMAGE_OPTIONS ''
+
+append /etc/fstab <<<<
+PARTUUID=cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd /mnt/images xfs defaults,nodev,nosuid,noexec,ro,nofail,noauto 0 1
+PARTUUID=dcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdc /var btrfs defaults,nodev,x-initrd.mount,x-systemd.requires=initrd-fs.target 0 1
+PARTUUID=ecececececececececececececececec /home xfs defaults,nodev,nosuid,noexec 0 1
+>>>>
+
+create /etc/crypttab <<<<\
+swap    PARTUUID=bdbdbdbdbdbdbdbdbdbdbdbdbdbdbdbd /dev/urandom swap,cipher=aes-xts-plain64,size=256
+>>>> mode=0o600 force=True
+
+append /usr/lib/systemd/network/20-extbr0.network <<<<Address=10.42.1.1/8
+Gateway=10.42.0.1
+DNS=10.42.0.1
+>>>>
+
+export borg_repository
