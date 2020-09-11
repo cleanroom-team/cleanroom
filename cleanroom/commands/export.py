@@ -468,7 +468,7 @@ class ExportCommand(Command):
         self._execute(
             location.next_line(),
             system_context,
-            "create_initrd",
+            "_create_initrd",
             os.path.join(initrd_parts, "50-mkinitcpio"),
         )
 
