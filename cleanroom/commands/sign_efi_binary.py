@@ -10,11 +10,9 @@ from cleanroom.command import Command
 from cleanroom.helper.run import run
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
-from cleanroom.printer import info
+from cleanroom.printer import info, trace
 
 import os
-import os.path
-import shutil
 import typing
 
 
@@ -59,12 +57,16 @@ class SignEfiBinaryCommand(Command):
             systems_directory, kwargs.get("cert", "config/efi/sign.crt")
         )
 
-        info("Signing EFI binary {} using key {} and cert {}.".format(input, key, cert))
-        output = to_sign + ".signed"
+        info(
+            f"Signing EFI binary {to_sign} using key {key} and cert {cert} (keep unsigned: {keep_unsigned})."
+        )
+
+        signed = to_sign + ".signed"
+
         assert os.path.isfile(key)
         assert os.path.isfile(cert)
         assert os.path.isfile(to_sign)
-        assert not os.path.exists(output)
+        assert not os.path.exists(signed)
 
         run(
             self._binary(Binaries.SBSIGN),
@@ -73,10 +75,16 @@ class SignEfiBinaryCommand(Command):
             "--cert",
             cert,
             "--output",
-            output,
+            signed,
             to_sign,
         )
 
-        if not keep_unsigned:
+        if keep_unsigned:
+            assert os.path.isfile(to_sign)
+            assert os.path.isfile(signed)
+        else:
+            trace(f"Moving {signed} to {to_sign}.")
             os.remove(to_sign)
-            shutil.move(output, to_sign)
+            os.rename(signed, to_sign)
+
+            assert os.path.isfile(to_sign)
