@@ -22,7 +22,7 @@ import typing
 
 def file_size(system_context: typing.Optional[SystemContext], f: str) -> int:
     f = file_name(system_context, f)
-    if f:
+    if f and os.path.isfile(f):
         statinfo = os.stat(f)
         return statinfo.st_size
     return 0
