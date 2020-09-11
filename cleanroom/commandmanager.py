@@ -8,7 +8,7 @@
 from .command import Command, stringify
 from .exceptions import PreflightError
 from .location import Location
-from .printer import debug, h2, success, trace
+from .printer import debug, h2, success, trace, warn
 from .systemcontext import SystemContext
 
 import importlib.util
@@ -256,6 +256,10 @@ class CommandManager:
                 )
 
             command_class = inspect.getmembers(cmd_module, is_command)
+            if len(command_class) == 0:
+                warn(f"No command defined, SKIPPING.")
+                continue
+            assert len(command_class) == 1
             instance = command_class[0][1](**self._services_to_propagate)
             self._add_command(command_name, command_file_name, instance)
 
