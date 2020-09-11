@@ -175,7 +175,7 @@ def main(*command_arguments: str) -> None:
             python,
             "/clrm/python/clrm",
             "--systems-directory=/clrm/systems",
-            "--work-directory=/clrm/work",
+            "--work-directory=/clrm/work_dir",
             "--repository-base-directory=/clrm/repository",
             *args.args,
         ]
