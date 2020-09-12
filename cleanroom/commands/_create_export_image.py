@@ -41,10 +41,13 @@ class CreateExportImageCommand(Command):
             syntax="<IMAGE_FILE> "
             "efi_fsimage=<EFI_PARTITION_IMAGE> "
             "[efi_label=<STRING>] "
+            "[efi_uuid=<UUID>] "
             "root_fsimage=<ROOT_PARTITION_IMAGE>] "
             "[root_label=<STRING>] "
+            "root_uuid=<UUID> "
             "verity_fsimage=<VERITY_PARTITION_IMAGE>] "
-            "[verity_label=<STRING>] ",
+            "[verity_label=<STRING>] "
+            "verity_uuid=UUID",
             help_string="Create a filesystem image ready to be exported from clrm.",
             file=__file__,
             **services,
@@ -59,16 +62,27 @@ class CreateExportImageCommand(Command):
             location,
             (
                 "efi_fsimage",
-                "root_fsimage",
-                "verity_fsimage",
                 "efi_label",
+                "efi_uuid",
+                "root_fsimage",
                 "root_label",
+                "root_uuid",
+                "verity_fsimage",
                 "verity_label",
+                "verity_uuid",
             ),
             **kwargs,
         )
         self._require_kwargs(
-            location, ("efi_fsimage", "root_fsimage", "verity_fsimage",), **kwargs,
+            location,
+            (
+                "efi_fsimage",
+                "root_fsimage",
+                "root_uuid",
+                "verity_fsimage",
+                "verity_uuid",
+            ),
+            **kwargs,
         )
 
     def __call__(

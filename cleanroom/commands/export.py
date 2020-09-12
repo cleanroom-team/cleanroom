@@ -45,6 +45,13 @@ def _validate_installation(location: Location, system_context: SystemContext) ->
         )
 
 
+def _uuid_ify(data: str) -> str:
+    assert len(data) == 32
+    return "{}-{}-{}-{}-{}".format(
+        data[0:8], data[8:12], data[12:16], data[16:20], data[20:]
+    )
+
+
 class ExportCommand(Command):
     """The export_squashfs Command."""
 
@@ -251,6 +258,7 @@ class ExportCommand(Command):
             efi_partition=efi_partition,
             root_partition=root_partition,
             verity_partition=verity_partition,
+            root_hash=root_hash,
         )
 
         system_context.set_substitution("EXPORT_DIRECTORY", export_directory)
@@ -433,6 +441,7 @@ class ExportCommand(Command):
         efi_partition: str,
         root_partition: str,
         verity_partition: str,
+        root_hash: str,
     ):
         image_name = system_context.substitution_expanded("CLRM_IMAGE_FILENAME", "")
         assert image_name
@@ -450,6 +459,9 @@ class ExportCommand(Command):
             + file_size(None, verity_partition)
         )
 
+        root_uuid = _uuid_ify(root_hash[:32]) if root_hash else ""
+        verity_uuid = _uuid_ify(root_hash[32:]) if root_hash else ""
+
         with open(image_filename, "wb") as fd:
             fd.seek(total_size - 1)
             fd.write(b"\b")
@@ -460,11 +472,13 @@ class ExportCommand(Command):
             "_create_export_image",
             image_filename,
             efi_fsimage=efi_partition,
-            root_fsimage=root_partition,
-            verity_fsimage=verity_partition,
             efi_label="ESP",
+            root_fsimage=root_partition,
             root_label=system_context.substitution_expanded("ROOTFS_PARTLABEL", ""),
-            verity_label=system_context.substitution_expanded("VERITY_PARTLABEL", ""),
+            root_uuid=root_uuid,
+            verity_fsimage=verity_partition,
+            verity_label=system_context.substitution_expanded("VRTYFS_PARTLABEL", ""),
+            verity_uuid=verity_uuid,
         )
 
     def delete_export_directory(self, export_directory: str) -> None:
