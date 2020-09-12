@@ -50,8 +50,6 @@ class ExportCommand(Command):
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
-        self._root_hash: str = ""
-
         super().__init__(
             "export",
             syntax="REPOSITORY "
@@ -198,15 +196,15 @@ class ExportCommand(Command):
             location, system_context, usr_only=usr_only
         )
         assert root_partition
-        (verity_partition, self._root_hash) = self._create_rootverity_fsimage(
+        (verity_partition, root_hash) = self._create_rootverity_fsimage(
             location, system_context, rootfs=root_partition,
         )
-        assert self._root_hash
+        assert root_hash
 
         cmdline = system_context.set_or_append_substitution(
             "KERNEL_CMDLINE", "systemd.volatile=true rootfstype=squashfs"
         )
-        cmdline = _setup_kernel_commandline(cmdline, self._root_hash)
+        cmdline = _setup_kernel_commandline(cmdline, root_hash)
 
         kernel_file = ""
         if has_kernel:
