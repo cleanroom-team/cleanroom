@@ -22,7 +22,7 @@ class PkgAmdCpuCommand(Command):
             "pkg_amd_cpu",
             help_string="Install everything for amd CPU.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -36,7 +36,7 @@ class PkgAmdCpuCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
 

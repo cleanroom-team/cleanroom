@@ -21,7 +21,7 @@ class PkgIntelCpuCommand(Command):
             "pkg_intel_cpu",
             help_string="Install everything for intel CPU.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -35,7 +35,7 @@ class PkgIntelCpuCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
 
