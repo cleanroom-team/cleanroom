@@ -9,9 +9,9 @@ from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.exceptions import GenerateError
 from cleanroom.location import Location
+from cleanroom.helper.file import size_extend
 from cleanroom.helper.run import run
 from cleanroom.systemcontext import SystemContext
-from cleanroom.imager import size_extend
 
 import typing
 
