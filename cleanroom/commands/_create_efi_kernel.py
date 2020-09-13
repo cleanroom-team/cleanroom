@@ -15,7 +15,6 @@ from cleanroom.printer import debug, trace
 
 from glob import glob
 import os
-import tempfile
 import typing
 
 
@@ -125,31 +124,28 @@ class CreateEfiKernelCommand(Command):
         debug("{}: efistub  : {}.".format(self.name, efistub))
 
         self._validate_files(location, kernel, *initrd_files, osrelease_file, efistub)
-        with tempfile.TemporaryDirectory() as tmp:
-            initrd = _create_initrd(tmp, *initrd_files)
-            cmdline = _create_cmdline_file(tmp, cmdline_input)
 
-            run(
-                self._binary(Binaries.OBJCOPY),
-                "--add-section",
-                ".osrel={}".format(osrelease_file),
-                "--change-section-vma",
-                ".osrel=0x20000",
-                "--add-section",
-                ".cmdline={}".format(cmdline),
-                "--change-section-vma",
-                ".cmdline=0x30000",
-                "--add-section",
-                ".linux={}".format(kernel),
-                "--change-section-vma",
-                ".linux=0x40000",
-                "--add-section",
-                ".initrd={}".format(initrd),
-                "--change-section-vma",
-                ".initrd=0x3000000",
-                efistub,
-                output,
-            )
+        initrd = _create_initrd(system_context.boot_directory, *initrd_files)
+        cmdline = _create_cmdline_file(system_context.boot_directory, cmdline_input)
 
-            os.remove(initrd)
-            os.remove(cmdline)
+        run(
+            self._binary(Binaries.OBJCOPY),
+            "--add-section",
+            ".osrel={}".format(osrelease_file),
+            "--change-section-vma",
+            ".osrel=0x20000",
+            "--add-section",
+            ".cmdline={}".format(cmdline),
+            "--change-section-vma",
+            ".cmdline=0x30000",
+            "--add-section",
+            ".linux={}".format(kernel),
+            "--change-section-vma",
+            ".linux=0x40000",
+            "--add-section",
+            ".initrd={}".format(initrd),
+            "--change-section-vma",
+            ".initrd=0x3000000",
+            efistub,
+            output,
+        )
