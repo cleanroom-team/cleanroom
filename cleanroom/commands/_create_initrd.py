@@ -416,6 +416,14 @@ class CreateInitrdCommand(Command):
         self._fix_mkinitcpio_conf(location.next_line(), system_context, "BINARIES")
         self._fix_mkinitcpio_conf(location.next_line(), system_context, "MODULES")
 
+        self._execute(
+            location.next_line(),
+            system_context,
+            "append",
+            "/etc/mkinitcpio.conf",
+            'COMPRESSION="cat"',
+        )
+
         location.set_description("Create mkinitcpio presets")
         create_file(
             system_context,
