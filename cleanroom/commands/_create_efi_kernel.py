@@ -25,6 +25,13 @@ def _create_initrd(directory: str, *files: str) -> str:
         for f in files:
             with open(f, "rb") as source_file:
                 target_file.write(source_file.read())
+
+    # compress the entire initrd:
+    debug("Compressing initrd with gzip")
+    run("gzip", "-9", target)
+    # os.remove(target) ## Gzip kills the uncompressed file!
+    os.rename(f"{target}.gz", target)
+
     return target
 
 
