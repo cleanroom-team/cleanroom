@@ -40,5 +40,5 @@ class PkgIntelKmsCommand(Command):
 
         # enable kms:
         system_context.set_or_append_substitution(
-            "MKINITCPIO_EXTRA_MODULES", "intel_agp i915"
+            "INITRD_EXTRA_MODULES", "intel_agp i915"
         )

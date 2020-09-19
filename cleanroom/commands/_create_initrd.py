@@ -44,33 +44,20 @@ class CreateInitrdCommand(Command):
             location, 1, '"{}" takes an initrd to create.', *args, **kwargs
         )
 
-    def _fix_mkinitcpio_conf(
-        self,
-        location: Location,
-        system_context: SystemContext,
-        name: str,
-        *,
-        extra: str = "",
+    def _fix_mkinitcpio_modules(
+        self, location: Location, system_context: SystemContext, extra: str = "",
     ):
-        if extra:
-            extra += " " + system_context.substitution_expanded(
-                f"MKINITCPIO_EXTRA_{name}", "",
-            )
-        else:
-            extra = system_context.substitution_expanded(
-                f"MKINITCPIO_EXTRA_{name}", "",
-            )
-
         extra = extra.replace(",", " ")
+        extra = extra.replace("  ", " ")
         extra = extra.strip()
 
         if extra:
-            debug(f'Changing {name} to "{extra}"')
+            debug(f'Changing MODULES to "{extra}"')
             self._execute(
                 location.next_line(),
                 system_context,
                 "sed",
-                "/^{}=/ c{}=({})".format(name, name, extra,),
+                f"/^MODULES=/ cMODULES=({extra})",
                 "/etc/mkinitcpio.conf",
             )
 
@@ -94,14 +81,10 @@ class CreateInitrdCommand(Command):
             "/etc/mkinitcpio.conf",
         )
 
-        self._fix_mkinitcpio_conf(location.next_line(), system_context, "HOOKS")
-        self._fix_mkinitcpio_conf(location.next_line(), system_context, "FILES")
-        self._fix_mkinitcpio_conf(location.next_line(), system_context, "BINARIES")
-        self._fix_mkinitcpio_conf(
+        self._fix_mkinitcpio_modules(
             location.next_line(),
             system_context,
-            "MODULES",
-            extra=system_context.substitution_expanded("INITRD_EXTRA_MODULES", ""),
+            system_context.substitution_expanded("INITRD_EXTRA_MODULES", ""),
         )
 
         self._execute(
@@ -162,10 +145,6 @@ class CreateInitrdCommand(Command):
     def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
         return [
             ("INITRD_EXTRA_MODULES", "", "Extra modules to add to the initrd",),
-            ("MKINITCPIO_EXTRA_MODULES", "", "Extra modules to add to the initrd",),
-            ("MKINITCPIO_EXTRA_HOOKS", "", "Extra hooks to add to the initrd",),
-            ("MKINITCPIO_EXTRA_BINARIES", "", "Extra binaries to add to the initrd",),
-            ("MKINITCPIO_EXTRA_FILES", "", "Extra files to add to the initrd",),
         ]
 
     def __call__(

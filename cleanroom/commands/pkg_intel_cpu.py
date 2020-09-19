@@ -64,7 +64,7 @@ class PkgIntelCpuCommand(Command):
         )
 
         system_context.set_or_append_substitution(
-            "MKINITCPIO_EXTRA_MODULES", "crc32c-intel"
+            "INITRD_EXTRA_MODULES", "crc32c-intel"
         )
 
         # Clean out firmware:
