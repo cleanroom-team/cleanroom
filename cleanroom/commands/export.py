@@ -197,6 +197,7 @@ class ExportCommand(Command):
             os.path.join(system_context.boot_directory, "vmlinuz")
         )
         if has_kernel:
+            self._create_clrm_config_initrd(location, system_context)
             self._create_initrd(location, system_context)
 
         root_partition = self._create_root_fsimage(
@@ -491,6 +492,23 @@ class ExportCommand(Command):
 
         assert os.path.exists(
             os.path.join(system_context.boot_directory, "initrd-parts/50-mkinitcpio")
+        )
+
+    def _create_clrm_config_initrd(
+        self, location: Location, system_context: SystemContext
+    ):
+        location.set_description("Create clrm config initrd")
+        initrd_parts = os.path.join(system_context.boot_directory, "initrd-parts")
+        os.makedirs(initrd_parts, exist_ok=True)
+        self._execute(
+            location.next_line(),
+            system_context,
+            "_create_clrm_config_initrd",
+            os.path.join(initrd_parts, "99-clrm"),
+        )
+
+        assert os.path.exists(
+            os.path.join(system_context.boot_directory, "initrd-parts/99-clrm")
         )
 
     def _run_all_exportcommand_hooks(self, system_context: SystemContext) -> None:
