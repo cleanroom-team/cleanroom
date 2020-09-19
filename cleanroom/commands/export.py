@@ -395,33 +395,6 @@ class ExportCommand(Command):
 
         return (verity_file, root_hash)
 
-    def _create_cache_data(
-        self, location: Location, system_context: SystemContext, *, has_kernel: bool
-    ) -> typing.Tuple[str, str, str, str]:
-        rootfs_file = self._create_root_fsimage(location, system_context)
-        (verity_file, root_hash) = self._create_rootverity_fsimage(
-            location, system_context, rootfs=rootfs_file
-        )
-        assert root_hash
-
-        cmdline = system_context.set_or_append_substitution(
-            "KERNEL_CMDLINE", "systemd.volatile=true rootfstype=squashfs"
-        )
-        cmdline = _setup_kernel_commandline(cmdline, root_hash)
-
-        kernel_file = ""
-        if has_kernel:
-            kernel_file = os.path.join(
-                system_context.boot_directory,
-                system_context.substitution_expanded("KERNEL_FILENAME", ""),
-            )
-            assert kernel_file
-            self._create_complete_kernel(
-                location, system_context, cmdline, kernel_file=kernel_file,
-            )
-
-        return kernel_file, rootfs_file, verity_file, root_hash
-
     def create_export_directory(self, system_context: SystemContext) -> str:
         """Return the root directory."""
         export_volume = os.path.join(system_context.scratch_directory, "export")
