@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""create_initrd command.
+"""_create_initrd_mkinitcpio command.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
@@ -23,13 +23,13 @@ def _cleanup_extra_files(
     location.set_description("Remove extra mkinitcpio files")
 
 
-class CreateInitrdCommand(Command):
-    """The create_initrd command."""
+class CreateInitrdMkinitcpioCommand(Command):
+    """The _create_initrd_mkinitcpio command."""
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
         super().__init__(
-            "create_initrd",
+            "_create_initrd_mkinitcpio",
             syntax="<INITRD_FILE>",
             help_string="Create an initrd.",
             file=__file__,

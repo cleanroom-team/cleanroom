@@ -165,6 +165,11 @@ class ExportCommand(Command):
                 "${PRETTY_SYSTEM_NAME}_${DISTRO_VERSION_ID}.img",
                 "File name for the clrm image file",
             ),
+            (
+                "INITRD_GENERATOR",
+                "mkinitcpio",
+                "Initrd generator to use (default: mkinitcpio)",
+            ),
         ]
 
     def __call__(
@@ -483,15 +488,23 @@ class ExportCommand(Command):
         location.set_description("Create initrd")
         initrd_parts = os.path.join(system_context.boot_directory, "initrd-parts")
         os.makedirs(initrd_parts, exist_ok=True)
+
+        initrd_generator = system_context.substitution_expanded(
+            "INITRD_GENERATOR", "mkinitcpio"
+        )
+        assert initrd_generator
+
         self._execute(
             location.next_line(),
             system_context,
-            "_create_initrd",
-            os.path.join(initrd_parts, "50-mkinitcpio"),
+            f"_create_initrd_{initrd_generator}",
+            os.path.join(initrd_parts, f"50-{initrd_generator}"),
         )
 
         assert os.path.exists(
-            os.path.join(system_context.boot_directory, "initrd-parts/50-mkinitcpio")
+            os.path.join(
+                system_context.boot_directory, f"initrd-parts/50-{initrd_generator}"
+            )
         )
 
     def _create_clrm_config_initrd(
