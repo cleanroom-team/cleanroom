@@ -44,6 +44,7 @@ class Binaries(Enum):
     QEMU_NBD = auto()
     SBSIGN = auto()
     SFDISK = auto()
+    SWUPD = auto()
     SYNC = auto()
     SYSTEMCTL = auto()
     SYSTEMD_REPART = auto()
@@ -106,6 +107,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.QEMU_NBD: _check_for_binary("qemu-nbd"),
         Binaries.SBSIGN: _check_for_binary("sbsign"),
         Binaries.SFDISK: _check_for_binary("sfdisk"),
+        Binaries.SWUPD: _check_for_binary("swupd"),
         Binaries.SYNC: _check_for_binary("sync"),
         Binaries.SYSTEMCTL: _check_for_binary("systemctl"),
         Binaries.SYSTEMD_REPART: _check_for_binary("systemd-repart"),
@@ -134,6 +136,7 @@ class BinaryManager:
                 Binaries.DPKG,
                 Binaries.PACMAN,
                 Binaries.PACMAN_KEY,
+                Binaries.SWUPD,
             ]
         )
 
