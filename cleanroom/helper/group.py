@@ -52,7 +52,7 @@ class GroupHelper:
         root_directory: str
     ) -> bool:
         """Execute command."""
-        command_line = [self._add_command, "--prefix", root_directory, group_name]
+        command_line = [self._add_command, "--root", root_directory, group_name]
 
         if gid >= 0:
             command_line += ["--gid", str(gid)]
@@ -80,7 +80,7 @@ class GroupHelper:
         root_directory: str = ""
     ) -> bool:
         """Modify an existing group."""
-        command_line = [self._mod_command, "--prefix", root_directory, group_name]
+        command_line = [self._mod_command, "--root", root_directory, group_name]
 
         if gid >= 0:
             command_line += ["--gid", str(gid)]

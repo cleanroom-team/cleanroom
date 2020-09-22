@@ -4,7 +4,7 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
+from ..printer import debug
 from .run import run
 
 import os
@@ -59,7 +59,7 @@ class UserHelper:
         root_directory: str
     ):
         """Add a new user to the system."""
-        command = [self._add_command, "--prefix", root_directory, user_name]
+        command = [self._add_command, "--root", root_directory, user_name]
 
         if comment:
             command += ["--comment", comment]
@@ -108,7 +108,7 @@ class UserHelper:
         root_directory: str
     ) -> bool:
         """Modify an existing user."""
-        command = [self._mod_command, "--prefix", root_directory, user_name]
+        command = [self._mod_command, "--root", root_directory, user_name]
 
         if comment:
             command += ["--comment", comment]
