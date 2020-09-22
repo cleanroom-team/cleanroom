@@ -45,6 +45,7 @@ class StripLicenseFilesCommand(Command):
             "export",
             "remove",
             "/usr/share/licenses/*",
+            "/usr/share/package-licenses/*",
             recursive=True,
             force=True,
         )
