@@ -215,12 +215,18 @@ class CommandManager:
                 verbosity=2,
             )
 
+        target_distribution = command.target_distribution
+        if target_distribution and not target_distribution.isalpha():
+            raise PreflightError(
+                f'Command "{name}" has invalid target distribution "{target_distribution}".'
+            )
+
         self._commands[name] = CommandInfo(
             name=name,
             syntax_string=command.syntax_string,
             help_string=command.help_string,
             file_name=file_name,
-            target_distribution=command.target_distribution,
+            target_distribution=target_distribution,
             dependency_func=lambda args, kwargs: __dependency_func(
                 command, *args, **kwargs
             ),
