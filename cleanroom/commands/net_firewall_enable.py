@@ -11,6 +11,7 @@ from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
 import typing
+import os
 
 
 class NetFirewallEnableCommand(Command):
@@ -22,7 +23,7 @@ class NetFirewallEnableCommand(Command):
             "net_firewall_enable",
             help_string="Enable previously configured firewall.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -41,10 +42,20 @@ class NetFirewallEnableCommand(Command):
         """Execute command."""
         assert firewall_type(system_context) == "iptables"
         location.set_description("Enable firewall")
+        to_enable: typing.List[str] = []
+        if os.path.exists(
+            system_context.file_name("/usr/lib/systemd/system/iptables.service")
+        ):
+            to_enable.append("iptables.service")
+        if os.path.exists(
+            system_context.file_name("/usr/lib/systemd/system/ip6tables.service")
+        ):
+            to_enable.append("ip6tables.service")
+        if os.path.exists(
+            system_context.file_name("/usr/lib/systemd/system/iptables-restore.service")
+        ):
+            to_enable.append("iptables-restore.service")
+
         self._execute(
-            location,
-            system_context,
-            "systemd_enable",
-            "iptables.service",
-            "ip6tables.service",
+            location, system_context, "systemd_enable", *to_enable,
         )
