@@ -59,6 +59,6 @@ class Executor:
                 command = self._command_manager.command(exec_obj.command)
                 assert command
                 command.execute_func(
-                    exec_obj.location, system_context, *exec_obj.args, **exec_obj.kwargs
+                    exec_obj.location, system_context, exec_obj.args, exec_obj.kwargs
                 )
         success("System {} created successfully.".format(system_name))

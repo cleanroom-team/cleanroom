@@ -219,13 +219,13 @@ class CommandManager:
             syntax_string=command.syntax_string,
             help_string=command.help_string,
             file_name=file_name,
-            dependency_func=lambda *args, **kwargs: __dependency_func(
+            dependency_func=lambda args, kwargs: __dependency_func(
                 command, *args, **kwargs
             ),
-            validate_func=lambda loc, *args, **kwargs: __validate_func(
+            validate_func=lambda loc, args, kwargs: __validate_func(
                 command, loc, *args, **kwargs
             ),
-            execute_func=lambda loc, sc, *args, **kwargs: __execute_func(
+            execute_func=lambda loc, sc, args, kwargs: __execute_func(
                 command, loc, sc, *args, **kwargs
             ),
             register_substitutions=command.register_substitutions,

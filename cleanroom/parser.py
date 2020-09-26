@@ -161,8 +161,8 @@ class Parser:
 
                 (args, kwargs) = _process_arguments(arguments)
 
-                command_info.validate_func(current_location, *args, **kwargs)
-                command_dependency = command_info.dependency_func(*args, **kwargs)
+                command_info.validate_func(current_location, args, kwargs)
+                command_dependency = command_info.dependency_func(args, kwargs)
                 if command_dependency:
                     if base_system_name:
                         raise ParseError(

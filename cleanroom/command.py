@@ -127,8 +127,8 @@ class Command:
         command_info = self._service("command_manager").command(command)
         if not command_info:
             raise GenerateError('Command "{}" not found.'.format(command))
-        command_info.validate_func(location, *args, **kwargs)
-        command_info.execute_func(location, system_context, *args, **kwargs)
+        command_info.validate_func(location, args, kwargs)
+        command_info.execute_func(location, system_context, args, kwargs)
 
     def _add_hook(
         self,
@@ -143,7 +143,7 @@ class Command:
         command_info = self._service("command_manager").command(command)
         if not command_info:
             raise ParseError('Command "{}" not found.'.format(command))
-        command_info.validate_func(location, *args, **kwargs)
+        command_info.validate_func(location, args, kwargs)
 
         system_context.add_hook(
             hook_name,
@@ -162,7 +162,7 @@ class Command:
             if not command_info:
                 raise GenerateError('Command "{}" not found.'.format(hook.command))
             command_info.execute_func(
-                hook.location, system_context, *hook.args, **hook.kwargs
+                hook.location, system_context, hook.args, hook.kwargs
             )
 
         success('Hooks "{}" were run successfully.'.format(hook_name), verbosity=1)
