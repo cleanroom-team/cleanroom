@@ -114,16 +114,17 @@ class Parser:
         self._command_manager = command_manager
         self._grammar = _generate_grammar(debug_parser=debug_parser)
 
-    def parse(self, input_file: str) -> typing.Tuple[str, typing.List[ExecObject]]:
+    def parse(self, input_file: str) -> typing.Tuple[str, str, typing.List[ExecObject]]:
         """Parse a file."""
         with open(input_file, "r") as f:
             debug("Parsing file {}...".format(input_file))
             return self._parse_string(f.read(), input_file)
 
     def _parse_string(
-        self, data, input_file_name
-    ) -> typing.Tuple[str, typing.List[ExecObject]]:
+        self, data: str, input_file_name: str
+    ) -> typing.Tuple[str, str, typing.List[ExecObject]]:
         base_system_name = ""
+        target_distribution = ""
         exec_obj_list: typing.List[ExecObject] = []
 
         current_location = Location(file_name=input_file_name)
@@ -145,7 +146,7 @@ class Parser:
                 assert len(command) == 3
 
                 command_pos = command.get("locn_start", -1)
-                command_name = command.get("value", "")
+                command_name: str = command.get("value", "")
 
                 current_location = Location(
                     file_name=input_file_name,
@@ -163,6 +164,8 @@ class Parser:
 
                 command_info.validate_func(current_location, args, kwargs)
                 command_dependency = command_info.dependency_func(args, kwargs)
+                command_target_distribution = command_info.target_distribution
+
                 if command_dependency:
                     if base_system_name:
                         raise ParseError(
@@ -170,6 +173,17 @@ class Parser:
                             'provided in "{}".'.format(input_file_name)
                         )
                     base_system_name = command_dependency
+                if command_target_distribution:
+                    if (
+                        target_distribution
+                        and target_distribution != command_target_distribution
+                    ):
+                        raise ParseError(
+                            "Target distributions detected for system provided in "
+                            + f'"{input_file_name}" (== {command_target_distribution}) '
+                            + f'does not match "{target_distribution}" used earlier in the same file.'
+                        )
+                    target_distribution = command_target_distribution
 
                 exec_obj_list.append(
                     ExecObject(
@@ -183,4 +197,4 @@ class Parser:
         except pp.ParseException as pe:
             raise ParseError(str(pe), location=current_location)
 
-        return base_system_name, exec_obj_list
+        return base_system_name, target_distribution, exec_obj_list

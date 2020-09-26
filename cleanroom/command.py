@@ -46,6 +46,7 @@ class Command:
         *,
         file: str,
         syntax: str = "",
+        target_distribution: str = "",
         help_string: str,
         **services: typing.Any,
     ) -> None:
@@ -53,6 +54,7 @@ class Command:
         self._name = name
         self._syntax_string = syntax
         self._help_string = help_string
+        self._target_distribution = target_distribution
         helper_directory = os.path.join(
             os.path.dirname(os.path.realpath(file)), os.path.basename(file)[:-3],
         )
@@ -102,6 +104,10 @@ class Command:
     ) -> typing.Optional[str]:
         """Maybe implement this, but this default should be ok."""
         return None
+
+    @property
+    def target_distribution(self) -> str:
+        return self._target_distribution
 
     def __call__(
         self,

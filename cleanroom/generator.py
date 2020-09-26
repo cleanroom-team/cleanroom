@@ -66,7 +66,7 @@ class Generator:
         work_directory: WorkDir,
         command_manager: CommandManager,
         repository_base_directory: str = "",
-        ignore_errors: bool = False
+        ignore_errors: bool = False,
     ) -> None:
         """Generate all systems in the dependency tree."""
 
@@ -83,13 +83,14 @@ class Generator:
 
         for (
             system_name,
+            target_distribution,
             base_system_name,
             exec_obj_list,
             _,
         ) in self._systems_manager.walk_systems_forest():
             total_systems += 1
 
-            h1('Generate "{}"'.format(system_name))
+            h1(f'Generate "{system_name}" ({target_distribution})')
             try:
                 if os.path.isdir(
                     os.path.join(work_directory.storage_directory, system_name)

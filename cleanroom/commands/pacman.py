@@ -22,6 +22,7 @@ class PacmanCommand(Command):
         """Constructor."""
         super().__init__(
             "pacman",
+            target_distribution="arch",
             syntax="<PACKAGES> [remove=False] "
             "[overwrite=GLOB] [assume_installed=PKG]",
             help_string="Run pacman to install <PACKAGES>.",

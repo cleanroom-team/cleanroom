@@ -6,6 +6,7 @@
 
 
 from __future__ import annotations
+from cleanroom.exceptions import GenerateError
 
 from .printer import error, debug, h2, trace
 from .execobject import ExecObject
@@ -66,6 +67,7 @@ class SystemContext:
         assert systems_definition_directory
         assert repository_base_directory
 
+        self._target_distribution = ""
         self._system_name = system_name
         self._timestamp = timestamp
         self._repository_base_directory = repository_base_directory
@@ -118,6 +120,17 @@ class SystemContext:
     @property
     def system_name(self) -> str:
         return self._system_name
+
+    @property
+    def target_distribution(self) -> str:
+        return self._target_distribution
+
+    def set_target_distribution(self, distribution: str):
+        if self._target_distribution and distribution:
+            if self._target_distribution != distribution:
+                raise GenerateError("Target distribution mismatch!")
+        if distribution:
+            self._target_distribution = distribution
 
     @property
     def pretty_system_name(self) -> str:

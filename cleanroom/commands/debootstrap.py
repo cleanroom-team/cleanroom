@@ -22,6 +22,7 @@ class DebootstrapCommand(Command):
         """Constructor."""
         super().__init__(
             "debootstrap",
+            target_distribution="debian",
             syntax="suite=<SUITE> "
             "mirror=<MIRROR> [variant=<VARIANT>] "
             "[include=<INCLUDE>] [exclude=<EXCLUDE>]",

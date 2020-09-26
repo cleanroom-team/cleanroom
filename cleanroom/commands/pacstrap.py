@@ -28,6 +28,7 @@ class PacstrapCommand(Command):
         """Constructor."""
         super().__init__(
             "pacstrap",
+            target_distribution="arch",
             syntax="<PACKAGES> config=<config>",
             help_string="Run pacstrap to install <PACKAGES>.\n"
             "After the pacman keyring is initialized, this will call\n"

@@ -23,6 +23,7 @@ class CommandInfo(typing.NamedTuple):
     syntax_string: str
     help_string: str
     file_name: str
+    target_distribution: str
     dependency_func: typing.Callable[
         [typing.Tuple[typing.Any, ...], typing.Dict[str, typing.Any]],
         typing.Optional[str],
@@ -219,6 +220,7 @@ class CommandManager:
             syntax_string=command.syntax_string,
             help_string=command.help_string,
             file_name=file_name,
+            target_distribution=command.target_distribution,
             dependency_func=lambda args, kwargs: __dependency_func(
                 command, *args, **kwargs
             ),

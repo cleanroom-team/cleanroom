@@ -25,6 +25,7 @@ class _DependencyNode(object):
     def __init__(
         self,
         system: str,
+        target_distribution: str,
         parent: typing.Optional[_DependencyNode],
         exec_obj_list: typing.List[ExecObject],
     ) -> None:
@@ -38,6 +39,7 @@ class _DependencyNode(object):
 
         # Payload:
         self.system = system
+        self.target_distribution = target_distribution
         self.exec_obj_list = exec_obj_list
 
     def find(self, system: str) -> typing.Optional[_DependencyNode]:
@@ -67,6 +69,24 @@ class _DependencyNode(object):
             return self.parent.depth + 1
         return 0
 
+    def append_child(self, child: _DependencyNode):
+        if self.target_distribution and child.target_distribution:
+            if self.target_distribution != child.target_distribution:
+                raise ParseError(
+                    f"Target distribution mismatch between {self.system}(== {self.target_distribution}) "
+                    + f"and {child.system}(== {child.target_distribution})"
+                )
+        else:
+            if self.target_distribution:
+                child.target_distribution = self.target_distribution
+            elif child.target_distribution:
+                self.target_distribution = child.target_distribution
+                for c in self.children:
+                    assert not c.target_distribution
+                    c.target_distribution = self.target_distribution
+
+        self.children.append(child)
+
 
 class SystemsManager(object):
     """Drives the generation of systems."""
@@ -75,7 +95,7 @@ class SystemsManager(object):
         self,
         command_manager: CommandManager,
         systems_definition_directory: str,
-        *systems: str
+        *systems: str,
     ) -> None:
         """Constructor."""
         self._command_manager = command_manager
@@ -94,7 +114,7 @@ class SystemsManager(object):
     def walk_systems_forest(
         self,
     ) -> typing.Generator[
-        typing.Tuple[str, typing.Optional[str], typing.List[ExecObject], int],
+        typing.Tuple[str, str, typing.Optional[str], typing.List[ExecObject], int],
         None,
         None,
     ]:
@@ -106,7 +126,7 @@ class SystemsManager(object):
                         node.system, base_system or "<NONE>"
                     )
                 )
-                yield node.system, base_system, node.exec_obj_list, node.depth
+                yield node.system, node.target_distribution, base_system, node.exec_obj_list, node.depth
 
     @property
     def systems_definition_directory(self) -> str:
@@ -116,11 +136,15 @@ class SystemsManager(object):
         """Print the systems forest."""
         base_indent = "  "
         debug("Systems forest ({} trees):".format(len(self._systems_forest)))
-        for (system_name, _, exec_obj_list, depth) in self.walk_systems_forest():
+        for (
+            system_name,
+            target_distribution,
+            _,
+            exec_obj_list,
+            depth,
+        ) in self.walk_systems_forest():
             debug(
-                "  {}{} ({} commands)".format(
-                    base_indent * depth, system_name, len(exec_obj_list)
-                )
+                f"  {base_indent * depth}{system_name} ({len(exec_obj_list)} commands, {target_distribution})"
             )
 
     def _add_system(self, system_name: str) -> typing.Optional[_DependencyNode]:
@@ -140,9 +164,11 @@ class SystemsManager(object):
             return node
 
         system_file = self._find_system_definition_file(system_name)
-        (base_system_name, exec_obj_list) = self._parse_system_definition_file(
-            system_file
-        )
+        (
+            base_system_name,
+            target_distribution,
+            exec_obj_list,
+        ) = self._parse_system_definition_file(system_file)
 
         if not exec_obj_list:
             return None
@@ -159,10 +185,12 @@ class SystemsManager(object):
             parent_node and parent_node.system == base_system_name
         )
 
-        node = _DependencyNode(system_name, parent_node, exec_obj_list)
+        node = _DependencyNode(
+            system_name, target_distribution, parent_node, exec_obj_list
+        )
 
         if parent_node:
-            parent_node.children.append(node)
+            parent_node.append_child(node)
         else:
             self._systems_forest.append(node)
 
@@ -170,16 +198,18 @@ class SystemsManager(object):
 
     def _parse_system_definition_file(
         self, system_file: str
-    ) -> typing.Tuple[str, typing.List[ExecObject]]:
+    ) -> typing.Tuple[str, str, typing.List[ExecObject]]:
         debug('Parsing "{}".'.format(system_file))
         system_parser = Parser(self._command_manager)
-        (base_system_name, exec_obj_list) = system_parser.parse(system_file)
+        (base_system_name, target_distribution, exec_obj_list) = system_parser.parse(
+            system_file
+        )
         if not base_system_name:
             raise ParseError('No base system was provided in "{}".'.format(system_file))
         if base_system_name == "scratch":
             base_system_name = ""
 
-        return base_system_name, exec_obj_list
+        return base_system_name, target_distribution, exec_obj_list
 
     def _find_system_definition_file(self, system: str) -> str:
         """Make sure a system definition file can be found."""
