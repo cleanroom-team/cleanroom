@@ -28,7 +28,7 @@ class ExportDirectoryCommand(Command):
             "repository=<REPOSITORY_PATH>",
             help_string="Export a directory from cleanroom.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -39,7 +39,7 @@ class ExportDirectoryCommand(Command):
             location,
             1,
             '"{}" needs a borg repository directory ' "to export into.",
-            *args
+            *args,
         )
         self._validate_kwargs(
             location, ("compression", "compression_level", "repository"), **kwargs
@@ -51,7 +51,7 @@ class ExportDirectoryCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         export_directory = args[0]
@@ -65,16 +65,17 @@ class ExportDirectoryCommand(Command):
         env["BORG_UNKNOWN_UNENCRYPTED_ACCESS_IS_OK"] = "yes"
         env["BORG_RELOCATED_REPO_ACCESS_IS_OK"] = "yes"
 
+        comp = kwargs.get("compression", "zstd")
+        comp_level = kwargs.get("compression_level", 5)
+
         run(
             self._service("binary_manager").binary(Binaries.BORG),
             "create",
             "--compression",
-            "{},{}".format(
-                kwargs.get("compression", "zstd"), kwargs.get("compression_level", 5)
-            ),
+            f"{comp},{comp_level}",
             "--numeric-owner",
             "--noatime",
-            "{}::{}".format(export_repository, backup_name),
+            f"{export_repository}::{backup_name}",
             ".",
             work_directory=export_directory,
             env=env,

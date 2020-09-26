@@ -44,7 +44,7 @@ class PkgSshdCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         self._install_openssh(location, system_context)
@@ -79,7 +79,7 @@ class PkgSshdCommand(Command):
         location: Location,
         system_context: SystemContext,
         arg: str,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         self._set_sshd_config(
             location, system_context, arg, self._yes_or_no(arg, **kwargs)
@@ -128,7 +128,7 @@ class PkgSshdCommand(Command):
             location.next_line(),
             system_context,
             "sed",
-            "/^[\\s#]*{0}\\s/ c{0} {1}".format(key, value),
+            f"/^[\\s#]*{key}\\s/ c{key} {value}",
             "/etc/ssh/sshd_config",
         )
 

@@ -144,12 +144,12 @@ class BinaryManager:
         passed = True
         for b in self._binaries.items():
             if b[1]:
-                debug("{} found: {}...".format(b[0], b[1]))
+                debug(f"{b[0]} found: {b[1]}...")
             else:
                 if b in self._optionals:
-                    debug("{} not found [OPTIONAL].")
+                    debug(f"{b[0]} not found [OPTIONAL].")
                 else:
-                    warn("{} not found.".format(b[0]))
+                    warn(f"{b[0]} not found.")
                     passed = False
         if not passed:
             raise PreflightError("Required binaries are not available.")

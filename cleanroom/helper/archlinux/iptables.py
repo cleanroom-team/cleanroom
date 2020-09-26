@@ -53,7 +53,7 @@ def _insert_rules(file_name: str, magic: str, *rules: str) -> None:
     for ir in input_rules.split("\n"):
         output_rules.append(ir)
         if ir in rules:
-            raise GenerateError("Rule {} already found in iptables rules.".format(ir))
+            raise GenerateError(f"Rule {ir} already found in iptables rules.")
         if ir == magic:
             output_rules += rules
 
@@ -66,16 +66,14 @@ def open_port(
     port: int,
     *,
     protocol: str = "tcp",
-    comment: str = ""
+    comment: str = "",
 ) -> None:
     """Open a port in the firewall."""
     magic = _TCP_MAGIC if protocol == "tcp" else _UDP_MAGIC
 
-    rules = ["# {}:\n".format(comment)] if comment else []
+    rules = [f"# {comment}:\n",] if comment else []
     rules.append(
-        "-A {0} -p {1} -m {1} --dport {2} -j ACCEPT".format(
-            protocol.upper(), protocol, port
-        )
+        f"-A {protocol.upper()} -p {protocol} -m {protocol} --dport {port} -j ACCEPT"
     )
 
     _insert_rules(system_context.file_name(_IPv4_RULES), magic, *rules)
@@ -87,11 +85,10 @@ def forward_interface(
 ) -> None:
     magic = _FORWARD_MAGIC
 
-    rules = ["# {}:\n".format(comment)] if comment else []
-    rules.append("-A FORWARD -i {} -j ACCEPT".format(interface))
+    rules = [f"# {comment}:\n"] if comment else []
+    rules.append(f"-A FORWARD -i {interface} -j ACCEPT")
     rules.append(
-        "-A FORWARD -o {} -m conntrack "
-        "--ctstate RELATED,ESTABLISHED -j ACCEPT".format(interface)
+        f"-A FORWARD -o {interface} -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT"
     )
 
     _insert_rules(system_context.file_name(_IPv4_RULES), magic, *rules)
@@ -106,7 +103,7 @@ def _install_v4_rules(
         system_context,
         rule_file,
         textwrap.dedent(
-            """\
+            f"""\
                 # iptables rules:
 
                 *filter
@@ -122,7 +119,7 @@ def _install_v4_rules(
 
                 -A FORWARD -m physdev --physdev-is-bridged -j ACCEPT
 
-                {}
+                {_FORWARD_MAGIC}
 
                 -A FORWARD -j LOGDROP
 
@@ -140,15 +137,13 @@ def _install_v4_rules(
 
                 -A OUTPUT -p udp --dport 67:68 --sport 67:68 -j ACCEPT
 
-                {}
+                {_TCP_MAGIC}
 
-                {}
+                {_UDP_MAGIC}
 
                 COMMIT
                 """
-        )
-        .format(_FORWARD_MAGIC, _TCP_MAGIC, _UDP_MAGIC)
-        .encode("utf8"),
+        ).encode("utf8"),
         force=True,
         mode=0o644,
     )
@@ -162,7 +157,7 @@ def _install_v6_rules(
         system_context,
         rule_file,
         textwrap.dedent(
-            """\
+            f"""\
                 # ip6tables rules:
 
                 *filter
@@ -179,7 +174,7 @@ def _install_v6_rules(
 
                 -A FORWARD -m physdev --physdev-is-bridged -j ACCEPT
 
-                {}
+                {_FORWARD_MAGIC}
 
                 -A FORWARD -j LOGDROP
 
@@ -197,15 +192,13 @@ def _install_v6_rules(
 
                 -A OUTPUT -p udp --dport 67:68 --sport 67:68 -j ACCEPT
 
-                {}
+                {_TCP_MAGIC}
 
-                {}
+                {_UDP_MAGIC}
 
                 COMMIT
                 """
-        )
-        .format(_FORWARD_MAGIC, _TCP_MAGIC, _UDP_MAGIC)
-        .encode("utf8"),
+        ).encode("utf8"),
         force=True,
         mode=0o644,
     )

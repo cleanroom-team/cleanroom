@@ -175,13 +175,9 @@ class Printer:
 
     def h1(self, *args: str, verbosity: int = 0) -> None:
         """Print big headline."""
-        intro = "\n\n{}============================================{}".format(
-            self._h1_suffix, self._ansi_reset
-        )
-        prefix = "{}== ".format(self._h1_suffix)
-        postfix = "{}============================================{}".format(
-            self._h1_suffix, self._ansi_reset
-        )
+        intro = f"\n\n{self._h1_suffix}============================================{self._ansi_reset}"
+        prefix = f"{self._h1_suffix}== "
+        postfix = f"{self._h1_suffix}============================================{self._ansi_reset}"
         self._print(intro, verbosity=verbosity)
         self._print(prefix, *args, self._ansi_reset, verbosity=verbosity)
         self._print(postfix, verbosity=verbosity)
@@ -190,27 +186,27 @@ class Printer:
 
     def h2(self, *args: str, verbosity: int = 0) -> None:
         """Print a headline."""
-        intro = "\n{}******{}".format(self._h_prefix, self._h1_suffix)
+        intro = f"\n{self._h_prefix}******{self._h1_suffix}"
         self._print(intro, *args, self._ansi_reset, verbosity=verbosity)
 
     def h3(self, *args: str, verbosity: int = 0) -> None:
         """Print a subheading."""
-        intro = "\n{}******{}".format(self._h_prefix, self._ansi_reset)
+        intro = f"\n{self._h_prefix}******{self._ansi_reset}"
         self._print(intro, *args, verbosity=verbosity)
 
     def error(self, *args: str, verbosity: int = 0) -> None:
         """Print error message."""
-        intro = "{}ERROR:".format(self._error_prefix)
+        intro = f"{self._error_prefix}ERROR:"
         self._print(intro, *args, self._ansi_reset, verbosity=verbosity)
 
     def warn(self, *args: str, verbosity: int = 0) -> None:
         """Print warning message."""
-        intro = "{}warn: ".format(self._warn_prefix)
+        intro = f"{self._warn_prefix}warn: "
         self._print(intro, *args, self._ansi_reset, verbosity=verbosity)
 
     def success(self, *args: str, verbosity: int = 0) -> None:
         """Print success message."""
-        intro = "{}  OK  {}".format(self._ok_prefix, self._ok_suffix)
+        intro = f"{self._ok_prefix}  OK  {self._ok_suffix}"
         self._print(intro, *args, self._ansi_reset, verbosity=verbosity)
         self._buffer = ""
 
@@ -219,16 +215,16 @@ class Printer:
         *args: str,
         verbosity: int = 0,
         force_exit: bool = True,
-        ignore: bool = False
+        ignore: bool = False,
     ) -> None:
         """Print fail message."""
         if ignore:
-            intro = "{} fail {}".format(self._ig_fail_prefix, self._ig_fail_suffix)
+            intro = f"{self._ig_fail_prefix} fail {self._ig_fail_suffix}"
             self._print(
                 intro, *args, "(ignored)", self._ansi_reset, verbosity=verbosity
             )
         else:
-            intro = "{} FAIL {}".format(self._fail_prefix, self._fail_suffix)
+            intro = f"{self._fail_prefix} FAIL {self._fail_suffix}"
             self._print(intro, *args, self._ansi_reset, verbosity=verbosity)
             if force_exit:
                 sys.exit(1)
@@ -243,15 +239,15 @@ class Printer:
 
     def info(self, *args: str) -> None:
         """Print even more verbose."""
-        intro = "{}......{}".format(self._extra_prefix, self._extra_suffix)
+        intro = f"{self._extra_prefix}......{self._extra_suffix}"
         self._print(intro, *args, self._ansi_reset, verbosity=2)
 
     def debug(self, *args: str) -> None:
         """Print if debug is set."""
-        intro = "{}------{}".format(self._extra_prefix, self._extra_suffix)
+        intro = f"{self._extra_prefix}------{self._extra_suffix}"
         self._print(intro, *args, self._ansi_reset, verbosity=3)
 
     def trace(self, *args: str) -> None:
         """Print trace messsages."""
-        intro = "{}++++++{}".format(self._extra_prefix, self._extra_suffix)
+        intro = f"{self._extra_prefix}++++++{self._extra_suffix}"
         self._print(intro, *args, self._ansi_reset, verbosity=4)

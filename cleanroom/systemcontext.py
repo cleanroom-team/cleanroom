@@ -6,13 +6,12 @@
 
 
 from __future__ import annotations
-from cleanroom.exceptions import GenerateError
 
+from .exceptions import GenerateError
 from .printer import error, debug, h2, trace
 from .execobject import ExecObject
 
 import os
-import os.path
 import pickle
 import string
 import typing
@@ -34,7 +33,7 @@ def _recursive_expand(system_context: SystemContext, arg: typing.Any) -> typing.
                     break
 
         except ValueError as e:
-            error('Failed to expand string "{}": {}'.format(arg, e))
+            error(f'Failed to expand string "{arg}": {e}')
 
     return result
 
@@ -60,7 +59,7 @@ class SystemContext:
         systems_definition_directory: str,
         repository_base_directory: str,
         storage_directory: str,
-        timestamp: str
+        timestamp: str,
     ) -> None:
         """Constructor."""
         assert scratch_directory
@@ -78,15 +77,10 @@ class SystemContext:
 
         debug(
             "SystemContext: Directories:\n"
-            "          repository_base: {}...\n"
-            "          scratch: {}...\n"
-            "          system-definitions: {}...\n"
-            "          system-storage: {}...".format(
-                self._repository_base_directory,
-                self._scratch_directory,
-                self._systems_definition_directory,
-                self._system_storage_directory,
-            )
+            + f"          repository_base: {self._repository_base_directory} ...\n"
+            + f"          scratch: {self._scratch_directory} ...\n"
+            + f"          system-definitions: {self._systems_definition_directory} ...\n"
+            + f"          system-storage: {self._system_storage_directory} ..."
         )
 
         self._base_context: typing.Optional[SystemContext] = None
@@ -103,7 +97,7 @@ class SystemContext:
         self._setup_core_substitutions()
 
     def __enter__(self) -> typing.Any:
-        h2("Creating system {}".format(self._system_name))
+        h2(f"Creating system {self.system_name}")
         return self
 
     def __exit__(self, exc_type: typing.Any, exc_val: typing.Any, exc_tb: typing.Any):
@@ -212,11 +206,7 @@ class SystemContext:
     def add_hook(self, hook: str, exec_obj: ExecObject) -> None:
         """Add a hook."""
         self._hooks.setdefault(hook, []).append(exec_obj)
-        trace(
-            'Added hook "{}": It now has {} entries.'.format(
-                hook, len(self._hooks[hook])
-            )
-        )
+        trace(f'Added hook "{hook}": It now has {len(self._hooks[hook])} entries.')
 
     def hooks(self, hook_name: str) -> typing.Sequence[ExecObject]:
         """Run all the registered hooks."""
@@ -234,7 +224,7 @@ class SystemContext:
     def set_substitution(self, key: str, value: str) -> str:
         """Add a substitution to the substitution table."""
         self._substitutions[key] = value
-        trace('Added substitution: "{}"="{}".'.format(key, value))
+        trace(f'Added substitution: "{key}"="{value}".')
         return value
 
     def set_or_append_substitution(self, key: str, value: str) -> str:
@@ -259,7 +249,7 @@ class SystemContext:
 
     def debug_dump_substitutions(self):
         for (k, v) in self._substitutions.items():
-            print('"{}"="{}"'.format(k, v))
+            print(f'"{k}"="{v}"')
 
     def expand(self, input: str) -> str:
         return _recursive_expand(self, input)
@@ -273,7 +263,7 @@ class SystemContext:
             self.fs_directory,
             os.path.relpath(path, "/") if os.path.isabs(path) else path,
         )
-        trace('Mapped system path "{}" to "{}".'.format(path, result))
+        trace(f'Mapped system path "{path}" to "{result}".')
         return result
 
     @property
@@ -300,7 +290,7 @@ class SystemContext:
         hooks_that_ran = self._hooks_that_already_ran
         self._hooks_that_already_ran = []
 
-        trace("Pickling system_context into {}.".format(pickle_jar))
+        trace(f"Pickling system_context into {pickle_jar}.")
         with open(pickle_jar, "wb") as pj:
             pickle.dump(self, pj)
 

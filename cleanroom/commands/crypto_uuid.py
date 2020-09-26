@@ -23,7 +23,7 @@ class CryptoUuidCommand(Command):
             syntax="<UUID> <NAME>",
             help_string="Set the UUID of the crypto partition and the NAME to bind to it.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -39,7 +39,7 @@ class CryptoUuidCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         uuid = args[0]
@@ -50,6 +50,5 @@ class CryptoUuidCommand(Command):
             raise GenerateError("rd.luks.name already set.", location=location)
 
         system_context.set_or_append_substitution(
-            "KERNEL_CMDLINE",
-            "rd.luks.name={}={} rd.luks.options=discard".format(uuid, name),
+            "KERNEL_CMDLINE", f"rd.luks.name={uuid}={name} rd.luks.options=discard",
         )

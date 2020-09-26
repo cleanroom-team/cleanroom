@@ -22,12 +22,12 @@ def _ensure_directory(directory: str, btrfs_helper: BtrfsHelper) -> None:
         btrfs_helper.set_property(directory, name="compression", value="none")
         if not os.path.isdir(directory):
             raise PreflightError(
-                "Failed to set up work directory: " "{} not created.".format(directory)
+                f"Failed to set up work directory: {directory} not created."
             )
 
 
 def _clear_directory(directory: str, btrfs_helper: BtrfsHelper) -> None:
-    trace("Cleaning directory: {}.".format(directory))
+    trace(f"Cleaning directory: {directory}.")
     umount_all(directory)
 
     if os.path.isdir(directory):
@@ -54,7 +54,7 @@ class WorkDir:
         *,
         work_directory: str,
         clear_scratch_directory: bool = False,
-        clear_storage: bool = False
+        clear_storage: bool = False,
     ) -> None:
         """Constructor."""
         self._btrfs_helper = btrfs_helper
@@ -63,28 +63,24 @@ class WorkDir:
 
         if work_directory:
             if not os.path.exists(work_directory):
-                trace(
-                    'Creating permanent work directory in "{}".'.format(work_directory)
-                )
+                trace(f'Creating permanent work directory in "{work_directory}".')
                 os.makedirs(work_directory, 0o700)
             else:
                 if not btrfs_helper.is_btrfs_filesystem(work_directory):
                     raise PreflightError(
-                        '"{}" is not on a btrfs filesystem.'.format(self.work_directory)
+                        f'"{self.work_directory}" is not on a btrfs filesystem.'
                     )
 
-                trace('Using existing work directory in "{}".'.format(work_directory))
+                trace(f'Using existing work directory in "{work_directory}".')
                 if os.path.isdir(os.path.join(work_directory, "scratch")):
                     if not umount_all(os.path.join(work_directory, "scratch")):
                         raise PreflightError(
-                            "Failed to umount all in work "
-                            'directory "{}".'.format(work_directory)
+                            f'Failed to umount all in work directory "{work_directory}".'
                         )
                 if os.path.isdir(os.path.join(work_directory, "storage")):
                     if not umount_all(os.path.join(work_directory, "storage")):
                         raise PreflightError(
-                            "Failed to umount all in work "
-                            'directory "{}".'.format(work_directory)
+                            f'Failed to umount all in work directory "{work_directory}".'
                         )
                 if clear_scratch_directory:
                     self.clear_scratch_directory()
@@ -159,6 +155,6 @@ class WorkDir:
         _ensure_directory(self.storage_directory, self._btrfs_helper)
         _ensure_directory(self.scratch_directory, self._btrfs_helper)
 
-        info('WorkDir: work directory     = "{}".'.format(self.work_directory))
-        debug('WorkDir: scratch directory  = "{}".'.format(self.scratch_directory))
-        debug('WorkDir: storage directory  = "{}".'.format(self.storage_directory))
+        info(f'WorkDir: work directory     = "{self.work_directory}".')
+        debug(f'WorkDir: scratch directory  = "{self.scratch_directory}".')
+        debug(f'WorkDir: storage directory  = "{self.storage_directory}".')

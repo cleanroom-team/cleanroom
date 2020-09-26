@@ -25,7 +25,7 @@ class WriteDeployInfoCommand(Command):
             syntax="",
             help_string="Write deploy info file.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -64,7 +64,7 @@ class WriteDeployInfoCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         extra_dir = os.path.join(system_context.boot_directory, "extra")
@@ -90,14 +90,14 @@ class WriteDeployInfoCommand(Command):
                     "IMAGE_OPTIONS", ""
                 )
                 if image_options:
-                    image_options = "nodev,nosuid,noexec,{}".format(image_options)
+                    image_options = f"nodev,nosuid,noexec,{image_options}"
                 else:
                     image_options = "nodev,nosuid,noexec"
                 deployment_parameters = [
-                    "--efi-device=PARTUUID={}".format(efi_partition),
-                    "--image-device={}".format(image_device),
-                    "--image-fs-type={}".format(image_fs),
-                    "--image-options={}".format(image_options),
+                    f"--efi-device=PARTUUID={efi_partition}",
+                    f"--image-device={image_device}",
+                    f"--image-fs-type={image_fs}",
+                    f"--image-options={image_options}",
                 ]
                 deployment_parameters += system_context.substitution_expanded(
                     "DEPLOY_TYPE_EXTRA_PARAMETERS", ""
@@ -110,9 +110,7 @@ class WriteDeployInfoCommand(Command):
 
         for di in device_ids:
             assert di
-            path = system_context.substitution_expanded(
-                "DEPLOY_{}_REPART_D".format(di), ""
-            )
+            path = system_context.substitution_expanded(f"DEPLOY_{di}_REPART_D", "")
             assert path
 
             devices.append({"device_id": di, "repart_d": path})

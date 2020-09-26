@@ -26,7 +26,7 @@ class CopyCommand(Command):
             "[recursive=False] [force=False]",
             help_string="Copy a file within the system.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -39,12 +39,12 @@ class CopyCommand(Command):
         self._validate_kwargs(
             location,
             ("from_outside", "to_outside", "ignore_missing", "recursive", "force"),
-            **kwargs
+            **kwargs,
         )
 
         if kwargs.get("from_outside", False) and kwargs.get("to_outside", False):
             raise ParseError(
-                'You can not "{}" a file from_outside to_outside.'.format(self.name),
+                f'You can not "{self.name}" a file from_outside to_outside.',
                 location=location,
             )
 
@@ -53,7 +53,7 @@ class CopyCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         copy(system_context, *args, **kwargs)

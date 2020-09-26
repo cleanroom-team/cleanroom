@@ -85,12 +85,9 @@ class CommandManager:
             command_info = self.command(key)
             assert command_info
             long_help_lines = command_info.help_string.split("\n")
+            msg = "\n          ".join(long_help_lines)
             print(
-                "{}\n          {}\n\n          Definition in: {}\n\n".format(
-                    command_info.syntax_string,
-                    "\n          ".join(long_help_lines),
-                    command_info.file_name,
-                )
+                f"{command_info.syntax_string}\n          {msg}\n\n          Definition in: {command_info.file_name}\n\n"
             )
 
     def _collect_substitutions(
@@ -138,14 +135,12 @@ class CommandManager:
         substitutions = self._collect_substitutions()
         substitutions.sort()
         for (key, value, description, name) in substitutions:
-            print('  {} ("{}"): {}\n    {}\n'.format(key, value, name, description))
+            print(f'  {key} ("{value}"): {name}\n    {description}\n')
 
     def setup_substitutions(self, system_context: SystemContext):
         if system_context.base_context:
             debug(
-                'System Context inherited, using substitutions from "{}".'.format(
-                    system_context.base_context.system_name
-                )
+                f'System Context inherited, using substitutions from "{system_context.base_context.system_name}".'
             )
             return
 
@@ -156,22 +151,15 @@ class CommandManager:
             if not pattern.match(key):
                 continue  # skip this key, but keep it in documentation!
             assert not system_context.has_substitution(key)
-            debug(
-                'Setting up system context: substitution "{}" = "{}".'.format(
-                    key, value
-                )
-            )
+            debug(f'Setting up system context: substitution "{key}" = "{value}".')
             system_context.set_substitution(key, value)
 
     def preflight_check(self) -> None:
         if not self._search_directories:
             raise PreflightError("No directories to search for commands " "were given.")
         if not self._commands:
-            raise PreflightError(
-                'No commands were found in "{}".'.format(
-                    '", "'.join(self._search_directories)
-                )
-            )
+            dirs = '", "'.join(self._search_directories)
+            raise PreflightError(f'No commands were found in "{dirs}".')
 
     def command(self, name: str) -> typing.Optional[CommandInfo]:
         return self._commands.get(name, None)
@@ -181,17 +169,20 @@ class CommandManager:
             cmd: Command, location: Location, *args: typing.Any, **kwargs: typing.Any
         ) -> None:
             cmd_str = stringify(cmd.name, args, kwargs)
-            trace("{} Validating {}.".format(location, cmd_str))
+            trace(f"{location} Validating {cmd_str}.")
             command.validate(location, *args, **kwargs),
-            success("{}: Validated {}.".format(location, cmd_str), verbosity=4)
+            success(f"{location}: Validated {cmd_str}.", verbosity=4)
 
         def __dependency_func(
             cmd: Command, *args: typing.Any, **kwargs: typing.Any
         ) -> typing.Optional[str]:
             cmd_str = stringify(cmd.name, args, kwargs)
-            trace("Getting dependency of {}.".format(cmd_str))
+            trace(f"Getting dependency of {cmd_str}.")
             result = cmd.dependency(*args, **kwargs)
-            success('Dependency of {} is "{}".'.format(cmd_str, result), verbosity=3)
+            success(
+                f'Dependency of {cmd_str} is "{result}".',
+                verbosity=4 if not result else 2,
+            )
             return result
 
         def __execute_func(
@@ -202,16 +193,10 @@ class CommandManager:
             **kwargs: typing.Any,
         ) -> None:
             cmd_str = stringify(cmd.name, args, kwargs)
-            trace(
-                "{}::{}: Executing {}.".format(
-                    system_context.system_name, location, cmd_str
-                )
-            )
+            trace(f"{system_context.system_name}::{location}: Executing {cmd_str}.")
             call_command(location, system_context, cmd, *args, **kwargs)
             success(
-                "{}::{}: Executed {}.".format(
-                    system_context.system_name, location, cmd_str
-                ),
+                f"{system_context.system_name}::{location}: Executed {cmd_str}.",
                 verbosity=2,
             )
 
@@ -246,7 +231,7 @@ class CommandManager:
 
             command_file_name = os.path.join(directory, f)
 
-            trace("Loading command from {}.".format(command_file_name))
+            trace(f"Loading command from {command_file_name}.")
 
             command_name = f[:-3]
             name = "cleanroom.commands." + command_name
@@ -287,4 +272,4 @@ class CommandManager:
         debug("Commands found:")
         for (command_name, command_info) in self._commands.items():
             path = command_info.file_name
-            debug('  {}: "{}"'.format(command_name, path))
+            debug(f'  {command_name}: "{path}"')

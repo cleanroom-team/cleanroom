@@ -72,7 +72,7 @@ def debootstrap(
     mirror: str,
     include: typing.Optional[str] = None,
     exclude: typing.Optional[str] = None,
-    debootstrap_command: str
+    debootstrap_command: str,
 ) -> None:
     """Run debootstrap on host."""
     assert not _package_type(system_context)
@@ -83,11 +83,11 @@ def debootstrap(
 
     args: typing.List[str] = []
     if variant:
-        args.append("--variant={}".format(variant))
+        args.append(f"--variant={variant}")
     if include:
-        args.append("--include={}".format(include))
+        args.append(f"--include={include}")
     if exclude:
-        args.append("--exclude={}".format(exclude))
+        args.append(f"--exclude={exclude}")
     args += [suite, target]
     if mirror:
         args.append(mirror)
@@ -133,17 +133,15 @@ def debootstrap(
     with open(
         os.path.join(system_context.meta_directory, "apt/config/override.conf"), "w"
     ) as apt_override:
-        apt_override.write('Dir::Etc "{}";\n'.format(apt_config))
+        apt_override.write(f'Dir::Etc "{apt_config}";\n')
         apt_override.write(
-            'DPkg::options {{"--admindir={}"; "--instdir={}";}};\n'.format(
-                dpkg_state, root
-            )
+            f'DPkg::options {{"--admindir={dpkg_state}"; "--instdir={root}";}};\n'
         )
-        apt_override.write('Dir::State "{}";\n'.format(apt_state))
-        apt_override.write('Dir::Cache "{}";\n'.format(apt_cache))
-        apt_override.write('Dir::Log "{}";\n'.format(os.path.join(apt_cache, "log")))
+        apt_override.write(f'Dir::State "{apt_state}";\n')
+        apt_override.write(f'Dir::Cache "{apt_cache}";\n')
+        apt_override.write(f'Dir::Log "{os.path.join(apt_cache, "log")}";\n')
         apt_override.write(
-            'Dir::State::status "{}";\n'.format(os.path.join(dpkg_state, "status"))
+            f'Dir::State::status "{os.path.join(dpkg_state, "status")}";\n'
         )
 
 
@@ -152,7 +150,7 @@ def apt(
     *packages: str,
     remove: bool = False,
     assume_installed: str = "",
-    overwrite: str = ""
+    overwrite: str = "",
 ) -> None:
     """Use apt to install packages."""
     assert _package_type(system_context) == "deb"

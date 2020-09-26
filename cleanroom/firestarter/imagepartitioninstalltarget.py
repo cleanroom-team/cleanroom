@@ -20,12 +20,11 @@ import typing
 def _copy_file(src: str, dest: str, overwrite: bool):
     file = os.path.basename(src)
     if not os.path.exists(os.path.join(dest, file)) or overwrite:
-        debug(
-            "Copying {} into {}{}".format(src, dest, " [FORCE]." if overwrite else ".")
-        )
+        marker = " [FORCE]" if overwrite else ""
+        debug(f"Copying {src} into {dest}{marker}.")
         copy2(src, dest)
     else:
-        debug("Skipped copy of {} into {}.".format(src, dest))
+        debug(f"Skipped copy of {src} into {dest}.")
 
 
 def _copy_efi(
@@ -41,7 +40,8 @@ def _copy_efi(
             for f in os.listdir(linux_src_path)
             if os.path.isfile(os.path.join(linux_src_path, f))
         ]
-        debug('Found kernel(s): "{}".'.format('", "'.join(kernels)))
+        kernels_str = '", "'.join(kernels)
+        debug(f'Found kernel(s): "{kernels_str}".')
         assert len(kernels) == 1
         kernel = kernels[0]
 
@@ -62,9 +62,7 @@ def _copy_efi(
                 if d != "Linux" and os.path.isdir(os.path.join(efi_src_path, d))
             ]
             for d in dirs:
-                trace(
-                    "Copying {} to {}".format(os.path.join(efi_src_path, d), efi_path)
-                )
+                trace(f"Copying {os.path.join(efi_src_path, d)} to {efi_path}")
                 copytree(os.path.join(efi_src_path, d), efi_path, dirs_exist_ok=True)
 
             copytree(
@@ -74,7 +72,7 @@ def _copy_efi(
             )
 
     except Exception as e:
-        debug("Failed to install EFI: {}.".format(e))
+        debug(f"Failed to install EFI: {e}.")
         return 1
     else:
         debug("Successfully installed EFI")

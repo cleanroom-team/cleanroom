@@ -91,7 +91,7 @@ def test_partitioner(tmpdir) -> None:
         assert not partitioner.is_partitioned()
         assert partitioner.label() is None
 
-        print("LBA: {}-{}".format(partitioner.first_lba(), partitioner.last_lba()))
+        print(f"LBA: {partitioner.first_lba()}-{partitioner.last_lba}")
 
         parts = [
             disk.Partitioner.efi_partition(size="64M"),

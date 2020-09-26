@@ -27,7 +27,7 @@ class SshInstallPrivateKeyCommand(Command):
             syntax="<USER> <KEYFILE> [include_public_key=False]",
             help_string="Install <KEYFILE> as private key for <USER>.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -44,16 +44,14 @@ class SshInstallPrivateKeyCommand(Command):
         location: Location,
         system_context: SystemContext,
         directory: str,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         if not exists(system_context, directory):
             makedirs(system_context, directory, **kwargs)
             return
         if not isdir(system_context, directory):
             raise GenerateError(
-                '"{}" needs directory "{}", but that exists and is not a directory.'.format(
-                    self.name, directory
-                ),
+                f'"{self.name}" needs directory "{directory}", but that exists and is not a directory.',
                 location=location,
             )
 
@@ -62,7 +60,7 @@ class SshInstallPrivateKeyCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         user_name = args[0]
@@ -73,13 +71,10 @@ class SshInstallPrivateKeyCommand(Command):
         )
         if user is None:
             raise GenerateError(
-                '"{}" could not find user "{}".'.format(self.name, user_name),
-                location=location,
+                f'"{self.name}" could not find user "{user_name}".', location=location,
             )
 
-        debug(
-            'Installing "{}" to user "{}" ({}).'.format(key_file, user_name, user.home)
-        )
+        debug(f'Installing "{key_file}" to user "{user_name}" ({user.home}).')
 
         self._check_or_create_directory(
             location,

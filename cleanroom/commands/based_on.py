@@ -29,7 +29,7 @@ class BasedOnCommand(Command):
             "Note: This command needs to be the first in the "
             "system definition file!",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -44,7 +44,7 @@ class BasedOnCommand(Command):
         system_pattern = re.compile("^[A-Za-z][A-Za-z0-9_-]*$")
         if not system_pattern.match(base):
             raise ParseError(
-                '"{}" got invalid base system name "{}".'.format(self.name, base),
+                f'"{self.name}" got invalid base system name "{base}".',
                 location=location,
             )
 
@@ -56,7 +56,7 @@ class BasedOnCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
 
@@ -72,7 +72,7 @@ class BasedOnCommand(Command):
                 system_context.base_context
                 and system_context.base_context.system_name == base_system
             )
-            verbose("Building on top of {}.".format(base_system))
+            verbose(f"Building on top of {base_system}.")
             self._execute(location, system_context, "_restore", base_system)
 
         self._run_hooks(system_context, "_setup")

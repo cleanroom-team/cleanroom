@@ -17,7 +17,8 @@ import typing
 def _nspawn_ify(what: str, *systems: str) -> str:
     clean = [s for s in systems if s]
     if len(clean) > 0:
-        return "\n{}={}".format(what, " ".join(*clean))
+        clean_str = " ".join(*clean)
+        return f"\n{what}={clean_str}"
     return ""
 
 
@@ -35,7 +36,7 @@ class RegisterContainerCommand(Command):
             "enable=False",
             help_string="Register a container with a system.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -48,7 +49,7 @@ class RegisterContainerCommand(Command):
         self._validate_kwargs(
             location,
             ("description", "after", "requires", "timeout", "enable"),
-            **kwargs
+            **kwargs,
         )
         self._require_kwargs(location, ("description",), **kwargs)
 
@@ -57,7 +58,7 @@ class RegisterContainerCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         system = args[0]
@@ -90,9 +91,7 @@ class RegisterContainerCommand(Command):
         )
 
         location.set_description("")
-        override_dir = "{}/systemd-nspawn@{}.service.d".format(
-            systemd_directory, system
-        )
+        override_dir = f"{systemd_directory}/systemd-nspawn@{system}.service.d"
         self._execute(location.next_line(), system_context, "mkdir", override_dir)
 
         after = _nspawn_ify("After", *after_input.split(","))
@@ -102,21 +101,15 @@ class RegisterContainerCommand(Command):
             location.next_line(),
             system_context,
             "create",
-            "{}/override.conf".format(override_dir),
+            f"{override_dir}/override.conf",
             textwrap.dedent(
-                """\
+                f"""\
                       [Unit]
                       Description=Container {system}: {description}{after}{requires}
                        
                       [Service]
                       TimeoutStartSec={timeout}
                       """
-            ).format(
-                system=system,
-                description=description,
-                after=after,
-                requires=requires,
-                timeout=timeout,
             ),
         )
 
@@ -127,6 +120,6 @@ class RegisterContainerCommand(Command):
                 system_context,
                 "symlink",
                 "../systemd-nspawn@.service",
-                "systemd-nspawn@{}.service".format(system),
-                work_directory="{}/machines.target.wants".format(systemd_directory),
+                f"systemd-nspawn@{system}.service",
+                work_directory=f"{systemd_directory}/machines.target.wants",
             )

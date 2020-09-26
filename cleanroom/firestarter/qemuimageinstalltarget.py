@@ -65,7 +65,7 @@ def _copy_efi(src: str, dest: str) -> int:
         ]
         for d in dirs:
             dest = os.path.join(efi_path, d)
-            trace("Copying {} to {}".format(os.path.join(efi_src_path, d), dest))
+            trace(f"Copying {os.path.join(efi_src_path, d)} to {dest}")
             copytree(
                 os.path.join(efi_src_path, d), dest, dirs_exist_ok=True,
             )
@@ -77,7 +77,7 @@ def _copy_efi(src: str, dest: str) -> int:
         )
 
     except Exception as e:
-        debug("Failed to install EFI: {}.".format(e))
+        debug(f"Failed to install EFI: {e}.")
         return 1
     else:
         debug("Successfully installed EFI")
@@ -92,7 +92,7 @@ def create_qemu_image(
     system_image_file: str,
     tmp_dir: str,
 ) -> str:
-    trace("Creating image file {}.".format(image_path))
+    trace(f"Creating image file {image_path}.")
     with disk.NbdDevice.new_image_file(
         image_path, image_size, disk_format=image_format
     ) as device:
@@ -146,7 +146,7 @@ class QemuImageInstallTarget(InstallTarget):
 
         return qemu_tool.run_qemu(
             parse_result,
-            drives=["{}:{}".format(image_path, parse_result.hdd_format)],
+            drives=[f"{image_path}:{parse_result.hdd_format}",],
             work_directory=tmp_dir,
         )
 

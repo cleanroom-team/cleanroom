@@ -24,7 +24,7 @@ class QemuInstallTarget(InstallTarget):
             print("No DISPLAY variable set: Can not start qemu.")
             exit(1)
 
-        clrm_device = "{}:raw:read-only".format(image_file)
+        clrm_device = f"{image_file}:raw:read-only"
         if parse_result.usb_clrm:
             clrm_device += ":usb"
 

@@ -23,7 +23,7 @@ class DepmodAllCommand(Command):
             "_depmod_all",
             help_string="Make sure all module dependecies are up to date.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -37,7 +37,7 @@ class DepmodAllCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         modules = system_context.file_name("/usr/lib/modules")
@@ -47,7 +47,7 @@ class DepmodAllCommand(Command):
         for kver in [
             f for f in os.listdir(modules) if os.path.isdir(os.path.join(modules, f))
         ]:
-            location.set_description("Run depmod for kernel version {}...".format(kver))
+            location.set_description(f"Run depmod for kernel version {kver}...")
             self._execute(
                 location,
                 system_context,

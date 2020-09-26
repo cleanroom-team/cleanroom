@@ -22,7 +22,7 @@ class PkgKernelCommand(Command):
             syntax_string="[variant=(lts|hardened|DEFAULT)]",
             help_string="Set up a Kernel. If no variant is given, then the default kernel is installed.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -37,14 +37,14 @@ class PkgKernelCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
 
         kernel = "linux"
         variant = kwargs.get("variant", "")
         if variant:
-            kernel = "{}-{}".format(kernel, variant)
+            kernel = f"{kernel}-{variant}"
 
         self._execute(
             location,

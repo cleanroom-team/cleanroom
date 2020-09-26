@@ -27,7 +27,7 @@ def _setup_network(
     cluster_match: str,
     gateway: str,
     dns: str,
-    ntp: str
+    ntp: str,
 ) -> None:
     create_file(
         system_context,
@@ -47,7 +47,7 @@ def _setup_network(
         system_context,
         "/usr/lib/systemd/network/10-extern.network",
         textwrap.dedent(
-            """\
+            f"""\
                 [Match]
                 {outside_match}
                 
@@ -60,16 +60,7 @@ def _setup_network(
                 IPForward=yes
                 IPMasquerade=yes
                 """
-        )
-        .format(
-            outside_match=outside_match,
-            cluster_id=cluster_id,
-            node_id=node_id,
-            gateway=gateway,
-            dns=dns,
-            ntp=ntp,
-        )
-        .encode("utf-8"),
+        ).encode("utf-8"),
         mode=0o644,
     )
 
@@ -77,7 +68,7 @@ def _setup_network(
         system_context,
         "/usr/lib/systemd/network/30-cbr.network",
         textwrap.dedent(
-            """\
+            f"""\
                 [Match]
                 Name=cbr0
                 
@@ -85,11 +76,7 @@ def _setup_network(
                 Description={cluster_name} pod bridge setup
                 Address=10.{cluster_offset}.{node_id}.1/16
                 """
-        )
-        .format(
-            cluster_name=cluster_name, cluster_offset=cluster_id + 128, node_id=node_id
-        )
-        .encode("utf-8"),
+        ).encode("utf-8"),
         mode=0o644,
     )
 
@@ -97,7 +84,7 @@ def _setup_network(
         system_context,
         "/usr/lib/systemd/network/40-cbr-outside-if.network",
         textwrap.dedent(
-            """\
+            f"""\
                 [Match]
                 {cluster_match}
                 
@@ -105,9 +92,7 @@ def _setup_network(
                 Description={cluster_name} pod bridge outside connectivity
                 Bridge=cbr0
                 """
-        )
-        .format(cluster_name=cluster_name, cluster_match=cluster_match)
-        .encode("utf-8"),
+        ).encode("utf-8"),
         mode=0o644,
     )
 
@@ -147,7 +132,7 @@ def _setup_kubelet(
         system_context,
         "/usr/lib/systemd/system/kubelet.service.d/override.conf",
         textwrap.dedent(
-            """\
+            f"""\
                 [Service]
                 EnvironmentFile=
                 ExecStart=
@@ -156,9 +141,7 @@ def _setup_kubelet(
                     --address={node_ip} --port 10250 \\
                     --api-servers=http://{master_ip}:8080/
                 """
-        )
-        .format(master_ip=master_ip, node_ip=node_ip)
-        .encode("utf-8"),
+        ).encode("utf-8"),
         mode=0o644,
     )
 
@@ -171,16 +154,14 @@ def _setup_kube_proxy(
         system_context,
         "/usr/lib/systemd/system/kube-proxy.service.d/override.conf",
         textwrap.dedent(
-            """\
+            f"""\
                 [Service]
                 EnvironmentFile=
                 ExecStart=
                 ExecStart=/usr/bin/kube-proxy --logtostderr=true --v=0 \\
                     --master={master_ip} 
                 """
-        )
-        .format(master_ip=master_ip)
-        .encode("utf-8"),
+        ).encode("utf-8"),
         mode=0o644,
     )
 
@@ -199,7 +180,7 @@ class K8sNodeCommand(Command):
             "[gateway=<10.0.2.2>] [dns=<10.0.2.3>] [ntp=<10.42.0.1>]",
             help_string="Set up cluster node network.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -219,7 +200,7 @@ class K8sNodeCommand(Command):
                 "dns",
                 "ntp",
             ),
-            **kwargs
+            **kwargs,
         )
         self._require_kwargs(
             location, ("cluster_name", "cluster_id", "node_id"), **kwargs
@@ -236,7 +217,7 @@ class K8sNodeCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         cluster_name = kwargs.get("cluster_name", "")
@@ -244,21 +225,17 @@ class K8sNodeCommand(Command):
         node_id = int(kwargs.get("node_id", -1))
 
         outside_match = kwargs.get(
-            "outside_match",
-            "MACAddress=52:54:00:12:{:02x}:{:02x}".format(cluster_id, node_id),
+            "outside_match", f"MACAddress=52:54:00:12:{cluster_id:02x}:{node_id:02x}",
         )
         cluster_match = kwargs.get(
-            "cluster_match",
-            "MACAddress=52:54:00:13:{:02x}:{:02x}".format(cluster_id, node_id),
+            "cluster_match", f"MACAddress=52:54:00:13:{cluster_id:02x}:{node_id:02x}",
         )
         gateway = kwargs.get("gateway", "10.0.2.2")
         dns = kwargs.get("dns", "10.0.2.3")
         ntp = kwargs.get("ntp", "10.42.0.1")
 
-        master_ip = "10.128.{cluster_id}.1".format(cluster_id=cluster_id)
-        node_ip = "10.128.{cluster_id}.{node_id}".format(
-            cluster_id=cluster_id, node_id=node_id
-        )
+        master_ip = f"10.128.{cluster_id}.1"
+        node_ip = f"10.128.{cluster_id}.{node_id}"
 
         _setup_network(
             location,

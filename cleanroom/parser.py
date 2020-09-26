@@ -117,7 +117,7 @@ class Parser:
     def parse(self, input_file: str) -> typing.Tuple[str, str, typing.List[ExecObject]]:
         """Parse a file."""
         with open(input_file, "r") as f:
-            debug("Parsing file {}...".format(input_file))
+            debug(f"Parsing file {input_file}...")
             return self._parse_string(f.read(), input_file)
 
     def _parse_string(
@@ -156,9 +156,7 @@ class Parser:
                 command_info = self._command_manager.command(command_name)
 
                 if not command_info:
-                    raise ParseError(
-                        "Unknown command {}.".format(c), location=current_location
-                    )
+                    raise ParseError(f"Unknown command {c}.", location=current_location)
 
                 (args, kwargs) = _process_arguments(arguments)
 
@@ -169,8 +167,7 @@ class Parser:
                 if command_dependency:
                     if base_system_name:
                         raise ParseError(
-                            "More than one base system was "
-                            'provided in "{}".'.format(input_file_name)
+                            f'More than one base system was provided in "{input_file_name}".'
                         )
                     base_system_name = command_dependency
                 if command_target_distribution:

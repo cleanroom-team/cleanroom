@@ -23,7 +23,7 @@ class SetHostnameCommand(Command):
             syntax="<STATIC> [pretty=<PRETTY>]",
             help_string="Set the hostname of the system.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -44,7 +44,7 @@ class SetHostnameCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         static_hostname = args[0]
@@ -63,6 +63,6 @@ class SetHostnameCommand(Command):
             location.next_line(),
             system_context,
             "sed",
-            '/^PRETTY_HOSTNAME=/ cPRETTY_HOSTNAME="{}"'.format(pretty_hostname),
+            f'/^PRETTY_HOSTNAME=/ cPRETTY_HOSTNAME="{pretty_hostname}"',
             "/etc/machine.info",
         )

@@ -89,40 +89,31 @@ def _move_symlink(
     link_target = os.readlink(link)
     # normalize to /usr/lib...
     if link_target.startswith("/lib/"):
-        link_target = "/usr{}".format(link_target)
+        link_target = f"/usr{link_target}"
     (output_link, output_link_target) = _map_host_link(
         root_directory, old_base, new_base, link, link_target
     )
 
-    trace(
-        "Moving link {}->{}: {} to {}".format(
-            link, link_target, output_link, output_link_target
-        )
-    )
+    trace(f"Moving link {link}->{link_target}: {output_link} to {output_link_target}")
     os.makedirs(os.path.dirname(output_link), mode=0o755, exist_ok=True)
 
     if not os.path.isdir(os.path.dirname(output_link)):
         raise GenerateError(
-            '"{}" is no directory when trying to move '
-            '"{}" into /usr.'.format(output_link, link),
+            f'"{output_link}" is no directory when trying to move "{link}" into /usr.',
             location=location,
         )
 
     if os.path.exists(output_link):
         if not os.path.islink(output_link):
             raise GenerateError(
-                '"{}" exists and is not a link when '
-                'trying to move "{}" into /usr.'.format(output_link, link),
+                f'"{output_link}" exists and is not a link when trying to move "{link}" into /usr.',
                 location=location,
             )
         else:
             old_link_target = os.readlink(output_link)
             if old_link_target != output_link_target:
                 raise GenerateError(
-                    '"{}" exists but points to "{}" '
-                    'when "{}" was expected.'.format(
-                        link, old_link_target, output_link_target
-                    ),
+                    f'"{link}" exists but points to "{old_link_target}" when "{output_link_target}" was expected.',
                     location=location,
                 )
             else:
@@ -141,8 +132,7 @@ def _move_file(location: Location, old_base: str, new_base: str, path: str):
     new_dir = _map_base(old_base, new_base, path_dir)[0]
     if os.path.exists(new_dir) and not os.path.isdir(new_dir):
         raise GenerateError(
-            '"{}" is not a directory when moving "{}".'.format(new_dir, path),
-            location=location,
+            f'"{new_dir}" is not a directory when moving "{path}".', location=location,
         )
 
     if not os.path.exists(new_dir):
@@ -151,8 +141,7 @@ def _move_file(location: Location, old_base: str, new_base: str, path: str):
     new_path = os.path.join(new_dir, path_name)
     if os.path.exists(new_path):
         raise GenerateError(
-            '"{}" already exists when moving "{}".'.format(new_path, path),
-            location=location,
+            f'"{new_path}" already exists when moving "{path}".', location=location,
         )
 
     shutil.copyfile(path, new_path)
@@ -169,7 +158,7 @@ class SystemdCleanupCommand(Command):
             "moving files and links to the appropriate /usr "
             "directory.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -183,7 +172,7 @@ class SystemdCleanupCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         old_base = system_context.file_name("/etc/systemd/system") + "/"

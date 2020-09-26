@@ -24,7 +24,7 @@ class SystemdSetDefaultCommand(Command):
             syntax="<TARGET>",
             help_string="Set the systemd target to boot into.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -49,7 +49,7 @@ class SystemdSetDefaultCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         target = args[0]
@@ -58,8 +58,7 @@ class SystemdSetDefaultCommand(Command):
 
         if not isfile(system_context, target_path):
             raise GenerateError(
-                'Target "{}" does not exist or is no file. '
-                "Can not use as default target.".format(target)
+                f'Target "{target}" does not exist or is no file. Can not use as default target.'
             )
 
         default = "default.target"

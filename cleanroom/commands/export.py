@@ -24,7 +24,7 @@ def _setup_kernel_commandline(base_cmdline: str, root_hash: str) -> str:
         (
             base_cmdline,
             "root=/dev/mapper/root",
-            "roothash={}".format(root_hash),
+            f"roothash={root_hash}",
             "FOO",  # One of my mainboards eats the last letter of the last argument:-/
         )
     )
@@ -47,9 +47,7 @@ def _validate_installation(location: Location, system_context: SystemContext) ->
 
 def _uuid_ify(data: str) -> str:
     assert len(data) == 32
-    return "{}-{}-{}-{}-{}".format(
-        data[0:8], data[8:12], data[12:16], data[16:20], data[20:]
-    )
+    return f"{data[0:8]}-{data[8:12]}-{data[12:16]}-{data[16:20]}-{data[20:]}"
 
 
 class ExportCommand(Command):
@@ -108,8 +106,7 @@ class ExportCommand(Command):
         repo_compression = kwargs.get("repository_compression", "zstd")
         if repo_compression not in ("none", "lz4", "zstd", "zlib", "lzma",):
             raise ParseError(
-                '"{}" is not a supported '
-                "repository compression format.".format(repo_compression),
+                f'"{repo_compression}" is not a supported repository compression format.',
                 location=location,
             )
 
@@ -117,24 +114,17 @@ class ExportCommand(Command):
         if efi_emulator:
             if not os.path.isdir(os.path.join(efi_emulator, "EFI")):
                 raise ParseError(
-                    '"{}" is not a valid efi emulator. '
-                    'The folder needs to contain a "EFI" folder.'.format(efi_emulator),
+                    f'"{efi_emulator}" is not a valid efi emulator. The folder needs to contain a "EFI" folder.',
                     location=location,
                 )
             if not os.path.isdir(os.path.join(efi_emulator, "Bootloaders")):
                 raise ParseError(
-                    '"{}" is not a valid efi emulator. '
-                    'The folder needs to contain a "Bootloaders" folder.'.format(
-                        efi_emulator
-                    ),
+                    f'"{efi_emulator}" is not a valid efi emulator. The folder needs to contain a "Bootloaders" folder.',
                     location=location,
                 )
             if not os.path.isdir(os.path.join(efi_emulator, "BootSectors")):
                 raise ParseError(
-                    '"{}" is not a valid efi emulator. '
-                    'The folder needs to contain a "BootSectors" folder.'.format(
-                        efi_emulator
-                    ),
+                    f'"{efi_emulator}" is not a valid efi emulator. The folder needs to contain a "BootSectors" folder.',
                     location=location,
                 )
 
@@ -189,7 +179,7 @@ class ExportCommand(Command):
         repository_compression_level = kwargs.get("repository_compression_level", 5)
         usr_only = kwargs.get("usr_only", True)
 
-        h2('Exporting system "{}".'.format(system_context.system_name))
+        h2(f'Exporting system "{system_context.system_name}".')
         debug("Running Hooks.")
         self._run_all_exportcommand_hooks(system_context)
 
@@ -269,7 +259,7 @@ class ExportCommand(Command):
 
         system_context.set_substitution("EXPORT_DIRECTORY", export_directory)
 
-        verbose("Exporting all data in {}.".format(export_directory))
+        verbose(f"Exporting all data in {export_directory}.")
         self._execute(
             location.next_line(),
             system_context,
@@ -292,7 +282,7 @@ class ExportCommand(Command):
 
         if exists(system_context, tarball):
             raise GenerateError(
-                '"{}": Root tarball "{}" already exists.'.format(self.name, tarball),
+                f'"{self.name}": Root tarball "{tarball}" already exists.',
                 location=location,
             )
         run(

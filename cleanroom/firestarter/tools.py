@@ -67,7 +67,7 @@ def find_archive(
     for line in borg_list.stdout.decode("utf-8").split("\n"):
         if not line.startswith(system_name):
             continue
-        trace("Borg list: {}.".format(line))
+        trace(f"Borg list: {line}.")
         versioned_system_name = line.split(" ")[0]
         assert versioned_system_name[len(system_name)] == "-"
         current_version = versioned_system_name[len(system_name) + 1 :]
@@ -104,7 +104,7 @@ def execute_with_system_mounted(
                 options="ro",
             ) as root:
 
-                trace('Executing with EFI "{}" and root "{}".'.format(efi, root))
+                trace(f'Executing with EFI "{efi}" and root "{root}".')
                 result = to_execute(efi, root)
 
     return result
@@ -115,7 +115,7 @@ class BorgMount:
         self, mnt_point: str, *, repository: str, system_name: str, version: str,
     ) -> None:
         if not os.path.isdir(mnt_point):
-            raise OSError('Mount point "{}" is not a directory.'.format(mnt_point))
+            raise OSError(f'Mount point "{mnt_point}" is not a directory.')
 
         (archive, _) = find_archive(system_name, repository=repository, version=version)
         if not archive:
@@ -127,9 +127,7 @@ class BorgMount:
         self._version = version
 
     def __enter__(self) -> typing.Any:
-        run_borg(
-            "mount", "{}::{}".format(self._repository, self._archive), self._mnt_point
-        )
+        run_borg("mount", f"{self._repository}::{self._archive}", self._mnt_point)
 
         # find image file:
         image_files = [

@@ -18,11 +18,11 @@ def preflight_check(
     try:
         func()
     except PreflightError:
-        fail('Preflight Check "{}" failed'.format(title), ignore=ignore_errors)
+        fail(f'Preflight Check "{title}" failed', ignore=ignore_errors)
         if not ignore_errors:
             raise
     else:
-        success('Preflight Check "{}" passed'.format(title), verbosity=2)
+        success(f'Preflight Check "{title}" passed', verbosity=2)
 
 
 def users_check() -> None:

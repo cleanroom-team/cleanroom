@@ -17,11 +17,11 @@ import typing
 
 def validate_device(dev: str, dir: str) -> typing.Tuple[str, str, str]:
     if not os.path.isdir(dir):
-        ("{} is not a directory.".format(dir))
+        (f"{dir} is not a directory.")
         return ("", "", "")
 
     if not disk.is_block_device(dev):
-        ("{} is not a block device.".format(dev))
+        (f"{dir} is not a block device.")
         return ("", "", "")
 
     return (dev, "raw", dir)
@@ -31,20 +31,20 @@ def validate_image(
     file: str, format: str, size: str, dir: str
 ) -> typing.Tuple[str, str, str]:
     if not os.path.isdir(dir):
-        ("{} is not a directory.".format(dir))
+        (f"{dir} is not a directory.")
         return ("", "", "")
 
     if file.startswith("/dev/") or file.startswith("/sys/"):
-        ('"{}" does not look like a image file name.'.format(file))
+        (f'"{file}" does not look like a image file name.')
         return ("", "", "")
     if not os.path.exists(file):
         if not size:
-            ('No size for missing image file "{}"'.format(file))
+            (f'No size for missing image file "{file}"')
             return ("", "", "")
         disk.create_image_file(file, disk.byte_size(size), disk_format=format)
 
     if not os.path.isfile(file):
-        ('"{}" exists but is no file.'.format(file))
+        (f'"{file}" exists but is no file.')
         return ("", "", "")
 
     return (file, format, dir)
@@ -56,8 +56,9 @@ def parse_arguments(args: typing.Any) -> typing.List[typing.Tuple[str, str, str]
 
     for m in args.mappings:
         parts = m.split(":")
+        parts_str = ":".join(parts)
         (dev, format, dir) = ("", "", "")
-        trace("==> {}.".format(":".join(parts)))
+        trace(f"==> {parts_str}.")
 
         if len(parts) == 2:
             (dev, format, dir) = validate_device(*parts)
@@ -67,16 +68,16 @@ def parse_arguments(args: typing.Any) -> typing.List[typing.Tuple[str, str, str]
             (dev, format, dir) = validate_image(parts[0], parts[1], parts[2], parts[3])
 
         if not dev or not dir:
-            error('Failed to parse device mapping "{}"'.format(m))
+            error(f'Failed to parse device mapping "{m}"')
             return []
 
         if dev in device_map:
-            error('Multiple definitions of device "{}".'.format(dev))
+            error(f'Multiple definitions of device "{dev}".')
             return []
         else:
             device_map[dev] = True
 
-        device_list.append((dev, format, dir))
+        device_list.append((dev, format, dir,))
 
     return device_list
 
@@ -112,7 +113,7 @@ class PartitionInstallTarget(InstallTarget):
                 dev_node = d.device()
                 run.run(
                     "/usr/bin/systemd-repart",
-                    "--definitions={}".format(dir),
+                    f"--definitions={dir}",
                     "--dry-run=no",
                     "--empty=force",
                     dev_node,

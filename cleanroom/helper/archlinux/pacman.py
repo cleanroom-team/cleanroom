@@ -136,7 +136,7 @@ def _pacman_keyinit(system_context: SystemContext, pacman_key_command: str) -> N
 
 
 def _mountpoint(root_dir: str, folder: str, dev: str, **kwargs: typing.Any):
-    debug("Mounting {} in chroot.".format(folder))
+    debug(f"Mounting {folder} in chroot.")
     path = root_dir
     if folder:
         path = os.path.join(root_dir, folder)
@@ -253,7 +253,7 @@ def _copy_state(system_context: SystemContext, internal_pacman: bool) -> None:
         _config_file(system_context, internal_pacman),
     )
 
-    debug("Inside: {}, outside: {}".format(inside, outside))
+    debug(f"Inside: {inside}, outside: {outside}.")
     if internal_pacman:
         shutil.rmtree(inside)
         info("Copy pacman DB into the filesystem.")
@@ -273,7 +273,7 @@ def _copy_state(system_context: SystemContext, internal_pacman: bool) -> None:
 
 
 def _move_pacman_data(system_context: SystemContext, *, move_into_fs: bool) -> None:
-    debug('Moving pacman data for system "{}".'.format(system_context.system_name))
+    debug(f'Moving pacman data for system "{system_context.system_name}".')
 
     _setup_directories(system_context, move_into_fs)
 
@@ -332,17 +332,11 @@ def pacman(
     if previous_pacstate != pacstate:
         if pacstate:
             info(
-                "Pacman got installed, "
-                'moving pacman data into system "{}".'.format(
-                    system_context.system_name
-                )
+                f'Pacman got installed, moving pacman data into system "{system_context.system_name}".'
             )
         else:
             info(
-                "Pacman got deinstalled, "
-                'moving pacman data out of system "{}".'.format(
-                    system_context.system_name
-                )
+                f'Pacman got deinstalled, moving pacman data out of system "{system_context.system_name}".'
             )
 
         _move_pacman_data(system_context, move_into_fs=pacstate)

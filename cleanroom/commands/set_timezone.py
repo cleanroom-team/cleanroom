@@ -24,7 +24,7 @@ class SetTimezoneCommand(Command):
             syntax="<TIMEZONE>",
             help_string="Set up the timezone for a system.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -40,7 +40,7 @@ class SetTimezoneCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         etc = "/etc"
@@ -51,7 +51,7 @@ class SetTimezoneCommand(Command):
         full_timezone = "../usr/share/zoneinfo/" + timezone
         if not exists(system_context, full_timezone, work_directory=etc):
             raise GenerateError(
-                'Timezone "{}" not found when trying to set timezone.'.format(timezone),
+                f'Timezone "{timezone}" not found when trying to set timezone.',
                 location=location,
             )
 

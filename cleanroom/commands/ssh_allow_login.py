@@ -26,7 +26,7 @@ class SshAllowLoginCommand(Command):
             syntax="<USER> <PUBLIC_KEYFILE> " "options=<OPTIONS>",
             help_string="Authorize <PUBLIC_KEYFILE> to log in " "as <USER>.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -43,7 +43,7 @@ class SshAllowLoginCommand(Command):
         location: Location,
         system_context: SystemContext,
         directory: str,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         if not exists(system_context, directory):
             self._execute(
@@ -52,8 +52,7 @@ class SshAllowLoginCommand(Command):
             return
         if not isdir(system_context, directory):
             raise GenerateError(
-                '"{}" needs directory "{}", but that exists and '
-                "is not a directory.".format(self.name, directory),
+                f'"{self.name}" needs directory "{directory}", but that exists and is not a directory.',
                 location=location,
             )
 
@@ -62,25 +61,20 @@ class SshAllowLoginCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         user = args[0]
         keyfile = args[1]
 
-        info("Adding ssh key to {}'s authorized_keys file.".format(user))
+        info(f"Adding ssh key to {user}'s authorized_keys file.")
         data = UserHelper.user_data(user, root_directory=system_context.fs_directory)
         if data is None:
             raise GenerateError(
-                '"{}" could not find user "{}".'.format(self.name, user),
-                location=location,
+                f'"{self.name}" could not find user "{user}".', location=location,
             )
 
-        trace(
-            "{} mapping: UID {}, GID {}, home: {}.".format(
-                user, data.uid, data.gid, data.home
-            )
-        )
+        trace(f"{user} mapping: UID {data.uid}, GID {data.gid}, home: {data.home}.")
         self._check_or_create_directory(
             location,
             system_context,

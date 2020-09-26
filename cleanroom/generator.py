@@ -31,11 +31,10 @@ class Generator:
         self, system: str, exception: Exception, ignore_errors: bool = False
     ) -> None:
         if isinstance(exception, AssertionError):
-            fail('Generation of "{}" asserted.'.format(system), force_exit=False)
+            fail(f'Generation of "{system}" asserted.', force_exit=False)
         else:
             fail(
-                'Generation of "{}" failed: {}'.format(system, str(exception)),
-                force_exit=False,
+                f'Generation of "{system}" failed: {str(exception)}', force_exit=False,
             )
 
         self._report_error_details(system, exception, ignore_errors=ignore_errors)
@@ -113,7 +112,5 @@ class Generator:
             success("All systems generated successfully.")
         else:
             fail(
-                "{} of {} systems failed during generation phase.".format(
-                    failed_systems, total_systems
-                )
+                f"{failed_systems} of {total_systems} systems failed during generation phase."
             )

@@ -24,7 +24,7 @@ class SetMachineIdCommand(Command):
             syntax="<ID>",
             help_string="Set the machine id of the system.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -41,7 +41,7 @@ class SetMachineIdCommand(Command):
         id_pattern = re.compile("^[A-Fa-f0-9]{32}$")
         if not id_pattern.match(machine_id):
             raise ParseError(
-                '"{}" is not a valid machine-id.'.format(machine_id), location=location
+                f'"{machine_id}" is not a valid machine-id.', location=location
             )
 
     def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
@@ -58,14 +58,13 @@ class SetMachineIdCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         old_machine_id = system_context.substitution("MACHINE_ID", "")
         if old_machine_id:
             raise GenerateError(
-                'Machine-id was already set to "{}".'.format(old_machine_id),
-                location=location,
+                f'Machine-id was already set to "{old_machine_id}".', location=location,
             )
 
         machine_id = args[0]

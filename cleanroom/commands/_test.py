@@ -25,18 +25,18 @@ def _environment(system_context: SystemContext) -> typing.Mapping[str, str]:
 def _find_tests(system_context: SystemContext) -> typing.Generator[str, None, None]:
     """Find tests to run."""
     tests_directory = system_context.system_tests_directory
-    debug('Searching for tests in "{}".'.format(tests_directory))
+    debug(f'Searching for tests in "{tests_directory}".')
 
     for f in sorted(os.listdir(tests_directory)):
         test = os.path.join(tests_directory, f)
         if not os.path.isfile(test):
-            trace('"{}": Not a file, skipping.'.format(test))
+            trace(f'"{test}": Not a file, skipping.')
             continue
         if not os.access(test, os.X_OK):
-            trace('"{}": Not executable, skipping.'.format(test))
+            trace(f'"{test}": Not executable, skipping.')
             continue
 
-        info('Found test: "{}"'.format(test))
+        info(f'Found test: "{test}"')
         yield test
 
 
@@ -52,7 +52,7 @@ class TestCommand(Command):
             '"test" subdirectory of the systems directory and '
             "will pass the system name as first argument.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -65,17 +65,16 @@ class TestCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         h2(
-            'Running tests for system "{}"'.format(system_context.system_name),
-            verbosity=2,
+            f'Running tests for system "{system_context.system_name}"', verbosity=2,
         )
         env = _environment(system_context)
 
         for test in _find_tests(system_context):
-            trace("{}::Running test {}...".format(system_context.system_name, test))
+            trace(f"{system_context.system_name}::Running test {test}...")
             test_result = run(
                 test,
                 system_context.system_name,
@@ -85,9 +84,8 @@ class TestCommand(Command):
             )
             if test_result.returncode == 0:
                 success(
-                    '{}::Test "{}"'.format(system_context.system_name, test),
-                    verbosity=3,
+                    f'{system_context.system_name}::Test "{test}"', verbosity=3,
                 )
             else:
                 report_completed_process(msg, test_result)
-                fail('{}::Test "{}"'.format(system_context.system_name, test))
+                fail(f'{system_context.system_name}::Test "{test}"')

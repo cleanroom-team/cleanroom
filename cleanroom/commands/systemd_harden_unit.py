@@ -35,7 +35,7 @@ class SystemdHardenUnitCommand(Command):
             '[SystemCallFilter="@system-service"]',
             help_string="Apply hardening override to a systemd unit.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -63,7 +63,7 @@ class SystemdHardenUnitCommand(Command):
                 "RestrictAddressFamilies",
                 "SystemCallArchitecture",
             ),
-            **kwargs
+            **kwargs,
         )
 
     def __call__(
@@ -71,7 +71,7 @@ class SystemdHardenUnitCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         for unit in args:
@@ -82,7 +82,7 @@ class SystemdHardenUnitCommand(Command):
         location: Location,
         system_context: SystemContext,
         unit: str,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         if "." not in unit:
             unit += ".service"
@@ -91,7 +91,7 @@ class SystemdHardenUnitCommand(Command):
             location,
             system_context,
             "mkdir",
-            "/usr/lib/systemd/system/{}.d".format(unit),
+            f"/usr/lib/systemd/system/{unit}.d",
             force=True,
             mode=0o755,
         )

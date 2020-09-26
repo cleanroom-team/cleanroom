@@ -160,7 +160,7 @@ def _install_lvm_support(
     if not vg:
         return []
 
-    device_name = "dev-{}-{}".format(vg, image_name)
+    device_name = f"dev-{vg}-{image_name}"
     write_file(
         os.path.join(
             staging_area,

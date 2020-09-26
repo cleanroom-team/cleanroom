@@ -43,9 +43,6 @@ class DebootstrapCommand(Command):
         )
         self._require_kwargs(location, ("suite", "mirror",), **kwargs)
 
-        if not kwargs.get("suite", ""):
-            raise ParseError('"{}" needs a suite.'.format(self.name), location=location)
-
     def __call__(
         self,
         location: Location,

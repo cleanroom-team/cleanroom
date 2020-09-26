@@ -67,7 +67,7 @@ def is_nbd_device_in_use(device: str, *, nbd_client_command: str = ""):
         if fd != -1:
             os.close(fd)
 
-        trace("    Extra check result: {}.".format(ret_val))
+        trace(f"    Extra check result: {ret_val}.")
 
     return ret_val
 
@@ -78,7 +78,7 @@ def _get_max_nbd_count():
     with open("/sys/module/nbd/parameters/nbds_max", "r") as input:
         tmp = input.read().strip()
         ret_val = int(tmp)
-        trace("Read number of nbd devices from /sys: {}.".format(ret_val))
+        trace(f"Read number of nbd devices from /sys: {ret_val}.")
 
     return ret_val
 
@@ -131,7 +131,7 @@ def byte_size(size: typing.Any) -> int:
 
 
 def _sfdisk_size(size: int) -> str:
-    return "{}KiB".format(kib_ify(size))
+    return f"{kib_ify(size)}KiB"
 
 
 def create_image_file(
@@ -176,21 +176,21 @@ class Device:
     def device(self, partition: typing.Optional[int] = None) -> str:
         if partition is None:
             return self._device
-        return "{}{}".format(self._device, partition)
+        return f"{self._device}{partition}"
 
     def close(self):
         self._device = ""
 
     def wait_for_device_node(self, partition: typing.Optional[int] = None) -> bool:
         dev = self.device(partition)
-        trace('Waiting for "{}".'.format(dev))
+        trace(f'Waiting for "{dev}".')
         for _ in range(20):
             if is_block_device(dev):
                 return True
             elif os.path.exists(dev):
-                warn('"{}" exists but is no block device!'.format(dev))
+                warn(f'"{dev}" exists but is no block device!')
             sleep(0.5)
-        debug("Could not find device node {}.".format(dev))
+        debug(f"Could not find device node {dev}.")
         return False
 
 
@@ -210,11 +210,7 @@ class NbdDevice(Device):
         create_image_file(
             file_name, size, disk_format=disk_format, qemu_img_command=qemu_img_command
         )
-        debug(
-            "New image file {} ({}) created with size {}.".format(
-                file_name, disk_format, size
-            )
-        )
+        debug(f"New image file {file_name} ({disk_format}) created with size {size}.")
         return NbdDevice(
             file_name,
             disk_format=disk_format,
@@ -254,11 +250,7 @@ class NbdDevice(Device):
 
         super().__init__(device)
 
-        debug(
-            'Block device "{}" created for file {}.'.format(
-                self._device, self._file_name
-            )
-        )
+        debug(f'Block device "{self._device}" created for file {self._file_name}.')
 
     def __enter__(self) -> typing.Any:
         return self
@@ -279,7 +271,9 @@ class NbdDevice(Device):
     def device(self, partition: typing.Optional[int] = None) -> str:
         if partition is None:
             return self._device
-        return "{}p{}".format(self._device, partition)
+        if self._device[-1:].isnumeric():
+            return f"{self._device}p{partition}"
+        return f"{self._device}{partition}"
 
     def disk_format(self) -> str:
         return self._disk_format
@@ -315,16 +309,16 @@ class NbdDevice(Device):
             device = _nbd_device(counter)
             counter += 1
             if not is_block_device(device):
-                trace("{} is not a block device, skipping".format(device))
+                trace(f"{device} is not a block device, skipping")
                 continue
 
             if is_nbd_device_in_use(device, nbd_client_command=nbd_client_command):
-                trace("{} is in use, skipping".format(device))
+                trace(f"{device} is in use, skipping")
                 continue
 
             args = [
-                "--connect={}".format(device),
-                "--format={}".format(disk_format),
+                f"--connect={device}",
+                f"--format={disk_format}",
                 file_name,
             ]
             if read_only:
@@ -343,7 +337,7 @@ class NbdDevice(Device):
                 continue
 
             if result.returncode == 0:
-                trace("Device {} connected to file {}.".format(device, file_name))
+                trace(f"Device {device} connected to file {file_name}.")
                 return device
 
         trace("Too many nbd devices found, aborting!")
@@ -355,7 +349,7 @@ class NbdDevice(Device):
         assert is_block_device(device)
 
         run(qemu_nbd_command or "/usr/bin/qemu-nbd", "--disconnect", device)
-        trace('"{}" disconnected.'.format(device))
+        trace(f'"{device}" disconnected.')
 
 
 def _nbd_device(counter: int) -> str:
@@ -373,7 +367,7 @@ def _assert_uuid(data: str):
     ):
         return
 
-    raise GenerateError('"{}" is not a valid UUID.'.format(data))
+    raise GenerateError(f'"{data}" is not a valid UUID.')
 
 
 class Partitioner:
@@ -469,25 +463,23 @@ class Partitioner:
             prefix = ""
             partition_data: typing.List[str] = []
             if p.node is not None:
-                prefix = "{}: ".format(p.node)
+                prefix = f"{p.node}: "
             if p.start is not None:
-                partition_data.append(
-                    "start={}".format(_sfdisk_size(byte_size(p.start)))
-                )
+                partition_data.append(f"start={_sfdisk_size(byte_size(p.start))}")
             if p.size is not None:
-                partition_data.append("size={}".format(_sfdisk_size(byte_size(p.size))))
+                partition_data.append(f"size={_sfdisk_size(byte_size(p.size))}")
             if p.partition_type:
                 _assert_uuid(p.partition_type)
-                partition_data.append('type="{}"'.format(p.partition_type))
+                partition_data.append(f'type="{p.partition_type}"')
             if p.uuid:
                 _assert_uuid(p.uuid)
-                partition_data.append('uuid="{}"'.format(p.uuid))
+                partition_data.append(f'uuid="{p.uuid}"')
             if p.name:
-                partition_data.append('name="{}"'.format(p.name))
+                partition_data.append(f'name="{p.name}"')
 
             instructions += prefix + ", ".join(partition_data) + "\nprint\n"
 
-        trace("SFDISK partition instructions:\n{}---EOF---".format(instructions))
+        trace(f"SFDISK partition instructions:\n{instructions}---EOF---")
 
         run(
             self._flock_command,

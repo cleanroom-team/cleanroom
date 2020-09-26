@@ -17,7 +17,7 @@ class CleanRoomError(Exception):
         self,
         *args: typing.Any,
         location: typing.Optional[Location] = None,
-        original_exception: typing.Optional[Exception] = None
+        original_exception: typing.Optional[Exception] = None,
     ) -> None:
         """Constructor."""
         super().__init__(*args)
@@ -29,9 +29,7 @@ class CleanRoomError(Exception):
 
     def __str__(self) -> str:
         """Stringify exception."""
-        prefix = "Error"
-        if self.location:
-            prefix += " in {}".format(self.location)
+        prefix = f"Error in {self.location}" if self.location else "Error"
 
         postfix = ""
         if self.original_exception is not None:
@@ -40,7 +38,7 @@ class CleanRoomError(Exception):
             else:
                 postfix = "\n    Trigger: " + str(self.original_exception)
 
-        return "{}: {}{}".format(prefix, super().__str__(), postfix)
+        return f"{prefix}: {super().__str__()}{postfix}"
 
 
 class PreflightError(CleanRoomError):

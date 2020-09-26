@@ -24,7 +24,7 @@ class Executor:
         systems_definition_directory: str,
         command_manager: CommandManager,
         repository_base_directory: str,
-        timestamp: str
+        timestamp: str,
     ) -> None:
         assert scratch_directory
         assert systems_definition_directory
@@ -61,4 +61,4 @@ class Executor:
                 command.execute_func(
                     exec_obj.location, system_context, exec_obj.args, exec_obj.kwargs
                 )
-        success("System {} created successfully.".format(system_name))
+        success(f"System {system_name} created successfully.")

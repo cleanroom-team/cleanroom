@@ -19,7 +19,7 @@ class Location:
         file_name: typing.Optional[str] = None,
         line_number: typing.Optional[int] = None,
         description: typing.Optional[str] = None,
-        parent: typing.Optional[Location] = None
+        parent: typing.Optional[Location] = None,
     ) -> None:
         """Constructor."""
         if line_number is not None:
@@ -44,7 +44,7 @@ class Location:
         *,
         file_name: typing.Optional[str] = None,
         line_number: typing.Optional[int] = None,
-        description: typing.Optional[str] = None
+        description: typing.Optional[str] = None,
     ) -> "Location":
         return Location(
             file_name=file_name,
@@ -64,19 +64,18 @@ class Location:
         """Stringify location."""
         if self.file_name is None:
             if self.description:
-                result = '"{}"'.format(self.description)
+                result = f'"{self.description}"'
             else:
                 result = "<UNKNOWN>"
-
         else:
             result = self.file_name
 
             if self.line_number is not None and self.line_number > 0:
-                result += ":{}".format(self.line_number)
+                result = f"{result}:{self.line_number}"
 
             if self.description is not None:
-                result += ' "{}"'.format(self.description)
+                result = f'{result} "{self.description}"'
 
         if self.parent is not None:
-            result = str(self.parent) + " => " + result
+            result = f"{str(self.parent)} => {result}"
         return result

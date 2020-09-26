@@ -27,7 +27,7 @@ class AddPartitionCommand(Command):
             "minPadding=<SIZE> maxPadding=<SIZE>]",
             help_string="Add a partition to be created on the system.\n",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -52,7 +52,7 @@ class AddPartitionCommand(Command):
                 "minPadding",
                 "maxPadding",
             ),
-            **kwargs
+            **kwargs,
         )
         self._require_kwargs(location, ("type",), **kwargs)
         type = kwargs.get("type")
@@ -80,7 +80,7 @@ class AddPartitionCommand(Command):
             "root-ia64",
             "root-ia64-verity",
         ):
-            raise ParseError("Invalid type found: {}.".format(type))
+            raise ParseError(f"Invalid type found: {type}.")
 
     def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
         return [
@@ -96,7 +96,7 @@ class AddPartitionCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         name = args[0]
@@ -109,41 +109,41 @@ class AddPartitionCommand(Command):
         contents = "[Partition]\n"
 
         type = kwargs.get("type", "")
-        contents += "Type={}\n".format(type)
+        contents += f"Type={type}\n"
         label = kwargs.get("label", "")
         if label:
-            contents += "Label={}\n".format(label)
+            contents += f"Label={label}\n"
         uuid = kwargs.get("uuid", "")
         if uuid:
-            contents += "UUID={}\n".format(uuid)
+            contents += f"UUID={uuid}\n"
         priority = kwargs.get("priority", 0)
         if priority != 0:
-            contents += "Priority={}\n".format(priority)
+            contents += f"Priority={priority}\n"
         weight = kwargs.get("weight", 1000)
         if weight != 1000:
-            contents += "Weight={}\n".format(weight)
+            contents += f"Weight={weight}\n"
         padding_weight = kwargs.get("paddingWeight", 0)
         if padding_weight != 0:
-            contents += "PaddingWeight={}\n".format(padding_weight)
+            contents += f"PaddingWeight={padding_weight}\n"
         minSize = kwargs.get("minSize", "")
         if minSize:
-            contents += "SizeMinBytes={}\n".format(minSize)
+            contents += f"SizeMinBytes={minSize}\n"
         maxSize = kwargs.get("maxSize", "")
         if maxSize:
-            contents += "SizeMaxBytes={}\n".format(maxSize)
+            contents += f"SizeMaxBytes={maxSize}\n"
         minPadding = kwargs.get("minPadding", "")
         if minPadding:
-            contents += "PaddingMinBytes={}\n".format(minPadding)
+            contents += f"PaddingMinBytes={minPadding}\n"
         maxPadding = kwargs.get("maxPadding", "")
         if maxPadding:
-            contents += "PaddingMaxBytes={}\n".format(maxPadding)
+            contents += f"PaddingMaxBytes={maxPadding}\n"
 
         rel_path = os.path.join(
             system_context.substitution("DISTRO_ID"), "repart.d", device_id,
         )
         path = os.path.join(system_context.boot_directory, "extra", rel_path,)
         filename = os.path.join(path, name)
-        trace("Creating repart.d file {} (relative: {}).".format(filename, rel_path))
+        trace(f"Creating repart.d file {filename} (relative: {rel_path}).")
 
         os.makedirs(path, mode=0o750, exist_ok=True)
         with open(filename, "wb") as f:
@@ -159,10 +159,10 @@ class AddPartitionCommand(Command):
             device_ids.append(device_id)
         system_context.set_substitution("DEPLOY_DEVICE_IDS", " ".join(device_ids))
 
-        key = "DEPLOY_{}_REPART_D".format(device_id)
+        key = f"DEPLOY_{device_id}_REPART_D"
         repart_path = system_context.substitution_expanded(key, "")
         if not repart_path:
-            trace("Setting {} to {}.".format(key, rel_path))
+            trace(f"Setting {key} to {rel_path}.")
             system_context.set_substitution(key, rel_path)
         else:
             assert rel_path == repart_path

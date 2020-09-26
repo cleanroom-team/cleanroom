@@ -35,7 +35,7 @@ class PkgPostgresqlCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         password = kwargs.get("password", "")
@@ -118,7 +118,7 @@ class PkgPostgresqlCommand(Command):
             create_file(
                 system_context,
                 "/home/postgres/.pgpass",
-                "*:*:*:*:{}".format(password).encode("utf-8"),
+                f"*:*:*:*:{password}".encode("utf-8"),
                 mode=0o600,
                 user="postgres",
                 group="postgres",

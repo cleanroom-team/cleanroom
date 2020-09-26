@@ -21,15 +21,13 @@ def _tar(efi_fs: str, rootfs: str, *, tarball_name: str, efi_tarball_name: str) 
         result = tool.run(
             "/usr/bin/bash",
             "-c",
-            '( cd {} ; tar -cf "{}" --auto-compress .) '.format(
-                efi_fs, efi_tarball_name
-            ),
+            f'( cd {efi_fs} ; tar -cf "{efi_tarball_name}" --auto-compress .) ',
         ).returncode
     if tarball_name:
         result += tool.run(
             "/usr/bin/bash",
             "-c",
-            '( cd {} ; tar -cf "{}" --auto-compress .) '.format(rootfs, tarball_name),
+            f'( cd {rootfs} ; tar -cf "{tarball_name}" --auto-compress .) ',
         ).returncode
 
     return result

@@ -22,7 +22,7 @@ class TeardownCommand(Command):
             "_teardown",
             help_string="Implicitly run after any other command of a " "system is run.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -35,7 +35,7 @@ class TeardownCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         self._run_hooks(system_context, "_teardown")
@@ -45,9 +45,7 @@ class TeardownCommand(Command):
 
         self._execute(location, system_context, "_store")
 
-        debug(
-            'Cleaning up everything in "{}".'.format(system_context.scratch_directory)
-        )
+        debug(f'Cleaning up everything in "{system_context.scratch_directory}".')
         self._service("btrfs_helper").delete_subvolume_recursive(
             system_context.scratch_directory
         )

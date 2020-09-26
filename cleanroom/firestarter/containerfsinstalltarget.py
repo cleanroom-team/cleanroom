@@ -19,9 +19,7 @@ def _extract_into_snapshot(_, rootfs: str, *, import_snapshot: str) -> int:
     return tool.run(
         "/usr/bin/bash",
         "-c",
-        '( cd "{}" ; tar -cf - . ) | ( cd "{}" ; tar -xf - )'.format(
-            rootfs, import_snapshot
-        ),
+        f'( cd "{rootfs}" ; tar -cf - . ) | ( cd "{import_snapshot}" ; tar -xf - )',
     ).returncode
 
 

@@ -34,7 +34,7 @@ def stringify(
         else ""
     )
     separator = " " if args_str and kwargs_str else ""
-    return '"{}"'.format(command) + args_str + separator + kwargs_str
+    return f'"{command}{args_str}{separator}{kwargs_str}"'
 
 
 class Command:
@@ -72,7 +72,7 @@ class Command:
     def syntax_string(self) -> str:
         """Return syntax description."""
         if self._syntax_string:
-            return "{} {}".format(self._name, self._syntax_string)
+            return f"{self._name} {self._syntax_string}"
         return self._name
 
     @property
@@ -96,7 +96,7 @@ class Command:
         
         Note that args and kwargs will *NOT* be string expanded and might contain substitutions!
         """
-        fail('Command "{}" called validate illegally!'.format(self.name))
+        fail(f'Command "{self.name}" called validate illegally!')
         return None
 
     def dependency(
@@ -120,7 +120,7 @@ class Command:
         
         Note that args and kwargs will be string expanded and not contain substitutions!
         """
-        fail('Command "{}"() triggered illegally!'.format(self.name))
+        fail(f'Command "{self.name}"() triggered illegally!')
 
     def _execute(
         self,
@@ -132,7 +132,7 @@ class Command:
     ) -> None:
         command_info = self._service("command_manager").command(command)
         if not command_info:
-            raise GenerateError('Command "{}" not found.'.format(command))
+            raise GenerateError(f'Command "{command}" not found.')
         command_info.validate_func(location, args, kwargs)
         command_info.execute_func(location, system_context, args, kwargs)
 
@@ -148,7 +148,7 @@ class Command:
         """Add a hook."""
         command_info = self._service("command_manager").command(command)
         if not command_info:
-            raise ParseError('Command "{}" not found.'.format(command))
+            raise ParseError(f'Command "{command}" not found.')
         command_info.validate_func(location, args, kwargs)
 
         system_context.add_hook(
@@ -158,20 +158,20 @@ class Command:
 
     def _run_hooks(self, system_context: SystemContext, hook_name: str) -> None:
         if system_context.hooks_were_run(hook_name):
-            verbose('Already ran "{}", skipping.'.format(hook_name))
+            verbose(f'Already ran "{hook_name}", skipping.')
             return
 
-        h3('Running "{}" hooks.'.format(hook_name))
+        h3(f'Running "{hook_name}" hooks.')
 
         for hook in system_context.hooks(hook_name):
             command_info = self._service("command_manager").command(hook.command)
             if not command_info:
-                raise GenerateError('Command "{}" not found.'.format(hook.command))
+                raise GenerateError(f'Command "{hook.command}" not found.')
             command_info.execute_func(
                 hook.location, system_context, hook.args, hook.kwargs
             )
 
-        success('Hooks "{}" were run successfully.'.format(hook_name), verbosity=1)
+        success(f'Hooks "{hook_name}" were run successfully.', verbosity=1)
 
     def _service(self, service_name: str) -> typing.Any:
         return self._services.get(service_name, None)
@@ -239,15 +239,14 @@ class Command:
         if not known_kwargs:
             if kwargs:
                 raise ParseError(
-                    '"{}" does not accept keyword arguments.'.format(self.name),
+                    f'"{self.name}" does not accept keyword arguments.',
                     location=location,
                 )
         else:
             for key in kwargs.keys():
                 if key not in known_kwargs:
                     raise ParseError(
-                        '"{}" does not accept the keyword '
-                        'arguments "{}".'.format(self.name, key),
+                        f'"{self.name}" does not accept the keyword arguments "{key}".',
                         location=location,
                     )
 
@@ -260,8 +259,7 @@ class Command:
         for key in required_kwargs:
             if key not in kwargs:
                 raise ParseError(
-                    '"{}" requires the keyword '
-                    'arguments "{}" to be passed.'.format(self.name, key),
+                    f'"{self.name}" requires the keyword arguments "{key}" to be passed.',
                     location=location,
                 )
 

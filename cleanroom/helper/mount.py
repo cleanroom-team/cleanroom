@@ -77,7 +77,7 @@ def mount(
     *,
     options: str = "",
     fs_type: str = "",
-    chroot: str = ""
+    chroot: str = "",
 ) -> None:
     assert len(mount_points(directory)) == 0
 
@@ -132,7 +132,7 @@ class Mount:
         fs_type: str = "",
         chroot: str = "",
         must_exist: bool = False,
-        fallback_cwd: str = ""
+        fallback_cwd: str = "",
     ) -> None:
         self._volume = volume
         self._fallback_cwd = fallback_cwd
@@ -144,14 +144,10 @@ class Mount:
 
         if os.path.exists(self._directory):
             if not os.path.isdir(self._directory):
-                raise OSError(
-                    'Mount point "{}" is not a directory.'.format(self._directory)
-                )
+                raise OSError(f'Mount point "{self._directory}" is not a directory.')
         else:
             if must_exist:
-                raise OSError(
-                    'Mount point "{}" does not exist.'.format(self._directory)
-                )
+                raise OSError(f'Mount point "{self._directory}" does not exist.')
             else:
                 self._must_remove_mount_point = True
                 os.makedirs(self._directory)

@@ -17,25 +17,23 @@ def _append_network(
     hostfwd: typing.List[str] = [],
     mac: str = "",
     net: str = "",
-    host: str = ""
+    host: str = "",
 ):
-    hostfwd_args = ["hostfwd={}".format(p) for p in hostfwd]
+    hostfwd_args = [f"hostfwd={p}" for p in hostfwd]
 
     hostfwd_str = "," + ",".join(hostfwd_args) if hostfwd_args else ""
-    mac_str = ",mac={}".format(mac) if mac else ""
-    host_str = ",host={}".format(host) if host else ""
-    net_str = ",net={}".format(net) if net else ""
+    mac_str = f",mac={mac}" if mac else ""
+    host_str = f",host={host}" if host else ""
+    net_str = f",net={net}" if net else ""
 
     # -netdev bridge,id=bridge1,br=qemubr0
     # -device virtio-net,netdev=bridge1,mac=52:54:00:12:01:c1
 
     return [
         "-netdev",
-        "user,id=nic0,hostname={}{}{}{}".format(
-            hostname, hostfwd_str, net_str, host_str
-        ),
+        f"user,id=nic0,hostname={hostname}{hostfwd_str}{net_str}{host_str}",
         "-device",
-        "virtio-net,netdev=nic0{}".format(mac_str),
+        f"virtio-net,netdev=nic0{mac_str}",
     ]
 
 
@@ -64,11 +62,9 @@ def _append_hdd(bootindex: int, counter: int, disk: str):
 
     return [
         "-drive",
-        "file={},format={},if=none,id=disk{}{}".format(
-            disk_parts[0], disk_parts[1], c, drive_extra
-        ),
+        f"file={disk_parts[0]},format={disk_parts[1]},if=none,id=disk{c}{drive_extra}",
         "-device",
-        "{},drive=disk{},bootindex={}".format(driver, c, bootindex),
+        f"{driver},drive=disk{c},bootindex={bootindex}",
     ]
 
 
@@ -80,9 +76,7 @@ def _append_fs(fs: str, *, read_only: bool = False):
 
     return [
         "-virtfs",
-        "local,id={0},path={1},mount_tag={0},security_mode=passthrough{2}".format(
-            fs_parts[0], fs_parts[1], ro
-        ),
+        f"local,id={fs_parts[0]},path={fs_parts[1]},mount_tag={fs_parts[0]},security_mode=passthrough{ro}",
     ]
 
 
@@ -93,7 +87,7 @@ def _append_efi(efi_vars: str):
         "-drive",
         "if=pflash,format=raw,readonly," "file=/usr/share/ovmf/x64/OVMF_CODE.fd",
         "-drive",
-        "if=pflash,format=raw,file={}".format(efi_vars),
+        f"if=pflash,format=raw,file={efi_vars}",
     ]
 
 
@@ -196,11 +190,11 @@ def run_qemu(
         "-cpu",
         "Penryn",  # Needed for clover to boot:-/
         "-smp",
-        "cores={}".format(parse_result.cores),
+        f"cores={parse_result.cores}",
         "-machine",
         "pc-q35-2.12",
         "-m",
-        "size={}".format(parse_result.memory),  # memory
+        f"size={parse_result.memory}",  # memory
         "-object",
         "rng-random,filename=/dev/urandom,id=rng0",
         "-device",
@@ -242,12 +236,13 @@ def run_qemu(
     if parse_result.verbatim:
         qemu_args += parse_result.verbatim
 
-    print('Running: "{}"'.format('" "'.join(qemu_args)))
+    run_str = '" "'.join(qemu_args)
+    print(f'Running: "{run_str}"')
     result = tools.run(*qemu_args, work_directory=work_directory, check=False)
 
     if result.returncode != 0:
-        print("Qemu run Failed with return code {}.".format(result.returncode))
-        print("Qemu stdout: {}".format(result.stdout))
-        print("Qemu stderr: {}".format(result.stderr))
+        print(f"Qemu run Failed with return code {result.returncode}.")
+        print(f"Qemu stdout: {result.stdout}")
+        print(f"Qemu stderr: {result.stderr}")
 
     return result.returncode

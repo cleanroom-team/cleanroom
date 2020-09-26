@@ -49,7 +49,7 @@ class BtrfsHelper:
 
     def delete_subvolume(self, directory: str) -> bool:
         """Delete a subvolume."""
-        trace("BTRFS: Delete subvolume {}.".format(directory))
+        trace(f"BTRFS: Delete subvolume {directory}.")
         return (
             run(
                 self._command,

@@ -24,7 +24,7 @@ class SetLocalesCommand(Command):
             syntax="<LOCALE> [<MORE_LOCALES>] [charmap=UTF-8]",
             help_string="Set the system locales.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -50,7 +50,7 @@ class SetLocalesCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         charmap = kwargs.get("charmap", "UTF-8")
@@ -61,10 +61,9 @@ class SetLocalesCommand(Command):
                 os.path.join(locales_dir, a[0:2])
             ):
                 raise ParseError(
-                    'Locale "{}" not found in /usr/share/locale.'.format(a),
-                    location=location,
+                    f'Locale "{a}" not found in /usr/share/locale.', location=location,
                 )
-            locales.append("{}.{} {}\n".format(a, charmap, charmap))
+            locales.append(f"{a}.{charmap} {charmap}\n")
 
         self._execute(
             location,

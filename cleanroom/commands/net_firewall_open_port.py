@@ -24,7 +24,7 @@ class NetFirewallOpenPortCommand(Command):
             syntax="<PORT> [protocol=(tcp|udp)] [comment=<TEXT>]",
             help_string="Open a port in the firewall.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -37,7 +37,7 @@ class NetFirewallOpenPortCommand(Command):
         protocol = kwargs.get("protocol", "tcp")
         if protocol != "tcp" and protocol != "udp":
             raise ParseError(
-                '"{}" only supports protocols "tcp" and "udp".'.format(self.name),
+                f'"{self.name}" only supports protocols "tcp" and "udp".',
                 location=location,
             )
 
@@ -46,7 +46,7 @@ class NetFirewallOpenPortCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         protocol = kwargs.get("protocol", "tcp")

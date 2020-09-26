@@ -52,7 +52,7 @@ def _get_initrd_parts(location: Location, path: str) -> typing.List[str]:
             initrd_parts.append(f)
     if not initrd_parts:
         raise GenerateError(
-            'No initrd-parts found in directory "{}".'.format(path), location=location
+            f'No initrd-parts found in directory "{path}".', location=location
         )
     initrd_parts.sort()
     for ip in initrd_parts:
@@ -93,7 +93,7 @@ class CreateEfiKernelCommand(Command):
         for f in files:
             if f and not os.path.isfile(f):
                 raise GenerateError(
-                    '"{}": referenced file "{}" does not exist.'.format(self.name, f),
+                    f'"{self.name}": referenced file "{f}" does not exist.',
                     location=location,
                 )
 
@@ -117,11 +117,11 @@ class CreateEfiKernelCommand(Command):
             "/usr/lib/systemd/boot/efi/" "linuxx64.efi.stub"
         )
 
-        debug("{}: Kernel   : {}.".format(self.name, kernel))
-        debug("{}: Initrd   : {}.".format(self.name, ", ".join(initrd_files)))
-        debug("{}: cmdline  : {}.".format(self.name, cmdline_input))
-        debug("{}: osrelease: {}.".format(self.name, osrelease_file))
-        debug("{}: efistub  : {}.".format(self.name, efistub))
+        debug(f"{self.name}: Kernel   : {kernel}.")
+        debug(f"{self.name}: Initrd   : {initrd_files}.")
+        debug(f"{self.name}: cmdline  : {cmdline_input}.")
+        debug(f"{self.name}: osrelease: {osrelease_file}.")
+        debug(f"{self.name}: efistub  : {efistub}.")
 
         self._validate_files(location, kernel, *initrd_files, osrelease_file, efistub)
 
@@ -131,19 +131,19 @@ class CreateEfiKernelCommand(Command):
         run(
             self._binary(Binaries.OBJCOPY),
             "--add-section",
-            ".osrel={}".format(osrelease_file),
+            f".osrel={osrelease_file}",
             "--change-section-vma",
             ".osrel=0x20000",
             "--add-section",
-            ".cmdline={}".format(cmdline),
+            f".cmdline={cmdline}",
             "--change-section-vma",
             ".cmdline=0x30000",
             "--add-section",
-            ".linux={}".format(kernel),
+            f".linux={kernel}",
             "--change-section-vma",
             ".linux=0x40000",
             "--add-section",
-            ".initrd={}".format(initrd),
+            f".initrd={initrd}",
             "--change-section-vma",
             ".initrd=0x3000000",
             efistub,

@@ -37,7 +37,7 @@ def report_completed_process(
 
     if completed_process.returncode != 0 or stdout or stderr:
         channel("Arguments  : {}".format(" ".join(completed_process.args)))
-        channel("Return Code: {}".format(completed_process.returncode))
+        channel(f"Return Code: {completed_process.returncode}")
         _report_output_lines(channel, "StdOut     :", stdout)
         _report_output_lines(channel, "StdErr     :", stderr)
 
@@ -75,12 +75,12 @@ def run(
     try:
         if stdout:
             if trace_output:
-                trace_output(">> Redirecting stdout to {}.".format(stdout))
+                trace_output(f">> Redirecting stdout to {stdout}.")
             stdout_fd = open(stdout, mode="w")
 
         if stderr:
             if trace_output:
-                trace_output(">> Redirecting stderr to {}.".format(stdout))
+                trace_output(f">> Redirecting stderr to {stderr}.")
             stderr_fd = open(stderr, mode="w")
 
         completed_process = subprocess.run(
@@ -90,11 +90,7 @@ def run(
             **kwargs,
         )
     except subprocess.TimeoutExpired as to:
-        print(
-            "Timeout: STDOUT so far: {}\nSTDERR so far:{}\n.".format(
-                to.stdout, to.stderr
-            )
-        )
+        print(f"Timeout: STDOUT so far: {to.stdout}\nSTDERR so far:{to.stderr}\n.")
         raise
 
     finally:
@@ -114,9 +110,7 @@ def run(
 
     if returncode is not None and completed_process.returncode != returncode:
         raise GenerateError(
-            "Unexpected return value {} (expected {}).".format(
-                completed_process.returncode, returncode
-            )
+            f"Unexpected return value {completed_process.returncode} (expected {returncode})."
         )
 
     return completed_process

@@ -31,7 +31,7 @@ class SshdSetHostkeysCommand(Command):
             help_string="Install all the ssh_host_*_key files found in "
             "<HOSTKEY_DIR> for SSHD.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -45,17 +45,13 @@ class SshdSetHostkeysCommand(Command):
     def _validate_key_directory(self, location: Location, key_directory: str) -> None:
         if not os.path.isdir(key_directory):
             raise ParseError(
-                '"{}": {} must be a directory (work directory is {}).'.format(
-                    self.name, key_directory, os.getcwd()
-                )
+                f'"{self.name}": {key_directory} must be a directory (work directory is {os.getcwd()}).'
             )
 
         keyfiles = glob.glob(_key_files(key_directory))
         if not keyfiles:
             raise ParseError(
-                '"{}": No ssh_host_*_key files found in {}.'.format(
-                    self.name, key_directory
-                ),
+                f'"{self.name}": No ssh_host_*_key files found in {key_directory}.',
                 location=location,
             )
 
@@ -64,14 +60,14 @@ class SshdSetHostkeysCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         key_directory = args[0]
         self._validate_key_directory(location, key_directory)
         if not isdir(system_context, "/etc/ssh"):
             raise GenerateError(
-                '"{}": No /etc/ssh directory found in system.'.format(self.name),
+                f'"{self.name}": No /etc/ssh directory found in system.',
                 location=location,
             )
 

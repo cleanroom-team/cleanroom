@@ -31,7 +31,7 @@ def _validate_rules_file(file_name: str, *extra_matches) -> None:
     with open(file_name, "r") as rules_fd:
         rules_contents = rules_fd.read()
 
-    print("Contents: {}<<<<<".format(rules_contents))
+    print(f"Contents: {rules_contents}<<<<<")
 
     for match in (*extra_matches, ipt._FORWARD_MAGIC, ipt._TCP_MAGIC, ipt._UDP_MAGIC):
         assert ("\n" + match + "\n") in rules_contents

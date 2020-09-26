@@ -42,7 +42,7 @@ def file_size(system_context: typing.Optional[SystemContext], f: str) -> int:
 def file_name(system_context: typing.Optional[SystemContext], f: str) -> str:
     """Return the full (outside) file path to a absolute (inside) file."""
     if not os.path.isabs(f):
-        raise GenerateError('File path "{}" is not absolute.'.format(f))
+        raise GenerateError(f'File path "{f}" is not absolute.')
 
     full_path = os.path.normpath(f)
     if system_context:
@@ -50,11 +50,9 @@ def file_name(system_context: typing.Optional[SystemContext], f: str) -> str:
         full_path = os.path.normpath(os.path.join(root_path, f[1:]))
 
         if full_path != root_path and not full_path.startswith(root_path + "/"):
-            raise GenerateError(
-                'File path "{}" is outside of "{}"'.format(full_path, root_path)
-            )
+            raise GenerateError(f'File path "{full_path}" is outside of "{root_path}"')
 
-    trace('Mapped file path "{}" to "{}".'.format(f, full_path))
+    trace(f'Mapped file path "{f}" to "{full_path}".')
 
     return full_path
 
@@ -78,9 +76,9 @@ def expand_files(
     to_iterate = map(func, files)
 
     for pattern in to_iterate:
-        debug("expand_files: Matching pattern: {}.".format(pattern))
+        debug(f"expand_files: Matching pattern: {pattern}.")
         for match in glob.iglob(pattern, recursive=recursive):
-            debug("expand_files: --- match {}.".format(match))
+            debug(f"expand_files: --- match {match}.")
             yield match
 
 
@@ -105,13 +103,9 @@ def _check_file(
 
     # Report result:
     if work_directory is None:
-        trace("{}: {} = {}".format(description, to_test, result))
+        trace(f"{description}: {to_test} = {result}")
     else:
-        trace(
-            "{}: {} (relative to {}) = {}".format(
-                description, to_test, work_directory, result
-            )
-        )
+        trace(f"{description}: {to_test} (relative to {work_directory}) = {result}")
 
     os.chdir(old_work_directory)
     return result
@@ -160,7 +154,7 @@ def symlink(
     if os.path.isdir(destination):
         destination = os.path.join(destination, os.path.basename(source))
 
-    trace('Symlinking "{}"->"{}".'.format(source, destination))
+    trace(f'Symlinking "{source}"->"{destination}".')
     os.symlink(source, destination)
 
 
@@ -170,14 +164,12 @@ def makedirs(
     user: int = 0,
     group: int = 0,
     mode: typing.Optional[int] = None,
-    exist_ok: bool = False
+    exist_ok: bool = False,
 ) -> None:
     """Make directories in the system filesystem."""
     for d in dirs:
         info(
-            'Creating "{}" with mode={}, uid={}, gid={} (exist_ok: {}).'.format(
-                d, mode, user, group, exist_ok
-            )
+            f'Creating "{d}" with mode={mode}, uid={user}, gid={group} (exist_ok: {exist_ok}).'
         )
         full_path = file_name(system_context, d)
         os.makedirs(full_path, exist_ok=exist_ok)
@@ -193,9 +185,9 @@ def _chmod(mode: int, *files: str) -> None:
     if mode is None:
         return
     for f in files:
-        trace('Chmod of "{}" to {}.'.format(f, mode))
+        trace(f'Chmod of "{f}" to {mode}.')
         if os.path.islink(f):
-            debug(" -> {} is a symlink, skipping for chmod.".format(f))
+            debug(f" -> {f} is a symlink, skipping for chmod.")
             continue
         os.chmod(f, mode)
 
@@ -213,7 +205,7 @@ def _chown(uid: int, gid: int, *files: str) -> None:
     assert gid is not str
 
     for f in files:
-        trace('Chown of "{}" to {}:{}.'.format(f, uid, gid))
+        trace(f'Chown of "{f}" to {uid}:{gid}.')
         os.chown(f, uid, gid, follow_symlinks=False)
 
 
@@ -222,17 +214,17 @@ def _get_uid(system_context: SystemContext, user: typing.Any) -> int:
         trace("UID: Mapped None to 0.")
         return 0
     if isinstance(user, int):
-        trace("UID: Mapped numeric user to {}.".format(user))
+        trace(f"UID: Mapped numeric user to {user}.")
         return user
     if isinstance(user, str) and user.isdigit():
         uid = int(user)
-        trace("UID: Mapped numeric string to {}.".format(uid))
+        trace(f"UID: Mapped numeric string to {uid}.")
         return uid
     data = UserHelper.user_data(user, root_directory=system_context.fs_directory)
     if data is None:  # No user file was found!
         info("UID: User file not found, mapped to 0.")
         return 0
-    trace("UID: User name {} mapped to {}.".format(user, data.gid))
+    trace(f"UID: User name {user} mapped to {data.gid}.")
     return data.uid
 
 
@@ -241,17 +233,17 @@ def _get_gid(system_context: SystemContext, group: typing.Any) -> int:
         trace("GID: Mapped None to 0.")
         return 0
     if isinstance(group, int):
-        trace("GID: Mapped numeric group to {}.".format(group))
+        trace(f"GID: Mapped numeric group to {group}.")
         return group
     if isinstance(group, str) and group.isdigit():
         gid = int(group)
-        trace("GID: Mapped numeric string to {}.".format(gid))
+        trace(f"GID: Mapped numeric string to {gid}.")
         return gid
     data = GroupHelper.group_data(group, root_directory=system_context.fs_directory)
     if data is None:  # No group file was found!
         info("GID: Group file not found, mapped to 0.")
         return 0
-    trace("GID: Group name {} mapped to {}.".format(group, data.gid))
+    trace(f"GID: Group name {group} mapped to {data.gid}.")
     return data.gid
 
 
@@ -260,13 +252,13 @@ def chown(
     user: typing.Any,
     group: typing.Any,
     *files: str,
-    recursive: bool = False
+    recursive: bool = False,
 ) -> None:
     """Change ownership of a file in the system filesystem."""
     _chown(
         _get_uid(system_context, user),
         _get_gid(system_context, group),
-        *expand_files(system_context, *files, recursive=recursive)
+        *expand_files(system_context, *files, recursive=recursive),
     )
 
 
@@ -292,17 +284,17 @@ def create_file(
 
     if os.path.exists(full_path) and not force:
         raise GenerateError(
-            '"{}" exists when trying to create a ' "file there.".format(full_path)
+            f'"{full_path}" exists when trying to create a ' "file there."
         )
 
     with open(full_path, "wb") as f:
         f.write(contents)
 
-    trace("Changing permissions of {} to {}.".format(full_path, mode))
+    trace(f"Changing permissions of {full_path} to {mode}.")
     os.chmod(full_path, mode)
     uid = _get_uid(system_context, user)
     gid = _get_gid(system_context, group)
-    trace("Changing ownership of {} to {}:{}.".format(full_path, uid, gid))
+    trace(f"Changing ownership of {full_path} to {uid}:{gid}.")
     _chown(uid, gid, full_path)
 
 
@@ -314,7 +306,7 @@ def append_file(
 
     if not os.path.exists(full_path) and not force:
         raise GenerateError(
-            '"{}" does not exist when trying to append to it.'.format(full_path)
+            f'"{full_path}" does not exist when trying to append to it.'
         )
 
     with open(full_path, "ab") as f:
@@ -329,7 +321,7 @@ def prepend_file(
 
     if not os.path.exists(full_path) and not force:
         raise GenerateError(
-            '"{}" does not exist when trying to append to it.'.format(full_path)
+            f'"{full_path}" does not exist when trying to append to it.'
         )
 
     with open(full_path, "r+b") as f:
@@ -347,20 +339,20 @@ def _file_op(
     from_outside: bool = False,
     ignore_missing_sources: bool = True,
     force: bool = False,
-    **kwargs: typing.Any
+    **kwargs: typing.Any,
 ) -> None:
     assert not to_outside or not from_outside
     sources = args[:-1]
     destination = args[-1]
 
     desc = description.format(sources, destination)
-    debug("File_op(raw): {}".format(desc))
+    debug(f"File_op(raw): {desc}")
     sources = tuple(
         expand_files(None if from_outside else system_context, *sources, recursive=True)
     )
     destination = file_name(None if to_outside else system_context, destination)
     desc = description.format(sources, destination)
-    debug("File_op(mapped): {}.".format(desc))
+    debug(f"File_op(mapped): {desc}.")
 
     assert sources or ignore_missing_sources
 
@@ -377,19 +369,19 @@ def _file_op(
             if ignore_missing_sources:
                 continue
             else:
-                raise OSError('Source file "{}" does not exist.'.format(s))
+                raise OSError(f'Source file "{s}" does not exist.')
 
         d = os.path.normpath(destination)
         if os.path.isfile(d):
             if not force:
-                raise OSError('Destination "{}" exists already.'.format(d))
+                raise OSError(f'Destination "{d}" exists already.')
 
         if os.path.isdir(d):
             d = os.path.join(d, os.path.basename(s))
 
         assert s != d
         desc = description.format(s, d)
-        debug("File_op(running once): {}.".format(desc))
+        debug(f"File_op(running once): {desc}.")
         op(s, d, **kwargs)
 
 
@@ -411,7 +403,7 @@ def copy(
     system_context: typing.Optional[SystemContext],
     *args: str,
     recursive: bool = False,
-    **kwargs: typing.Any
+    **kwargs: typing.Any,
 ) -> None:
     """Copy files."""
     if recursive:
@@ -420,7 +412,7 @@ def copy(
             _recursive_copy_op,
             'Copying "{}" to "{}" (recursive).',
             *args,
-            **kwargs
+            **kwargs,
         )
     return _file_op(system_context, _copy_op, 'Copying "{}" to "{}".', *args, **kwargs)
 
@@ -439,17 +431,17 @@ def remove(
     *files: str,
     recursive: bool = False,
     force: bool = False,
-    outside: bool = False
+    outside: bool = False,
 ) -> None:
     """Delete a file inside of a system."""
     sc = None if outside else system_context
     for file in expand_files(sc, *files, recursive=recursive):
-        trace('Removing "{}".'.format(file))
+        trace(f'Removing "{file}".')
 
         if not os.path.exists(file):
             if force:
                 continue
-            raise GenerateError('Failed to delete: "{}" does not exist.'.format(file))
+            raise GenerateError(f'Failed to delete: "{file}" does not exist.')
         if os.path.isdir(file) and not os.path.islink(file):
             if recursive:
                 shutil.rmtree(file)
@@ -462,4 +454,4 @@ def remove(
                 if not force:
                     raise
                 else:
-                    verbose('Failed to unlink "{}".'.format(file))
+                    verbose(f'Failed to unlink "{file}".')

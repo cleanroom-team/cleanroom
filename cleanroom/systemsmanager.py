@@ -103,7 +103,8 @@ class SystemsManager(object):
         self._systems_definition_directory = systems_definition_directory
         self._systems_forest: typing.List[_DependencyNode] = []
 
-        verbose("Requested systems: {}.".format(", ".join(systems)))
+        systems_str = ", ".join(systems)
+        verbose(f"Requested systems: {systems_str}.")
         for system in systems:
             if system.endswith(".def"):
                 system = system[:-4]
@@ -122,9 +123,7 @@ class SystemsManager(object):
             for node in root_node.walk():
                 base_system = node.parent.system if node.parent else None
                 debug(
-                    "yielding ({}, {}, <COMMANDS>)".format(
-                        node.system, base_system or "<NONE>"
-                    )
+                    f"yielding ({node.system}, {node.target_distribution}, {base_system}, <COMMANDS>)"
                 )
                 yield node.system, node.target_distribution, base_system, node.exec_obj_list, node.depth
 
@@ -135,7 +134,7 @@ class SystemsManager(object):
     def _print_systems_forest(self) -> None:
         """Print the systems forest."""
         base_indent = "  "
-        debug("Systems forest ({} trees):".format(len(self._systems_forest)))
+        debug(f"Systems forest ({len(self._systems_forest)} trees):")
         for (
             system_name,
             target_distribution,
@@ -152,15 +151,11 @@ class SystemsManager(object):
         if system_name == "scratch":
             return None
 
-        info('Adding system "{}".'.format(system_name))
+        info(f'Adding system "{system_name}".')
 
         node = self._find(system_name)
         if node:
-            trace(
-                'Found system "{}" in system_forest (skipping addition).'.format(
-                    system_name
-                )
-            )
+            trace(f'Found system "{system_name}" in system_forest (skipping addition).')
             return node
 
         system_file = self._find_system_definition_file(system_name)
@@ -178,7 +173,7 @@ class SystemsManager(object):
         )
         exec_obj_list.append(ExecObject(location.next_line(), "_teardown", (), {}))
 
-        debug('"{}" depends on "{}"'.format(system_name, base_system_name))
+        debug(f'"{system_name}" depends on "{base_system_name}"')
 
         parent_node = self._add_system(base_system_name) if base_system_name else None
         assert not base_system_name or (
@@ -199,13 +194,13 @@ class SystemsManager(object):
     def _parse_system_definition_file(
         self, system_file: str
     ) -> typing.Tuple[str, str, typing.List[ExecObject]]:
-        debug('Parsing "{}".'.format(system_file))
+        debug(f'Parsing "{system_file}".')
         system_parser = Parser(self._command_manager)
         (base_system_name, target_distribution, exec_obj_list) = system_parser.parse(
             system_file
         )
         if not base_system_name:
-            raise ParseError('No base system was provided in "{}".'.format(system_file))
+            raise ParseError(f'No base system was provided in "{system_file}".')
         if base_system_name == "scratch":
             base_system_name = ""
 
@@ -216,8 +211,7 @@ class SystemsManager(object):
         system_file = os.path.join(self._systems_definition_directory, system + ".def")
         if not os.path.exists(system_file):
             raise SystemNotFoundError(
-                "Could not find systems file for {}, "
-                "checked in {}.".format(system, system_file)
+                f"Could not find systems file for {system}, checked in {system_file}."
             )
 
         return system_file

@@ -65,11 +65,7 @@ def _parse_commandline(
         help="Installation target specifics", dest="subcommand", required=True,
     )
     for it in install_targets:
-        debug(
-            'Setting up subparser for "{}" with help "{}".'.format(
-                it.name, it.help_string
-            )
-        )
+        debug(f'Setting up subparser for "{it.name}" with help "{it.help_string}".')
         it.setup_subparser(subparsers.add_parser(it.name, help=it.help_string))
 
     return parser.parse_args(args[1:])
@@ -99,16 +95,16 @@ def main(*command_args: str) -> int:
     pr.set_verbosity(parse_result.verbose)
     pr.show_verbosity_level()
 
-    trace("Arguments parsed from command line: {}.".format(parse_result))
+    trace(f"Arguments parsed from command line: {parse_result}.")
 
     install_target = next(
         x for x in known_install_targets if x.name == parse_result.subcommand
     )
     assert install_target
-    debug("Install target {} found.".format(install_target.name))
+    debug(f"Install target {install_target.name} found.")
 
-    with TemporaryDirectory(prefix="fs_{}".format(install_target.name)) as tmp_dir:
-        trace("Using temporary directory: {}.".format(tmp_dir))
+    with TemporaryDirectory(prefix=f"fs_{install_target.name}") as tmp_dir:
+        trace(f"Using temporary directory: {tmp_dir}.")
 
         image_dir = os.path.join(tmp_dir, "borg")
         os.makedirs(image_dir)
@@ -119,19 +115,17 @@ def main(*command_args: str) -> int:
             repository=parse_result.repository,
             version=parse_result.system_version,
         ) as image_file:
-            trace("Mounted borg directory with image file: {}.".format(image_file))
+            trace(f"Mounted borg directory with image file: {image_file}.")
             debug(
-                "Running install target with parse_args={}, tmp_dir={} and image_file={}.".format(
-                    parse_result, tmp_dir, image_file
-                )
+                f"Running install target with parse_args={parse_result}, tmp_dir={tmp_dir} and image_file={image_file}."
             )
             result = install_target(
                 parse_result=parse_result, tmp_dir=tmp_dir, image_file=image_file,
             )
-            debug("Install target done: return code: {}.".format(result))
+            debug(f"Install target done: return code: {result}.")
             trace("Starting cleanup.")
 
-    trace("Done, leaving with return code {}.".format(result))
+    trace(f"Done, leaving with return code {result}.")
     return result
 
 

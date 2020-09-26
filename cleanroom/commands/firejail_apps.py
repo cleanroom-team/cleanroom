@@ -24,7 +24,7 @@ class FirejailAppsConfigureCommand(Command):
             syntax="<APP>+",
             help_string="Firejail applications.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -33,8 +33,7 @@ class FirejailAppsConfigureCommand(Command):
         """Validate the arguments."""
         if not args:
             raise ParseError(
-                '"{}" does need at least one application.'.format(self.name),
-                location=location,
+                f'"{self.name}" does need at least one application.', location=location,
             )
         self._validate_arguments_at_least(
             location, 1, '"{}" needs at least one application.', *args
@@ -45,16 +44,15 @@ class FirejailAppsConfigureCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         for a in args:
-            location.set_description("Processing application {}.".format(a))
-            desktop_file = "/usr/share/applications/{}.desktop".format(a)
+            location.set_description(f"Processing application {a}.")
+            desktop_file = f"/usr/share/applications/{a}.desktop"
             if not os.path.exists(system_context.file_name(desktop_file)):
                 raise GenerateError(
-                    'Desktop file "{}" not found.'.format(desktop_file),
-                    location=location,
+                    f'Desktop file "{desktop_file}" not found.', location=location,
                 )
             self._execute(
                 location.next_line(),
