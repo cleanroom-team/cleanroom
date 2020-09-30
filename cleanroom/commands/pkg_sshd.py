@@ -22,7 +22,7 @@ class PkgSshdCommand(Command):
         """Constructor."""
         super().__init__(
             "pkg_sshd",
-            syntax="[AllowTcpForwading=False] [GatewayPorts=False] [PermitRootLogin=False]",
+            syntax="[AllowTcpForwading=False] [GatewayPorts=False]",
             help_string="Install sshd. Please add host keys into /etc/ssh",
             file=__file__,
             **services,
@@ -35,7 +35,7 @@ class PkgSshdCommand(Command):
         self._validate_no_args(location, *args)
         self._validate_kwargs(
             location,
-            ("AllowTcpForwarding", "GatewayPorts", "PermitRootLogin"),
+            ("AllowTcpForwarding", "GatewayPorts",),
             **kwargs,
         )
 
@@ -102,9 +102,6 @@ class PkgSshdCommand(Command):
             )
 
         # Config tweaks:
-        self._set_sshd_config_yes_or_no(
-            location, system_context, "PermitRootLogin", **kwargs,
-        )
         self._set_sshd_config(location, system_context, "PasswordAuthentication", "no")
         self._set_sshd_config(location, system_context, "PermitEmptyPasswords", "no")
         self._set_sshd_config(location, system_context, "Protocol", "2")
