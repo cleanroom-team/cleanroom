@@ -68,7 +68,7 @@ class CreateRootFsimageCommand(Command):
             rootfs_file,
             *target_args,
             "-comp",
-            "zstd",
+            "gzip",  # compression does not matter: We disable compression!
             "-noappend",
             "-no-exports",
             "-noI",
