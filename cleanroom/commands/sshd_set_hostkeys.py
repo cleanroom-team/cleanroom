@@ -66,10 +66,7 @@ class SshdSetHostkeysCommand(Command):
         key_directory = args[0]
         self._validate_key_directory(location, key_directory)
         if not isdir(system_context, "/etc/ssh"):
-            raise GenerateError(
-                f'"{self.name}": No /etc/ssh directory found in system.',
-                location=location,
-            )
+            os.makedirs(system_context.file_name("/etc/ssh"))
 
         self._execute(
             location,
