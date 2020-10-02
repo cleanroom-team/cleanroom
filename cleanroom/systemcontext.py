@@ -191,6 +191,7 @@ class SystemContext:
 
         self.set_substitution("SCRATCH_DIR", self.scratch_directory)
         self.set_substitution("ROOT_DIR", self.fs_directory)
+        self.set_substitution("BOOT_DIR", self.boot_directory)
         self.set_substitution("META_DIR", self.meta_directory)
         self.set_substitution("CACHE_DIR", self.cache_directory)
         self.set_substitution(
