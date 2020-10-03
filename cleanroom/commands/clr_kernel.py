@@ -22,7 +22,7 @@ def move_kernel(system_context: SystemContext, variant: str) -> str:
     os.remove(default_file)
 
     prefix = f"org.clearlinux.{variant}."
-    version = os.path.basename(installed_kernel)[len(prefix):]
+    version = os.path.basename(installed_kernel)[len(prefix) :]
 
     shutil.copyfile(system_context.file_name(installed_kernel), vmlinuz)
 
@@ -30,12 +30,19 @@ def move_kernel(system_context: SystemContext, variant: str) -> str:
 
 
 def update_cmdline(system_context: SystemContext, version: str, variant: str):
-    with open(system_context.file_name(f"/usr/lib/kernel/cmdline-{version}.{variant}"), "r") as cmd:
-        clr_cmdline = [a.strip() for a in cmd.read().split('\n') if a and a != "quiet"]
+    with open(
+        system_context.file_name(f"/usr/lib/kernel/cmdline-{version}.{variant}"), "r"
+    ) as cmd:
+        clr_cmdline = [a.strip() for a in cmd.read().split("\n") if a and a != "quiet"]
 
-    in_cmdline = [a for a in system_context.substitution("KERNEL_CMDLINE", "").split(" ") if a]
+    in_cmdline = [
+        a for a in system_context.substitution("KERNEL_CMDLINE", "").split(" ") if a
+    ]
 
-    cmdline = [*in_cmdline, *clr_cmdline,]
+    cmdline = [
+        *in_cmdline,
+        *clr_cmdline,
+    ]
     cmdline_str = " ".join([a for a in cmdline if a])
 
     system_context.set_substitution("KERNEL_CMDLINE", cmdline_str)
@@ -46,8 +53,13 @@ def move_initrds(system_context: SystemContext):
     os.makedirs(initrd_parts, exist_ok=True)
 
     i915 = os.path.join(initrd_parts, "05-i915.cpio.xz")
-    shutil.move(system_context.file_name("/usr/lib/initrd.d/00-intel-ucode.cpio"), os.path.join(initrd_parts, "00-intel-ucode.cpio"))
-    shutil.move(system_context.file_name("/usr/lib/initrd.d/i915-firmware.cpio.xz"), i915)
+    shutil.move(
+        system_context.file_name("/usr/lib/initrd.d/00-intel-ucode.cpio"),
+        os.path.join(initrd_parts, "00-intel-ucode.cpio"),
+    )
+    shutil.move(
+        system_context.file_name("/usr/lib/initrd.d/i915-firmware.cpio.xz"), i915
+    )
 
     run("/usr/bin/xz", "-d", i915)
 
@@ -73,7 +85,7 @@ class ClrKernelCommand(Command):
         """Validate the arguments."""
         self._validate_no_args(location, *args)
         self._validate_kwargs(location, ("variant",), **kwargs)
-        self._require_kwargs(location, ('variant',), **kwargs)
+        self._require_kwargs(location, ("variant",), **kwargs)
 
     def __call__(
         self,
@@ -88,10 +100,7 @@ class ClrKernelCommand(Command):
         kernel = f"kernel-{variant}"
 
         self._execute(
-            location,
-            system_context,
-            "swupd",
-            kernel,
+            location, system_context, "swupd", kernel,
         )
 
         version = move_kernel(system_context, variant)
