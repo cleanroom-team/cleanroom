@@ -83,8 +83,6 @@ def _install_image_file_support(
 
     escaped_image_device = _escape_device(image_device)
 
-    # FIXME: This used to include this line: "After=systemd-cryptsetup@main.service"
-    # FIXME: Is this actually needed?
     write_file(
         os.path.join(staging_area, "usr/lib/systemd/system/images.mount"),
         textwrap.dedent(
@@ -238,10 +236,26 @@ def _install_sysroot_setup_support(staging_area: str) -> typing.List[str]:
 
 
 def _install_verity_support(
-    staging_area: str, system_context: SystemContext
+    staging_area: str, system_context: SystemContext, root_hash: str,
 ) -> typing.List[str]:
-    generator_dir = os.path.join(staging_area, "usr/lib/systemd/system-generators")
-    os.makedirs(generator_dir, exist_ok=True)
+    if not root_hash:
+        return []
+
+    assert len(root_hash) == 64
+
+    data_id = f"PARTUUID={root_hash[:8]}-{root_hash[8:12]}-{root_hash[12:16]}-{root_hash[16:20]}-{root_hash[20:32]}"
+    data_dev = _device_ify(data_id)
+    data_dev_esc = _escape_device(data_dev)
+
+    hash_id = f"PARTUUID={root_hash[32:40]}-{root_hash[40:44]}-{root_hash[44:48]}-{root_hash[48:52]}-{root_hash[52:]}"
+    hash_dev = _device_ify(hash_id)
+    hash_dev_esc = _escape_device(hash_dev)
+
+    trace(f"root: {root_hash}.")
+    trace(f"Data: {data_id} ({data_dev} = {data_dev_esc}.")
+    trace(f"Hash: {hash_id} ({hash_dev} = {hash_dev_esc}.")
+
+    os.makedirs(os.path.join(staging_area, "/usr/lib/systemd"), exist_ok=True)
 
     # Installing binaries is not a good idea in general, as dependencies are not handled!
     # These binaries are probably safe: systemd binaries tend to have few dependencies and those
@@ -251,13 +265,37 @@ def _install_verity_support(
         os.path.join(staging_area, "usr/lib/systemd/systemd-veritysetup"),
     )
     os.chmod(os.path.join(staging_area, "usr/lib/systemd/systemd-veritysetup"), 0o755)
-    shutil.copyfile(
-        system_context.file_name(
-            "/usr/lib/systemd/system-generators/systemd-veritysetup-generator"
+    write_file(
+        os.path.join(
+            staging_area, "usr/lib/systemd/system/systemd-veritysetup-root.service"
         ),
-        os.path.join(generator_dir, "systemd-veritysetup-generator"),
+        textwrap.dedent(
+            f"""\
+                [Unit]
+                Description=veritysetup for root partition
+                DefaultDependencies=no
+                Conflicts=umount.target
+                BindsTo={data_dev_esc}.device {hash_dev_esc}.device
+                IgnoreOnIsolate=true
+                After=cryptsetup-pre.target {data_dev_esc}.device {hash_dev_esc}.device
+                Before=cryptsetup.target umount.target
+
+                [Service]
+                Type=oneshot
+                RemainAfterExit=yes
+                ExecStart=/usr/lib/systemd/systemd-veritysetup attach root '{data_dev}' '{hash_dev}' '{root_hash}'
+                ExecStop=/usr/lib/systemd/systemd-veritysetup detach root
+            """
+        ).encode("utf-8"),
+        mode=0o644,
     )
-    os.chmod(os.path.join(generator_dir, "systemd-veritysetup-generator"), 0o755)
+    trace("Wrote systemd-veritysetup-root.service")
+    crypt_requires = os.path.join(staging_area, "usr/lib/systemd/system/cryptsetup.target.requires")
+    os.makedirs(crypt_requires)
+    symlink(
+        os.path.join(crypt_requires, "systemd-veritysetup-root.service",),
+        "../systemd-veritysetup-root.service",
+    )
 
     return [
         "dm-verity",
@@ -341,7 +379,7 @@ class CreateClrmConfigInitrdCommand(Command):
         """Constructor."""
         super().__init__(
             "_create_clrm_config_initrd",
-            syntax="<INITRD_FILE>",
+            syntax="<INITRD_FILE> [root_hash=<ROOT_HASH>]",
             help_string="Create an initrd with extra cleanroom config.",
             file=__file__,
             **services,
@@ -351,9 +389,10 @@ class CreateClrmConfigInitrdCommand(Command):
         self, location: Location, *args: typing.Any, **kwargs: typing.Any
     ) -> None:
         """Validate the arguments."""
-        self._validate_arguments_exact(
-            location, 1, '"{}" takes an initrd to create.', *args, **kwargs
+        self._validate_args_exact(
+            location, 1, '"{}" takes an initrd to create.', *args,
         )
+        self._validate_kwargs(location, ("root_hash",), **kwargs)
 
     def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
         return [
@@ -383,6 +422,7 @@ class CreateClrmConfigInitrdCommand(Command):
             info("Skipping initrd generation: No vmlinuz in boot directory.")
             return
 
+        root_hash = kwargs.get("root_hash", "")
         vg = system_context.substitution_expanded("DEFAULT_VG", None)
         image_fs = system_context.substitution_expanded("IMAGE_FS", None)
         image_device = _device_ify(
@@ -406,7 +446,7 @@ class CreateClrmConfigInitrdCommand(Command):
             ),
             *_install_lvm_support(staging_area, vg, image_name),
             *_install_sysroot_setup_support(staging_area),
-            *_install_verity_support(staging_area, system_context),
+            *_install_verity_support(staging_area, system_context, root_hash),
             *_install_volatile_support(staging_area, system_context),
             *_install_var_mount_support(staging_area, system_context),
             *_install_etc_shadow(staging_area, system_context),

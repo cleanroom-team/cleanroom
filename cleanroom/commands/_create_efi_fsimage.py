@@ -157,7 +157,8 @@ class CreateEfiFsimageCommand(Command):
             "[extra_files=<EXTRA_FILE_DIR>] "
             "[efi_emulator=<EMULATOR_DIR> "
             "[requested_size=<SIZE>] "
-            "[partition_label=<STRING>]",
+            "[partition_label=<STRING>] "
+            "[root_hash=<ROOT_HASH>]",
             help_string="Export a filesystem image.",
             file=__file__,
             **services,
@@ -179,6 +180,7 @@ class CreateEfiFsimageCommand(Command):
                 "kernel_file",
                 "partition_label",
                 "requested_size",
+                "root_hash",
             ),
             **kwargs,
         )
@@ -213,6 +215,7 @@ class CreateEfiFsimageCommand(Command):
         extra_files = kwargs.get("extra_files", "")
         efi_emulator = kwargs.get("efi_emulator", "")
         partition_label = kwargs.get("partition_label", "")
+        root_hash = kwargs.get("root_hash", "")
 
         if kernel_file:
             if not os.path.isfile(boot_loader_file):
@@ -283,6 +286,10 @@ class CreateEfiFsimageCommand(Command):
             else:
                 with open(os.path.join(staging_area, "no_boot.txt"), "w") as f:
                     f.write("No EFI boot support installed\n")
+
+            if root_hash:
+                with open(os.path.join(staging_area, "root_hash"), "w") as f:
+                    f.write(f"{root_hash}")
 
             _copy_staging_area_into_efi_partition_file(
                 staging_area,

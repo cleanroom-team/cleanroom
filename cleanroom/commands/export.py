@@ -24,7 +24,6 @@ def _setup_kernel_commandline(base_cmdline: str, root_hash: str) -> str:
         (
             base_cmdline,
             "root=/dev/mapper/root",
-            f"roothash={root_hash}",
             "FOO",  # One of my mainboards eats the last letter of the last argument:-/
         )
     )
@@ -188,12 +187,6 @@ class ExportCommand(Command):
 
         # Create some extra data:
         self._create_root_tarball(location, system_context)
-        has_kernel = os.path.exists(
-            os.path.join(system_context.boot_directory, "vmlinuz")
-        )
-        if has_kernel:
-            self._create_clrm_config_initrd(location, system_context)
-            self._create_initrd(location, system_context)
 
         root_partition = self._create_root_fsimage(
             location, system_context, usr_only=usr_only
@@ -203,6 +196,13 @@ class ExportCommand(Command):
             location, system_context, rootfs=root_partition,
         )
         assert root_hash
+
+        has_kernel = os.path.exists(
+            os.path.join(system_context.boot_directory, "vmlinuz")
+        )
+        if has_kernel:
+            self._create_clrm_config_initrd(location, system_context, root_hash)
+            self._create_initrd(location, system_context)
 
         cmdline = system_context.set_or_append_substitution(
             "KERNEL_CMDLINE", "systemd.volatile=true rootfstype=squashfs"
@@ -239,6 +239,7 @@ class ExportCommand(Command):
             efi_partition=efi_partition,
             kernel_file=kernel_file,
             efi_emulator=efi_emulator,
+            root_hash=root_hash,
         )
 
         info("Validating installation for export.")
@@ -334,6 +335,7 @@ class ExportCommand(Command):
         efi_partition: str,
         efi_emulator: str,
         kernel_file: str,
+        root_hash: str,
     ):
         extra_dir = os.path.join(system_context.boot_directory, "extra")
         extra_files = extra_dir if os.path.isdir(extra_dir) else ""
@@ -344,6 +346,7 @@ class ExportCommand(Command):
             "_create_efi_fsimage",
             efi_partition,
             kernel_file=kernel_file,
+            root_hash=root_hash,
             systemd_boot_loader=os.path.join(
                 system_context.fs_directory,
                 "usr/lib/systemd/boot/efi/systemd-bootx64.efi",
@@ -498,7 +501,7 @@ class ExportCommand(Command):
         )
 
     def _create_clrm_config_initrd(
-        self, location: Location, system_context: SystemContext
+        self, location: Location, system_context: SystemContext, root_hash:str,
     ):
         location.set_description("Create clrm config initrd")
         initrd_parts = os.path.join(system_context.boot_directory, "initrd-parts")
@@ -508,6 +511,7 @@ class ExportCommand(Command):
             system_context,
             "_create_clrm_config_initrd",
             os.path.join(initrd_parts, "99-clrm"),
+            root_hash=root_hash,
         )
 
         assert os.path.exists(
