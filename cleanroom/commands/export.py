@@ -501,7 +501,7 @@ class ExportCommand(Command):
         )
 
     def _create_clrm_config_initrd(
-        self, location: Location, system_context: SystemContext, root_hash:str,
+        self, location: Location, system_context: SystemContext, root_hash: str,
     ):
         location.set_description("Create clrm config initrd")
         initrd_parts = os.path.join(system_context.boot_directory, "initrd-parts")

@@ -290,7 +290,9 @@ def _install_verity_support(
         mode=0o644,
     )
     trace("Wrote systemd-veritysetup-root.service")
-    crypt_requires = os.path.join(staging_area, "usr/lib/systemd/system/cryptsetup.target.requires")
+    crypt_requires = os.path.join(
+        staging_area, "usr/lib/systemd/system/cryptsetup.target.requires"
+    )
     os.makedirs(crypt_requires)
     symlink(
         os.path.join(crypt_requires, "systemd-veritysetup-root.service",),
