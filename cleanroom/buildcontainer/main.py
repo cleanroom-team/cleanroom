@@ -89,7 +89,7 @@ def _parse_commandline(*arguments: str) -> typing.Any:
     )
 
     parser.add_argument(
-        dest="executable", help="The program to run", choices=["clrm", "bash"],
+        dest="executable", help="The program to run", choices=["clrm", "bash", "raw",],
     )
     parser.add_argument(
         dest="args", nargs=REMAINDER, help="Arguments for the program to run",
@@ -182,8 +182,12 @@ def main(*command_arguments: str) -> None:
         extra_args += [f"--bind-ro={b}" for b in args.bind_ro]
 
     run_args: typing.List[str] = []
-    if args.executable == "bash":
-        run_args = ["/usr/bin/bash", *args.args]
+    if args.executable == "raw":
+        run_args = [
+            *args.args,
+        ]
+    elif args.executable == "bash":
+        run_args = ["/bin/bash", *args.args]
     else:
         run_args = [
             python,
