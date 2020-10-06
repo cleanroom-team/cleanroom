@@ -85,6 +85,8 @@ class swupd_initCommand(Command):
             "--no-progress",
         )
 
+        system_context.set_substitution("INITRD_GENERATOR", "clr")
+
         location.set_description("Move systemd files into /usr")
         self._add_hook(location, system_context, "_teardown", "systemd_cleanup")
 
