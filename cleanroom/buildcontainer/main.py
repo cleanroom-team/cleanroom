@@ -220,6 +220,7 @@ def main(*command_arguments: str) -> None:
             f"--bind={work_directory}:/clrm/work_dir",
             f"--bind={repository_base_directory}:/clrm/repository",
             f"--bind-ro={systems_directory}:/clrm/systems",
+            "--bind-ro=/run/systemd/resolve/stub-resolv.conf:/etc/resolv.conf",
             "--settings=false",
             "--link-journal=no",
             "--register=no",
