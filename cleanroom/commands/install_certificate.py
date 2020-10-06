@@ -79,5 +79,5 @@ class InstallCertificatesCommand(Command):
             "/usr/bin/trust",
             "extract-compat",
             chroot=system_context.fs_directory,
-            chroot_helper=self._binary(Binaries.CHROOT_HELPER),
+            chroot_helper=self._binary(Binaries.SYSTEMD_NSPAWN),
         )

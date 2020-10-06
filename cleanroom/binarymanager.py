@@ -20,7 +20,6 @@ class Binaries(Enum):
     APT_GET = auto()
     BORG = auto()
     BTRFS = auto()
-    CHROOT_HELPER = auto()
     CPIO = auto()
     DEBOOTSTRAP = auto()
     DEPMOD = auto()
@@ -47,6 +46,7 @@ class Binaries(Enum):
     SWUPD = auto()
     SYNC = auto()
     SYSTEMCTL = auto()
+    SYSTEMD_NSPAWN = auto()
     SYSTEMD_REPART = auto()
     TAR = auto()
     USERADD = auto()
@@ -86,7 +86,6 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.APT_GET: _check_for_binary("apt-get"),
         Binaries.BORG: _check_for_binary("borg"),
         Binaries.BTRFS: _check_for_binary("btrfs"),
-        Binaries.CHROOT_HELPER: _check_for_binary("arch-chroot"),
         Binaries.CPIO: _check_for_binary("cpio"),
         Binaries.DEPMOD: _check_for_binary("depmod"),
         Binaries.DPKG: _check_for_binary("dpkg"),
@@ -110,6 +109,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.SWUPD: _check_for_binary("swupd"),
         Binaries.SYNC: _check_for_binary("sync"),
         Binaries.SYSTEMCTL: _check_for_binary("systemctl"),
+        Binaries.SYSTEMD_NSPAWN: _check_for_binary("systemd-nspawn"),
         Binaries.SYSTEMD_REPART: _check_for_binary("systemd-repart"),
         Binaries.TAR: _check_for_binary("tar"),
         Binaries.USERADD: _check_for_binary("useradd"),

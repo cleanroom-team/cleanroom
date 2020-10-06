@@ -62,7 +62,15 @@ def run(
         args = ("/usr/bin/bash", "-c", _quote_args(*args))
     if chroot is not None:
         assert chroot_helper
-        args = (chroot_helper, chroot, *args)
+        args = (
+            chroot_helper,
+            f"--directory={chroot}",
+            "--settings=no",
+            "--uuid=36ba2dc69f9a49048afa3eab4063c44f",
+            "--register=no",
+            "--keep-unit",
+            *args,
+        )
 
     if trace_output:
         if work_directory:

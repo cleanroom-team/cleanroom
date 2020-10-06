@@ -43,7 +43,7 @@ class PacstrapCommand(Command):
     ) -> None:
         """Validate the arguments."""
         if not self._binary(Binaries.PACMAN) or not self._binary(
-            Binaries.CHROOT_HELPER
+            Binaries.SYSTEMD_NSPAWN
         ):
             raise ParseError("No pacman binary was found.")
 
@@ -81,7 +81,7 @@ class PacstrapCommand(Command):
             system_context,
             *args,
             pacman_command=self._binary(Binaries.PACMAN),
-            chroot_helper=self._binary(Binaries.CHROOT_HELPER),
+            chroot_helper=self._binary(Binaries.SYSTEMD_NSPAWN),
             **kwargs
         )
 

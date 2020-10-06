@@ -50,6 +50,6 @@ class RunCommand(Command):
         """Execute command."""
         if kwargs.pop("inside", False):
             kwargs["chroot"] = system_context.fs_directory
-            kwargs["chroot_helper"] = self._binary(Binaries.CHROOT_HELPER)
+            kwargs["chroot_helper"] = self._binary(Binaries.SYSTEMD_NSPAWN)
 
         run(*list(map(lambda a: str(a), args)), **kwargs)
