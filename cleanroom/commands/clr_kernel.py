@@ -22,7 +22,7 @@ def move_kernel(system_context: SystemContext, variant: str) -> str:
     os.remove(default_file)
 
     prefix = f"org.clearlinux.{variant}."
-    version = os.path.basename(installed_kernel)[len(prefix) :]
+    version = os.path.basename(installed_kernel)[len(prefix):]
 
     shutil.copyfile(system_context.file_name(installed_kernel), vmlinuz)
 
@@ -74,7 +74,8 @@ class ClrKernelCommand(Command):
         super().__init__(
             "clr_kernel",
             syntax_string="[variant=(native)]",
-            help_string="Set up a Kernel. If no variant is given, then the default kernel is installed.",
+            help_string="Set up a Kernel. If no variant is given, "
+            "then the default kernel is installed.",
             file=__file__,
             **services,
         )
@@ -86,6 +87,11 @@ class ClrKernelCommand(Command):
         self._validate_no_args(location, *args)
         self._validate_kwargs(location, ("variant",), **kwargs)
         self._require_kwargs(location, ("variant",), **kwargs)
+
+    def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
+        return [
+            ("KERNEL_VERSION", "", "The version of the kernel being used"),
+        ]
 
     def __call__(
         self,
@@ -105,5 +111,7 @@ class ClrKernelCommand(Command):
 
         version = move_kernel(system_context, variant)
         update_cmdline(system_context, version, variant)
+
+        system_context.set_substitution("KERNEL_VERSION", f"{version}.{variant}")
 
         move_initrds(system_context)
