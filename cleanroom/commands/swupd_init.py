@@ -54,6 +54,7 @@ class swupd_initCommand(Command):
                 "Trying to run swupd_init on a system that already has a CLRM_PACKAGE_TYPE defined."
             )
         system_context.set_substitution("CLRM_PACKAGE_TYPE", "swupd")
+        system_context.set_substitution("DISTRO_PRETTY_NAME", "Cleanroom - CLR")
 
         run(
             self._binary(Binaries.SWUPD),
