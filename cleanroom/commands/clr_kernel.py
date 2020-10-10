@@ -49,7 +49,7 @@ def update_cmdline(system_context: SystemContext, version: str, variant: str):
 
 
 def move_initrds(system_context: SystemContext):
-    initrd_parts = os.path.join(system_context.boot_directory, "initrd-parts")
+    initrd_parts = system_context.initrd_parts_directory
     os.makedirs(initrd_parts, exist_ok=True)
 
     i915 = os.path.join(initrd_parts, "05-i915.cpio.xz")

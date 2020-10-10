@@ -43,9 +43,6 @@ def _create_cmdline_file(directory: str, cmdline: str) -> str:
 
 
 def _get_initrd_parts(location: Location, path: str) -> typing.List[str]:
-    if not path:
-        raise GenerateError("No initrd-parts directory.", location=location)
-
     initrd_parts: typing.List[str] = []
     for f in glob(os.path.join(path, "*")):
         if os.path.isfile(f):
@@ -107,10 +104,9 @@ class CreateEfiKernelCommand(Command):
         """Execute command."""
         output = args[0]
         kernel = kwargs.get("kernel", "")
-        initrd_directory = kwargs.get(
-            "initrd", os.path.join(system_context.boot_directory, "initrd-parts")
+        initrd_files = _get_initrd_parts(
+            location, system_context.initrd_parts_directory
         )
-        initrd_files = _get_initrd_parts(location, initrd_directory)
         cmdline_input = kwargs.get("commandline", "")
         osrelease_file = system_context.file_name("/usr/lib/os-release")
         efistub = system_context.file_name(

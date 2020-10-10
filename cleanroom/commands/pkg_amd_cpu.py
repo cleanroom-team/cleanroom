@@ -51,13 +51,12 @@ class PkgAmdCpuCommand(Command):
         location.set_description("Install amd-ucode")
         self._execute(location, system_context, "pacman", "amd-ucode")
 
-        initrd_parts = os.path.join(system_context.boot_directory, "initrd-parts")
-        os.makedirs(initrd_parts, exist_ok=True)
+        os.makedirs(system_context.initrd_parts_directory, exist_ok=True)
         self._execute(
             location,
             system_context,
             "move",
             "/boot/amd-ucode.img",
-            os.path.join(initrd_parts, "00-amd-ucode"),
+            os.path.join(system_context.initrd_parts_directory, "00-amd-ucode"),
             to_outside=True,
         )

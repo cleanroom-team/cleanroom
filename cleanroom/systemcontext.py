@@ -158,6 +158,10 @@ class SystemContext:
         return os.path.join(self._scratch_directory, "boot")
 
     @property
+    def initrd_parts_directory(self) -> str:
+        return os.path.join(self.boot_directory, "initrd-parts")
+
+    @property
     def meta_directory(self) -> str:
         return os.path.join(self._scratch_directory, "meta")
 

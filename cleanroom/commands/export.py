@@ -466,20 +466,19 @@ class ExportCommand(Command):
         kernel_file: str,
     ) -> None:
         location.set_description("Create EFI kernel")
-        boot_directory = system_context.boot_directory
         self._execute(
             location.next_line(),
             system_context,
             "_create_efi_kernel",
             kernel_file,
-            kernel=os.path.join(boot_directory, "vmlinuz"),
-            initrd_directory=os.path.join(boot_directory, "initrd-parts"),
+            kernel=os.path.join(system_context.boot_directory, "vmlinuz"),
+            initrd_directory=system_context.initrd_parts_directory,
             commandline=cmdline,
         )
 
     def _create_initrd(self, location: Location, system_context: SystemContext):
         location.set_description("Create initrd")
-        initrd_parts = os.path.join(system_context.boot_directory, "initrd-parts")
+        initrd_parts = system_context.initrd_parts_directory
         os.makedirs(initrd_parts, exist_ok=True)
 
         initrd_generator = system_context.substitution_expanded(
@@ -496,7 +495,7 @@ class ExportCommand(Command):
 
         assert os.path.exists(
             os.path.join(
-                system_context.boot_directory, f"initrd-parts/50-{initrd_generator}"
+                system_context.initrd_parts_directory, f"50-{initrd_generator}"
             )
         )
 
@@ -504,18 +503,17 @@ class ExportCommand(Command):
         self, location: Location, system_context: SystemContext, root_hash: str,
     ):
         location.set_description("Create clrm config initrd")
-        initrd_parts = os.path.join(system_context.boot_directory, "initrd-parts")
-        os.makedirs(initrd_parts, exist_ok=True)
+        os.makedirs(system_context.initrd_parts_directory, exist_ok=True)
         self._execute(
             location.next_line(),
             system_context,
             "_create_clrm_config_initrd",
-            os.path.join(initrd_parts, "99-clrm"),
+            os.path.join(system_context.initrd_parts_directory, "99-clrm"),
             root_hash=root_hash,
         )
 
         assert os.path.exists(
-            os.path.join(system_context.boot_directory, "initrd-parts/99-clrm")
+            os.path.join(system_context.initrd_parts_directory, "99-clrm")
         )
 
     def _run_all_exportcommand_hooks(self, system_context: SystemContext) -> None:
