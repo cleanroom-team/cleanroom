@@ -139,9 +139,15 @@ class AddPartitionCommand(Command):
             contents += f"PaddingMaxBytes={maxPadding}\n"
 
         rel_path = os.path.join(
-            system_context.substitution("DISTRO_ID"), "repart.d", device_id,
+            system_context.substitution("DISTRO_ID"),
+            "repart.d",
+            device_id,
         )
-        path = os.path.join(system_context.boot_directory, "extra", rel_path,)
+        path = os.path.join(
+            system_context.boot_directory,
+            "extra",
+            rel_path,
+        )
         filename = os.path.join(path, name)
         trace(f"Creating repart.d file {filename} (relative: {rel_path}).")
 

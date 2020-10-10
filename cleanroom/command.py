@@ -56,7 +56,8 @@ class Command:
         self._help_string = help_string
         self._target_distribution = target_distribution
         helper_directory = os.path.join(
-            os.path.dirname(os.path.realpath(file)), os.path.basename(file)[:-3],
+            os.path.dirname(os.path.realpath(file)),
+            os.path.basename(file)[:-3],
         )
         self.__helper_directory = (
             helper_directory if os.path.isdir(helper_directory) else None
@@ -93,7 +94,7 @@ class Command:
         """Implement this!
 
         Validate all arguments.
-        
+
         Note that args and kwargs will *NOT* be string expanded and might contain substitutions!
         """
         fail(f'Command "{self.name}" called validate illegally!')
@@ -117,7 +118,7 @@ class Command:
         **kwargs: typing.Any,
     ) -> None:
         """Implement this!
-        
+
         Note that args and kwargs will be string expanded and not contain substitutions!
         """
         fail(f'Command "{self.name}"() triggered illegally!')

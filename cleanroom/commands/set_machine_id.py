@@ -64,7 +64,8 @@ class SetMachineIdCommand(Command):
         old_machine_id = system_context.substitution("MACHINE_ID", "")
         if old_machine_id:
             raise GenerateError(
-                f'Machine-id was already set to "{old_machine_id}".', location=location,
+                f'Machine-id was already set to "{old_machine_id}".',
+                location=location,
             )
 
         machine_id = args[0]

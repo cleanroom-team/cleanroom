@@ -69,7 +69,8 @@ class TestCommand(Command):
     ) -> None:
         """Execute command."""
         h2(
-            f'Running tests for system "{system_context.system_name}"', verbosity=2,
+            f'Running tests for system "{system_context.system_name}"',
+            verbosity=2,
         )
         env = _environment(system_context)
 
@@ -84,7 +85,8 @@ class TestCommand(Command):
             )
             if test_result.returncode == 0:
                 success(
-                    f'{system_context.system_name}::Test "{test}"', verbosity=3,
+                    f'{system_context.system_name}::Test "{test}"',
+                    verbosity=3,
                 )
             else:
                 report_completed_process(msg, test_result)

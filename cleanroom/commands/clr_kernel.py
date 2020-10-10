@@ -22,7 +22,7 @@ def move_kernel(system_context: SystemContext, variant: str) -> str:
     os.remove(default_file)
 
     prefix = f"org.clearlinux.{variant}."
-    version = os.path.basename(installed_kernel)[len(prefix):]
+    version = os.path.basename(installed_kernel)[len(prefix) :]
 
     shutil.copyfile(system_context.file_name(installed_kernel), vmlinuz)
 

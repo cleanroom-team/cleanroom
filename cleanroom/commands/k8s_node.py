@@ -225,10 +225,12 @@ class K8sNodeCommand(Command):
         node_id = int(kwargs.get("node_id", -1))
 
         outside_match = kwargs.get(
-            "outside_match", f"MACAddress=52:54:00:12:{cluster_id:02x}:{node_id:02x}",
+            "outside_match",
+            f"MACAddress=52:54:00:12:{cluster_id:02x}:{node_id:02x}",
         )
         cluster_match = kwargs.get(
-            "cluster_match", f"MACAddress=52:54:00:13:{cluster_id:02x}:{node_id:02x}",
+            "cluster_match",
+            f"MACAddress=52:54:00:13:{cluster_id:02x}:{node_id:02x}",
         )
         gateway = kwargs.get("gateway", "10.0.2.2")
         dns = kwargs.get("dns", "10.0.2.3")

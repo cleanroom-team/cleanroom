@@ -46,7 +46,13 @@ class PacmanCommand(Command):
             *args
         )
         self._validate_kwargs(
-            location, ("remove", "overwrite", "assume_installed",), **kwargs
+            location,
+            (
+                "remove",
+                "overwrite",
+                "assume_installed",
+            ),
+            **kwargs
         )
 
     def __call__(

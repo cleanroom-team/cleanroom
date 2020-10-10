@@ -34,7 +34,8 @@ class Generator:
             fail(f'Generation of "{system}" asserted.', force_exit=False)
         else:
             fail(
-                f'Generation of "{system}" failed: {str(exception)}', force_exit=False,
+                f'Generation of "{system}" failed: {str(exception)}',
+                force_exit=False,
             )
 
         self._report_error_details(system, exception, ignore_errors=ignore_errors)

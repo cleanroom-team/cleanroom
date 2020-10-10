@@ -103,7 +103,13 @@ class ExportCommand(Command):
                 )
 
         repo_compression = kwargs.get("repository_compression", "zstd")
-        if repo_compression not in ("none", "lz4", "zstd", "zlib", "lzma",):
+        if repo_compression not in (
+            "none",
+            "lz4",
+            "zstd",
+            "zlib",
+            "lzma",
+        ):
             raise ParseError(
                 f'"{repo_compression}" is not a supported repository compression format.',
                 location=location,
@@ -193,7 +199,9 @@ class ExportCommand(Command):
         )
         assert root_partition
         (verity_partition, root_hash) = self._create_rootverity_fsimage(
-            location, system_context, rootfs=root_partition,
+            location,
+            system_context,
+            rootfs=root_partition,
         )
         assert root_hash
 
@@ -307,7 +315,10 @@ class ExportCommand(Command):
         efi_cert: str,
     ):
         self._create_efi_kernel(
-            location, system_context, cmdline, kernel_file=kernel_file,
+            location,
+            system_context,
+            cmdline,
+            kernel_file=kernel_file,
         )
 
         if efi_key and efi_cert:
@@ -362,7 +373,10 @@ class ExportCommand(Command):
         rootfs_label = system_context.substitution_expanded("ROOTFS_PARTLABEL", "")
         if not rootfs_label:
             raise GenerateError("ROOTFS_PARTLABEL is unset.")
-        squashfs_file = os.path.join(system_context.cache_directory, rootfs_label,)
+        squashfs_file = os.path.join(
+            system_context.cache_directory,
+            rootfs_label,
+        )
 
         self._execute(
             location,
@@ -418,7 +432,10 @@ class ExportCommand(Command):
         image_name = system_context.substitution_expanded("CLRM_IMAGE_FILENAME", "")
         assert image_name
 
-        image_filename = os.path.join(export_volume, image_name,)
+        image_filename = os.path.join(
+            export_volume,
+            image_name,
+        )
 
         assert efi_partition
         assert root_partition
@@ -500,7 +517,10 @@ class ExportCommand(Command):
         )
 
     def _create_clrm_config_initrd(
-        self, location: Location, system_context: SystemContext, root_hash: str,
+        self,
+        location: Location,
+        system_context: SystemContext,
+        root_hash: str,
     ):
         location.set_description("Create clrm config initrd")
         os.makedirs(system_context.initrd_parts_directory, exist_ok=True)

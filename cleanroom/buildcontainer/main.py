@@ -89,10 +89,18 @@ def _parse_commandline(*arguments: str) -> typing.Any:
     )
 
     parser.add_argument(
-        dest="executable", help="The program to run", choices=["clrm", "bash", "raw",],
+        dest="executable",
+        help="The program to run",
+        choices=[
+            "clrm",
+            "bash",
+            "raw",
+        ],
     )
     parser.add_argument(
-        dest="args", nargs=REMAINDER, help="Arguments for the program to run",
+        dest="args",
+        nargs=REMAINDER,
+        help="Arguments for the program to run",
     )
 
     parse_result = parser.parse_args(arguments[1:])

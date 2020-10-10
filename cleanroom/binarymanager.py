@@ -124,7 +124,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
 
 class BinaryManager:
     """The find and allow access to all the different system binaries
-       Cleanroom may need."""
+    Cleanroom may need."""
 
     def __init__(self) -> None:
         """Constructor."""

@@ -29,7 +29,12 @@ class CommandInfo(typing.NamedTuple):
         typing.Optional[str],
     ]
     validate_func: typing.Callable[
-        [Location, typing.Tuple[typing.Any, ...], typing.Dict[str, typing.Any],], None,
+        [
+            Location,
+            typing.Tuple[typing.Any, ...],
+            typing.Dict[str, typing.Any],
+        ],
+        None,
     ]
     execute_func: typing.Callable[
         [

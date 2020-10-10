@@ -37,7 +37,13 @@ class TarCommand(Command):
             location, 2, '"{}" needs a source and a target.', *args
         )
         self._validate_kwargs(
-            location, ("to_outside", "compress", "work_directory",), **kwargs
+            location,
+            (
+                "to_outside",
+                "compress",
+                "work_directory",
+            ),
+            **kwargs
         )
 
     def __call__(

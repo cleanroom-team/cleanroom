@@ -132,7 +132,8 @@ def _move_file(location: Location, old_base: str, new_base: str, path: str):
     new_dir = _map_base(old_base, new_base, path_dir)[0]
     if os.path.exists(new_dir) and not os.path.isdir(new_dir):
         raise GenerateError(
-            f'"{new_dir}" is not a directory when moving "{path}".', location=location,
+            f'"{new_dir}" is not a directory when moving "{path}".',
+            location=location,
         )
 
     if not os.path.exists(new_dir):
@@ -141,7 +142,8 @@ def _move_file(location: Location, old_base: str, new_base: str, path: str):
     new_path = os.path.join(new_dir, path_name)
     if os.path.exists(new_path):
         raise GenerateError(
-            f'"{new_path}" already exists when moving "{path}".', location=location,
+            f'"{new_path}" already exists when moving "{path}".',
+            location=location,
         )
 
     shutil.copyfile(path, new_path)

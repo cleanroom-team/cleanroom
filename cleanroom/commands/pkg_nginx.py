@@ -33,8 +33,22 @@ class PkgNginxCommand(Command):
     ) -> None:
         """Validate the arguments."""
         self._validate_no_args(location, *args)
-        self._validate_kwargs(location, ("http", "https",), **kwargs)
-        self._require_kwargs(location, ("http", "https",), **kwargs)
+        self._validate_kwargs(
+            location,
+            (
+                "http",
+                "https",
+            ),
+            **kwargs
+        )
+        self._require_kwargs(
+            location,
+            (
+                "http",
+                "https",
+            ),
+            **kwargs
+        )
 
     def __call__(
         self,

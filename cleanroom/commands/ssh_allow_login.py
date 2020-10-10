@@ -71,7 +71,8 @@ class SshAllowLoginCommand(Command):
         data = UserHelper.user_data(user, root_directory=system_context.fs_directory)
         if data is None:
             raise GenerateError(
-                f'"{self.name}" could not find user "{user}".', location=location,
+                f'"{self.name}" could not find user "{user}".',
+                location=location,
             )
 
         trace(f"{user} mapping: UID {data.uid}, GID {data.gid}, home: {data.home}.")

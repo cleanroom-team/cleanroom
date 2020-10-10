@@ -67,7 +67,9 @@ def _copy_efi(src: str, dest: str) -> int:
             dest = os.path.join(efi_path, d)
             trace(f"Copying {os.path.join(efi_src_path, d)} to {dest}")
             copytree(
-                os.path.join(efi_src_path, d), dest, dirs_exist_ok=True,
+                os.path.join(efi_src_path, d),
+                dest,
+                dirs_exist_ok=True,
             )
 
         copytree(
@@ -121,7 +123,10 @@ def create_qemu_image(
                 fs_type="vfat",
             ) as efi_dest_mnt:
                 tool.execute_with_system_mounted(
-                    lambda e, _: _copy_efi(e, efi_dest_mnt,),
+                    lambda e, _: _copy_efi(
+                        e,
+                        efi_dest_mnt,
+                    ),
                     image_file=system_image_file,
                     tmp_dir=tmp_dir,
                 )
@@ -146,7 +151,9 @@ class QemuImageInstallTarget(InstallTarget):
 
         return qemu_tool.run_qemu(
             parse_result,
-            drives=[f"{image_path}:{parse_result.hdd_format}",],
+            drives=[
+                f"{image_path}:{parse_result.hdd_format}",
+            ],
             work_directory=tmp_dir,
         )
 

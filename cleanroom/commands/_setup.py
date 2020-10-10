@@ -69,19 +69,51 @@ class SetupCommand(Command):
 
     def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
         return [
-            ("DISTRO_NAME", "cleanroom", "The distribution name",),
-            ("DISTRO_PRETTY_NAME", "Cleanroom", "The distribution pretty name",),
-            ("DISTRO_ID", "clrm", "The distribution id",),
-            ("DISTRO_ID_LIKE", "arch", "The id of the distribution this one is like",),
-            ("DISTRO_ANSI_COLOR", "0;36", "The distribution color",),
-            ("DISTRO_VERSION", "${TIMESTAMP}", "The distribution version",),
-            ("DISTRO_VERSION_ID", "${TIMESTAMP}", "The distribution version id",),
+            (
+                "DISTRO_NAME",
+                "cleanroom",
+                "The distribution name",
+            ),
+            (
+                "DISTRO_PRETTY_NAME",
+                "Cleanroom",
+                "The distribution pretty name",
+            ),
+            (
+                "DISTRO_ID",
+                "clrm",
+                "The distribution id",
+            ),
+            (
+                "DISTRO_ID_LIKE",
+                "arch",
+                "The id of the distribution this one is like",
+            ),
+            (
+                "DISTRO_ANSI_COLOR",
+                "0;36",
+                "The distribution color",
+            ),
+            (
+                "DISTRO_VERSION",
+                "${TIMESTAMP}",
+                "The distribution version",
+            ),
+            (
+                "DISTRO_VERSION_ID",
+                "${TIMESTAMP}",
+                "The distribution version id",
+            ),
             (
                 "DISTRO_HOME_URL",
                 "https://github.com/cleanroom-team/cleanroom",
                 "The distributions home URL",
             ),
-            ("DISTRO_SUPPORT_URL", "", "The distributions support URL",),
+            (
+                "DISTRO_SUPPORT_URL",
+                "",
+                "The distributions support URL",
+            ),
             (
                 "DISTRO_BUG_URL",
                 "https://github.com/cleanroom-team/cleanroom/issues",

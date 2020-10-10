@@ -38,7 +38,10 @@ class CreateInitrdDracutCommand(Command):
         )
 
     def _fix_dracut_modules(
-        self, location: Location, system_context: SystemContext, extra: str = "",
+        self,
+        location: Location,
+        system_context: SystemContext,
+        extra: str = "",
     ):
         extra = extra.replace(",", " ")
         extra = extra.replace("  ", " ")
@@ -77,7 +80,11 @@ class CreateInitrdDracutCommand(Command):
 
     def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
         return [
-            ("INITRD_EXTRA_MODULES", "", "Extra modules to add to the initrd",),
+            (
+                "INITRD_EXTRA_MODULES",
+                "",
+                "Extra modules to add to the initrd",
+            ),
         ]
 
     def __call__(

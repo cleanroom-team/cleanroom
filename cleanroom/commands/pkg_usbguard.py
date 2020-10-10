@@ -99,7 +99,9 @@ class PkgAvahiCommand(Command):
         )
 
         remove(
-            system_context, "/etc/usbguard", recursive=True,
+            system_context,
+            "/etc/usbguard",
+            recursive=True,
         )
 
         # Fix for https://github.com/USBGuard/usbguard/issues/287

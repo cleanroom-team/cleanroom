@@ -62,7 +62,9 @@ def _parse_commandline(
     )
 
     subparsers = parser.add_subparsers(
-        help="Installation target specifics", dest="subcommand", required=True,
+        help="Installation target specifics",
+        dest="subcommand",
+        required=True,
     )
     for it in install_targets:
         debug(f'Setting up subparser for "{it.name}" with help "{it.help_string}".')
@@ -120,7 +122,9 @@ def main(*command_args: str) -> int:
                 f"Running install target with parse_args={parse_result}, tmp_dir={tmp_dir} and image_file={image_file}."
             )
             result = install_target(
-                parse_result=parse_result, tmp_dir=tmp_dir, image_file=image_file,
+                parse_result=parse_result,
+                tmp_dir=tmp_dir,
+                image_file=image_file,
             )
             debug(f"Install target done: return code: {result}.")
             trace("Starting cleanup.")

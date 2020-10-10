@@ -29,7 +29,9 @@ class QemuInstallTarget(InstallTarget):
             clrm_device += ":usb"
 
         return qemu_tool.run_qemu(
-            parse_result, drives=[clrm_device], work_directory=tmp_dir,
+            parse_result,
+            drives=[clrm_device],
+            work_directory=tmp_dir,
         )
 
     def setup_subparser(self, subparser: typing.Any) -> None:

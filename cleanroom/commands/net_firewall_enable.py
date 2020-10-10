@@ -57,5 +57,8 @@ class NetFirewallEnableCommand(Command):
             to_enable.append("iptables-restore.service")
 
         self._execute(
-            location, system_context, "systemd_enable", *to_enable,
+            location,
+            system_context,
+            "systemd_enable",
+            *to_enable,
         )

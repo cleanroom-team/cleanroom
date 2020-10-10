@@ -112,7 +112,12 @@ def execute_with_system_mounted(
 
 class BorgMount:
     def __init__(
-        self, mnt_point: str, *, repository: str, system_name: str, version: str,
+        self,
+        mnt_point: str,
+        *,
+        repository: str,
+        system_name: str,
+        version: str,
     ) -> None:
         if not os.path.isdir(mnt_point):
             raise OSError(f'Mount point "{mnt_point}" is not a directory.')

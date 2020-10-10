@@ -36,7 +36,11 @@ class WriteDeployInfoCommand(Command):
 
     def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
         return [
-            ("DEPLOY_TYPE", "", "Type of deployment to use for the current system",),
+            (
+                "DEPLOY_TYPE",
+                "",
+                "Type of deployment to use for the current system",
+            ),
             (
                 "DEPLOY_TYPE_EXTRA_PARAMETERS",
                 "",

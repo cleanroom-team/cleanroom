@@ -34,7 +34,12 @@ class PkgSshdCommand(Command):
         """Validate the arguments."""
         self._validate_no_args(location, *args)
         self._validate_kwargs(
-            location, ("AllowTcpForwarding", "GatewayPorts",), **kwargs,
+            location,
+            (
+                "AllowTcpForwarding",
+                "GatewayPorts",
+            ),
+            **kwargs,
         )
 
     def __call__(

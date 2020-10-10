@@ -236,7 +236,9 @@ def _install_sysroot_setup_support(staging_area: str) -> typing.List[str]:
 
 
 def _install_verity_support(
-    staging_area: str, system_context: SystemContext, root_hash: str,
+    staging_area: str,
+    system_context: SystemContext,
+    root_hash: str,
 ) -> typing.List[str]:
     if not root_hash:
         return []
@@ -295,7 +297,10 @@ def _install_verity_support(
     )
     os.makedirs(crypt_requires)
     symlink(
-        os.path.join(crypt_requires, "systemd-veritysetup-root.service",),
+        os.path.join(
+            crypt_requires,
+            "systemd-veritysetup-root.service",
+        ),
         "../systemd-veritysetup-root.service",
     )
 
@@ -345,7 +350,10 @@ def _install_var_mount_support(
 
     shutil.copyfile(
         var_mount,
-        os.path.join(staging_area, "usr/lib/systemd/system/sysroot-var.mount",),
+        os.path.join(
+            staging_area,
+            "usr/lib/systemd/system/sysroot-var.mount",
+        ),
     )
     trace("Installed sysroot-var.mount")
     symlink(
@@ -367,7 +375,11 @@ def _install_etc_shadow(
         os.makedirs(os.path.join(staging_area, "etc"), exist_ok=True)
 
         shutil.copyfile(
-            shadow_file, os.path.join(staging_area, "etc/shadow",),
+            shadow_file,
+            os.path.join(
+                staging_area,
+                "etc/shadow",
+            ),
         )
         os.chmod(os.path.join(staging_area, "etc/shadow"), 0o600)
         trace("Installed /etc/shadow.initramfs as /etc/shadow into initrd.")
@@ -392,14 +404,25 @@ class CreateClrmConfigInitrdCommand(Command):
     ) -> None:
         """Validate the arguments."""
         self._validate_args_exact(
-            location, 1, '"{}" takes an initrd to create.', *args,
+            location,
+            1,
+            '"{}" takes an initrd to create.',
+            *args,
         )
         self._validate_kwargs(location, ("root_hash",), **kwargs)
 
     def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
         return [
-            ("IMAGE_FS", "ext2", "The filesystem type to load clrm-images from",),
-            ("IMAGE_DEVICE", "", "The device to load clrm-images from",),
+            (
+                "IMAGE_FS",
+                "ext2",
+                "The filesystem type to load clrm-images from",
+            ),
+            (
+                "IMAGE_DEVICE",
+                "",
+                "The device to load clrm-images from",
+            ),
             (
                 "IMAGE_OPTIONS",
                 "rw",

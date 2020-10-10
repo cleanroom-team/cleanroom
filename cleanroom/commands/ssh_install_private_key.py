@@ -71,7 +71,8 @@ class SshInstallPrivateKeyCommand(Command):
         )
         if user is None:
             raise GenerateError(
-                f'"{self.name}" could not find user "{user_name}".', location=location,
+                f'"{self.name}" could not find user "{user_name}".',
+                location=location,
             )
 
         debug(f'Installing "{key_file}" to user "{user_name}" ({user.home}).')

@@ -18,7 +18,9 @@ class CopyInstallTarget(InstallTarget):
 
     def setup_subparser(self, subparser: typing.Any) -> None:
         subparser.add_argument(
-            dest="target", action="store", help="The target to copy into.",
+            dest="target",
+            action="store",
+            help="The target to copy into.",
         )
 
     def __call__(

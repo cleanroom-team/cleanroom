@@ -61,7 +61,8 @@ class SetLocalesCommand(Command):
                 os.path.join(locales_dir, a[0:2])
             ):
                 raise ParseError(
-                    f'Locale "{a}" not found in /usr/share/locale.', location=location,
+                    f'Locale "{a}" not found in /usr/share/locale.',
+                    location=location,
                 )
             locales.append(f"{a}.{charmap} {charmap}\n")
 

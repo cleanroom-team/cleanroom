@@ -33,7 +33,15 @@ class ChownCommand(Command):
         self._validate_args_at_least(
             location, 1, '"{}" takes one or more files.', *args
         )
-        self._validate_kwargs(location, ("user", "group", "recursive",), **kwargs)
+        self._validate_kwargs(
+            location,
+            (
+                "user",
+                "group",
+                "recursive",
+            ),
+            **kwargs
+        )
 
     def __call__(
         self,

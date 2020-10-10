@@ -71,7 +71,13 @@ def open_port(
     """Open a port in the firewall."""
     magic = _TCP_MAGIC if protocol == "tcp" else _UDP_MAGIC
 
-    rules = [f"# {comment}:\n",] if comment else []
+    rules = (
+        [
+            f"# {comment}:\n",
+        ]
+        if comment
+        else []
+    )
     rules.append(
         f"-A {protocol.upper()} -p {protocol} -m {protocol} --dport {port} -j ACCEPT"
     )

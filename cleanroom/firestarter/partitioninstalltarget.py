@@ -77,7 +77,13 @@ def parse_arguments(args: typing.Any) -> typing.List[typing.Tuple[str, str, str]
         else:
             device_map[dev] = True
 
-        device_list.append((dev, format, dir,))
+        device_list.append(
+            (
+                dev,
+                format,
+                dir,
+            )
+        )
 
     return device_list
 

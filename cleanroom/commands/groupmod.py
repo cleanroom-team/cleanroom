@@ -33,7 +33,14 @@ class GroupModCommand(Command):
         """Validate the arguments."""
         self._validate_args_exact(location, 1, '"{}" needs a groupname.', *args)
         self._validate_kwargs(
-            location, ("gid", "rename", "password", "root_directory",), **kwargs
+            location,
+            (
+                "gid",
+                "rename",
+                "password",
+                "root_directory",
+            ),
+            **kwargs
         )
         if len(kwargs) == 0:
             raise ParseError("groupmod needs something to change.", location=location)

@@ -40,5 +40,8 @@ class EnsureDepmodCommand(Command):
         """Execute command."""
         location.set_description("Run ldconfig")
         self._add_hook(
-            location, system_context, "export", "_depmod_all",
+            location,
+            system_context,
+            "export",
+            "_depmod_all",
         )

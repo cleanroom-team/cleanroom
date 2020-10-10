@@ -50,5 +50,6 @@ class CryptoUuidCommand(Command):
             raise GenerateError("rd.luks.name already set.", location=location)
 
         system_context.set_or_append_substitution(
-            "KERNEL_CMDLINE", f"rd.luks.name={uuid}={name} rd.luks.options=discard",
+            "KERNEL_CMDLINE",
+            f"rd.luks.name={uuid}={name} rd.luks.options=discard",
         )

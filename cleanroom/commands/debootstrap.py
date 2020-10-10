@@ -39,9 +39,24 @@ class DebootstrapCommand(Command):
         """Validate the arguments."""
         self._validate_no_args(location, *args)
         self._validate_kwargs(
-            location, ("suite", "mirror", "variant", "include", "exclude",), **kwargs
+            location,
+            (
+                "suite",
+                "mirror",
+                "variant",
+                "include",
+                "exclude",
+            ),
+            **kwargs
         )
-        self._require_kwargs(location, ("suite", "mirror",), **kwargs)
+        self._require_kwargs(
+            location,
+            (
+                "suite",
+                "mirror",
+            ),
+            **kwargs
+        )
 
     def __call__(
         self,
