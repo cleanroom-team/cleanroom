@@ -11,8 +11,10 @@ from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 from cleanroom.printer import debug, info, trace
 
+from hashlib import sha512
 import os
 import shutil
+from tempfile import TemporaryDirectory
 import textwrap
 import typing
 
@@ -386,6 +388,136 @@ def _install_etc_shadow(
     return []
 
 
+def _hash_file(path: str) -> bytes:
+    hash = sha512()
+
+    with open(path, "rb") as fd:
+        while True:
+            data = fd.read(1024 * 1024)
+            if not data:
+                break
+            hash.update(data)
+
+    return hash.digest()
+
+
+def _hash_directory(dir: str) -> typing.Dict[str, bytes]:
+    hashes: typing.Dict[str, bytes] = {}
+    for root, _, files in os.walk(dir):
+        for file in files:
+            path = os.path.join(root, file)
+            key = os.path.relpath(path, dir)
+            hash = _hash_file(path)
+
+            trace(f'Hashed "{path} as "{key}": "{hash}".')
+
+            hashes[key] = hash
+
+    return hashes
+
+
+def _copy_modules(
+    system_context: SystemContext,
+    modules: typing.List[str],
+    modules_dir: str,
+    *,
+    kernel_version: str,
+):
+    known_modules: typing.Dict[str, str] = {}
+    src_top = os.path.join(system_context.file_name("/usr/lib/modules"), kernel_version)
+    for root, _, files in os.walk(src_top):
+        for f in files:
+            if "modules." in f:
+                continue
+
+            module_name = os.path.splitext(f)[0]
+            module_path = os.path.relpath(os.path.join(root, f), src_top)
+            assert module_name not in known_modules
+            trace(f'Found "{module_name}" at "{os.path.join(root, f)}" ({module_path})')
+            known_modules[module_name] = module_path
+
+    target_top = os.path.join(modules_dir, kernel_version)
+
+    debug(f'Installing modules from "{src_top}" into "{target_top}"')
+    for m in modules:
+        if m not in known_modules:
+            info(f"Module {m} not found. Was it built into the kernel?")
+            continue
+        p = known_modules[m]
+
+        os.makedirs(os.path.dirname(os.path.join(target_top, p)), exist_ok=True)
+        trace(f"Copying extra module {m} ({p}).")
+        trace(f'    "{os.path.join(src_top, p)}" => "{os.path.join(target_top, p)}".')
+        shutil.copyfile(os.path.join(src_top, p), os.path.join(target_top, p))
+
+
+def _depmod_all(module_dir: str, *, kernel_version: str, depmod_command: str):
+    run(
+        depmod_command,
+        "-a",
+        "-b",
+        module_dir,
+        kernel_version,
+    )
+
+
+def _install_extra_modules(
+    staging_area: str,
+    system_context: SystemContext,
+    modules: typing.List[str],
+    *,
+    kernel_version: str,
+    cpio_command: str,
+    depmod_command: str,
+):
+    if not modules:
+        return
+
+    # Extract all initrds:
+    with TemporaryDirectory(prefix="clrm_cpio") as tmp:
+        initrd_parts = system_context.initrd_parts_directory
+        cpio_modules: typing.Dict[str, bytes] = {}
+
+        for p in [
+            os.path.join(initrd_parts, f)
+            for f in os.listdir(initrd_parts)
+            if os.path.isfile(os.path.join(initrd_parts, f))
+        ]:
+            # extract one initrd:
+            run(
+                "/usr/bin/bash",
+                "-c",
+                f'/usr/bin/cat "{p}" | "{cpio_command}" -id',
+                work_directory=tmp,
+            )
+
+        modules_dir = os.path.join(tmp, "usr/lib/modules")
+        os.makedirs(modules_dir, exist_ok=True)
+        cpio_modules = _hash_directory(os.path.join(modules_dir, kernel_version))
+
+        _copy_modules(
+            system_context, modules, modules_dir, kernel_version=kernel_version
+        )
+        _depmod_all(
+            tmp,
+            kernel_version=kernel_version,
+            depmod_command=depmod_command,
+        )
+        new_modules = _hash_directory(os.path.join(modules_dir, kernel_version))
+
+        for t in [
+            k
+            for k, v in new_modules.items()
+            if k not in cpio_modules or cpio_modules[k] != v
+        ]:
+            target = os.path.join(staging_area, "usr/lib/modules", kernel_version, t)
+            src = os.path.join(modules_dir, kernel_version, t)
+            trace(f'   Installing module-related file: "{src}" => "{target}".')
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            shutil.copyfile(src, target)
+            trace(f"Copied {target} into {staging_area}.")
+
+
 class CreateClrmConfigInitrdCommand(Command):
     """The _create_clrm_config_initrd command."""
 
@@ -456,12 +588,19 @@ class CreateClrmConfigInitrdCommand(Command):
         image_options = system_context.substitution_expanded("IMAGE_OPTIONS", "")
         image_name = system_context.substitution_expanded("CLRM_IMAGE_FILENAME", "")
 
+        kver = system_context.substitution("KERNEL_VERSION", "")
+        assert kver
+
         initrd = args[0]
+
+        assert not os.path.exists(initrd)
 
         staging_area = os.path.join(system_context.cache_directory, "clrm_extra")
         os.makedirs(staging_area)
 
-        modules = [
+        cpio_command = self._binary(Binaries.CPIO)
+
+        modules: typing.List[str] = [
             *system_context.substitution_expanded("INITRD_EXTRA_MODULES", "").split(
                 ","
             ),
@@ -479,18 +618,22 @@ class CreateClrmConfigInitrdCommand(Command):
         modules = [
             m for m in modules if m
         ]  # Trim empty modules (e.g. added by the substitution)
-        system_context.set_or_append_substitution(
-            "INITRD_EXTRA_MODULES", ",".join(modules)
-        )
-        debug(
-            f'INITRD_EXTRA_MODULES is now {system_context.substitution("INITRD_EXTRA_MODULES", "")}.'
+
+        _install_extra_modules(
+            staging_area,
+            system_context,
+            modules,
+            kernel_version=kver,
+            cpio_command=cpio_command,
+            depmod_command=self._binary(Binaries.DEPMOD),
         )
 
         # Create Initrd:
         run(
             "/bin/sh",
             "-c",
-            f'cd "{staging_area}" ; "{self._binary(Binaries.FIND)}" . | "{self._binary(Binaries.CPIO)}" -o -H newc > "{initrd}"',
+            f'"{self._binary(Binaries.FIND)}" . | "{cpio_command}" -o -H newc > "{initrd}"',
+            work_directory=staging_area,
         )
 
         assert os.path.exists(initrd)

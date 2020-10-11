@@ -11,7 +11,7 @@ from cleanroom.systemcontext import SystemContext
 
 import shutil
 import typing
-import os.path
+import os
 
 
 def move_kernel(system_context: SystemContext, variant: str) -> str:
@@ -57,11 +57,22 @@ def move_initrds(system_context: SystemContext):
         system_context.file_name("/usr/lib/initrd.d/00-intel-ucode.cpio"),
         os.path.join(initrd_parts, "00-intel-ucode.cpio"),
     )
+
     shutil.move(
         system_context.file_name("/usr/lib/initrd.d/i915-firmware.cpio.xz"), i915
     )
-
     run("/usr/bin/xz", "-d", i915)
+
+    main = os.path.join(initrd_parts, "50-clr.gz")
+    shutil.move(
+        system_context.file_name("/usr/lib/initrd.d/clr-init.cpio.gz"),
+        main,
+    )
+    run(
+        "/usr/bin/gzip",
+        "-d",
+        main,
+    )
 
     os.rmdir(system_context.file_name("/usr/lib/initrd.d"))
 
@@ -106,12 +117,42 @@ class ClrKernelCommand(Command):
         kernel = f"kernel-{variant}"
 
         self._execute(
-            location, system_context, "swupd", kernel,
+            location,
+            system_context,
+            "swupd",
+            kernel,
+            "boot-encrypted",
         )
 
         version = move_kernel(system_context, variant)
         update_cmdline(system_context, version, variant)
 
         system_context.set_substitution("KERNEL_VERSION", f"{version}.{variant}")
+
+        # fix up permissions of some files that were just installed:
+        os.chmod(
+            system_context.file_name(
+                "/usr/lib/systemd/system/blk-availability.service"
+            ),
+            0o644,
+        )
+        os.chmod(
+            system_context.file_name("/usr/lib/systemd/system/dm-event.service"), 0o644
+        )
+        os.chmod(
+            system_context.file_name("/usr/lib/systemd/system/dm-event.socket"), 0o644
+        )
+        os.chmod(
+            system_context.file_name("/usr/lib/systemd/system/lvm2-lvmetad.service"),
+            0o644,
+        )
+        os.chmod(
+            system_context.file_name("/usr/lib/systemd/system/lvm2-lvmetad.socket"),
+            0o644,
+        )
+        os.chmod(
+            system_context.file_name("/usr/lib/systemd/system/lvm2-pvscan@.service"),
+            0o644,
+        )
 
         move_initrds(system_context)
