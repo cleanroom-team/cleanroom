@@ -9,7 +9,7 @@ from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
 import typing
-import os.path
+import os
 
 
 class PkgKernelCommand(Command):
@@ -57,12 +57,23 @@ class PkgKernelCommand(Command):
 
         vmlinuz = os.path.join(system_context.boot_directory, "vmlinuz")
 
+        lib_modules = system_context.file_name("/usr/lib/modules")
+        module_dirs = [
+            d
+            for d in os.listdir(lib_modules)
+            if os.path.isdir(os.path.join(lib_modules, d)) and "-arch" in d
+        ]
+        assert len(module_dirs) == 1
+
+        kernel_version = module_dirs[0]
+        system_context.set_substitution("KERNEL_VERSION", kernel_version)
+
         # New style linux packages that put vmlinuz into /usr/lib/modules:
         self._execute(
             location.next_line(),
             system_context,
             "move",
-            "/usr/lib/modules/*/vmlinuz",
+            f"/usr/lib/modules/{kernel_version}/vmlinuz",
             vmlinuz,
             to_outside=True,
             ignore_missing_sources=True,
