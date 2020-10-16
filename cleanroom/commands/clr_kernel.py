@@ -9,6 +9,7 @@ from cleanroom.helper.run import run
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
+import glob
 import shutil
 import typing
 import os
@@ -22,17 +23,18 @@ def move_kernel(system_context: SystemContext, variant: str) -> str:
     os.remove(default_file)
 
     prefix = f"org.clearlinux.{variant}."
-    version = os.path.basename(installed_kernel)[len(prefix) :]
+    kernel_version = os.path.basename(installed_kernel)[len(prefix) :]
 
-    shutil.copyfile(system_context.file_name(installed_kernel), vmlinuz)
+    shutil.move(system_context.file_name(installed_kernel), vmlinuz)
 
-    return version
+    return kernel_version
 
 
 def update_cmdline(system_context: SystemContext, version: str, variant: str):
-    with open(
-        system_context.file_name(f"/usr/lib/kernel/cmdline-{version}.{variant}"), "r"
-    ) as cmd:
+    cmdline_file = system_context.file_name(
+        f"/usr/lib/kernel/cmdline-{version}.{variant}"
+    )
+    with open(cmdline_file, "r") as cmd:
         clr_cmdline = [a.strip() for a in cmd.read().split("\n") if a and a != "quiet"]
 
     in_cmdline = [
@@ -47,8 +49,10 @@ def update_cmdline(system_context: SystemContext, version: str, variant: str):
 
     system_context.set_substitution("KERNEL_CMDLINE", cmdline_str)
 
+    os.remove(cmdline_file)
 
-def move_initrds(system_context: SystemContext):
+
+def move_initrds(system_context: SystemContext, *, variant: str, kernel_version: str):
     initrd_parts = system_context.initrd_parts_directory
     os.makedirs(initrd_parts, exist_ok=True)
 
@@ -75,6 +79,19 @@ def move_initrds(system_context: SystemContext):
     )
 
     os.rmdir(system_context.file_name("/usr/lib/initrd.d"))
+
+    modules_initrd = system_context.file_name(
+        f"/usr/lib/kernel/initrd-org.clearlinux.{variant}.{kernel_version}"
+    )
+    assert os.path.isfile(modules_initrd)
+    shutil.move(modules_initrd, os.path.join(initrd_parts, "60-modules.xz"))
+    run("/usr/bin/xz", "-d", os.path.join(initrd_parts, "60-modules.xz"))
+
+    # Remove unnecessary files:
+    for mid in glob.glob(
+        system_context.file_name("/usr/lib/kernel/initrd-org.clearlinux.*")
+    ):
+        os.remove(mid)
 
 
 class ClrKernelCommand(Command):
@@ -124,10 +141,11 @@ class ClrKernelCommand(Command):
             "boot-encrypted",
         )
 
-        version = move_kernel(system_context, variant)
-        update_cmdline(system_context, version, variant)
+        kernel_version = move_kernel(system_context, variant)
+        update_cmdline(system_context, kernel_version, variant)
 
-        system_context.set_substitution("KERNEL_VERSION", f"{version}.{variant}")
+        system_context.set_substitution("KERNEL_VERSION", f"{kernel_version}.{variant}")
+        move_initrds(system_context, kernel_version=kernel_version, variant=variant)
 
         # fix up permissions of some files that were just installed:
         os.chmod(
@@ -154,5 +172,3 @@ class ClrKernelCommand(Command):
             system_context.file_name("/usr/lib/systemd/system/lvm2-pvscan@.service"),
             0o644,
         )
-
-        move_initrds(system_context)
