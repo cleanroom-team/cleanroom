@@ -37,26 +37,6 @@ class CreateInitrdDracutCommand(Command):
             location, 1, '"{}" takes an initrd to create.', *args, **kwargs
         )
 
-    def _fix_dracut_modules(
-        self,
-        location: Location,
-        system_context: SystemContext,
-        extra: str = "",
-    ):
-        extra = extra.replace(",", " ")
-        extra = extra.replace("  ", " ")
-        extra = extra.strip()
-
-        if extra:
-            debug(f'Changing MODULES to "{extra}"')
-            self._execute(
-                location.next_line(),
-                system_context,
-                "sed",
-                f"/^MODULES=/ cMODULES=({extra})",
-                "/etc/mkinitcpio.conf",
-            )
-
     def _install_dracut(self, location: Location, system_context: SystemContext):
         location.set_description("Install dracut")
         self._execute(location, system_context, "pacman", "dracut", "busybox")
@@ -77,15 +57,6 @@ class CreateInitrdDracutCommand(Command):
         )
 
         remove(system_context, "/boot/vmlinuz")
-
-    def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
-        return [
-            (
-                "INITRD_EXTRA_MODULES",
-                "",
-                "Extra modules to add to the initrd",
-            ),
-        ]
 
     def __call__(
         self,
@@ -111,20 +82,6 @@ class CreateInitrdDracutCommand(Command):
         )
 
         dracut_args: typing.List[str] = []
-        modules = (
-            system_context.substitution_expanded("INITRD_EXTRA_MODULES", "")
-            .replace(",", " ")
-            .replace("  ", " ")
-            .split(" ")
-        )
-        modules = list(set(modules))
-        modules.sort()
-
-        if modules:
-            dracut_args += [
-                "--add-drivers",
-                " ".join(modules),
-            ]
 
         run(
             "/usr/bin/dracut",

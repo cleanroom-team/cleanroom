@@ -62,7 +62,8 @@ class ExportCommand(Command):
             "[repository_compression=zstd] "
             "[repository_compression_level=5] "
             "[skip_validation=False] "
-            "[usr_only=True]",
+            "[usr_only=True] "
+            "[debug_initrd=False]",
             help_string="Export a filesystem image.",
             file=__file__,
             **services,
@@ -85,6 +86,7 @@ class ExportCommand(Command):
                 "repository_compression_level",
                 "skip_validation",
                 "usr_only",
+                "debug_initrd",
             ),
             **kwargs,
         )
@@ -184,6 +186,8 @@ class ExportCommand(Command):
         repository_compression_level = kwargs.get("repository_compression_level", 5)
         usr_only = kwargs.get("usr_only", True)
 
+        debug_initrd = kwargs.get("debug_initrd", False)
+
         h2(f'Exporting system "{system_context.system_name}".')
         debug("Running Hooks.")
         self._run_all_exportcommand_hooks(system_context)
@@ -209,8 +213,10 @@ class ExportCommand(Command):
             os.path.join(system_context.boot_directory, "vmlinuz")
         )
         if has_kernel:
-            self._create_clrm_config_initrd(location, system_context, root_hash)
             self._create_initrd(location, system_context)
+            self._create_clrm_config_initrd(
+                location, system_context, root_hash, debug=debug_initrd
+            )
 
         cmdline = system_context.set_or_append_substitution(
             "KERNEL_CMDLINE", "systemd.volatile=true rootfstype=squashfs"
@@ -521,6 +527,7 @@ class ExportCommand(Command):
         location: Location,
         system_context: SystemContext,
         root_hash: str,
+        debug: bool,
     ):
         location.set_description("Create clrm config initrd")
         os.makedirs(system_context.initrd_parts_directory, exist_ok=True)
@@ -528,12 +535,13 @@ class ExportCommand(Command):
             location.next_line(),
             system_context,
             "_create_clrm_config_initrd",
-            os.path.join(system_context.initrd_parts_directory, "99-clrm"),
+            os.path.join(system_context.initrd_parts_directory, "90-clrm"),
             root_hash=root_hash,
+            debug=debug,
         )
 
         assert os.path.exists(
-            os.path.join(system_context.initrd_parts_directory, "99-clrm")
+            os.path.join(system_context.initrd_parts_directory, "90-clrm")
         )
 
     def _run_all_exportcommand_hooks(self, system_context: SystemContext) -> None:

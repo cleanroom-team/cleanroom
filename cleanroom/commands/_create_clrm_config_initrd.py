@@ -63,6 +63,7 @@ def symlink(path: str, target: str):
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
     os.symlink(target, path)
+    assert os.path.islink(path)
 
 
 def _install_image_file_support(
@@ -92,6 +93,9 @@ def _install_image_file_support(
                 [Unit]
                 Description=Mount /images in initrd
                 DefaultDependencies=no
+                Wants=initrd-find-image-partitions.service
+                Before=initrd-find-image-partitions.service shutdown.target
+                Conflicts=shutdown.target
                 
                 [Mount]
                 What={image_device}
@@ -124,8 +128,10 @@ def _install_image_file_support(
                 DefaultDependencies=no
                 ConditionFileNotEmpty=/images/{image_name}
                 After=images.mount
+                Before=shutdown.target
                 BindsTo=images.mount
                 Requisite=images.mount
+                Conflicts=shutdown.target
                 
                 [Service]
                 WorkingDirectory=/
@@ -141,13 +147,6 @@ def _install_image_file_support(
         mode=0o644,
     )
     trace("Wrote initrd-find-image-partitions (/images/{image_name}).")
-    symlink(
-        os.path.join(
-            staging_area,
-            "usr/lib/systemd/system/images.mount.wants/initrd-find-image-partitions.service",
-        ),
-        "../initrd-find-image-partitions.service",
-    )
 
     return [
         "loop",
@@ -173,8 +172,10 @@ def _install_lvm_support(
                 DefaultDependencies=no
                 ConditionPathExists=/dev/{vg}/{image_name}
                 After={device_name}.device
+                Before=shutdown.target
                 BindsTo={device_name}.device
                 Requisite={device_name}.device
+                Conflicts=shutdown.target
                 
                 [Service]
                 WorkingDirectory=/
@@ -211,9 +212,9 @@ def _install_sysroot_setup_support(staging_area: str) -> typing.List[str]:
                 Description=Set up root fs in /sysroot
                 DefaultDependencies=no
                 ConditionPathExists=/sysroot/usr/lib/boot/root-fs.tar
-                Requires=sysroot.mount
-                After=sysroot.mount systemd-volatile-root.service
-                Before=initrd-root-fs.target shutdown.target
+                Requires=initrd-root-fs.target
+                After=initrd-root-fs.target
+                Before=initrd-parse-etc.service initrd-fs.target shutdown.target
                 Conflicts=shutdown.target
                 AssertPathExists=/etc/initrd-release
                 
@@ -226,10 +227,11 @@ def _install_sysroot_setup_support(staging_area: str) -> typing.List[str]:
         mode=0o644,
     )
     trace("Wrote initrd-sysroot-setup.service")
+
     symlink(
         os.path.join(
             staging_area,
-            "usr/lib/systemd/system/initrd.target.wants/initrd-sysroot-setup.service",
+            "usr/lib/systemd/system/initrd-root-fs.target.wants/initrd-sysroot-setup.service",
         ),
         "../initrd-sysroot-setup.service",
     )
@@ -287,21 +289,24 @@ def _install_verity_support(
                 [Service]
                 Type=oneshot
                 RemainAfterExit=yes
-                ExecStart=/usr/lib/systemd/systemd-veritysetup attach root '{data_dev}' '{hash_dev}' '{root_hash}'
+                ExecStart=/usr/lib/systemd/systemd-veritysetup attach root "{data_dev}" "{hash_dev}" "{root_hash}"
                 ExecStop=/usr/lib/systemd/systemd-veritysetup detach root
             """
         ).encode("utf-8"),
         mode=0o644,
     )
     trace("Wrote systemd-veritysetup-root.service")
-    crypt_requires = os.path.join(
-        staging_area, "usr/lib/systemd/system/cryptsetup.target.requires"
-    )
-    os.makedirs(crypt_requires)
     symlink(
         os.path.join(
-            crypt_requires,
-            "systemd-veritysetup-root.service",
+            staging_area,
+            f"usr/lib/systemd/system/{data_dev_esc}.device.wants/systemd-veritysetup-root.service",
+        ),
+        "../systemd-veritysetup-root.service",
+    )
+    symlink(
+        os.path.join(
+            staging_area,
+            f"usr/lib/systemd/system/{hash_dev_esc}.device.wants/systemd-veritysetup-root.service",
         ),
         "../systemd-veritysetup-root.service",
     )
@@ -369,9 +374,7 @@ def _install_var_mount_support(
     return []
 
 
-def _install_etc_shadow(
-    staging_area: str, system_context: SystemContext
-) -> typing.List[str]:
+def _install_etc_shadow(staging_area: str, system_context: SystemContext):
     shadow_file = system_context.file_name("/etc/shadow.initramfs")
     if os.path.exists(shadow_file):
         os.makedirs(os.path.join(staging_area, "etc"), exist_ok=True)
@@ -385,18 +388,20 @@ def _install_etc_shadow(
         )
         os.chmod(os.path.join(staging_area, "etc/shadow"), 0o600)
         trace("Installed /etc/shadow.initramfs as /etc/shadow into initrd.")
-    return []
 
 
 def _hash_file(path: str) -> bytes:
     hash = sha512()
 
-    with open(path, "rb") as fd:
-        while True:
-            data = fd.read(1024 * 1024)
-            if not data:
-                break
-            hash.update(data)
+    if os.path.islink(path):
+        hash.update(os.readlink(path).encode("utf-8"))
+    else:
+        with open(path, "rb") as fd:
+            while True:
+                data = fd.read(1024 * 1024)
+                if not data:
+                    break
+                hash.update(data)
 
     return hash.digest()
 
@@ -409,17 +414,20 @@ def _hash_directory(dir: str) -> typing.Dict[str, bytes]:
             key = os.path.relpath(path, dir)
             hash = _hash_file(path)
 
-            trace(f'Hashed "{path} as "{key}": "{hash}".')
-
             hashes[key] = hash
 
     return hashes
+
+
+def _strip_extensions(path: str):
+    return os.path.basename(path).split(".")[0]
 
 
 def _copy_modules(
     system_context: SystemContext,
     modules: typing.List[str],
     modules_dir: str,
+    etc_dir: str,
     *,
     kernel_version: str,
 ):
@@ -430,7 +438,7 @@ def _copy_modules(
             if "modules." in f:
                 continue
 
-            module_name = os.path.splitext(f)[0]
+            module_name = _strip_extensions(f).replace("_", "-")
             module_path = os.path.relpath(os.path.join(root, f), src_top)
             assert module_name not in known_modules
             trace(f'Found "{module_name}" at "{os.path.join(root, f)}" ({module_path})')
@@ -438,8 +446,10 @@ def _copy_modules(
 
     target_top = os.path.join(modules_dir, kernel_version)
 
+    installed_modules: typing.List[str] = []
     debug(f'Installing modules from "{src_top}" into "{target_top}"')
-    for m in modules:
+    for module in modules:
+        m = module.replace("_", "-")
         if m not in known_modules:
             info(f"Module {m} not found. Was it built into the kernel?")
             continue
@@ -449,73 +459,103 @@ def _copy_modules(
         trace(f"Copying extra module {m} ({p}).")
         trace(f'    "{os.path.join(src_top, p)}" => "{os.path.join(target_top, p)}".')
         shutil.copyfile(os.path.join(src_top, p), os.path.join(target_top, p))
+        installed_modules.append(m)
+
+    if installed_modules:
+        os.makedirs(os.path.join(etc_dir, "modules-load.d"), exist_ok=True)
+        with open(
+            os.path.join(etc_dir, "modules-load.d", "clrm-initrd.conf"), "w"
+        ) as modconf:
+            modconf.write("\n".join(installed_modules))
 
 
-def _depmod_all(module_dir: str, *, kernel_version: str, depmod_command: str):
+def _depmod_all(install_dir: str, *, kernel_version: str, depmod_command: str):
+    if not os.path.exists(os.path.join(install_dir, "lib")):
+        os.symlink("usr/lib", os.path.join(install_dir, "lib"))
+
+    assert os.path.islink(os.path.join(install_dir, "lib"))
+    assert os.readlink(os.path.join(install_dir, "lib")) == "usr/lib"
+
     run(
         depmod_command,
         "-a",
         "-b",
-        module_dir,
+        install_dir,
         kernel_version,
     )
 
 
 def _install_extra_modules(
-    staging_area: str,
     system_context: SystemContext,
+    install_dir: str,
     modules: typing.List[str],
     *,
     kernel_version: str,
-    cpio_command: str,
     depmod_command: str,
 ):
     if not modules:
         return
 
-    # Extract all initrds:
-    with TemporaryDirectory(prefix="clrm_cpio") as tmp:
-        initrd_parts = system_context.initrd_parts_directory
-        cpio_modules: typing.Dict[str, bytes] = {}
+    usr_lib_modules = os.path.join(install_dir, "usr/lib/modules")
+    os.makedirs(usr_lib_modules, exist_ok=True)
 
-        for p in [
-            os.path.join(initrd_parts, f)
-            for f in os.listdir(initrd_parts)
-            if os.path.isfile(os.path.join(initrd_parts, f))
-        ]:
-            # extract one initrd:
-            run(
-                "/usr/bin/bash",
-                "-c",
-                f'/usr/bin/cat "{p}" | "{cpio_command}" -id',
-                work_directory=tmp,
+    etc_dir = os.path.join(install_dir, "etc")
+    os.makedirs(etc_dir, exist_ok=True)
+
+    _copy_modules(
+        system_context, modules, usr_lib_modules, etc_dir, kernel_version=kernel_version
+    )
+    _depmod_all(
+        install_dir,
+        kernel_version=kernel_version,
+        depmod_command=depmod_command,
+    )
+
+
+def _extract_initrds(
+    system_context: SystemContext, extraction_dir: str, *, cpio_command: str
+):
+    initrd_parts = system_context.initrd_parts_directory
+    for p in [
+        os.path.join(initrd_parts, f)
+        for f in os.listdir(initrd_parts)
+        if os.path.isfile(os.path.join(initrd_parts, f))
+    ]:
+        # extract one initrd:
+        run(
+            "/usr/bin/bash",
+            "-c",
+            f'/usr/bin/cat "{p}" | "{cpio_command}" -idu',
+            work_directory=extraction_dir,
+        )
+
+
+def _install_debug_support(
+    system_context: SystemContext,
+    tmp: str,
+):
+    _install_etc_shadow(tmp, system_context),
+
+    for cmd in [
+        "/usr/bin/journalctl",
+        "/usr/lib/systemd/systemd-sulogin-shell"
+        "/usr/lib/systemd/system/rescue.target",
+        "/usr/lib/systemd/system/rescue.service",
+    ]:
+        assert cmd[0] == "/"
+
+        if os.path.isfile(system_context.file_name(cmd)):
+            os.makedirs(os.path.join(tmp, os.path.dirname(cmd)), exist_ok=True)
+
+            dest = os.path.join(tmp, cmd[1:])
+            if os.path.exists(dest):
+                os.remove(dest)
+
+            shutil.copy2(
+                system_context.file_name(cmd),
+                dest,
+                follow_symlinks=False,
             )
-
-        modules_dir = os.path.join(tmp, "usr/lib/modules")
-        os.makedirs(modules_dir, exist_ok=True)
-        cpio_modules = _hash_directory(os.path.join(modules_dir, kernel_version))
-
-        _copy_modules(
-            system_context, modules, modules_dir, kernel_version=kernel_version
-        )
-        _depmod_all(
-            tmp,
-            kernel_version=kernel_version,
-            depmod_command=depmod_command,
-        )
-        new_modules = _hash_directory(os.path.join(modules_dir, kernel_version))
-
-        for t in [
-            k
-            for k, v in new_modules.items()
-            if k not in cpio_modules or cpio_modules[k] != v
-        ]:
-            target = os.path.join(staging_area, "usr/lib/modules", kernel_version, t)
-            src = os.path.join(modules_dir, kernel_version, t)
-            trace(f'   Installing module-related file: "{src}" => "{target}".')
-            os.makedirs(os.path.dirname(target), exist_ok=True)
-            shutil.copyfile(src, target)
-            trace(f"Copied {target} into {staging_area}.")
 
 
 class CreateClrmConfigInitrdCommand(Command):
@@ -525,7 +565,7 @@ class CreateClrmConfigInitrdCommand(Command):
         """Constructor."""
         super().__init__(
             "_create_clrm_config_initrd",
-            syntax="<INITRD_FILE> [root_hash=<ROOT_HASH>]",
+            syntax="<INITRD_FILE> [root_hash=<ROOT_HASH>] [debug=False]",
             help_string="Create an initrd with extra cleanroom config.",
             file=__file__,
             **services,
@@ -541,7 +581,14 @@ class CreateClrmConfigInitrdCommand(Command):
             '"{}" takes an initrd to create.',
             *args,
         )
-        self._validate_kwargs(location, ("root_hash",), **kwargs)
+        self._validate_kwargs(
+            location,
+            (
+                "root_hash",
+                "debug",
+            ),
+            **kwargs,
+        )
 
     def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
         return [
@@ -565,6 +612,11 @@ class CreateClrmConfigInitrdCommand(Command):
                 "",
                 "The volume group to look for clrm rootfs/verity partitions on",
             ),
+            (
+                "INITRD_EXTRA_MODULES",
+                "",
+                "Extra modules to add to the initrd",
+            ),
         ]
 
     def __call__(
@@ -580,6 +632,8 @@ class CreateClrmConfigInitrdCommand(Command):
             return
 
         root_hash = kwargs.get("root_hash", "")
+        debug = kwargs.get("debug", False)
+
         vg = system_context.substitution_expanded("DEFAULT_VG", None)
         image_fs = system_context.substitution_expanded("IMAGE_FS", None)
         image_device = _device_ify(
@@ -588,8 +642,12 @@ class CreateClrmConfigInitrdCommand(Command):
         image_options = system_context.substitution_expanded("IMAGE_OPTIONS", "")
         image_name = system_context.substitution_expanded("CLRM_IMAGE_FILENAME", "")
 
-        kver = system_context.substitution("KERNEL_VERSION", "")
-        assert kver
+        kernel_version = system_context.substitution_expanded("KERNEL_VERSION", "")
+        assert kernel_version
+
+        extra_modules = system_context.substitution_expanded(
+            "INITRD_EXTRA_MODULES", ""
+        ).split()
 
         initrd = args[0]
 
@@ -598,41 +656,64 @@ class CreateClrmConfigInitrdCommand(Command):
         staging_area = os.path.join(system_context.cache_directory, "clrm_extra")
         os.makedirs(staging_area)
 
-        cpio_command = self._binary(Binaries.CPIO)
+        with TemporaryDirectory(prefix="clrm_cpio_") as tmp:
+            _extract_initrds(
+                system_context, tmp, cpio_command=self._binary(Binaries.CPIO)
+            )
+            cpio_files = _hash_directory(tmp)
 
-        modules: typing.List[str] = [
-            *system_context.substitution_expanded("INITRD_EXTRA_MODULES", "").split(
-                ","
-            ),
-            "squashfs",
-            *_install_image_file_support(
-                staging_area, image_fs, image_device, image_options, image_name
-            ),
-            *_install_lvm_support(staging_area, vg, image_name),
-            *_install_sysroot_setup_support(staging_area),
-            *_install_verity_support(staging_area, system_context, root_hash),
-            *_install_volatile_support(staging_area, system_context),
-            *_install_var_mount_support(staging_area, system_context),
-            *_install_etc_shadow(staging_area, system_context),
-        ]
-        modules = [
-            m for m in modules if m
-        ]  # Trim empty modules (e.g. added by the substitution)
+            modules: typing.List[str] = [
+                *extra_modules,
+                *system_context.substitution_expanded("INITRD_EXTRA_MODULES", "").split(
+                    ","
+                ),
+                "squashfs",
+                *_install_image_file_support(
+                    tmp, image_fs, image_device, image_options, image_name
+                ),
+                *_install_lvm_support(tmp, vg, image_name),
+                *_install_sysroot_setup_support(tmp),
+                *_install_verity_support(tmp, system_context, root_hash),
+                *_install_volatile_support(tmp, system_context),
+                *_install_var_mount_support(tmp, system_context),
+            ]
+            modules = [
+                m for m in modules if m
+            ]  # Trim empty modules (e.g. added by the substitution)
 
-        _install_extra_modules(
-            staging_area,
-            system_context,
-            modules,
-            kernel_version=kver,
-            cpio_command=cpio_command,
-            depmod_command=self._binary(Binaries.DEPMOD),
-        )
+            _install_extra_modules(
+                system_context,
+                tmp,
+                modules,
+                kernel_version=kernel_version,
+                depmod_command=self._binary(Binaries.DEPMOD),
+            )
+
+            if debug:
+                _install_debug_support(
+                    system_context,
+                    tmp,
+                )
+
+            updated_files = _hash_directory(tmp)
+
+            for t in [
+                k
+                for k, v in updated_files.items()
+                if k not in cpio_files or cpio_files[k] != v
+            ]:
+                target = os.path.join(staging_area, t)
+                src = os.path.join(tmp, t)
+                trace(f'   Installing module-related file: "{src}" => "{target}".')
+                os.makedirs(os.path.dirname(target), exist_ok=True)
+                shutil.copy2(src, target, follow_symlinks=False)
+                trace(f"Copied {target} into {staging_area}.")
 
         # Create Initrd:
         run(
             "/bin/sh",
             "-c",
-            f'"{self._binary(Binaries.FIND)}" . | "{cpio_command}" -o -H newc > "{initrd}"',
+            f'"{self._binary(Binaries.FIND)}" . | "{self._binary(Binaries.CPIO)}" -o -H newc > "{initrd}"',
             work_directory=staging_area,
         )
 

@@ -44,26 +44,6 @@ class CreateInitrdMkinitcpioCommand(Command):
             location, 1, '"{}" takes an initrd to create.', *args, **kwargs
         )
 
-    def _fix_mkinitcpio_modules(
-        self,
-        location: Location,
-        system_context: SystemContext,
-        extra: str = "",
-    ):
-        extra = extra.replace(",", " ")
-        extra = extra.replace("  ", " ")
-        extra = extra.strip()
-
-        if extra:
-            debug(f'Changing MODULES to "{extra}"')
-            self._execute(
-                location.next_line(),
-                system_context,
-                "sed",
-                f"/^MODULES=/ cMODULES=({extra})",
-                "/etc/mkinitcpio.conf",
-            )
-
     def _install_mkinitcpio(
         self, location: Location, system_context: SystemContext
     ) -> typing.Sequence[str]:
@@ -82,12 +62,6 @@ class CreateInitrdMkinitcpioCommand(Command):
             "sd-encrypt block sd-lvm2 filesystems btrfs "
             "sd-shutdown)",
             "/etc/mkinitcpio.conf",
-        )
-
-        self._fix_mkinitcpio_modules(
-            location.next_line(),
-            system_context,
-            system_context.substitution_expanded("INITRD_EXTRA_MODULES", ""),
         )
 
         self._execute(
@@ -144,15 +118,6 @@ class CreateInitrdMkinitcpioCommand(Command):
             remove=True,
         )
         remove(system_context, "/boot/vmlinuz")
-
-    def register_substitutions(self) -> typing.List[typing.Tuple[str, str, str]]:
-        return [
-            (
-                "INITRD_EXTRA_MODULES",
-                "",
-                "Extra modules to add to the initrd",
-            ),
-        ]
 
     def __call__(
         self,
