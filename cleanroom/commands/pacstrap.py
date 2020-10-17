@@ -145,3 +145,5 @@ class PacstrapCommand(Command):
         self._add_hook(
             location.next_line(), system_context, "export", "_pacman_write_package_data"
         )
+
+        system_context.set_substitution("DISTRO_ID_LIKE", "archlinux")

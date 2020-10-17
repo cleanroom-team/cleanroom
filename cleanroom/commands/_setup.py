@@ -86,7 +86,7 @@ class SetupCommand(Command):
             ),
             (
                 "DISTRO_ID_LIKE",
-                "arch",
+                "archlinux",
                 "The id of the distribution this one is like",
             ),
             (
