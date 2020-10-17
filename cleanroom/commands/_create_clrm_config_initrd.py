@@ -423,6 +423,70 @@ def _strip_extensions(path: str):
     return os.path.basename(path).split(".")[0]
 
 
+def _kernel_module_map(module_dir: str) -> typing.Dict[str, str]:
+    known_modules: typing.Dict[str, str] = {}
+    for root, _, files in os.walk(module_dir):
+        for f in files:
+            if "modules." in f:
+                continue
+
+            module_name = _strip_extensions(f).replace("_", "-")
+            module_path = os.path.relpath(os.path.join(root, f), module_dir)
+            assert module_name not in known_modules
+            trace(f'Found "{module_name}" at "{os.path.join(root, f)}" ({module_path})')
+            known_modules[module_name] = module_path
+    return known_modules
+
+
+def _parse_module_dependencies(module_dir: str) -> typing.Dict[str, typing.List[str]]:
+    dependencies: typing.Dict[str, typing.List[str]] = {}
+    with open(os.path.join(module_dir, "modules.dep"), "r") as moddep:
+        for l in moddep:
+            trace(f'Parsing line "{l}".')
+            l = l.strip()
+            if not l or l.startswith("#"):
+                trace("    SKIPPING")
+                continue
+
+            colon = l.find(":")
+            assert colon > 0
+
+            path = l[:colon].strip()
+            assert path
+            dep_list = l[colon + 1 :].strip()
+
+            dependencies[path] = [d for d in dep_list.split(" ") if d]
+
+            dep_str = ", ".join(dependencies[path])
+            trace(f"Dependency: {path}: {dep_str}.")
+
+    return dependencies
+
+
+def _write_modules_load_file(etc_dir: str, module_name_list: typing.List[str]):
+    module_name_list.sort()
+    os.makedirs(os.path.join(etc_dir, "modules-load.d"), exist_ok=True)
+    with open(
+        os.path.join(etc_dir, "modules-load.d", "clrm-initrd.conf"), "w"
+    ) as modconf:
+        modconf.write("\n".join(module_name_list))
+
+
+def _module_dependencies(
+    module_path: str, dependencies: typing.Dict[str, typing.List[str]]
+) -> typing.Set[str]:
+    assert module_path
+    trace(f"Finding dependencies for: {module_path}.")
+    result: typing.Set[str] = set()
+    result.add(module_path)
+
+    for d in dependencies[module_path]:
+        result = result.union(_module_dependencies(d, dependencies))
+
+    trace(f"    => {result}.")
+    return result
+
+
 def _copy_modules(
     system_context: SystemContext,
     modules: typing.List[str],
@@ -431,22 +495,14 @@ def _copy_modules(
     *,
     kernel_version: str,
 ):
-    known_modules: typing.Dict[str, str] = {}
     src_top = os.path.join(system_context.file_name("/usr/lib/modules"), kernel_version)
-    for root, _, files in os.walk(src_top):
-        for f in files:
-            if "modules." in f:
-                continue
-
-            module_name = _strip_extensions(f).replace("_", "-")
-            module_path = os.path.relpath(os.path.join(root, f), src_top)
-            assert module_name not in known_modules
-            trace(f'Found "{module_name}" at "{os.path.join(root, f)}" ({module_path})')
-            known_modules[module_name] = module_path
-
     target_top = os.path.join(modules_dir, kernel_version)
 
-    installed_modules: typing.List[str] = []
+    known_modules = _kernel_module_map(src_top)
+
+    to_load: typing.List[str] = []
+    to_install: typing.Set[str] = set()
+
     debug(f'Installing modules from "{src_top}" into "{target_top}"')
     for module in modules:
         m = module.replace("_", "-")
@@ -454,19 +510,27 @@ def _copy_modules(
             info(f"Module {m} not found. Was it built into the kernel?")
             continue
         p = known_modules[m]
+        if p not in to_install:
+            to_install.add(p)
+            to_load.append(m)
 
-        os.makedirs(os.path.dirname(os.path.join(target_top, p)), exist_ok=True)
-        trace(f"Copying extra module {m} ({p}).")
-        trace(f'    "{os.path.join(src_top, p)}" => "{os.path.join(target_top, p)}".')
-        shutil.copyfile(os.path.join(src_top, p), os.path.join(target_top, p))
-        installed_modules.append(m)
+    _write_modules_load_file(etc_dir, to_load)
 
-    if installed_modules:
-        os.makedirs(os.path.join(etc_dir, "modules-load.d"), exist_ok=True)
-        with open(
-            os.path.join(etc_dir, "modules-load.d", "clrm-initrd.conf"), "w"
-        ) as modconf:
-            modconf.write("\n".join(installed_modules))
+    if not to_install:
+        return
+
+    # Install dependencies:
+    dependencies = _parse_module_dependencies(src_top)
+
+    to_test = to_install
+    for t in to_test:
+        to_install = to_install.union(_module_dependencies(t, dependencies))
+
+    for i in to_install:
+        os.makedirs(os.path.dirname(os.path.join(target_top, i)), exist_ok=True)
+        trace(f"Copying module {i}.")
+        trace(f'    "{os.path.join(src_top, i)}" => "{os.path.join(target_top, i)}".')
+        shutil.copy2(os.path.join(src_top, i), os.path.join(target_top, i))
 
 
 def _depmod_all(install_dir: str, *, kernel_version: str, depmod_command: str):
