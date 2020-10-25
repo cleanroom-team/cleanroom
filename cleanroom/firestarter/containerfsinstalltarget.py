@@ -35,6 +35,10 @@ class ContainerFilesystemInstallTarget(InstallTarget):
             container_name = parse_result.system_name
             if container_name.startswith("system-"):
                 container_name = container_name[7:]
+            if container_name.startswith("arch-"):
+                container_name = container_name[5:]
+            elif container_name.startswith("clr-"):
+                container_name = container_name[4:]
         read_write = parse_result.read_write
 
         container_dir = os.path.join(parse_result.machines_dir, container_name)

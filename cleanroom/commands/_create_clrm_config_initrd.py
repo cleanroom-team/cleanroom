@@ -201,7 +201,9 @@ def _install_lvm_support(
     return []
 
 
-def _install_sysroot_setup_support(staging_area: str) -> typing.List[str]:
+def _install_sysroot_setup_support(
+    staging_area: str, system_context: SystemContext
+) -> typing.List[str]:
     write_file(
         os.path.join(
             staging_area, "usr/lib/systemd/system/initrd-sysroot-setup.service"
@@ -235,6 +237,12 @@ def _install_sysroot_setup_support(staging_area: str) -> typing.List[str]:
         ),
         "../initrd-sysroot-setup.service",
     )
+
+    if not os.path.exists(os.path.join(staging_area, "usr/bin/tar")):
+        shutil.copy2(
+            system_context.file_name("/usr/bin/tar"),
+            os.path.join(staging_area, "usr/bin/tar"),
+        )
 
     return []
 
@@ -284,6 +292,7 @@ def _install_verity_support(
                 BindsTo={data_dev_esc}.device {hash_dev_esc}.device
                 IgnoreOnIsolate=true
                 After=cryptsetup-pre.target {data_dev_esc}.device {hash_dev_esc}.device
+                Requisite={data_dev_esc}.device {hash_dev_esc}.device
                 Before=cryptsetup.target umount.target
 
                 [Service]
@@ -374,20 +383,24 @@ def _install_var_mount_support(
     return []
 
 
-def _install_etc_shadow(staging_area: str, system_context: SystemContext):
-    shadow_file = system_context.file_name("/etc/shadow.initramfs")
-    if os.path.exists(shadow_file):
-        os.makedirs(os.path.join(staging_area, "etc"), exist_ok=True)
+def _install_shadow_file(staging_area: str, system_context: SystemContext):
+    for shadow_file in (
+        system_context.file_name("/etc/shadow.initramfs"),
+        system_context.file_name("/usr/share/defaults/etc/shadow.initramfs"),
+    ):
+        if os.path.exists(shadow_file):
+            os.makedirs(os.path.join(staging_area, "etc"), exist_ok=True)
 
-        shutil.copyfile(
-            shadow_file,
-            os.path.join(
-                staging_area,
-                "etc/shadow",
-            ),
-        )
-        os.chmod(os.path.join(staging_area, "etc/shadow"), 0o600)
-        trace("Installed /etc/shadow.initramfs as /etc/shadow into initrd.")
+            shutil.copyfile(
+                shadow_file,
+                os.path.join(
+                    staging_area,
+                    "etc/shadow",
+                ),
+            )
+            os.chmod(os.path.join(staging_area, "etc/shadow"), 0o600)
+            os.remove(shadow_file)
+            trace("Installed /etc/shadow.initramfs as /etc/shadow into initrd.")
 
 
 def _hash_file(path: str) -> bytes:
@@ -598,7 +611,7 @@ def _install_debug_support(
     system_context: SystemContext,
     tmp: str,
 ):
-    _install_etc_shadow(tmp, system_context),
+    _install_shadow_file(tmp, system_context),
 
     for cmd in [
         "/usr/bin/journalctl",
@@ -736,7 +749,7 @@ class CreateClrmConfigInitrdCommand(Command):
                     tmp, image_fs, image_device, image_options, image_name
                 ),
                 *_install_lvm_support(tmp, vg, image_name),
-                *_install_sysroot_setup_support(tmp),
+                *_install_sysroot_setup_support(tmp, system_context),
                 *_install_verity_support(tmp, system_context, root_hash),
                 *_install_volatile_support(tmp, system_context),
                 *_install_var_mount_support(tmp, system_context),

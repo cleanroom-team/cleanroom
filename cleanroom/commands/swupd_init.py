@@ -102,13 +102,17 @@ class swupd_initCommand(Command):
 
         system_context.set_substitution("DISTRO_ID_LIKE", "clearlinux")
         system_context.set_substitution(
-            "ROOTFS_PARTLABEL", "${DISTRO_ID}_${TIMESTAMP}-${DISTRO_VERSION_ID}"
+            "ROOTFS_PARTLABEL", "root_${TIMESTAMP}-${DISTRO_VERSION_ID}"
         )
         system_context.set_substitution(
-            "VRTYFS_PARTLABEL", "${DISTRO_ID}_${TIMESTAMP}-${DISTRO_VERSION_ID}"
+            "VRTYFS_PARTLABEL", "vrty_${TIMESTAMP}-${DISTRO_VERSION_ID}"
+        )
+        system_context.set_substitution(
+            "KERNEL_FILENAME",
+            "${PRETTY_SYSTEM_NAME}_${TIMESTAMP}-${DISTRO_VERSION_ID}.efi",
         )
         system_context.set_substitution(
             "CLRM_IMAGE_FILENAME",
-            "${PRETTY_SYSTE_NAME}_${TIMESTAMP}-${DISTRO_VERSION_ID}",
+            "${PRETTY_SYSTEM_NAME}_${TIMESTAMP}-${DISTRO_VERSION_ID}",
         )
         self._execute(location.next_line(), system_context, "create_os_release")

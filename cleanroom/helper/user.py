@@ -157,4 +157,9 @@ class UserHelper:
     @staticmethod
     def user_data(name: str, *, root_directory: str) -> typing.Optional[User]:
         """Get user data from passwd file."""
-        return _user_data(os.path.join(root_directory, "etc/passwd"), name)
+        user_data = _user_data(os.path.join(root_directory, "etc/passwd"), name)
+        if user_data is None:
+            user_data = _user_data(
+                os.path.join(root_directory, "usr/share/defaults/etc/passwd"), name
+            )
+        return user_data

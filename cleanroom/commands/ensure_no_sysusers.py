@@ -47,7 +47,7 @@ class EnsureNoSysusersCommand(Command):
             "remove",
             "/usr/lib/sysusers.d",
             "/usr/bin/systemd-sysusers",
-            "/usr/lib/systemd/system/sysinit.target.wants/" "systemd-sysusers.service",
+            "/usr/lib/systemd/system/*/systemd-sysusers.service",
             "/usr/lib/systemd/system/systemd-sysusers.service",
             recursive=True,
             force=True,

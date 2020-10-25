@@ -128,9 +128,10 @@ def _report_output_lines(
     channel: typing.Callable[..., None], headline: str, line_data: str
 ) -> None:
     """Pretty-print output lines."""
-    channel(headline)
-    if line_data == "" or line_data == "\n":
-        return
-    lines = line_data.split("\n")
-    for line in lines:
-        channel(f"    {line}")
+    if line_data:
+        channel(headline)
+        if line_data == "" or line_data == "\n":
+            return
+        lines = line_data.split("\n")
+        for line in lines:
+            channel(f"    {line}")

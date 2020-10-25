@@ -62,7 +62,7 @@ class EnsureHwdbCommand(Command):
             system_context,
             "export",
             "remove",
-            "/usr/lib/systemd/system/*/" "systemd-hwdb-update.service",
-            "/usr/lib/systemd/system/" "systemd-hwdb-update.service",
+            "/usr/lib/systemd/system/*/systemd-hwdb-update.service",
+            "/usr/lib/systemd/system/systemd-hwdb-update.service",
             force=True,
         )

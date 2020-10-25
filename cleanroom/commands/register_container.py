@@ -91,6 +91,10 @@ class RegisterContainerCommand(Command):
         )
 
         location.set_description("")
+
+        if not os.path.isdir(system_context.file_name(systemd_directory)):
+            os.makedirs(system_context.file_name(systemd_directory))
+
         override_dir = f"{systemd_directory}/systemd-nspawn@{system}.service.d"
         self._execute(location.next_line(), system_context, "mkdir", override_dir)
 
@@ -104,12 +108,12 @@ class RegisterContainerCommand(Command):
             f"{override_dir}/override.conf",
             textwrap.dedent(
                 f"""\
-                      [Unit]
-                      Description=Container {system}: {description}{after}{requires}
-                       
-                      [Service]
-                      TimeoutStartSec={timeout}
-                      """
+                    [Unit]
+                    Description=Container {system}: {description}{after}{requires}
+
+                    [Service]
+                    TimeoutStartSec={timeout}
+                """
             ),
         )
 

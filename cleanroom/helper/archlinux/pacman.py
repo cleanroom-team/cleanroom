@@ -136,7 +136,6 @@ def _pacman_keyinit(system_context: SystemContext, pacman_key_command: str) -> N
 
 
 def _mountpoint(root_dir: str, folder: str, dev: str, **kwargs: typing.Any):
-    debug(f"Mounting {folder} in chroot.")
     path = root_dir
     if folder:
         path = os.path.join(root_dir, folder)

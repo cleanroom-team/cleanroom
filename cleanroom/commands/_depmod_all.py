@@ -44,17 +44,17 @@ class DepmodAllCommand(Command):
         if not os.path.isdir(modules):
             return  # No kernel installed, nothing to do.
 
-        for kver in [
-            f for f in os.listdir(modules) if os.path.isdir(os.path.join(modules, f))
-        ]:
-            location.set_description(f"Run depmod for kernel version {kver}...")
-            self._execute(
-                location,
-                system_context,
-                "run",
-                self._binary(Binaries.DEPMOD),
-                "-a",
-                "-b",
-                system_context.fs_directory,
-                kver,
-            )
+        kernel_version = system_context.substitution_expanded("KERNEL_VERSION", "")
+        assert kernel_version
+
+        location.set_description(f"Run depmod for kernel version {kernel_version}...")
+        self._execute(
+            location,
+            system_context,
+            "run",
+            self._binary(Binaries.DEPMOD),
+            "-a",
+            "-b",
+            system_context.fs_directory,
+            kernel_version,
+        )
