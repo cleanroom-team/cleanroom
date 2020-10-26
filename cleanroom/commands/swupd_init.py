@@ -91,6 +91,80 @@ class swupd_initCommand(Command):
         location.set_description("Move systemd files into /usr")
         self._add_hook(location, system_context, "_teardown", "systemd_cleanup")
 
+        # Handle triggers:
+        self._add_hook(
+            location,
+            system_context,
+            "_export",
+            "persist_on_usr",
+            "catalog-trigger",
+            "/var/lib/systemd/catalog",
+        )
+        self._add_hook(
+            location,
+            system_context,
+            "_export",
+            "persist_on_usr",
+            "fontconfig-trigger",
+            "/var/cache/fontconfig",
+        )
+        self._add_hook(
+            location,
+            system_context,
+            "_export",
+            "persist_on_usr",
+            "glib-schemas-trigger",
+            "/var/cache/glib-2.0",
+        )
+        self._add_hook(
+            location,
+            system_context,
+            "_export",
+            "persist_on_usr",
+            "graphviz-dot-trigger",
+            "/var/lib/graphviz",
+        )
+        self._add_hook(
+            location,
+            system_context,
+            "_export",
+            "persist_on_usr",
+            "hwdb-update-trigger",
+            "/etc/udev",
+        )
+        self._add_hook(
+            location,
+            system_context,
+            "_export",
+            "persist_on_usr",
+            "icon-cache-update-trigger",
+            "/var/cache/icons",
+        )
+        self._add_hook(
+            location,
+            system_context,
+            "_export",
+            "persist_on_usr",
+            "ldconfig-trigger",
+            "/var/cache/ldconfig",
+        )
+        self._add_hook(
+            location,
+            system_context,
+            "_export",
+            "persist_on_usr",
+            "locale-archive-trigger",
+            "/var/cache/locale",
+        )
+        self._add_hook(
+            location,
+            system_context,
+            "_export",
+            "persist_on_usr",
+            "mandb-trigger",
+            "/var/cache/man",
+        )
+
         with open(system_context.file_name("/usr/lib/os-release"), "r") as osr:
             for l in osr:
                 l = l.strip()
