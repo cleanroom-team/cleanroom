@@ -91,78 +91,78 @@ class swupd_initCommand(Command):
         location.set_description("Move systemd files into /usr")
         self._add_hook(location, system_context, "_teardown", "systemd_cleanup")
 
-        # Handle triggers:
+        location.set_description("Setup Clearlinux triggers as hooks")
         self._add_hook(
             location,
             system_context,
-            "_export",
-            "persist_on_usr",
-            "catalog-trigger",
-            "/var/lib/systemd/catalog",
+            "export",
+            "_clr_catalog_trigger",
         )
         self._add_hook(
             location,
             system_context,
-            "_export",
-            "persist_on_usr",
-            "fontconfig-trigger",
-            "/var/cache/fontconfig",
+            "export",
+            "_clr_fontconfig_trigger",
         )
         self._add_hook(
             location,
             system_context,
-            "_export",
-            "persist_on_usr",
-            "glib-schemas-trigger",
-            "/var/cache/glib-2.0",
+            "export",
+            "_clr_glib_schemas_trigger",
         )
         self._add_hook(
             location,
             system_context,
-            "_export",
-            "persist_on_usr",
-            "graphviz-dot-trigger",
-            "/var/lib/graphviz",
+            "export",
+            "_clr_graphviz_dot_trigger",
         )
         self._add_hook(
             location,
             system_context,
-            "_export",
-            "persist_on_usr",
-            "hwdb-update-trigger",
-            "/etc/udev",
+            "export",
+            "_clr_hwdb_update_trigger",
         )
         self._add_hook(
             location,
             system_context,
-            "_export",
-            "persist_on_usr",
-            "icon-cache-update-trigger",
-            "/var/cache/icons",
+            "export",
+            "_clr_icon_cache_update_trigger",
         )
         self._add_hook(
             location,
             system_context,
-            "_export",
-            "persist_on_usr",
-            "ldconfig-trigger",
-            "/var/cache/ldconfig",
+            "export",
+            "_clr_ldconfig_trigger",
         )
         self._add_hook(
             location,
             system_context,
-            "_export",
-            "persist_on_usr",
-            "locale-archive-trigger",
-            "/var/cache/locale",
+            "export",
+            "_clr_locale_archive_trigger",
         )
         self._add_hook(
             location,
             system_context,
-            "_export",
-            "persist_on_usr",
-            "mandb-trigger",
-            "/var/cache/man",
+            "export",
+            "_clr_mandb_trigger",
+        )
+        self._add_hook(
+            location,
+            system_context,
+            "export",
+            "_clr_sysusers_trigger",
+        )
+        self._add_hook(
+            location,
+            system_context,
+            "export",
+            "_clr_dynamic_trust_store_trigger",
+        )
+        self._add_hook(
+            location,
+            system_context,
+            "export",
+            "_clr_mime_update_trigger",
         )
 
         with open(system_context.file_name("/usr/lib/os-release"), "r") as osr:

@@ -23,7 +23,7 @@ class swupdCommand(Command):
         super().__init__(
             "swupd",
             target_distribution="clr",
-            syntax="<PACKAGES>",
+            syntax="<PACKAGES> [remove=False]",
             help_string="Run swupd to install <PACKAGES>.",
             file=__file__,
             **services,
@@ -36,9 +36,10 @@ class swupdCommand(Command):
         if not self._binary(Binaries.SWUPD):
             raise ParseError("No swupd binary was found.")
 
-        self._validate_arguments_at_least(
+        self._validate_args_at_least(
             location, 1, '"{}" needs at least one package or group to install.', *args
         )
+        self._validate_kwargs(location, ("remove",), **kwargs)
 
     def __call__(
         self,
@@ -54,9 +55,11 @@ class swupdCommand(Command):
                 "Trying to run swupd when other package type has been initialized before."
             )
 
+        op = "bundle-rm" if kwargs.get("remove", False) else "bundle-add"
+
         run(
             self._binary(Binaries.SWUPD),
-            "bundle-add",
+            op,
             f"--path={system_context.fs_directory}",
             *args,
         )
