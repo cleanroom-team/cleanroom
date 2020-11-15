@@ -74,8 +74,6 @@ def _install_image_file_support(
     image_name: str,
 ) -> typing.List[str]:
     if not image_device:
-        assert not image_fs
-        assert not image_options
         return []
 
     assert image_fs
@@ -408,13 +406,15 @@ def _hash_file(path: str) -> bytes:
 
     if os.path.islink(path):
         hash.update(os.readlink(path).encode("utf-8"))
-    else:
+    if os.path.isfile(path):
         with open(path, "rb") as fd:
             while True:
                 data = fd.read(1024 * 1024)
                 if not data:
                     break
                 hash.update(data)
+    else:
+        hash.update(path.encode("utf-8"))
 
     return hash.digest()
 
@@ -422,12 +422,12 @@ def _hash_file(path: str) -> bytes:
 def _hash_directory(dir: str) -> typing.Dict[str, bytes]:
     hashes: typing.Dict[str, bytes] = {}
     for root, _, files in os.walk(dir):
+        if root == "dev":
+            continue  # ignore everything in /dev!
         for file in files:
             path = os.path.join(root, file)
             key = os.path.relpath(path, dir)
-            hash = _hash_file(path)
-
-            hashes[key] = hash
+            hashes[key] = _hash_file(path)
 
     return hashes
 

@@ -43,7 +43,7 @@ class ClrMandbTriggerCommand(Command):
         """Execute command."""
         if not os.path.exists(
             system_context.file_name("/usr/lib/systemd/system/mandb-trigger.service")
-        ) or os.path.isfile(system_context.file_name("/usr/bin/mandb")):
+        ) or not os.path.isfile(system_context.file_name("/usr/bin/mandb")):
             return
 
         run(

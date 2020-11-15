@@ -96,6 +96,16 @@ class swupd_initCommand(Command):
             location,
             system_context,
             "export",
+            "run",
+            "/usr/bin/systemd-tmpfiles",
+            "--create",
+            inside=True,
+        )
+
+        self._add_hook(
+            location,
+            system_context,
+            "export",
             "_clr_catalog_trigger",
         )
         self._add_hook(

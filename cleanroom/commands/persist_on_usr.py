@@ -61,7 +61,10 @@ class PersistOnUsrCommand(Command):
 
         os.makedirs(dirname(full_usr_dir), exist_ok=True)
 
-        shutil.move(full_directory, full_usr_dir)
+        if os.path.isdir(full_directory):
+            shutil.move(full_directory, full_usr_dir)
+        else:
+            os.makedirs(full_usr_dir)
         os.symlink(usr_dir, full_directory)
 
         self._execute(

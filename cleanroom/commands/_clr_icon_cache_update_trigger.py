@@ -71,6 +71,6 @@ class ClrIconCacheUpdateTriggerCommand(Command):
         )
         os.remove(
             system_context.file_name(
-                "/usr/lib/systemd/system/update-trigger.target.wants/icon-cache-update-trigger.service"
+                "/usr/lib/systemd/system/update-triggers.target.wants/icon-cache-update-trigger.service"
             )
         )

@@ -63,10 +63,10 @@ class ClrMimeUpdateTriggerCommand(Command):
         )
 
         os.remove(
-            system_context.file_name("/usr/lib/systemd/system/mime_update.service")
+            system_context.file_name("/usr/lib/systemd/system/mime-update.service")
         )
         os.remove(
             system_context.file_name(
-                "/usr/lib/systemd/system/update-triggers.target.wants/mime_update.service"
+                "/usr/lib/systemd/system/update-triggers.target.wants/mime-update.service"
             )
         )
