@@ -94,7 +94,7 @@ def _install_image_file_support(
                 Wants=initrd-find-image-partitions.service
                 Before=initrd-find-image-partitions.service shutdown.target
                 Conflicts=shutdown.target
-                
+
                 [Mount]
                 What={image_device}
                 Where=/images
@@ -130,14 +130,14 @@ def _install_image_file_support(
                 BindsTo=images.mount
                 Requisite=images.mount
                 Conflicts=shutdown.target
-                
+
                 [Service]
                 WorkingDirectory=/
                 Type=oneshot
                 RemainAfterExit=yes
                 ExecStart=/usr/bin/losetup -P /dev/loop7 /images/{image_name}
                 ExecStop=/usr/bin/losetup -d /dev/loop7
-                
+
                 [Install]
                 WantedBy=images.mount
                 """
@@ -174,13 +174,13 @@ def _install_lvm_support(
                 BindsTo={device_name}.device
                 Requisite={device_name}.device
                 Conflicts=shutdown.target
-                
+
                 [Service]
                 WorkingDirectory=/
                 Type=oneshot
                 RemainAfterExit=yes
                 ExecStart=/usr/bin/partprobe /dev/{vg}/{image_name}
-                
+
                 [Install]
                 WantedBy={device_name}.device
                 """
@@ -217,7 +217,7 @@ def _install_sysroot_setup_support(
                 Before=initrd-parse-etc.service initrd-fs.target shutdown.target
                 Conflicts=shutdown.target
                 AssertPathExists=/etc/initrd-release
-                
+
                 [Service]
                 Type=oneshot
                 RemainAfterExit=yes

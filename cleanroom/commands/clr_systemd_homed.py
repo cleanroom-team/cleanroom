@@ -96,7 +96,7 @@ class PkgSystemdHomedCommand(Command):
             "/usr/lib/tmpfiles.d/systemd-homed.conf",
             textwrap.dedent(
                 """\
-                    C /var/lib/systemd/home - - - - 
+                    C /var/lib/systemd/home - - - -
                     """
             ).encode("utf-8"),
             mode=0o644,

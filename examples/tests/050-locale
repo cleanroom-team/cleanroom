@@ -9,4 +9,3 @@ grep "^LC_MESSAGES=en_US" etc/locale.conf > /dev/null \
     || fail "LC_MESSAGES not set up in /etc/locale.conf" 2
 
 echo "Locale has been set up, ok"
-

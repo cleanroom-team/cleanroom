@@ -55,4 +55,3 @@ create /etc/modules-load.d/bluetooth.conf <<<<btusb
 # Export a image:
 ## This will run create_image and export the result into the provided borg repository:
 export borg_repository
-

@@ -8,4 +8,3 @@ function fail {
 test -d var/lib/pacman && fail "/var/lib/pacman exists, fail" 1
 
 echo "No /var/lib/pacman, ok"
-

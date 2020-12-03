@@ -55,10 +55,10 @@ class PkgTmuxCommand(Command):
 
                       # Last window on C-a C-a:
                       bind-key C-a last-window
-                    
+
                       # Highlight active window
                       set-window-option -g window-status-current-bg red
-                    
+
                       # Set window notifications
                       setw -g monitor-activity on
                       set -g visual-activity on

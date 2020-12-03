@@ -1,4 +1,5 @@
-# #!/usr/bin/python
+#!/usr/bin/python
+
 # """Test for the file helper module.
 #
 # @author: Tobias Hunger <tobias.hunger@gmail.com>

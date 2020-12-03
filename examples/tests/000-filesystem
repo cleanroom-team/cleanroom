@@ -8,4 +8,3 @@ function fail {
 test -c "dev/null"  || fail "/dev/null is missing or no char device."
 
 echo "Devices look sane, ok"
-

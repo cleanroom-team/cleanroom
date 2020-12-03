@@ -1,4 +1,5 @@
-# # -*- coding: utf-8 -*-
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 # """Test for the cleanroom.generator.helper.generic.user
 #
 # @author: Tobias Hunger <tobias.hunger@gmail.com>

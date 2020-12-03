@@ -50,7 +50,7 @@ def _setup_network(
             f"""\
                 [Match]
                 {outside_match}
-                
+
                 [Network]
                 Description=Node network
                 Address=10.128.{cluster_id}.{node_id}/8
@@ -71,7 +71,7 @@ def _setup_network(
             f"""\
                 [Match]
                 Name=cbr0
-                
+
                 [Network]
                 Description={cluster_name} pod bridge setup
                 Address=10.{cluster_offset}.{node_id}.1/16
@@ -87,7 +87,7 @@ def _setup_network(
             f"""\
                 [Match]
                 {cluster_match}
-                
+
                 [Network]
                 Description={cluster_name} pod bridge outside connectivity
                 Bridge=cbr0
@@ -159,7 +159,7 @@ def _setup_kube_proxy(
                 EnvironmentFile=
                 ExecStart=
                 ExecStart=/usr/bin/kube-proxy --logtostderr=true --v=0 \\
-                    --master={master_ip} 
+                    --master={master_ip}
                 """
         ).encode("utf-8"),
         mode=0o644,

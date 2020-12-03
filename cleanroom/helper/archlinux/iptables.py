@@ -119,7 +119,7 @@ def _install_v4_rules(
                 :TCP - [0:0]
                 :UDP - [0:0]
                 :LOGDROP - [0:0]
-                
+
                 -A LOGDROP -m limit --limit 5/m --limit-burst 10 -j LOG
                 -A LOGDROP -j DROP
 

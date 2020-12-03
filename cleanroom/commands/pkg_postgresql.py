@@ -62,26 +62,26 @@ class PkgPostgresqlCommand(Command):
             textwrap.dedent(
                 """\
                     #!/usr/bin/bash
-                    
+
                     DATADIR="$$1"
                     test "x$$DATADIR" = "x" && exit 2
-                    
+
                     USER=postgres
                     PASSWD=$$(cat /home/postgres/.pgpass | cut -d':' -f5)
-                    
+
                     if test ! -d "$${DATADIR}" ; then
                         su $${USER} -c "/usr/bin/initdb -D $${DATADIR} --encoding UTF8 --locale C" || exit 1
-                    
+
                         su $${USER} -c "/usr/bin/postgres --single -D $${DATADIR}" <<EOF > /dev/null 2>&1
                         ALTER USER $${USER} PASSWORD "$${PASSWD}";
                         EOF
-                    
+
                         echo >> "$${DATADIR}/postgresql.conf"
                         echo "listen_addresses = '*' # Listen everywhere!" >> "$${DATADIR}/postgresql.conf"
-                    
+
                         cat << END_OF_CONFIG > "$${DATADIR}/pg_hba.conf"
                     # TYPE  DATABASE        USER            ADDRESS                 METHOD
-                    
+
                     # "local" is for Unix domain socket connections only
                     local   all             all                                     md5
                     # IPv4 local connections:

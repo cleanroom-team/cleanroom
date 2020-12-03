@@ -1,4 +1,5 @@
-# #!/usr/bin/python
+#!/usr/bin/python
+
 # """Test for the built-in print_commands of cleanroom.
 #
 # @author: Tobias Hunger <tobias.hunger@gmail.com>

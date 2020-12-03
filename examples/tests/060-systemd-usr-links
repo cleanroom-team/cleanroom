@@ -11,7 +11,7 @@ SD="${TOP}/usr/lib/systemd/system"
 for L in $(cd "${SD}" ; find . -type l) ; do
     LT=$(cd "${SD}" && readlink "${L}" | sed -e 's!^\./!!')
     if test "x$LT" = "x/dev/null" ; then
-        echo "Systemd: Symlink ${L} is a mask, ok." 
+        echo "Systemd: Symlink ${L} is a mask, ok."
     elif [[ "$(dirname "${L}")" == "." ]]; then
         # top level:
         if [[ "${LT}" != */* ]]; then
@@ -28,4 +28,3 @@ for L in $(cd "${SD}" ; find . -type l) ; do
         fi
     fi
 done
-

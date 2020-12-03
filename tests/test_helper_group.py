@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """Test for the cleanroom.generator.helper.generic.group
 

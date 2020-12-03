@@ -31,4 +31,3 @@ systemd_enable fstrim.timer smartd.service tlp.service
 # This conflicts with tlp:
 remove /usr/lib/systemd/system/systemd-rfkill.service
     /usr/lib/systemd/system/systemd-rfkill.socket
-

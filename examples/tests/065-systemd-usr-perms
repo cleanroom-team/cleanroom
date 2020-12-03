@@ -21,4 +21,3 @@ for F in $(cd "${SD}" ; find . -type f) ; do
 done
 
 echo "Systemd unit permissions ok."
-
