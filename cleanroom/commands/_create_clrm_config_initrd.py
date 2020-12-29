@@ -135,6 +135,7 @@ def _install_image_file_support(
                 WorkingDirectory=/
                 Type=oneshot
                 RemainAfterExit=yes
+                ExecStartPre=-/usr/bin/mknod -m 660 /dev/loop7 b 7 7
                 ExecStart=/usr/bin/losetup -P /dev/loop7 /images/{image_name}
                 ExecStop=/usr/bin/losetup -d /dev/loop7
 
