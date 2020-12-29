@@ -83,6 +83,9 @@ class CreateInitrdDracutCommand(Command):
 
         dracut_args: typing.List[str] = []
 
+        kernel_version = system_context.substitution_expanded("KERNEL_VERSION", "")
+        assert kernel_version
+
         run(
             "/usr/bin/dracut",
             *dracut_args,
@@ -95,6 +98,7 @@ class CreateInitrdDracutCommand(Command):
             "--add",
             "busybox",
             "/boot/initramfs.img",
+            kernel_version,
             chroot=system_context.fs_directory,
             chroot_helper=self._binary(Binaries.SYSTEMD_NSPAWN),
         )
