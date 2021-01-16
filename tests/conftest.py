@@ -97,7 +97,7 @@ def command_manager():
 # Injected into parser:
 def _parse_and_verify_string(parser, data, expected_base_system, expected):
     """Verify one line of input to the Parser."""
-    (base_system, exec_obj_list) = parser._parse_string(data, "<TEST_DATA>")
+    (base_system, target_distribution, exec_obj_list) = parser._parse_string(data, "<TEST_DATA>")
     result = list(
         map(
             lambda x: (x.command, x.args, x.kwargs, x.location.line_number),
