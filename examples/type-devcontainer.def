@@ -37,7 +37,7 @@ pacman
 
     mesa-libgl opencl-mesa
 
-    xterm
+    xterm xxhash
 
     jq
 
