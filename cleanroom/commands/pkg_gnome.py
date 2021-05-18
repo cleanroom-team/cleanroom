@@ -60,7 +60,6 @@ class PkgGnomeCommand(Command):
             "baobab",
             "brasero",
             "cheese",
-            "chrome-gnome-shell",
             "file-roller",
             "p7zip",
             "unrar",
