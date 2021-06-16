@@ -14,7 +14,7 @@ import typing
 
 
 class PacstrapCommand(Command):
-    """The pacstrap command."""
+    """The _pacman_keyinit command."""
 
     def __init__(self, **services: typing.Any) -> None:
         """Constructor."""
