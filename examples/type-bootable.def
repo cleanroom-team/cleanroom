@@ -71,7 +71,6 @@ blacklist bfs
 blacklist befs
 blacklist cramfs
 blacklist efs
-blacklist erofs
 blacklist exofs
 blacklist freevxfs
 blacklist f2fs

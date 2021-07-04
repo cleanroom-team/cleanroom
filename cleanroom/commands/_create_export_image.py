@@ -155,7 +155,6 @@ class CreateExportImageCommand(Command):
             self._binary(Binaries.SYSTEMD_REPART),
             "--dry-run=no",
             "--empty=require",
-            f"--root={system_context.fs_directory}",
             f"--definitions={repart_d_directory}",
             image_filename,
         )
