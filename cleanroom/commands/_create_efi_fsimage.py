@@ -188,8 +188,6 @@ class CreateEfiFsimageCommand(Command):
     def _format_efi_partition(self, efi_file: str, *, partition_label: str = ""):
         mkfs_args: typing.List[str] = [
             self._binary(Binaries.MKFS_VFAT),
-            "-F",
-            "32",
         ]
         if partition_label:
             mkfs_args += [
