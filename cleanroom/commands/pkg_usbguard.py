@@ -112,6 +112,7 @@ class PkgAvahiCommand(Command):
             textwrap.dedent(
                 """\
                 [Service]
+                Type=simple
                 CapabilityBoundingSet=CAP_DAC_OVERRIDE
                 ReadWritePaths=-/var/etc/usbguard/rules.conf
                 ExecStart=

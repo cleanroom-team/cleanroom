@@ -49,8 +49,8 @@ class PkgIntelCpuCommand(Command):
         )
 
         # Intel ucode:
-        location.set_description("Install intel-ucode")
-        self._execute(location, system_context, "pacman", "intel-ucode")
+        location.set_description("Install intel packages")
+        self._execute(location, system_context, "pacman", "intel-ucode", "thermald")
 
         initrd_parts = os.path.join(system_context.boot_directory, "initrd-parts")
         os.makedirs(initrd_parts, exist_ok=True)
@@ -61,6 +61,13 @@ class PkgIntelCpuCommand(Command):
             "/boot/intel-ucode.img",
             os.path.join(initrd_parts, "00-intel-ucode"),
             to_outside=True,
+        )
+
+        self._execute(
+            location,
+            system_context,
+            "systemd_enable",
+            "thermald",
         )
 
         system_context.set_or_append_substitution(

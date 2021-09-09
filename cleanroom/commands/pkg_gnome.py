@@ -45,14 +45,18 @@ class PkgGnomeCommand(Command):
             location,
             system_context,
             "pacman",
-            "--assume-installed",
+            "--dbonly",
             "qt5-base",
-            "--assume-installed",
             "qt5-declarative",
-            "--assume-installed",
             "qt5-wayland",
-            "--assume-installed",
             "qt5-x11extras",
+            "jack",
+            "jack2",
+        )
+        self._execute(
+            location,
+            system_context,
+            "pacman",
             "pipewire",
             "pipewire-alsa",
             "pipewire-pulse",
@@ -99,14 +103,6 @@ class PkgGnomeCommand(Command):
             "gnome-user-share",
             "rygel",
             "system-config-printer",
-        )
-
-        # Remove useless GStreamer plugins:
-        remove(
-            system_context,
-            "/usr/lib/gstreamer-*/libgstjack.so",
-            "/usr/lib/gstreamer-*/libgstqmlgl.so",
-            force=True,
         )
 
         location.set_description("networkmanager fixup")

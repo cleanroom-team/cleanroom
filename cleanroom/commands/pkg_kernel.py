@@ -50,9 +50,9 @@ class PkgKernelCommand(Command):
             location,
             system_context,
             "pacman",
+            kernel,
             "--assume-installed",
             "initramfs",
-            kernel,
         )
 
         vmlinuz = os.path.join(system_context.boot_directory, "vmlinuz")
