@@ -23,6 +23,7 @@ class Binaries(Enum):
     CPIO = auto()
     DEBOOTSTRAP = auto()
     DEPMOD = auto()
+    DNF = auto()
     DPKG = auto()
     FIND = auto()
     FLOCK = auto()
@@ -88,6 +89,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.BTRFS: _check_for_binary("btrfs"),
         Binaries.CPIO: _check_for_binary("cpio"),
         Binaries.DEPMOD: _check_for_binary("depmod"),
+        Binaries.DNF: _check_for_binary("dnf"),
         Binaries.DPKG: _check_for_binary("dpkg"),
         Binaries.FIND: _check_for_binary("find"),
         Binaries.FLOCK: _check_for_binary("flock"),
@@ -133,6 +135,7 @@ class BinaryManager:
             [
                 Binaries.APT_GET,
                 Binaries.DEBOOTSTRAP,
+                Binaries.DNF,
                 Binaries.DPKG,
                 Binaries.PACMAN,
                 Binaries.PACMAN_KEY,
