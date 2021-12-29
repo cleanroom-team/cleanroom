@@ -54,16 +54,16 @@ def mount_points(
 
 def umount(directory: str, chroot: typing.Optional[str] = None) -> None:
     """Umount a directory."""
-    assert len(mount_points(directory)) == 1
+    assert len(mount_points(directory, chroot)) == 1
 
     run("/usr/bin/umount", _map_into_chroot(directory, chroot))
 
-    assert len(mount_points(directory)) == 0
+    assert len(mount_points(directory, chroot)) == 0
 
 
 def umount_all(directory: str, chroot: typing.Optional[str] = None) -> bool:
     """Umount all mount points below a directory."""
-    if len(mount_points(directory)) == 0:
+    if len(mount_points(directory, chroot)) == 0:
         return True
 
     run("/usr/bin/umount", "--recursive", _map_into_chroot(directory, chroot))
