@@ -65,7 +65,7 @@ def _check_for_one_binary(binary: str) -> str:
 
     for d in ["/usr/bin", "/usr/sbin", "/bin", "/sbin"]:
         result = os.path.join(d, binary)
-        if result:
+        if os.path.isfile(result):
             return result
 
     return ""
@@ -146,11 +146,12 @@ class BinaryManager:
             if b[1]:
                 debug(f"{b[0]} found: {b[1]}...")
             else:
-                if b in self._optionals:
+                if b[0] in self._optionals:
                     debug(f"{b[0]} not found [OPTIONAL].")
                 else:
                     warn(f"{b[0]} not found.")
                     passed = False
+
         if not passed:
             raise PreflightError("Required binaries are not available.")
 
