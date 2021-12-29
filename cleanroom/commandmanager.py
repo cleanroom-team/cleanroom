@@ -242,6 +242,7 @@ class CommandManager:
             name = "cleanroom.commands." + command_name
 
             spec = importlib.util.spec_from_file_location(name, command_file_name)
+            assert spec
             cmd_module = importlib.util.module_from_spec(spec)
             assert spec and spec.loader
             spec.loader.exec_module(cmd_module)

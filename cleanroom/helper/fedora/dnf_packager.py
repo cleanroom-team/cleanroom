@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-"""Manage dnf calls.
+"""Manage the dnf packager.
 
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
 
-from ...printer import debug, info
-from ...systemcontext import SystemContext
-from ..run import run
-from ..mount import umount_all, mount
+from cleanroom.printer import debug, info
+from cleanroom.systemcontext import SystemContext
+from cleanroom.helper.run import run
+from cleanroom.helper.mount import umount_all, mount
 
 import os
 import os.path

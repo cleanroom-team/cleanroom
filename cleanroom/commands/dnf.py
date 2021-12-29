@@ -8,11 +8,10 @@
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.exceptions import ParseError
-from cleanroom.helper.fedora.dnf import dnf
+from cleanroom.helper.fedora.dnf_packager import dnf
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
-import os.path
 import typing
 
 
@@ -56,8 +55,6 @@ class dnfCommand(Command):
 
         kwargs["exclude"] = kwargs.get("exclude", "").split(",")
         kwargs["group_levels"] = kwargs.get("group_levels", "").split(",")
-
-        print("KWARGS: {kwargs}...")
 
         dnf(system_context, *args, dnf_command=self._binary(Binaries.DNF), **kwargs)
 

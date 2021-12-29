@@ -94,8 +94,8 @@ def test_partitioner(tmpdir) -> None:
         print(f"LBA: {partitioner.first_lba()}-{partitioner.last_lba}")
 
         parts = [
-            disk.Partitioner.efi_partition(size="64M"),
-            disk.Partitioner.swap_partition(size="128M"),
+            disk.Partitioner.efi_partition(size=disk.byte_size("64M")),
+            disk.Partitioner.swap_partition(size=disk.byte_size("128M")),
             disk.Partitioner.data_partition(name="PV0 of vg_something"),
         ]
         partitioner.repartition(parts)

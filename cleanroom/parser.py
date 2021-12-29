@@ -5,6 +5,7 @@
 """
 
 
+from types import MethodType
 from .exceptions import ParseError
 from .location import Location
 from .printer import debug
@@ -106,6 +107,8 @@ def _process_arguments(
 
 class Parser:
     """Parse a system definition file."""
+
+    parse_and_verify_string: typing.Optional[MethodType] = None  # for pytest use only!
 
     def __init__(
         self, command_manager: CommandManager, *, debug_parser: bool = False
