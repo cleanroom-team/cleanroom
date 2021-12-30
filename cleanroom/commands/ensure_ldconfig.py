@@ -39,7 +39,15 @@ class EnsureLdconfigCommand(Command):
         **kwargs: typing.Any
     ) -> None:
         """Execute command."""
-        assert os.path.exists(system_context.file_name("/usr/bin/ldconfig"))
+        bin_ldconfig = "/usr/bin/ldconfig"
+        sbin_ldconfig = "/usr/sbin/ldconfig"
+        ldconfig = (
+            bin_ldconfig
+            if os.path.isfile(system_context.file_name(bin_ldconfig))
+            else sbin_ldconfig
+        )
+
+        assert os.path.exists(system_context.file_name(ldconfig))
 
         location.set_description("Run ldconfig")
         self._add_hook(
@@ -47,7 +55,7 @@ class EnsureLdconfigCommand(Command):
             system_context,
             "export",
             "run",
-            "/usr/bin/ldconfig",
+            ldconfig,
             "-X",
             inside=True,
         )
