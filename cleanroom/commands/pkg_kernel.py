@@ -4,7 +4,9 @@
 """
 
 
+from cleanroom import systemcontext
 from cleanroom.command import Command
+from cleanroom.exceptions import GenerateError
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
@@ -32,6 +34,49 @@ class PkgKernelCommand(Command):
         self._validate_no_args(location, *args)
         self._validate_kwargs(location, ("variant",), **kwargs)
 
+    def _find_kernel_version(self, system_context: SystemContext) -> str:
+        lib_modules = system_context.file_name("/usr/lib/modules")
+        module_dirs = [
+            d
+            for d in os.listdir(lib_modules)
+            if os.path.isdir(os.path.join(lib_modules, d))
+        ]
+        assert len(module_dirs) == 1
+
+        kernel_version = module_dirs[0]
+
+        return kernel_version
+
+    def _arch_install(
+        self, location: Location, system_context: SystemContext, package: str
+    ) -> typing.Tuple[(str, str)]:
+        self._execute(
+            location,
+            system_context,
+            "pacman",
+            package,
+            "--assume-installed",
+            "initramfs",
+        )
+
+        kernel_version = self._find_kernel_version(system_context)
+
+        return (kernel_version, f"/usr/lib/modules/{kernel_version}/vmlinuz")
+
+    def _fedora_install(
+        self, location: Location, system_context: SystemContext, package: str
+    ) -> typing.Tuple[(str, str)]:
+        self._execute(
+            location,
+            system_context,
+            "dnf",
+            package,
+        )
+
+        kernel_version = self._find_kernel_version(system_context)
+
+        return (kernel_version, f"/usr/lib/modules/{kernel_version}/vmlinuz")
+
     def __call__(
         self,
         location: Location,
@@ -40,40 +85,36 @@ class PkgKernelCommand(Command):
         **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
-
-        kernel = "linux"
         variant = kwargs.get("variant", "")
-        if variant:
-            kernel = f"{kernel}-{variant}"
 
-        self._execute(
-            location,
-            system_context,
-            "pacman",
-            kernel,
-            "--assume-installed",
-            "initramfs",
-        )
+        ctx = system_context.substitution_expanded("DISTRO_ID_LIKE", "")
+
+        kernel_version, kernel_file = "", ""
+        if ctx == "archlinux":
+            kernel = "linux"
+            if variant:
+                kernel = f"{kernel}-{variant}"
+            kernel_version, kernel_file = self._arch_install(
+                location, system_context, kernel
+            )
+        elif ctx == "fedora":
+            if variant:
+                raise GenerateError("Variant not supported by fedora.")
+            kernel_version, kernel_file = self._fedora_install(
+                location, system_context, "kernel"
+            )
+        else:
+            raise GenerateError("Unsupported distribution")
 
         vmlinuz = os.path.join(system_context.boot_directory, "vmlinuz")
 
-        lib_modules = system_context.file_name("/usr/lib/modules")
-        module_dirs = [
-            d
-            for d in os.listdir(lib_modules)
-            if os.path.isdir(os.path.join(lib_modules, d)) and "-arch" in d
-        ]
-        assert len(module_dirs) == 1
-
-        kernel_version = module_dirs[0]
         system_context.set_substitution("KERNEL_VERSION", kernel_version)
 
-        # New style linux packages that put vmlinuz into /usr/lib/modules:
         self._execute(
             location.next_line(),
             system_context,
             "move",
-            f"/usr/lib/modules/{kernel_version}/vmlinuz",
+            kernel_file,
             vmlinuz,
             to_outside=True,
             ignore_missing_sources=True,

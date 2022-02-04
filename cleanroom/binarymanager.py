@@ -140,6 +140,8 @@ class BinaryManager:
                 Binaries.PACMAN,
                 Binaries.PACMAN_KEY,
                 Binaries.SWUPD,
+                Binaries.QEMU_IMG,
+                Binaries.NBD_CLIENT,
             ]
         )
 

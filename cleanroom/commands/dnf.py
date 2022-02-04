@@ -58,9 +58,11 @@ class dnfCommand(Command):
 
         dnf(system_context, *args, dnf_command=self._binary(Binaries.DNF), **kwargs)
 
-        self._execute(location.next_line(), system_context, "create_os_release")
+        if kwargs.get("config", ""):
+            # Config is used only the first time round!
+            self._execute(location.next_line(), system_context, "create_os_release")
 
-        self._setup_hooks(location, system_context)
+            self._setup_hooks(location, system_context)
 
     def _setup_hooks(self, location: Location, system_context: SystemContext) -> None:
         location.set_description("Move systemd files into /usr")

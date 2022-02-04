@@ -50,8 +50,6 @@ class PkgGnomeCommand(Command):
             "qt5-declarative",
             "qt5-wayland",
             "qt5-x11extras",
-            "jack",
-            "jack2",
         )
         self._execute(
             location,

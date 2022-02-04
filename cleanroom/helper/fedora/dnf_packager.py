@@ -33,7 +33,7 @@ def _has_rpm_installed(system_context: SystemContext) -> bool:
 
 
 def _outside_config_file_location(system_context: SystemContext) -> str:
-    return os.path.join(system_context.cache_directory, "dnf.conf")
+    return os.path.join(system_context.meta_directory, "dnf.conf")
 
 
 def _rpm_dir(system_context: SystemContext) -> str:
@@ -207,12 +207,14 @@ def dnf(
     if group_levels:
         levels_string = ",".join(group_levels)
         debug(f"Group levels given as: {group_levels} => {levels_string}.")
-        action.append(f"--setopt=group_package_types={levels_string}")
+        if levels_string:
+            action.append(f"--setopt=group_package_types={levels_string}")
 
     if exclude:
         exclude_string = ",".join(exclude)
         debug(f"Exclude given as {exclude} => {exclude_string}.")
-        action.append(f"--exclude={exclude_string}")
+        if exclude_string:
+            action.append(f"--exclude={exclude_string}")
 
     debug(f"DNF Action to do: {action}.")
 
