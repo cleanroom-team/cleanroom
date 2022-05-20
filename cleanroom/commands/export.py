@@ -24,7 +24,7 @@ def _setup_kernel_commandline(base_cmdline: str, root_hash: str) -> str:
         (
             base_cmdline,
             "root=/dev/mapper/root",
-            "FOO",  # One of my mainboards eats the last letter of the last argument:-/
+            " ",  # One of my mainboards eats the last letter of the last argument:-/
         )
     )
     return cmdline

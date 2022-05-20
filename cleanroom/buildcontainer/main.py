@@ -27,6 +27,13 @@ def _parse_commandline(*arguments: str) -> typing.Any:
     )
 
     parser.add_argument(
+        "--boot",
+        dest="boot_container",
+        action="store_true",
+        default=False,
+        help="Boot up the container [default: False]?",
+    )
+    parser.add_argument(
         "--systems-directory",
         dest="systems_directory",
         action="store",
@@ -46,6 +53,12 @@ def _parse_commandline(*arguments: str) -> typing.Any:
         action="store",
         required=True,
         help="The directory containing image repositories.",
+    )
+    parser.add_argument(
+        "--environment",
+        dest="environment",
+        action="append",
+        help="Extra environment variables to use inside the container.",
     )
     parser.add_argument(
         "--bind",
@@ -188,6 +201,11 @@ def main(*command_arguments: str) -> None:
         extra_args += [f"--bind={b}" for b in args.bind]
     if args.bind_ro:
         extra_args += [f"--bind-ro={b}" for b in args.bind_ro]
+    if args.environment:
+        extra_args += [f"--setenv={b}" for b in args.environment]
+
+    if args.boot_container:
+        extra_args.append("--boot")
 
     run_args: typing.List[str] = []
     if args.executable == "raw":

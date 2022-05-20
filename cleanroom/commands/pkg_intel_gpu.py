@@ -41,7 +41,9 @@ class PkgIntelGpuCommand(Command):
         self._execute(location, system_context, "pkg_xorg")
 
         # Set some kernel parameters:
-        system_context.set_or_append_substitution("KERNEL_CMDLINE", "i915.fastboot=1")
+        system_context.set_or_append_substitution(
+            "KERNEL_CMDLINE", "i915.fastboot=1 intel_iommu=igfx_off"
+        )
 
         self._execute(
             location,

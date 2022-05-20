@@ -32,7 +32,8 @@ class RegisterContainerCommand(Command):
             syntax="<SYSTEM> "
             "description=<DESC> "
             "timeout=3m after=<SYSTEM>(,<SYSTEM>)* "
-            "requires=<SYSTEM>(,<SYSTEM>)*"
+            "requires=<SYSTEM>(,<SYSTEM>)* "
+            "gpu=False "
             "enable=False",
             help_string="Register a container with a system.",
             file=__file__,
@@ -48,7 +49,7 @@ class RegisterContainerCommand(Command):
         )
         self._validate_kwargs(
             location,
-            ("description", "after", "requires", "timeout", "enable"),
+            ("description", "after", "requires", "timeout", "enable", "gpu"),
             **kwargs,
         )
         self._require_kwargs(location, ("description",), **kwargs)
@@ -66,6 +67,7 @@ class RegisterContainerCommand(Command):
         after_input = kwargs.get("after", "")
         requires_input = kwargs.get("requires", "")
         timeout = kwargs.get("timeout", "3m")
+        gpu = kwargs.get("gpu", False)
         enable = kwargs.get("enable", False)
 
         bin_directory = "/usr/bin"
@@ -101,6 +103,10 @@ class RegisterContainerCommand(Command):
         after = _nspawn_ify("After", *after_input.split(","))
         requires = _nspawn_ify("Requires", *requires_input.split(","))
 
+        gpu_allow = ""
+        if gpu:
+            gpu_allow = "\nDeviceAllow=char_drm rw"
+
         self._execute(
             location.next_line(),
             system_context,
@@ -108,11 +114,12 @@ class RegisterContainerCommand(Command):
             f"{override_dir}/override.conf",
             textwrap.dedent(
                 f"""\
-                    [Unit]
-                    Description=Container {system}: {description}{after}{requires}
+[Unit]
+Description=Container {system}: {description}{after}{requires}
 
-                    [Service]
-                    TimeoutStartSec={timeout}
+[Service]
+TimeoutStartSec={timeout}{gpu_allow}
+MemoryMax=10G
                 """
             ),
         )
