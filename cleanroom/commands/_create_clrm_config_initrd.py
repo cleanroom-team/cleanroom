@@ -356,32 +356,6 @@ def _install_volatile_support(
     return []
 
 
-def _install_var_mount_support(
-    staging_area: str, system_context: SystemContext
-) -> typing.List[str]:
-    var_mount = system_context.file_name("/usr/lib/systemd/system/sysroot-var.mount")
-    if not os.path.exists(var_mount):
-        return []
-
-    shutil.copyfile(
-        var_mount,
-        os.path.join(
-            staging_area,
-            "usr/lib/systemd/system/sysroot-var.mount",
-        ),
-    )
-    trace("Installed sysroot-var.mount")
-    symlink(
-        os.path.join(
-            staging_area,
-            "usr/lib/systemd/system/initrd-fs.target.wants/sysroot-var.mount",
-        ),
-        "../sysroot-var.mount",
-    )
-
-    return []
-
-
 def _install_shadow_file(staging_area: str, system_context: SystemContext):
     for shadow_file in (
         system_context.file_name("/etc/shadow.initramfs"),
@@ -753,7 +727,6 @@ class CreateClrmConfigInitrdCommand(Command):
                 *_install_sysroot_setup_support(tmp, system_context),
                 *_install_verity_support(tmp, system_context, root_hash),
                 *_install_volatile_support(tmp, system_context),
-                *_install_var_mount_support(tmp, system_context),
             ]
             modules = [
                 m for m in modules if m
