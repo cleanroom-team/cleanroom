@@ -132,7 +132,7 @@ def _copy_staging_area_into_efi_partition_file(
 ):
     trace(f"Staging area: staging: {staging_area}, EFI file: {efi_file}).")
 
-    for (root, dirs, files) in os.walk(staging_area):
+    for root, dirs, files in os.walk(staging_area):
         trace(f"    root: {root}.")
 
         relative_path = os.path.relpath(root, start=staging_area)

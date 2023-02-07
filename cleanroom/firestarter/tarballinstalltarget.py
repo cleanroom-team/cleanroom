@@ -14,7 +14,6 @@ import typing
 
 
 def _tar(efi_fs: str, rootfs: str, *, tarball_name: str, efi_tarball_name: str) -> int:
-
     # Extract data
     result = 0
     if efi_tarball_name:

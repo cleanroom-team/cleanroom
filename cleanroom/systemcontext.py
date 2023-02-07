@@ -253,7 +253,7 @@ class SystemContext:
         return self.expand(self.substitution(key, default_value))
 
     def debug_dump_substitutions(self):
-        for (k, v) in self._substitutions.items():
+        for k, v in self._substitutions.items():
             print(f'"{k}"="{v}"')
 
     def expand(self, input: str) -> str:
