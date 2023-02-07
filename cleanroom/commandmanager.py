@@ -107,7 +107,7 @@ class CommandManager:
             assert command_info
 
             name = command_info.name
-            for (key, value, description) in command_info.register_substitutions():
+            for key, value, description in command_info.register_substitutions():
                 if not key in result:
                     result[key] = (key, value, description, (name,))
                 else:
@@ -139,7 +139,7 @@ class CommandManager:
 
         substitutions = self._collect_substitutions()
         substitutions.sort()
-        for (key, value, description, name) in substitutions:
+        for key, value, description, name in substitutions:
             print(f'  {key} ("{value}"): {name}\n    {description}\n')
 
     def setup_substitutions(self, system_context: SystemContext):
@@ -152,7 +152,7 @@ class CommandManager:
         pattern = re.compile("^[A-Za-z][A-Za-z0-9_]*$")
 
         substitutions = self._collect_substitutions()
-        for (key, value, _, _) in substitutions:
+        for key, value, _, _ in substitutions:
             if not pattern.match(key):
                 continue  # skip this key, but keep it in documentation!
             assert not system_context.has_substitution(key)
@@ -276,6 +276,6 @@ class CommandManager:
             self._find_commands_in_directory(directory)
 
         debug("Commands found:")
-        for (command_name, command_info) in self._commands.items():
+        for command_name, command_info in self._commands.items():
             path = command_info.file_name
             debug(f'  {command_name}: "{path}"')

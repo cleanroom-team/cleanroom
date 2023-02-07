@@ -173,7 +173,6 @@ def main(*command_arguments: str) -> None:
         clear_scratch_directory=args.clear_scratch_directory,
         clear_storage=args.clear_storage,
     ) as work_directory:
-
         h2("Starting generation phase")
 
         systems_manager = SystemsManager(

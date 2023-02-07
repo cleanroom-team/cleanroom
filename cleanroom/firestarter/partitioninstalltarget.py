@@ -114,7 +114,7 @@ class PartitionInstallTarget(InstallTarget):
         if not device_list:
             return 1
 
-        for (dev, format, dir) in device_list:
+        for dev, format, dir in device_list:
             with create_device(dev, format) as d:
                 dev_node = d.device()
                 run.run(

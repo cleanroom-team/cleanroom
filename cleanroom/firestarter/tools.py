@@ -103,7 +103,6 @@ def execute_with_system_mounted(
                 fs_type="squashfs",
                 options="ro",
             ) as root:
-
                 trace(f'Executing with EFI "{efi}" and root "{root}".')
                 result = to_execute(efi, root)
 
