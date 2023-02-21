@@ -306,6 +306,7 @@ class ExportCommand(Command):
             tarball,
             "--sort=name",
             "etc",
+            "tmp",
             "root",
             work_directory=system_context.fs_directory,
         )
