@@ -22,7 +22,7 @@ class CreateOsReleaseCommand(Command):
             syntax="",
             help_string="Create os release file.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -36,39 +36,29 @@ class CreateOsReleaseCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
-        os_release = 'NAME="{}"\n'.format(
-            system_context.substitution_expanded("DISTRO_NAME", "")
+        os_release = (
+            'NAME="{system_context.substitution_expanded("DISTRO_NAME", "")}"\n'
         )
-        os_release += 'PRETTY_NAME="{}"\n'.format(
-            system_context.substitution_expanded("DISTRO_PRETTY_NAME", "")
+        os_release += f'PRETTY_NAME="{system_context.substitution_expanded("DISTRO_PRETTY_NAME", "")}"\n'
+        os_release += 'ID="{system_context.substitution_expanded("DISTRO_ID", "")}"\n'
+        os_release += (
+            'ID_LIKE="{system_context.substitution_expanded("DISTRO_ID_LIKE", "")}"\n'
         )
-        os_release += 'ID="{}"\n'.format(
-            system_context.substitution_expanded("DISTRO_ID", "")
+        os_release += 'ANSI_COLOR="{system_context.substitution_expanded("DISTRO_ANSI_COLOR", "")}"\n'
+        os_release += (
+            'HOME_URL="{system_context.substitution_expanded("DISTRO_HOME_URL", "")}"\n'
         )
-        os_release += 'ID_LIKE="{}"\n'.format(
-            system_context.substitution_expanded("DISTRO_ID_LIKE", "")
+        os_release += 'SUPPORT_URL="{system_context.substitution_expanded("DISTRO_SUPPORT_URL", "")}"\n'
+        os_release += 'BUG_REPORT_URL="{system_context.substitution_expanded("DISTRO_BUG_URL", "")}"\n'
+        os_release += (
+            'VERSION="{system_context.substitution_expanded("DISTRO_VERSION", "")}"\n'
         )
-        os_release += 'ANSI_COLOR="{}"\n'.format(
-            system_context.substitution_expanded("DISTRO_ANSI_COLOR", "")
-        )
-        os_release += 'HOME_URL="{}"\n'.format(
-            system_context.substitution_expanded("DISTRO_HOME_URL", "")
-        )
-        os_release += 'SUPPORT_URL="{}"\n'.format(
-            system_context.substitution_expanded("DISTRO_SUPPORT_URL", "")
-        )
-        os_release += 'BUG_REPORT_URL="{}"\n'.format(
-            system_context.substitution_expanded("DISTRO_BUG_URL", "")
-        )
-        os_release += 'VERSION="{}"\n'.format(
-            system_context.substitution_expanded("DISTRO_VERSION", "")
-        )
-        os_release += 'VERSION_ID="{}"\n'.format(
-            system_context.substitution_expanded("DISTRO_VERSION_ID", "")
-        )
+        os_release += 'VERSION_ID="{system_context.substitution_expanded("DISTRO_VERSION_ID", "")}"\n'
+        os_release += 'IMAGE_ID="{system_context.substitution_expanded("DISTRO_VERSION_ID", "")}"\n'
+        os_release += 'IMAGE_VERSION="{system_context.substitution_expanded("DISTRO_VERSION_ID", "")}"\n'
 
         self._execute(
             location,

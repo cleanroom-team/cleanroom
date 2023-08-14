@@ -30,6 +30,7 @@ class Binaries(Enum):
     GROUPADD = auto()
     GROUPMOD = auto()
     LSOF = auto()
+    MKFS_EROFS = auto()
     MKFS_VFAT = auto()
     MKNOD = auto()
     MKSQUASHFS = auto()
@@ -37,7 +38,6 @@ class Binaries(Enum):
     MTOOLS_MMD = auto()
     MTOOLS_MCOPY = auto()
     NBD_CLIENT = auto()
-    OBJCOPY = auto()
     PACMAN = auto()
     PACMAN_KEY = auto()
     QEMU_IMG = auto()
@@ -50,6 +50,7 @@ class Binaries(Enum):
     SYSTEMD_NSPAWN = auto()
     SYSTEMD_REPART = auto()
     TAR = auto()
+    UKIFY = auto()
     USERADD = auto()
     USERMOD = auto()
     VERITYSETUP = auto()
@@ -64,7 +65,7 @@ def _check_for_one_binary(binary: str) -> str:
     if os.path.isabs(binary):
         return _check_for_abs_binary(binary)
 
-    for d in ["/usr/bin", "/usr/sbin", "/bin", "/sbin"]:
+    for d in ["/usr/lib/systemd", "/usr/bin", "/usr/sbin", "/bin", "/sbin"]:
         result = os.path.join(d, binary)
         if os.path.isfile(result):
             return result
@@ -96,6 +97,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.GROUPADD: _check_for_binary("groupadd"),
         Binaries.GROUPMOD: _check_for_binary("groupmod"),
         Binaries.LSOF: _check_for_binary("lsof"),
+        Binaries.MKFS_EROFS: _check_for_binary("mkfs.erofs"),
         Binaries.MKFS_VFAT: _check_for_binary("mkfs.vfat"),
         Binaries.MKNOD: _check_for_binary("mknod"),
         Binaries.MKSQUASHFS: _check_for_binary("mksquashfs"),
@@ -103,7 +105,6 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.MTOOLS_MMD: _check_for_binary("mmd"),
         Binaries.MTOOLS_MCOPY: _check_for_binary("mcopy"),
         Binaries.NBD_CLIENT: _check_for_binary("nbd-client"),
-        Binaries.OBJCOPY: _check_for_binary("objcopy"),
         Binaries.QEMU_IMG: _check_for_binary("qemu-img"),
         Binaries.QEMU_NBD: _check_for_binary("qemu-nbd"),
         Binaries.SBSIGN: _check_for_binary("sbsign"),
@@ -114,6 +115,7 @@ def _find_binaries() -> typing.Dict[Binaries, str]:
         Binaries.SYSTEMD_NSPAWN: _check_for_binary("systemd-nspawn"),
         Binaries.SYSTEMD_REPART: _check_for_binary("systemd-repart"),
         Binaries.TAR: _check_for_binary("tar"),
+        Binaries.UKIFY: _check_for_binary("ukify"),
         Binaries.USERADD: _check_for_binary("useradd"),
         Binaries.USERMOD: _check_for_binary("usermod"),
         Binaries.DEBOOTSTRAP: _check_for_binary("debootstrap"),

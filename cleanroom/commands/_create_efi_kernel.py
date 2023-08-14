@@ -34,14 +34,6 @@ def _create_initrd(directory: str, *files: str) -> str:
     return target
 
 
-def _create_cmdline_file(directory: str, cmdline: str) -> str:
-    target = os.path.join(directory, "cmdline")
-    with open(target, "wb") as cmdline_file:
-        cmdline_file.write(cmdline.encode("utf-8"))
-        cmdline_file.write(b"\0\0")
-    return target
-
-
 def _get_initrd_parts(location: Location, path: str) -> typing.List[str]:
     initrd_parts: typing.List[str] = []
     for f in glob(os.path.join(path, "*")):
@@ -122,26 +114,16 @@ class CreateEfiKernelCommand(Command):
         self._validate_files(location, kernel, *initrd_files, osrelease_file, efistub)
 
         initrd = _create_initrd(system_context.boot_directory, *initrd_files)
-        cmdline = _create_cmdline_file(system_context.boot_directory, cmdline_input)
 
         run(
-            self._binary(Binaries.OBJCOPY),
-            "--add-section",
-            f".osrel={osrelease_file}",
-            "--change-section-vma",
-            ".osrel=0x20000",
-            "--add-section",
-            f".cmdline={cmdline}",
-            "--change-section-vma",
-            ".cmdline=0x30000",
-            "--add-section",
-            f".linux={kernel}",
-            "--change-section-vma",
-            ".linux=0x40000",
-            "--add-section",
-            f".initrd={initrd}",
-            "--change-section-vma",
-            ".initrd=0x3000000",
-            efistub,
-            output,
+            self._binary(Binaries.UKIFY),
+            "build",
+            "--no-measure",
+            "--no-sign-kernel",
+            f"--linux={kernel}",
+            f"--cmdline={cmdline_input}",
+            f"--os-release=@{osrelease_file}",
+            f"--initrd={initrd}",
+            f"--stub={efistub}",
+            f"--output={output}",
         )

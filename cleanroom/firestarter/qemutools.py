@@ -58,7 +58,7 @@ def _append_hdd(bootindex: int, counter: int, disk: str):
 
     drive_extra = ""
     if read_only:
-        drive_extra += ",read-only"
+        drive_extra += ",read-only=on"
 
     return [
         "-drive",
@@ -72,7 +72,7 @@ def _append_fs(fs: str, *, read_only: bool = False):
     fs_parts = fs.split(":")
     assert len(fs_parts) == 2
 
-    ro = ",read-only" if read_only else ""
+    ro = ",read-only=on" if read_only else ""
 
     return [
         "-virtfs",
@@ -85,7 +85,7 @@ def _append_efi(efi_vars: str):
         copyfile("/usr/share/ovmf/x64/OVMF_VARS.fd", efi_vars)
     return [
         "-drive",
-        "if=pflash,format=raw,readonly," "file=/usr/share/ovmf/x64/OVMF_CODE.fd",
+        "if=pflash,format=raw,readonly=on,file=/usr/share/ovmf/x64/OVMF_CODE.fd",
         "-drive",
         f"if=pflash,format=raw,file={efi_vars}",
     ]
@@ -163,7 +163,7 @@ def setup_parser_for_qemu(parser: typing.Any) -> None:
         dest="ro_fs_es",
         default=[],
         action="append",
-        help="Host folders to make available to guest -- " "read-only (id:path)",
+        help="Host folders to make available to guest -- read-only (id:path)",
     )
     parser.add_argument(
         "--fs",
@@ -198,8 +198,8 @@ def run_qemu(
         "-object",
         "rng-random,filename=/dev/urandom,id=rng0",
         "-device",
-        "virtio-rng-pci,rng=rng0,max-bytes=512,period=1000",
         # Random number generator
+        "virtio-rng-pci,rng=rng0,max-bytes=512,period=1000",
         "-usb",
     ]
 

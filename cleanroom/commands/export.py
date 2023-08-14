@@ -40,7 +40,7 @@ def _validate_installation(location: Location, system_context: SystemContext) ->
     machine_id = system_context.substitution_expanded("MACHINE_ID")
     if not machine_id:
         raise GenerateError(
-            "Trying to export a system without " "a machine_id.", location=location
+            "Trying to export a system without a machine_id.", location=location
         )
 
 
@@ -94,13 +94,13 @@ class ExportCommand(Command):
         if "key" in kwargs:
             if "cert" not in kwargs:
                 raise ParseError(
-                    '"{}": cert keyword is required when ' "key keyword is given.",
+                    '"{}": cert keyword is required when key keyword is given.',
                     location=location,
                 )
         else:
             if "cert" in kwargs:
                 raise ParseError(
-                    '"{}": key keyword is required when ' "cert keyword is given.",
+                    '"{}": key keyword is required when cert keyword is given.',
                     location=location,
                 )
 

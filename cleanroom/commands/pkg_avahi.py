@@ -74,6 +74,6 @@ class PkgAvahiCommand(Command):
             location.next_line(),
             system_context,
             "sed",
-            "/^hosts\\s*:/ s/resolve/mdns_minimal " "[NOTFOUND=return] resolve/",
+            "/^hosts\\s*:/ s/resolve/mdns_minimal [NOTFOUND=return] resolve/",
             "/etc/nsswitch.conf",
         )

@@ -27,6 +27,7 @@ class CreateRootFsimageCommand(Command):
         self._root_hash = ""
 
         self._skip_validation = False
+        self._usr_only = False
 
         super().__init__(
             "_create_root_fsimage",

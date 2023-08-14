@@ -272,7 +272,7 @@ class CreateEfiFsimageCommand(Command):
                 trace('... "EFI/systemd" directory created.')
                 _copy_efi_file(
                     boot_loader_file,
-                    os.path.join(staging_area, "EFI/systemd/" "systemd-bootx64.efi"),
+                    os.path.join(staging_area, "EFI/systemd/systemd-bootx64.efi"),
                 )
                 trace("... systemd boot loader installed.")
 

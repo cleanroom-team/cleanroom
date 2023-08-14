@@ -98,7 +98,7 @@ def run(
             **kwargs,
         )
     except subprocess.TimeoutExpired as to:
-        print(f"Timeout: STDOUT so far: {to.stdout}\nSTDERR so far:{to.stderr}\n.")
+        print(f"Timeout: STDOUT so far: {to.stdout!r}\nSTDERR so far:{to.stderr!r}\n.")
         raise
 
     finally:

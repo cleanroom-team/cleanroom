@@ -93,7 +93,7 @@ class PkgGnomeCommand(Command):
             "pavucontrol",
             "sane",
             "sound-juicer",
-            "tracker-miners",
+            "tracker3-miners",
             "usb_modeswitch",
             "xdg-user-dirs-gtk",
             "xorg-server-xwayland",
