@@ -40,25 +40,23 @@ class CreateOsReleaseCommand(Command):
     ) -> None:
         """Execute command."""
         os_release = (
-            'NAME="{system_context.substitution_expanded("DISTRO_NAME", "")}"\n'
+            f'NAME="{system_context.substitution_expanded("DISTRO_NAME", "")}"\n'
         )
         os_release += f'PRETTY_NAME="{system_context.substitution_expanded("DISTRO_PRETTY_NAME", "")}"\n'
-        os_release += 'ID="{system_context.substitution_expanded("DISTRO_ID", "")}"\n'
+        os_release += f'ID="{system_context.substitution_expanded("DISTRO_ID", "")}"\n'
         os_release += (
-            'ID_LIKE="{system_context.substitution_expanded("DISTRO_ID_LIKE", "")}"\n'
+            f'ID_LIKE="{system_context.substitution_expanded("DISTRO_ID_LIKE", "")}"\n'
         )
-        os_release += 'ANSI_COLOR="{system_context.substitution_expanded("DISTRO_ANSI_COLOR", "")}"\n'
+        os_release += f'ANSI_COLOR="{system_context.substitution_expanded("DISTRO_ANSI_COLOR", "")}"\n'
+        os_release += f'HOME_URL="{system_context.substitution_expanded("DISTRO_HOME_URL", "")}"\n'
+        os_release += f'SUPPORT_URL="{system_context.substitution_expanded("DISTRO_SUPPORT_URL", "")}"\n'
+        os_release += f'BUG_REPORT_URL="{system_context.substitution_expanded("DISTRO_BUG_URL", "")}"\n'
         os_release += (
-            'HOME_URL="{system_context.substitution_expanded("DISTRO_HOME_URL", "")}"\n'
+            f'VERSION="{system_context.substitution_expanded("DISTRO_VERSION", "")}"\n'
         )
-        os_release += 'SUPPORT_URL="{system_context.substitution_expanded("DISTRO_SUPPORT_URL", "")}"\n'
-        os_release += 'BUG_REPORT_URL="{system_context.substitution_expanded("DISTRO_BUG_URL", "")}"\n'
-        os_release += (
-            'VERSION="{system_context.substitution_expanded("DISTRO_VERSION", "")}"\n'
-        )
-        os_release += 'VERSION_ID="{system_context.substitution_expanded("DISTRO_VERSION_ID", "")}"\n'
-        os_release += 'IMAGE_ID="{system_context.substitution_expanded("DISTRO_VERSION_ID", "")}"\n'
-        os_release += 'IMAGE_VERSION="{system_context.substitution_expanded("DISTRO_VERSION_ID", "")}"\n'
+        os_release += f'VERSION_ID="{system_context.substitution_expanded("DISTRO_VERSION_ID", "")}"\n'
+        os_release += f'IMAGE_ID="{system_context.substitution_expanded("DISTRO_VERSION_ID", "")}"\n'
+        os_release += f'IMAGE_VERSION="{system_context.substitution_expanded("DISTRO_VERSION_ID", "")}"\n'
 
         self._execute(
             location,
