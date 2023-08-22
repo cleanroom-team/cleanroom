@@ -101,7 +101,7 @@ class SetupCommand(Command):
             ),
             (
                 "DISTRO_VERSION_ID",
-                "${TIMESTAMP}",
+                "rolling",
                 "The distribution version id",
             ),
             (

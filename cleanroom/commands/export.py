@@ -144,22 +144,22 @@ class ExportCommand(Command):
             ),
             (
                 "ROOTFS_PARTLABEL",
-                "${DISTRO_ID}_${DISTRO_VERSION_ID}",
+                "${DISTRO_ID}_${DISTRO_VERSION}",
                 "Root filesystem partition label.",
             ),
             (
                 "VRTYFS_PARTLABEL",
-                "vrty_${DISTRO_VERSION_ID}",
+                "vrty_${DISTRO_VERSION}",
                 "Dm-verity filesystem partition label.",
             ),
             (
                 "KERNEL_FILENAME",
-                "${PRETTY_SYSTEM_NAME}_${DISTRO_VERSION_ID}.efi",
+                "${PRETTY_SYSTEM_NAME}_${DISTRO_VERSION}.efi",
                 "File name for the clrm image file",
             ),
             (
                 "CLRM_IMAGE_FILENAME",
-                "${PRETTY_SYSTEM_NAME}_${DISTRO_VERSION_ID}.img",
+                "${PRETTY_SYSTEM_NAME}_${DISTRO_VERSION}.img",
                 "File name for the clrm image file",
             ),
             (

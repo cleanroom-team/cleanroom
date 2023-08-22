@@ -55,8 +55,8 @@ class CreateOsReleaseCommand(Command):
             f'VERSION="{system_context.substitution_expanded("DISTRO_VERSION", "")}"\n'
         )
         os_release += f'VERSION_ID="{system_context.substitution_expanded("DISTRO_VERSION_ID", "")}"\n'
-        os_release += f'IMAGE_ID="{system_context.substitution_expanded("DISTRO_VERSION_ID", "")}"\n'
-        os_release += f'IMAGE_VERSION="{system_context.substitution_expanded("DISTRO_VERSION_ID", "")}"\n'
+        os_release += f'IMAGE_ID="{system_context.substitution_expanded("DISTRO_ID", "")}-{system_context.substitution_expanded("DISTRO_VERSION_ID", "")}"\n'
+        os_release += f'IMAGE_VERSION="{system_context.substitution_expanded("DISTRO_VERSION", "")}"\n'
 
         self._execute(
             location,
