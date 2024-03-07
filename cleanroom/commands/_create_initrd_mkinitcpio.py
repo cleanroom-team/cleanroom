@@ -59,7 +59,7 @@ class CreateInitrdMkinitcpioCommand(Command):
             "sed",
             "/^HOOKS=/ "
             "cHOOKS=(base systemd keyboard sd-vconsole "
-            "sd-encrypt block sd-lvm2 filesystems btrfs "
+            "sd-encrypt block lvm2 filesystems btrfs "
             "sd-shutdown)",
             "/etc/mkinitcpio.conf",
         )
