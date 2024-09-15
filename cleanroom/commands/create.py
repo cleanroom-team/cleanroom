@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.helper.file import create_file
 from cleanroom.location import Location
@@ -24,7 +23,7 @@ class CreateCommand(Command):
             "[mode=0o644] [user=UID/name] [group=GID/name]",
             help_string="Create a file with contents.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -35,7 +34,7 @@ class CreateCommand(Command):
             location,
             2,
             '"{}" takes a file name and the contents ' "to store in the file.",
-            *args
+            *args,
         )
         self._validate_kwargs(location, ("force", "mode", "user", "group"), **kwargs)
 
@@ -44,7 +43,7 @@ class CreateCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         file_name = args[0]

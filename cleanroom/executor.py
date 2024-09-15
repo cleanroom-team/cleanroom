@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from .commandmanager import CommandManager
 from .execobject import ExecObject
 from .printer import success

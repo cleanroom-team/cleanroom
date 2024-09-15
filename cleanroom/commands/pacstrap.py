@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.exceptions import ParseError
@@ -35,7 +34,7 @@ class PacstrapCommand(Command):
             "the _pacman_keyring command.\n\n"
             "Hooks: Will runs _setup hooks after pacstrapping.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -51,7 +50,7 @@ class PacstrapCommand(Command):
             location,
             1,
             '"{}" needs at least one package ' "or group to install.",
-            *args
+            *args,
         )
         self._validate_kwargs(location, ("config",), **kwargs)
         self._require_kwargs(location, ("config",), **kwargs)
@@ -61,7 +60,7 @@ class PacstrapCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         pacman_setup(system_context, kwargs.get("config", ""))
@@ -82,7 +81,7 @@ class PacstrapCommand(Command):
             *args,
             pacman_command=self._binary(Binaries.PACMAN),
             chroot_helper=self._binary(Binaries.SYSTEMD_NSPAWN),
-            **kwargs
+            **kwargs,
         )
 
         self._execute(location.next_line(), system_context, "create_os_release")

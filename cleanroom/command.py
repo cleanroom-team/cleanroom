@@ -7,7 +7,6 @@ from.
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from __future__ import annotations
 
 from .binarymanager import Binaries

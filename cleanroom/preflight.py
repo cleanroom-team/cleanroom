@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from .exceptions import PreflightError
 from .printer import debug, fail, success
 

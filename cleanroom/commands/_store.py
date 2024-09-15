@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.location import Location
 from cleanroom.command import Command
 from cleanroom.systemcontext import SystemContext
@@ -35,7 +34,7 @@ class StoreCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
 

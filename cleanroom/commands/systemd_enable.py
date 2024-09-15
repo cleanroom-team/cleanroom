@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.helper.systemd import systemd_enable
@@ -24,7 +23,7 @@ class SystemdEnableCommand(Command):
             syntax="<UNIT> [<MORE_UNITS>] [user=False]",
             help_string="Enable systemd units.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -41,12 +40,12 @@ class SystemdEnableCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         systemd_enable(
             system_context,
             *args,
             systemctl_command=self._binary(Binaries.SYSTEMCTL),
-            **kwargs
+            **kwargs,
         )

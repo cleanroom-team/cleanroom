@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from __future__ import annotations
 
 from .commandmanager import CommandManager
@@ -125,7 +124,13 @@ class SystemsManager(object):
                 debug(
                     f"yielding ({node.system}, {node.target_distribution}, {base_system}, <COMMANDS>)"
                 )
-                yield node.system, node.target_distribution, base_system, node.exec_obj_list, node.depth
+                yield (
+                    node.system,
+                    node.target_distribution,
+                    base_system,
+                    node.exec_obj_list,
+                    node.depth,
+                )
 
     @property
     def systems_definition_directory(self) -> str:

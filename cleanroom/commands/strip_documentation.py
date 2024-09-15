@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
@@ -21,7 +20,7 @@ class StripDocumentationCommand(Command):
             "strip_documentation",
             help_string="Strip away documentation files.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -35,7 +34,7 @@ class StripDocumentationCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         self._add_hook(location, system_context, "export", "_strip_documentation_hook")

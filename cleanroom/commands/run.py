@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.helper.run import run
@@ -26,7 +25,7 @@ class RunCommand(Command):
             "[stderr=None]",
             help_string="Run a command inside/outside of the " "current system.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -45,7 +44,7 @@ class RunCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         if kwargs.pop("inside", False):

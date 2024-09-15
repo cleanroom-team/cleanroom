@@ -5,7 +5,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.firestarter.installtarget import InstallTarget
 import cleanroom.firestarter.qemutools as qemu_tool
 

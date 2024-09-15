@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from os.path import dirname
 from cleanroom.command import Command
 from cleanroom.exceptions import ParseError

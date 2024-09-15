@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.helper.btrfs import BtrfsHelper
@@ -59,7 +58,7 @@ class SetupCommand(Command):
             help_string="Implicitly run before any "
             "other command of a system is run.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -126,7 +125,7 @@ class SetupCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         _setup_scratch_directory(system_context, self._service("btrfs_helper"))

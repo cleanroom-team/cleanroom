@@ -26,7 +26,7 @@ class TarCommand(Command):
             "[work_directory=<DIR>]",
             help_string="Create a tarball.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -43,7 +43,7 @@ class TarCommand(Command):
                 "compress",
                 "work_directory",
             ),
-            **kwargs
+            **kwargs,
         )
 
     def __call__(
@@ -51,7 +51,7 @@ class TarCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         work_directory = kwargs.get("work_directory", "/")
@@ -73,5 +73,5 @@ class TarCommand(Command):
             "-f",
             target,
             source,
-            work_directory=work_directory
+            work_directory=work_directory,
         )

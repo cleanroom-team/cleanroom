@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 import pytest  # type: ignore
 import random
 import typing
@@ -41,7 +40,7 @@ def _test_message(
     op: typing.Callable,
     has_output: bool,
     extras: typing.Tuple[str, ...] = (),
-    **kwargs: typing.Any
+    **kwargs: typing.Any,
 ) -> None:
     printer.set_verbosity(printer_verbosity)
     message = "Message " + str(random.randint(0, 1000000))

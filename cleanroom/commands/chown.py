@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.helper.file import chown
 from cleanroom.location import Location
@@ -23,7 +22,7 @@ class ChownCommand(Command):
             syntax="<FILE>+ [user=<USER>] [group=<GROUP>] " "[recursive=False]",
             help_string="Chmod a file or files.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -40,7 +39,7 @@ class ChownCommand(Command):
                 "group",
                 "recursive",
             ),
-            **kwargs
+            **kwargs,
         )
 
     def __call__(
@@ -48,7 +47,7 @@ class ChownCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         chown(
@@ -56,5 +55,5 @@ class ChownCommand(Command):
             kwargs.get("user", "root"),
             kwargs.get("group", "root"),
             *args,
-            recursive=kwargs.get("recursive", False)
+            recursive=kwargs.get("recursive", False),
         )

@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.helper.debian.apt import debootstrap
@@ -29,7 +28,7 @@ class DebootstrapCommand(Command):
             "from <MIRROR>. Include <INCLUDE> and exclude <EXCLUDE> "
             "packages.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -46,7 +45,7 @@ class DebootstrapCommand(Command):
                 "include",
                 "exclude",
             ),
-            **kwargs
+            **kwargs,
         )
         self._require_kwargs(
             location,
@@ -54,7 +53,7 @@ class DebootstrapCommand(Command):
                 "suite",
                 "mirror",
             ),
-            **kwargs
+            **kwargs,
         )
 
     def __call__(
@@ -62,7 +61,7 @@ class DebootstrapCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: str,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         debootstrap(

@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from ...exceptions import GenerateError
 from ...location import Location
 from ...systemcontext import SystemContext

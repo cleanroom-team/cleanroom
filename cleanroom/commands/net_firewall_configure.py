@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.helper.archlinux.iptables import install_rules
 from cleanroom.location import Location
@@ -22,7 +21,7 @@ class NetFirewallConfigureCommand(Command):
             "net_firewall_configure",
             help_string="Set up basic firewall.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -36,7 +35,7 @@ class NetFirewallConfigureCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         install_rules(location, system_context)

@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.helper.file import create_file
 from cleanroom.location import Location
@@ -25,7 +24,7 @@ class PkgNginxCommand(Command):
             syntax="http=False https=True",
             help_string="Setup nginx web server.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -39,7 +38,7 @@ class PkgNginxCommand(Command):
                 "http",
                 "https",
             ),
-            **kwargs
+            **kwargs,
         )
         self._require_kwargs(
             location,
@@ -47,7 +46,7 @@ class PkgNginxCommand(Command):
                 "http",
                 "https",
             ),
-            **kwargs
+            **kwargs,
         )
 
     def __call__(
@@ -55,7 +54,7 @@ class PkgNginxCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         self._execute(location, system_context, "pacman", "nginx")

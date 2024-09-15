@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.location import Location
 from cleanroom.helper.file import remove
@@ -23,7 +22,7 @@ class RemoveCommand(Command):
             syntax="<FILE_LIST> [force=True] [recursive=True] [outside=False]",
             help_string="remove files within the system.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -34,7 +33,7 @@ class RemoveCommand(Command):
             location,
             1,
             '"{}" needs at least one file or ' "directory to remove.",
-            *args
+            *args,
         )
         self._validate_kwargs(location, ("force", "recursive", "outside"), **kwargs)
 
@@ -43,7 +42,7 @@ class RemoveCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         remove(system_context, *args, **kwargs)

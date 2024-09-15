@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
@@ -21,7 +20,7 @@ class PkgGnomeCommand(Command):
             "pkg_gnome",
             help_string="Install the Gnome desktop environment",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -37,7 +36,7 @@ class PkgGnomeCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         self._execute(

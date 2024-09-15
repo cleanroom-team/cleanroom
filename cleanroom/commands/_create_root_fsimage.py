@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.exceptions import GenerateError
@@ -34,7 +33,7 @@ class CreateRootFsimageCommand(Command):
             syntax="<ROOTFS_IMAGE> [usr_only=True]",
             help_string="Create a root filesystem image",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -51,7 +50,7 @@ class CreateRootFsimageCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         self._usr_only = kwargs.get("usr_only", True)
@@ -78,6 +77,6 @@ class CreateRootFsimageCommand(Command):
             "-noX",
             "-processors",
             "1",
-            work_directory=system_context.fs_directory
+            work_directory=system_context.fs_directory,
         )
         size_extend(rootfs_file)

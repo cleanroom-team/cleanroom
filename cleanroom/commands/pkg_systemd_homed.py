@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.exceptions import GenerateError
 from cleanroom.helper.file import chmod, chown, create_file, makedirs
@@ -25,7 +24,7 @@ class PkgSystemdHomedCommand(Command):
             syntax="<PRIVATE_KEY_DATA> <PUBLIC_KEY_DATA>",
             help_string="Setup systemd-homed.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -36,7 +35,7 @@ class PkgSystemdHomedCommand(Command):
             location,
             2,
             '"{}" requires the private key data ' "and the public key data",
-            *args
+            *args,
         )
         self._validate_kwargs(location, (), **kwargs)
 
@@ -45,7 +44,7 @@ class PkgSystemdHomedCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
 

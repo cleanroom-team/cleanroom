@@ -25,7 +25,7 @@ class UseraddCommand(Command):
             "[shell=<PATH>] [expire=<EXPIRE_DATE>]",
             help_string="Modify an existing user.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -47,7 +47,7 @@ class UseraddCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         self._service("user_helper").useradd(

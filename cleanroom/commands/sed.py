@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.helper.run import run
 from cleanroom.location import Location
@@ -23,7 +22,7 @@ class SedCommand(Command):
             syntax="<PATTERN> <FILE>",
             help_string="Run sed on a file.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -39,7 +38,7 @@ class SedCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         run("/usr/bin/sed", "-i", "-e", args[0], system_context.file_name(args[1]))

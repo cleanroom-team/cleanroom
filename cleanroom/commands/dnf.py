@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.exceptions import ParseError
@@ -27,7 +26,7 @@ class dnfCommand(Command):
             help_string="Run dnf to install <PACKAGES>.\n\n"
             "Hooks: Will runs _setup hooks after dnf.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -49,7 +48,7 @@ class dnfCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
 

@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
@@ -21,7 +20,7 @@ class EnsureNoUnusedShellFilesCommand(Command):
             "ensure_no_unused_shell_files",
             help_string="Clean out files for shells that are not installed.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -35,7 +34,7 @@ class EnsureNoUnusedShellFilesCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
 

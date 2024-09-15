@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
@@ -22,7 +21,7 @@ class AddHookCommand(Command):
             syntax="<HOOK_NAME> <COMMAND> " "<ARGS>* [message=<MESSAGE>] [<KWARGS>]",
             help_string="Add a hook running command with " "arguments.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -33,7 +32,7 @@ class AddHookCommand(Command):
             location,
             1,
             '"{}" needs a hook name and a ' "command and optional arguments.",
-            *args
+            *args,
         )
 
     def __call__(
@@ -42,7 +41,7 @@ class AddHookCommand(Command):
         system_context: SystemContext,
         *args: typing.Any,
         message: str = "",
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         location.set_description(message)

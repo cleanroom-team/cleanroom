@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from ..exceptions import GenerateError
 from ..printer import debug, info, trace, verbose
 from ..systemcontext import SystemContext

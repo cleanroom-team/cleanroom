@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from __future__ import annotations
 
 from ..exceptions import GenerateError

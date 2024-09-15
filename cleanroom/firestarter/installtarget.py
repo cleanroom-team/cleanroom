@@ -5,7 +5,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 import typing
 
 

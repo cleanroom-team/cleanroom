@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from tempfile import TemporaryDirectory
 from cleanroom.exceptions import GenerateError
 from cleanroom.binarymanager import Binaries
@@ -121,9 +120,7 @@ def _populate_with_efi_emulator(staging_area: str, efi_emulator: str):
 	</dict>
 </dict>
 </plist>
-""".encode(
-                "utf-8"
-            )
+""".encode("utf-8")
         )
 
 

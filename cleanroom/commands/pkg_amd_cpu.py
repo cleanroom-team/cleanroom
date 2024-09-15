@@ -3,7 +3,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.helper.file import create_file
 from cleanroom.location import Location

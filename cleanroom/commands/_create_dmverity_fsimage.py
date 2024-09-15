@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.location import Location
@@ -26,7 +25,7 @@ class CreateDmverityFsimageCommand(Command):
             syntax="DMVERITY_IMAGE FILE " "[base_image=<BASE_FILE_IMAGE]",
             help_string="Export a filesystem image.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -43,7 +42,7 @@ class CreateDmverityFsimageCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         verity_file = args[0]

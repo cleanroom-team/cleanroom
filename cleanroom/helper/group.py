@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from .run import run
 
 import os
@@ -49,7 +48,7 @@ class GroupHelper:
         gid: int = -1,
         force: bool = False,
         system: bool = False,
-        root_directory: str
+        root_directory: str,
     ) -> bool:
         """Execute command."""
         command_line = [self._add_command, "--root", root_directory, group_name]
@@ -77,7 +76,7 @@ class GroupHelper:
         gid: int = -1,
         password: str = "",
         rename: str = "",
-        root_directory: str = ""
+        root_directory: str = "",
     ) -> bool:
         """Modify an existing group."""
         command_line = [self._mod_command, "--root", root_directory, group_name]

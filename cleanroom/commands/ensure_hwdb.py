@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
@@ -22,7 +21,7 @@ class EnsureHwdbCommand(Command):
             "ensure_hwdb",
             help_string="Make sure hwdb is installed.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -36,7 +35,7 @@ class EnsureHwdbCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         assert os.path.exists(system_context.file_name("/usr/bin/systemd-hwdb"))

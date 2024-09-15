@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.exceptions import ParseError
 from cleanroom.location import Location
@@ -24,7 +23,7 @@ class GroupModCommand(Command):
             "[password=<ENCRYPTED_PASSWORD>] [root_directory=<CHROOT>]",
             help_string="Modify an existing user.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -40,7 +39,7 @@ class GroupModCommand(Command):
                 "password",
                 "root_directory",
             ),
-            **kwargs
+            **kwargs,
         )
         if len(kwargs) == 0:
             raise ParseError("groupmod needs something to change.", location=location)
@@ -50,7 +49,7 @@ class GroupModCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         self._service("group_helper").groupmod(

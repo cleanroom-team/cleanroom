@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from .command import Command, stringify
 from .exceptions import PreflightError
 from .location import Location
@@ -175,7 +174,7 @@ class CommandManager:
         ) -> None:
             cmd_str = stringify(cmd.name, args, kwargs)
             trace(f"{location} Validating {cmd_str}.")
-            command.validate(location, *args, **kwargs),
+            (command.validate(location, *args, **kwargs),)
             success(f"{location}: Validated {cmd_str}.", verbosity=4)
 
         def __dependency_func(

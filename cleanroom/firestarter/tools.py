@@ -5,7 +5,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.printer import trace, verbose, debug
 import cleanroom.helper.disk as disk
 import cleanroom.helper.mount as mount

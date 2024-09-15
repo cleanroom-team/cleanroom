@@ -586,7 +586,7 @@ def _install_debug_support(
     system_context: SystemContext,
     tmp: str,
 ):
-    _install_shadow_file(tmp, system_context),
+    (_install_shadow_file(tmp, system_context),)
 
     for cmd in [
         "/usr/bin/journalctl",

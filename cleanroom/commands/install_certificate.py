@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.helper.run import run
@@ -27,7 +26,7 @@ class InstallCertificatesCommand(Command):
             syntax="<CA_CERT>+",
             help_string="Install CA certificates.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -39,7 +38,7 @@ class InstallCertificatesCommand(Command):
             1,
             '"{}" needs at least one ' "ca certificate to add",
             *args,
-            **kwargs
+            **kwargs,
         )
 
     def __call__(
@@ -47,7 +46,7 @@ class InstallCertificatesCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         for f in args:

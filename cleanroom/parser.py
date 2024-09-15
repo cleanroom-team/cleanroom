@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from types import MethodType
 from .exceptions import ParseError
 from .location import Location
@@ -90,7 +89,7 @@ def __map_value(value: typing.Dict[str, str]) -> typing.Any:
 
 
 def _process_arguments(
-    arguments: typing.List[typing.Dict[str, str]]
+    arguments: typing.List[typing.Dict[str, str]],
 ) -> typing.Tuple[typing.Tuple[typing.Any, ...], typing.Dict[str, typing.Any]]:
     args: typing.Tuple[typing.Any, ...] = ()
     kwargs: typing.Dict[str, typing.Any] = {}

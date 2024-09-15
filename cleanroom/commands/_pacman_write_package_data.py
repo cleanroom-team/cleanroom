@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
 from cleanroom.helper.archlinux.pacman import pacman_report
@@ -23,7 +22,7 @@ class PacmanWritePackageDataCommand(Command):
             "_pacman_write_package_data",
             help_string="Write pacman package data into the filesystem.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -37,7 +36,7 @@ class PacmanWritePackageDataCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         pacman_report(

@@ -22,7 +22,7 @@ class StripDocumentationHookCommand(Command):
             "_strip_documentation_hook",
             help_string="Strip away documentation files (hook).",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -36,7 +36,7 @@ class StripDocumentationHookCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         location.set_description("Strip documentation files")

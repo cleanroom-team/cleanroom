@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
@@ -23,7 +22,7 @@ class StripDevelopmentFilesCommand(Command):
             "strip_development_files",
             help_string="Strip away development files.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -37,7 +36,7 @@ class StripDevelopmentFilesCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         location.set_description("Strip development files")

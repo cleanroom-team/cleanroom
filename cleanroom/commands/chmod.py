@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.helper.file import chmod
 from cleanroom.location import Location
@@ -23,7 +22,7 @@ class ChmodCommand(Command):
             syntax="<MODE> <FILE>+",
             help_string="Chmod a file or files.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -39,7 +38,7 @@ class ChmodCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         chmod(system_context, *args, **kwargs)

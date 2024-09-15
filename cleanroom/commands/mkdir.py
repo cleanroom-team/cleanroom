@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.helper.file import makedirs
 from cleanroom.location import Location
@@ -23,7 +22,7 @@ class MkdirCommand(Command):
             syntax="<DIRNAME>+ [user=uid] [group=gid] " "[mode=0o755] [exist_ok=False]",
             help_string="Create a new directory.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -40,7 +39,7 @@ class MkdirCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         makedirs(system_context, *args, **kwargs)

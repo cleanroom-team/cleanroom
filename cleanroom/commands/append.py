@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.helper.file import append_file
 from cleanroom.location import Location
@@ -23,7 +22,7 @@ class AppendCommand(Command):
             syntax="<FILENAME> <CONTENTS>",
             help_string="Append contents to file.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -40,7 +39,7 @@ class AppendCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         to_write = args[1].encode("utf-8")

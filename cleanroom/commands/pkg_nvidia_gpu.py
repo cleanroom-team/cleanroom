@@ -19,7 +19,7 @@ class PkgNvidiaGpuCommand(Command):
             "pkg_nvidia_gpu",
             help_string="Set up NVidia GPU.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -33,7 +33,7 @@ class PkgNvidiaGpuCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
 

@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.exceptions import ParseError
 from cleanroom.helper.file import move
@@ -27,7 +26,7 @@ class MoveCommand(Command):
             "[force=False]",
             help_string="Move file or directory.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -40,7 +39,7 @@ class MoveCommand(Command):
         self._validate_kwargs(
             location,
             ("from_outside", "to_outside", "ignore_missing_sources", "force"),
-            **kwargs
+            **kwargs,
         )
         if kwargs.get("from_outside", False) and kwargs.get("to_outside", False):
             raise ParseError(
@@ -52,7 +51,7 @@ class MoveCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         move(system_context, *args, **kwargs)

@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.command import Command
 from cleanroom.exceptions import ParseError
 from cleanroom.location import Location
@@ -27,7 +26,7 @@ class UsermodCommand(Command):
             "[expire=<EXPIRE_DATE>], [append=False]",
             help_string="Modify an existing user.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -61,7 +60,7 @@ class UsermodCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         self._service("user_helper").usermod(

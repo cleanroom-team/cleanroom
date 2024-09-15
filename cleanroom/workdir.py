@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from .exceptions import PreflightError
 from .helper.btrfs import BtrfsHelper
 from .helper.mount import umount_all

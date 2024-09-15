@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.printer import debug, info
 from cleanroom.systemcontext import SystemContext
 from cleanroom.helper.run import run

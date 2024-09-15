@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-
 from cleanroom.exceptions import ParseError
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
@@ -27,7 +26,7 @@ class PacmanCommand(Command):
             "[overwrite=GLOB] [assume_installed=PKG]",
             help_string="Run pacman to install <PACKAGES>.",
             file=__file__,
-            **services
+            **services,
         )
 
     def validate(
@@ -43,7 +42,7 @@ class PacmanCommand(Command):
             location,
             1,
             '"{}"" needs at least ' "one package or group to install.",
-            *args
+            *args,
         )
         self._validate_kwargs(
             location,
@@ -52,7 +51,7 @@ class PacmanCommand(Command):
                 "overwrite",
                 "assume_installed",
             ),
-            **kwargs
+            **kwargs,
         )
 
     def __call__(
@@ -60,7 +59,7 @@ class PacmanCommand(Command):
         location: Location,
         system_context: SystemContext,
         *args: typing.Any,
-        **kwargs: typing.Any
+        **kwargs: typing.Any,
     ) -> None:
         """Execute command."""
         pacman(
@@ -70,5 +69,5 @@ class PacmanCommand(Command):
             overwrite=kwargs.get("overwrite", ""),
             assume_installed=kwargs.get("assume_installed", ""),
             pacman_command=self._binary(Binaries.PACMAN),
-            chroot_helper=self._binary(Binaries.SYSTEMD_NSPAWN)
+            chroot_helper=self._binary(Binaries.SYSTEMD_NSPAWN),
         )
