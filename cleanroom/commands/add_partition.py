@@ -56,7 +56,7 @@ class AddPartitionCommand(Command):
         )
         self._require_kwargs(location, ("type",), **kwargs)
         type = kwargs.get("type")
-        if not type in (
+        if type not in (
             "esp",
             "xbootldr",
             "swap",
@@ -104,7 +104,7 @@ class AddPartitionCommand(Command):
             name += ".conf"
 
         device_id = kwargs.get("device", "disk0")
-        assert not " " in device_id
+        assert " " not in device_id
 
         contents = "[Partition]\n"
 
@@ -161,7 +161,7 @@ class AddPartitionCommand(Command):
         device_ids = system_context.substitution_expanded(
             "DEPLOY_DEVICE_IDS", ""
         ).split()
-        if not device_id in device_ids:
+        if device_id not in device_ids:
             device_ids.append(device_id)
         system_context.set_substitution("DEPLOY_DEVICE_IDS", " ".join(device_ids))
 

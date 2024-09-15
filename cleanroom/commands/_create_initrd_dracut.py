@@ -10,7 +10,7 @@ from cleanroom.helper.file import copy, remove, move
 from cleanroom.helper.run import run
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
-from cleanroom.printer import debug, info
+from cleanroom.printer import info
 
 import os
 import typing

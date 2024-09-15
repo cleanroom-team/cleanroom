@@ -7,7 +7,6 @@
 
 
 import pytest  # type: ignore
-import typing
 
 import os
 import sys

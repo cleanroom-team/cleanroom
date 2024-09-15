@@ -53,12 +53,12 @@ class PkgSystemdHomedCommand(Command):
         public_key = args[1]
 
         location.set_description("Validate keys")
-        if not "BEGIN PRIVATE KEY" in private_key:
+        if "BEGIN PRIVATE KEY" not in private_key:
             raise GenerateError(
                 "Private key blob is not a private key.", location=location
             )
 
-        if not "BEGIN PUBLIC KEY" in public_key:
+        if "BEGIN PUBLIC KEY" not in public_key:
             raise GenerateError(
                 "Public key blob is not a public key.", location=location
             )

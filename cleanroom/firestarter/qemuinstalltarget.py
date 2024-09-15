@@ -20,7 +20,7 @@ class QemuInstallTarget(InstallTarget):
     def __call__(
         self, *, parse_result: typing.Any, tmp_dir: str, image_file: str
     ) -> int:
-        if not "DISPLAY" in os.environ:
+        if "DISPLAY" not in os.environ:
             print("No DISPLAY variable set: Can not start qemu.")
             exit(1)
 

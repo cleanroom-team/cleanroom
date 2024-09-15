@@ -5,7 +5,7 @@
 """
 
 
-from ..printer import trace, none
+from ..printer import none
 from .run import run
 
 import re

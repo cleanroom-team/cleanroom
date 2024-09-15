@@ -108,7 +108,7 @@ class CommandManager:
 
             name = command_info.name
             for key, value, description in command_info.register_substitutions():
-                if not key in result:
+                if key not in result:
                     result[key] = (key, value, description, (name,))
                 else:
                     (old_key, old_value, old_description, old_names) = result[key]
@@ -116,7 +116,7 @@ class CommandManager:
                         old_key == key
                         and old_value == value
                         and old_description == description
-                        and not name in old_names
+                        and name not in old_names
                         and old_names
                     )
                     result[key] = (key, value, description, (*old_names, name))
@@ -256,7 +256,7 @@ class CommandManager:
 
             command_class = inspect.getmembers(cmd_module, is_command)
             if len(command_class) == 0:
-                warn(f"No command defined, SKIPPING.")
+                warn("No command defined, SKIPPING.")
                 continue
             assert len(command_class) == 1
             instance = command_class[0][1](**self._services_to_propagate)

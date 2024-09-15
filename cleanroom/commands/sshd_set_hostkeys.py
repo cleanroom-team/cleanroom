@@ -6,7 +6,7 @@
 
 
 from cleanroom.command import Command
-from cleanroom.exceptions import GenerateError, ParseError
+from cleanroom.exceptions import ParseError
 from cleanroom.helper.file import chmod, chown, isdir
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext

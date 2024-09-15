@@ -5,10 +5,10 @@
 """
 
 from cleanroom.command import Command
-from cleanroom.helper.file import copy, remove
+from cleanroom.helper.file import copy
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
-from cleanroom.printer import debug, info
+from cleanroom.printer import info
 
 import os
 import shutil

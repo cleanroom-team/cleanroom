@@ -107,9 +107,9 @@ def run(
         if stderr_fd:
             stderr_fd.close()
 
-    if not completed_process.stdout is str and not completed_process.stdout is None:
+    if completed_process.stdout is not str and completed_process.stdout is not None:
         completed_process.stdout = completed_process.stdout.decode("utf-8")
-    if not completed_process.stderr is str and not completed_process.stderr is None:
+    if completed_process.stderr is not str and completed_process.stderr is not None:
         completed_process.stderr = completed_process.stderr.decode("utf-8")
 
     assert completed_process is not None

@@ -10,7 +10,6 @@ from cleanroom.helper.file import create_file, exists
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
-import os.path
 import typing
 import textwrap
 

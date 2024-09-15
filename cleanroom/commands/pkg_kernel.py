@@ -4,7 +4,6 @@
 """
 
 
-from cleanroom import systemcontext
 from cleanroom.command import Command
 from cleanroom.exceptions import GenerateError
 from cleanroom.location import Location

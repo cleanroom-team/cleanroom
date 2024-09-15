@@ -4,7 +4,6 @@
 @author: Tobias Hunger <tobias.hunger@gmail.com>
 """
 
-from ..printer import debug
 from .run import run
 
 import os

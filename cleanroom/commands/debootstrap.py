@@ -7,7 +7,6 @@
 
 from cleanroom.binarymanager import Binaries
 from cleanroom.command import Command
-from cleanroom.exceptions import ParseError
 from cleanroom.helper.debian.apt import debootstrap
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext

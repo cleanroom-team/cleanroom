@@ -6,7 +6,6 @@
 
 
 from cleanroom.command import Command
-from cleanroom.helper.file import remove
 from cleanroom.location import Location
 from cleanroom.systemcontext import SystemContext
 
